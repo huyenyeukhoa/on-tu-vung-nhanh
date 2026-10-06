@@ -2878,41 +2878,45 @@ Trả về JSON thuần tuý:
       btnAiUpgradeCustom.disabled = true;
 
       try {
-        const prompt = `Bạn là giáo viên tiếng Trung cao cấp. Hãy phân tích và nâng cấp từ/cụm từ Hán ngữ cơ bản: "${hanzi}".
-YÊU CẦU BẮT BUỘC: Hãy nâng cấp theo ĐÚNG 2 DẠNG:
-- Dạng 1 (upgrade1): Từ/cụm từ nâng cấp CÙNG ÂM TIẾT (thường là từ 2 âm tiết chuẩn văn viết / 书面语).
-- Dạng 2 (upgrade2): THÀNH NGỮ 4 ÂM TIẾT (成语 - 4 chữ Hán).
+        const prompt = `Bạn là chuyên gia ngôn ngữ & giáo viên tiếng Trung cao cấp. Hãy phân tích và nâng cấp từ/cụm từ Hán ngữ cơ bản: "${hanzi}".
+
+QUY TẮC NÂNG CẤP VÀ GIỮ NGHĨA CHÍNH XÁC (CỰC KỲ QUAN TRỌNG):
+1. GIỮ NGUYÊN SẮC THÁI & HƯỚNG NGHĨA: Từ nâng cấp BẮT BUỘC phải đồng nghĩa và giữ nguyên polarity (tích cực/tiêu cực/khẩu ngữ).
+   - VÍ DỤ CẢNH BÁO: Từ "${hanzi}" nếu mang nghĩa tiêu cực như "受不了" (không chịu nổi, suy sụp) -> TUYỆT ĐỐI KHÔNG chọn "忍受" (vì "忍受" là chịu đựng, ngược hướng ý nghĩa!). Phải nâng cấp thành "崩溃" (suy sụp) hoặc "难以忍受" / "不堪重负".
+2. HAI DẠNG NÂNG CẤP:
+   - Dạng 1 (upgrade1): Từ/cụm từ nâng cấp văn viết chuẩn (书面语, 2-3 âm tiết) diễn tả cùng ý nghĩa ở mức độ trang trọng/sắc sảo hơn (vd: 记住 -> 铭记; 受不了 -> 崩溃 / 难以忍受; 害怕 -> 畏惧).
+   - Dạng 2 (upgrade2): THÀNH NGỮ 4 ÂM TIẾT (成语 - 4 chữ Hán) tương ứng giàu hình ảnh/cảm xúc nhất (vd: 记住 -> 刻骨铭心; 受不了 -> 苦不堪言 / 痛不欲生; 害怕 -> 胆战心惊).
 
 Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 {
   "hanzi": "${hanzi}",
   "pinyin": "pinyin từ gốc có dấu tone",
   "vietnamese": "Nghĩa tiếng Việt ngắn gọn của từ gốc",
-  "explanation": "BẮT BUỘC viết 2-3 câu ngắn gọn phân tích CỤ THỂ NGỮ CẢNH VÀ LÝ DO NÂNG CẤP: Nói rõ từ gốc '${hanzi}' dùng khi nào (thường là khẩu ngữ), vì sao nên thay bằng từ Dạng 1 (từ này diễn tả sắc thái gì đặc biệt trong văn viết), và ngữ cảnh nào nên dùng thành ngữ Dạng 2 (diễn tả hình ảnh/cảm xúc gì vượt trội). TUYỆT ĐỐI KHÔNG VIẾT CHUNG CHUNG KHIỂU LÝ THUYẾT MẪU.",
+  "explanation": "BẮT BUỘC viết 2-3 câu ngắn gọn phân tích CỤ THỂ NGỮ CẢNH VÀ LÝ DO NÂNG CẤP: Nói rõ từ gốc '${hanzi}' dùng khi nào (thường là khẩu ngữ), vì sao nên thay bằng từ Dạng 1 (diễn tả sắc thái gì đặc biệt trong văn viết), và ngữ cảnh nào nên dùng thành ngữ Dạng 2 (diễn tả hình ảnh/cảm xúc gì vượt trội). TUYỆT ĐỐI KHÔNG VIẾT CHUNG CHUNG KHIỂU LÝ THUYẾT MẪU.",
   "upgrade1": {
-    "hanzi": "Từ nâng cấp cùng âm tiết / 2 âm tiết (vd: 记住 -> 铭记)",
+    "hanzi": "Từ nâng cấp 2-3 âm tiết văn viết chuẩn (vd: 崩溃 hoặc 难以忍受)",
     "pinyin": "pinyin dạng 1",
-    "pos": "Từ loại dạng 1 (vd: Động từ 2 âm tiết)",
+    "pos": "Văn viết (2-3 âm tiết)",
     "vietnamese": "Nghĩa tiếng Việt Dạng 1",
     "example": {
-      "hanzi": "Câu tiếng Trung dùng Dạng 1",
+      "hanzi": "Câu tiếng Trung tự nhiên sử dụng từ Dạng 1",
       "pinyin": "pinyin câu Dạng 1",
       "vietnamese": "Dịch nghĩa câu Dạng 1"
     }
   },
   "upgrade2": {
-    "hanzi": "Thành ngữ 4 âm tiết (vd: 记住 -> 刻骨铭心)",
+    "hanzi": "Thành ngữ 4 âm tiết (vd: 苦不堪言 hoặc 刻骨铭心)",
     "pinyin": "pinyin dạng 2",
     "pos": "Thành ngữ (4 âm tiết)",
     "vietnamese": "Nghĩa tiếng Việt Dạng 2",
     "example": {
-      "hanzi": "Giữ nguyên khung câu gốc nhưng thay bằng Thành ngữ Dạng 2",
+      "hanzi": "Câu tiếng Trung tự nhiên sử dụng Thành ngữ Dạng 2",
       "pinyin": "pinyin câu Dạng 2",
       "vietnamese": "Dịch nghĩa câu Dạng 2"
     }
   },
   "basicExample": {
-    "hanzi": "Câu tiếng Trung sử dụng TỪ GỐC (${hanzi})",
+    "hanzi": "Câu tiếng Trung khẩu ngữ/cơ bản sử dụng TỪ GỐC (${hanzi})",
     "pinyin": "pinyin câu gốc",
     "vietnamese": "Dịch nghĩa câu gốc"
   }
