@@ -2053,9 +2053,14 @@
       const cleanUp1Hanzi = cleanUp1HanziText.replace(/'/g, "\\'");
       const cleanUp2Hanzi = cleanUp2HanziText.replace(/'/g, "\\'");
 
-      const defaultExpl = up2 
-        ? `Nâng cấp sang <b>"${up1.hanzi}"</b> giúp câu văn trang trọng, chuẩn văn viết. Nâng cấp sang <b>"${up2.hanzi}"</b> giúp diễn đạt hàm súc, giàu hình ảnh và tạo ấn tượng sâu sắc hơn từ gốc <b>"${data.hanzi}"</b>.`
-        : `Nâng cấp sang <b>"${up1.hanzi}"</b> giúp nâng tầm câu văn chuẩn phong cách văn viết trang trọng hơn hẳn từ cơ bản <b>"${data.hanzi}"</b>.`;
+      let finalExpl = data.explanation || '';
+      if (!finalExpl || finalExpl.includes('là một từ cơ bản') || finalExpl.includes('chúng ta tìm') || finalExpl.includes('thuộc vốn từ giao tiếp')) {
+        if (up2) {
+          finalExpl = `Từ gốc <b>"${data.hanzi}"</b> (${data.vietnamese}) thường dùng trong giao tiếp hằng ngày. Bạn nên dùng <b>"${up1.hanzi}"</b> (${up1.vietnamese}) khi viết văn bản/bài luận để tăng tính trang trọng, nhã nhặn. Khi muốn nhấn mạnh sắc thái biểu cảm sâu sắc hoặc hình ảnh sống động, nên chọn thành ngữ <b>"${up2.hanzi}"</b> (${up2.vietnamese}) để câu văn hàm súc và giàu sức thuyết phục.`;
+        } else {
+          finalExpl = `Từ gốc <b>"${data.hanzi}"</b> (${data.vietnamese}) thuộc khẩu ngữ thông thường. Bạn nên nâng cấp sang <b>"${up1.hanzi}"</b> (${up1.vietnamese}) để câu văn đạt chuẩn phong cách văn viết trang trọng, lịch sự.`;
+        }
+      }
 
       let topBannerUpgradeHTML = '';
       if (up2) {
@@ -2156,7 +2161,7 @@
             <span>💡 Phân tích & Lý do nâng cấp:</span>
           </div>
           <div style="font-size: 13px; color: #3c2e54; line-height: 1.55;">
-            ${data.explanation || defaultExpl}
+            ${finalExpl}
           </div>
         </div>
 
@@ -2864,7 +2869,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
   "hanzi": "${hanzi}",
   "pinyin": "pinyin từ gốc có dấu tone",
   "vietnamese": "Nghĩa tiếng Việt ngắn gọn của từ gốc",
-  "explanation": "Giải thích chi tiết 2-3 câu về lý do và sự khác biệt khi chuyển từ gốc sang Dạng 1 (từ 2 âm tiết văn viết) và Dạng 2 (thành ngữ 4 chữ).",
+  "explanation": "BẮT BUỘC viết 2-3 câu ngắn gọn phân tích CỤ THỂ NGỮ CẢNH VÀ LÝ DO NÂNG CẤP: Nói rõ từ gốc '${hanzi}' dùng khi nào (thường là khẩu ngữ), vì sao nên thay bằng từ Dạng 1 (từ này diễn tả sắc thái gì đặc biệt trong văn viết), và ngữ cảnh nào nên dùng thành ngữ Dạng 2 (diễn tả hình ảnh/cảm xúc gì vượt trội). TUYỆT ĐỐI KHÔNG VIẾT CHUNG CHUNG KHIỂU LÝ THUYẾT MẪU.",
   "upgrade1": {
     "hanzi": "Từ nâng cấp cùng âm tiết / 2 âm tiết (vd: 记住 -> 铭记)",
     "pinyin": "pinyin dạng 1",
