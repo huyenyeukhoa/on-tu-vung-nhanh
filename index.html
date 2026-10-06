@@ -3476,8 +3476,8 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       }
     }
 
-    // Initialize Page
-    window.addEventListener('DOMContentLoaded', () => {
+    // Initialize Page (Guaranteed execution on all mobile browsers & WebViews)
+    function startApp() {
       initDictionaryData();
       initTTS();
       setupEventListeners();
@@ -3496,7 +3496,13 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       updateGroupWordsState();
       renderGroupDropdown();
       renderVocabList();
-    });
+    }
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', startApp);
+    } else {
+      startApp();
+    }
 
     // ==========================================
     // PWA SERVICE WORKER & INSTALL PROMPT LOGIC
