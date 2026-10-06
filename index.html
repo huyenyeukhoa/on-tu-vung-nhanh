@@ -3092,15 +3092,6 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       showToast(`Đã thêm "${hanzi}" vào nhóm Nâng Cấp!`);
     }
 
-      if (currentLevel === 'upgrade') {
-        updateGroupWordsState();
-        renderGroupDropdown();
-        renderVocabList();
-      }
-
-      showToast(`Đã thêm "${hanzi} ➔ ${upgradedHanzi}" vào Nâng cấp vốn từ!`);
-    }
-
     function saveCurrentState() {
       localStorage.setItem('hsk_current_level', currentLevel);
       localStorage.setItem('hsk_current_group_index', currentGroupIndex.toString());
