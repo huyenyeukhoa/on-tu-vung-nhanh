@@ -1278,17 +1278,36 @@
     </div>
   </div>
 
-  <!-- API Key Modal -->
+  <!-- Settings & Backup Modal -->
   <div class="modal-overlay" id="apiKeyModal">
-    <div class="modal-card" style="max-width: 400px;">
+    <div class="modal-card" style="max-width: 420px; padding: 20px 16px;">
       <div class="modal-header">
-        <div class="modal-title">🔑 OpenRouter API Key</div>
+        <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color);">⚙️ Cài Đặt & Sao Lưu Dữ Liệu</div>
         <button class="modal-close-btn" id="btnCloseApiKeyModal">✕</button>
       </div>
-      <div class="modal-body">
-        <p style="font-size: 13.5px; color: #4b5563; margin-bottom: 8px;">Nhập API Key OpenRouter để sử dụng AI <b>gemini 2.5 flash</b> giải thích từ vựng & tự điền thông tin từ mới.</p>
-        <input type="password" id="inputApiKey" class="input-field" placeholder="sk-or-v1-..." />
-        <button class="primary-submit-btn" id="btnSaveApiKey" style="width: 100%;">Lưu API Key</button>
+      <div class="modal-body" style="padding: 10px 0 0 0;">
+        
+        <!-- Section 1: Backup & Restore (Tải file dự phòng) -->
+        <div style="background: #f3eef9; padding: 12px 14px; border-radius: 14px; border: 1px solid #e2d8ef; margin-bottom: 14px;">
+          <div style="font-size: 13.5px; font-weight: 700; color: #766299; margin-bottom: 4px;">💾 Sao Lưu & Khôi Phục Dữ Liệu</div>
+          <p style="font-size: 12px; color: #4b5563; margin-bottom: 10px; line-height: 1.45;">
+            Tải bản sao lưu file <code>.json</code> để lưu cất giữ an toàn trên máy/Google Drive hoặc chuyển sang thiết bị khác.
+          </p>
+          <div style="display: flex; gap: 8px;">
+            <button class="primary-submit-btn" id="btnExportBackup" style="flex: 1; padding: 8px 10px; font-size: 12px; background: #8772a8;">📥 Tải sao lưu (Backup)</button>
+            <button class="primary-submit-btn" id="btnImportBackup" style="flex: 1; padding: 8px 10px; font-size: 12px; background: #766299;">📤 Khôi phục (Restore)</button>
+            <input type="file" id="inputImportBackupFile" accept=".json" style="display: none;" />
+          </div>
+        </div>
+
+        <!-- Section 2: OpenRouter API Key -->
+        <div style="background: #f9fafb; padding: 12px 14px; border-radius: 14px; border: 1px solid #f0f0f0;">
+          <div style="font-size: 13.5px; font-weight: 700; color: #374151; margin-bottom: 4px;">🔑 OpenRouter API Key (Dùng AI)</div>
+          <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.45;">Nhập API Key để sử dụng AI gemini 2.5 flash giải thích từ & tự điền thông tin.</p>
+          <input type="password" id="inputApiKey" class="input-field" placeholder="sk-or-v1-..." style="margin-bottom: 8px;" />
+          <button class="primary-submit-btn" id="btnSaveApiKey" style="width: 100%; padding: 8px 10px; font-size: 12.5px;">Lưu API Key</button>
+        </div>
+
       </div>
     </div>
   </div>
@@ -3252,7 +3271,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         renderVocabList();
       });
 
-      // API Key Modal Events
+      // API Key & Settings Modal Events
       btnApiKey.addEventListener('click', () => {
         inputApiKey.value = localStorage.getItem('openrouter_api_key') || '';
         apiKeyModal.classList.add('active');
@@ -3272,6 +3291,96 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           showToast('vui lòng nhập API Key hợp lệ!');
         }
       });
+
+      // Export Backup JSON File
+      const btnExportBackup = document.getElementById('btnExportBackup');
+      if (btnExportBackup) {
+        btnExportBackup.addEventListener('click', () => {
+          try {
+            const backupPayload = {
+              version: '1.0',
+              exportedAt: new Date().toISOString(),
+              customGroups: safeGetJSON('hsk_custom_groups', []),
+              upgradeWords: safeGetJSON('hsk_upgrade_words', []),
+              userProgress: safeGetJSON('hsk_user_progress', {}),
+              aiCache: safeGetJSON('hsk_ai_cache', {})
+            };
+
+            const jsonStr = JSON.stringify(backupPayload, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const nowStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `on_tu_vung_hsk_backup_${nowStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('📥 Đã tải file sao lưu (.json) thành công!');
+          } catch (e) {
+            showToast('❌ Tải bản sao lưu thất bại!');
+          }
+        });
+      }
+
+      // Import Backup JSON File
+      const btnImportBackup = document.getElementById('btnImportBackup');
+      const inputImportBackupFile = document.getElementById('inputImportBackupFile');
+      if (btnImportBackup && inputImportBackupFile) {
+        btnImportBackup.addEventListener('click', () => {
+          inputImportBackupFile.click();
+        });
+
+        inputImportBackupFile.addEventListener('change', (event) => {
+          const file = event.target.files && event.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            try {
+              const parsed = JSON.parse(e.target.result);
+              if (!parsed || (typeof parsed !== 'object')) {
+                throw new Error('File không đúng định dạng');
+              }
+
+              if (parsed.customGroups && Array.isArray(parsed.customGroups)) {
+                customGroups = parsed.customGroups;
+                localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+              }
+
+              if (parsed.upgradeWords && Array.isArray(parsed.upgradeWords)) {
+                upgradeList = parsed.upgradeWords;
+                localStorage.setItem('hsk_upgrade_words', JSON.stringify(upgradeList));
+              }
+
+              if (parsed.userProgress && typeof parsed.userProgress === 'object') {
+                userProgress = parsed.userProgress;
+                localStorage.setItem('hsk_user_progress', JSON.stringify(userProgress));
+              }
+
+              if (parsed.aiCache && typeof parsed.aiCache === 'object') {
+                Object.assign(aiCache, parsed.aiCache);
+                localStorage.setItem('hsk_ai_cache', JSON.stringify(aiCache));
+              }
+
+              updateCustomLevelTabCount();
+              updateGroupWordsState();
+              renderGroupDropdown();
+              renderVocabList();
+
+              showToast('🎉 Khôi phục dữ liệu thành công!');
+              apiKeyModal.classList.remove('active');
+            } catch (err) {
+              showToast('❌ File sao lưu không hợp lệ!');
+            }
+            event.target.value = '';
+          };
+          reader.readAsText(file);
+        });
+      }
 
       // Close AI Modal
       btnCloseAiModal.addEventListener('click', () => {
