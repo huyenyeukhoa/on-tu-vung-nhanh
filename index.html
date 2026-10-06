@@ -1419,7 +1419,7 @@
             vietnamese: "Mối tình sâu nghĩa nặng này, khiến tôi khắc xương ghi tâm."
           }
         },
-        explanation: "Từ '记住' là từ giao tiếp thông thường. Nâng cấp Dạng 1 '铭记' (2 âm tiết) giúp câu văn chuẩn văn viết (书面语), trang trọng nhã nhặn. Nâng cấp Dạng 2 '刻骨铭心' (thành ngữ 4 chữ) giúp tạo điểm nhấn cảm xúc cực kỳ sâu sắc.",
+        explanation: "Nâng cấp '铭记' giúp câu văn trang trọng chuẩn văn viết. Nâng cấp '刻骨铭心' thể hiện mức độ ghi nhớ sâu sắc tận xương tủy.",
         basicExample: {
           hanzi: "这份深情厚意，我会永远记住。",
           pinyin: "Zhè fèn shēnqíng hòuyì, wǒ huì yǒngyuǎn jìzhù.",
@@ -1454,7 +1454,7 @@
             vietnamese: "Chúng ta cần học tập tinh thần cao cả của các bậc tiền bối tiền nhân."
           }
         },
-        explanation: "'老一辈' là khẩu ngữ dân dã. Nâng cấp Dạng 1 '前辈' (2 âm tiết) vừa lịch sự vừa gọn gàng. Nâng cấp Dạng 2 '前辈先贤' (4 âm tiết) thể hiện sự tôn kính sâu sắc và có chất văn học cao.",
+        explanation: "Nâng cấp '前辈' giúp diễn đạt lịch sự, gọn gàng. Nâng cấp '前辈先贤' thể hiện sự tôn kính sâu sắc với chất văn học cao.",
         basicExample: {
           hanzi: "我们要学习老一辈的崇高精神。",
           pinyin: "Wǒmen yào xuéxí lǎoyībèi de chónggāo jīngshén.",
@@ -1489,7 +1489,7 @@
             vietnamese: "Theo góc nhìn của tôi, phương án này vẫn còn dư địa để hoàn thiện."
           }
         },
-        explanation: "'我觉得' lặp đi lặp lại rất nhiều trong nói hàng ngày. Nâng cấp Dạng 1 '我认为' giúp câu văn nghị luận trở nên khách quan. Nâng cấp Dạng 2 '依我之见' (4 âm tiết) tạo ấn tượng rất cao cấp trong bài viết luận.",
+        explanation: "Nâng cấp '我认为' giúp câu văn nghị luận khách quan hơn. Nâng cấp '依我之见' tạo sắc thái lập luận cao cấp, sắc sảo.",
         basicExample: {
           hanzi: "我觉得，这个方案还有完善的空间。",
           pinyin: "Wǒ juéde, zhège fāng'àn hái yǒu wánshàn de kōngjiān.",
@@ -1524,7 +1524,7 @@
             vietnamese: "Sự nghiệp khoa học công nghệ của tổ quốc ngày càng phát triển rực rỡ."
           }
         },
-        explanation: "'越来越' là khẩu ngữ. Dạng 1 '日益' (2 âm tiết) rất phổ biến trong báo chí và văn viết. Dạng 2 '蒸蒸日上' (thành ngữ 4 chữ) giúp miêu tả sự phát triển bùng nổ, rực rỡ.",
+        explanation: "Nâng cấp '日益' chuẩn phong cách báo chí văn viết. Nâng cấp '蒸蒸日上' miêu tả sự phát triển bùng nổ, thịnh vượng rực rỡ.",
         basicExample: {
           hanzi: "祖국의科技事业越来越好。",
           pinyin: "Zǔguó de kējì shìyè yuè lái yuè hǎo.",
@@ -1559,7 +1559,7 @@
             vietnamese: "Gia phong tốt có ảnh hưởng sâu sắc tự nhiên (mưa dầm thấm đất) đến sự trưởng thành của con người."
           }
         },
-        explanation: "Dạng 1 '深远' (2 âm tiết) giúp tả tầm ảnh hưởng sâu rộng trong văn viết. Dạng 2 '潜移默化' (thành ngữ 4 chữ) diễn tả sự thấm nhuần thầm lặng, tự nhiên vào tư tưởng.",
+        explanation: "Nâng cấp '深远' tả tầm ảnh hưởng sâu rộng. Nâng cấp '潜移默化' diễn tả sự thấm nhuần thầm lặng, tự nhiên vào tư tưởng.",
         basicExample: {
           hanzi: "好的家风对人的成长有着深刻印象的影响。",
           pinyin: "Hǎo de jiāfēng duì rén de chéngzhǎng yǒu zhe shēnkè yìnxiàng de yǐngxiǎng.",
@@ -2060,7 +2060,9 @@
       const cleanUp1Hanzi = cleanUp1HanziText.replace(/'/g, "\\'");
       const cleanUp2Hanzi = cleanUp2HanziText.replace(/'/g, "\\'");
 
-      const defaultExpl = `Từ <b>"${data.hanzi}"</b> thuộc vốn từ giao tiếp thông thường. Bạn có thể nâng cấp lên <b>Dạng 1 (Cùng âm tiết)</b> để trang trọng hơn hoặc <b>Dạng 2 (Thành ngữ 4 chữ)</b> để diễn đạt tinh tế, ấn tượng hơn.`;
+      const defaultExpl = up2 
+        ? `Nâng cấp sang <b>"${up1.hanzi}"</b> giúp câu văn trang trọng, chuẩn văn viết. Nâng cấp sang <b>"${up2.hanzi}"</b> giúp diễn đạt hàm súc, giàu hình ảnh và tạo ấn tượng sâu sắc hơn từ gốc <b>"${data.hanzi}"</b>.`
+        : `Nâng cấp sang <b>"${up1.hanzi}"</b> giúp nâng tầm câu văn chuẩn phong cách văn viết trang trọng hơn hẳn từ cơ bản <b>"${data.hanzi}"</b>.`;
 
       let topBannerUpgradeHTML = '';
       if (up2) {
@@ -2438,14 +2440,14 @@ Lưu ý:
             upgradedBlock = `
               <div style="font-size: 12.5px; line-height: 1.45; text-align: left; padding: 2px 0;">
                 <div style="margin-bottom: 4px; cursor: pointer;" onclick="handleHanziClick('${item.hanzi}', '${item.pinyin}')" title="chạm để xem chi tiết đối chiếu 3 câu">
-                  <span style="color:#766299; font-weight:700; font-size: 11px;">🔹 Dạng 1 (2 âm tiết):</span> 
-                  <b style="color:var(--primary-color); font-size: 14px;">${item.upgrade1.hanzi}</b> 
+                  <span style="color:#766299; font-weight:700; font-size: 13px;">🔹</span> 
+                  <b style="color:var(--primary-color); font-size: 14.5px;">${item.upgrade1.hanzi}</b> 
                   ${showPinyin ? `<span style="font-size:11px; color:#6b7280;">(${item.upgrade1.pinyin})</span>` : ''}
                   <div style="font-size:11.5px; color:#374151; margin-top:1px;">${item.upgrade1.vietnamese}</div>
                 </div>
                 <div style="cursor: pointer;" onclick="handleHanziClick('${item.hanzi}', '${item.pinyin}')" title="chạm để xem chi tiết đối chiếu 3 câu">
-                  <span style="color:#8e5899; font-weight:700; font-size: 11px;">🌟 Dạng 2 (Thành ngữ):</span> 
-                  <b style="color:#8e5899; font-size: 14px;">${item.upgrade2.hanzi}</b> 
+                  <span style="color:#8e5899; font-weight:700; font-size: 13px;">🌟</span> 
+                  <b style="color:#8e5899; font-size: 14.5px;">${item.upgrade2.hanzi}</b> 
                   ${showPinyin ? `<span style="font-size:11px; color:#6b7280;">(${item.upgrade2.pinyin})</span>` : ''}
                   <div style="font-size:11.5px; color:#374151; margin-top:1px;">${item.upgrade2.vietnamese}</div>
                 </div>
@@ -2463,7 +2465,7 @@ Lưu ý:
 
           const blankBlockUpgrade = `
             <div class="col-empty-blank" onclick="toggleRevealItem('${item.id}', event)" title="chạm để hiện đáp án từ nâng cấp">
-              <span style="font-size: 11.5px; opacity: 0.85; color: var(--primary-color); font-weight:700;">✨ Ẩn 2 dạng nâng cấp</span>
+              <span style="font-size: 11.5px; opacity: 0.85; color: var(--primary-color); font-weight:700;">✨ Ẩn từ nâng cấp</span>
             </div>
           `;
 
