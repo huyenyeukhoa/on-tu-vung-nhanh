@@ -3013,11 +3013,10 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
       updateCustomLevelTabCount();
       renderCustomGroupSelect();
-      if (currentLevel === 'custom') {
-        updateGroupWordsState();
-        renderGroupDropdown();
-        renderVocabList();
-      }
+      renderCustomGroupWords();
+      updateGroupWordsState();
+      renderGroupDropdown();
+      renderVocabList();
 
       showToast(`Đã thêm "${hanzi}" vào nhóm!`);
     }
@@ -3091,6 +3090,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
       updateCustomLevelTabCount();
       renderUpgradeGroupWords();
+      updateGroupWordsState();
       renderGroupDropdown();
       renderVocabList();
       showToast(`Đã thêm "${hanzi}" vào nhóm Nâng Cấp!`);
@@ -3199,6 +3199,18 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
       btnCloseCustomGroupsModal.addEventListener('click', () => {
         customGroupsModal.classList.remove('active');
+        updateGroupWordsState();
+        renderGroupDropdown();
+        renderVocabList();
+      });
+
+      customGroupsModal.addEventListener('click', (e) => {
+        if (e.target === customGroupsModal) {
+          customGroupsModal.classList.remove('active');
+          updateGroupWordsState();
+          renderGroupDropdown();
+          renderVocabList();
+        }
       });
 
       // Subtabs for Custom Group Modal (Standard vs Upgrade)
