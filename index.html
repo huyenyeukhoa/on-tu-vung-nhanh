@@ -1183,7 +1183,7 @@
   <div class="modal-overlay" id="customGroupsModal">
     <div class="modal-card" style="max-width: 480px; max-height: 85vh;">
       <div class="modal-header">
-        <div class="modal-title" id="customGroupsModalTitle">📁 Quản lý nhóm từ & AI Nâng Cấp</div>
+        <div class="modal-title" id="customGroupsModalTitle">📁 Quản lý nhóm từ</div>
         <button class="modal-close-btn" id="btnCloseCustomGroupsModal">✕</button>
       </div>
       <div class="modal-body">
@@ -1191,7 +1191,7 @@
         <!-- Mode Switcher Subtabs -->
         <div style="display: flex; gap: 6px; margin-bottom: 14px; background: #f3f4f6; padding: 4px; border-radius: 14px;">
           <div id="subtabModeNormal" style="flex:1; text-align:center; padding: 7px 8px; font-size: 12.5px; font-weight:700; border-radius: 10px; cursor:pointer; background:white; color:var(--primary-color); box-shadow: 0 2px 5px rgba(0,0,0,0.05);">📁 Nhóm tự tạo</div>
-          <div id="subtabModeUpgrade" style="flex:1; text-align:center; padding: 7px 8px; font-size: 12.5px; font-weight:700; border-radius: 10px; cursor:pointer; color:#6b7280;">✨ AI Nâng Cấp Vốn Từ</div>
+          <div id="subtabModeUpgrade" style="flex:1; text-align:center; padding: 7px 8px; font-size: 12.5px; font-weight:700; border-radius: 10px; cursor:pointer; color:#6b7280;">✨ Nâng cấp từ</div>
         </div>
 
         <!-- Section 1: Standard Custom Groups -->
@@ -1235,11 +1235,10 @@
         <!-- Section 2: AI Upgrade Words Manager -->
         <div id="sectionUpgradeGroup" style="display: none;">
           <div style="background: linear-gradient(135deg, #f3eef9 0%, #ffffff 100%); padding: 14px; border-radius: 14px; border: 1.5px dashed var(--primary-color); margin-bottom: 16px;">
-            <div style="font-weight: 700; font-size: 14px; color: var(--primary-color); margin-bottom: 8px;">✨ Phân tích & Nâng cấp từ bằng AI</div>
+            <div style="font-weight: 700; font-size: 14px; color: var(--primary-color); margin-bottom: 8px;">✨ AI Nâng Cấp Từ</div>
             
-            <label style="font-size: 12.5px; font-weight: 600; color: #374151;">Nhập Chữ Hán cơ bản (từ bình dân/thường dùng):</label>
             <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-              <input type="text" id="inputUpgradeBasicHanzi" class="input-field" placeholder="Ví dụ: 记住, 觉得, 老一辈, 越来越" style="margin:0; flex:1;" />
+              <input type="text" id="inputUpgradeBasicHanzi" class="input-field" placeholder="Nhập Hán tự gốc (vd: 还有, 记住)" style="margin:0; flex:1;" />
               <button class="primary-submit-btn" id="btnAiUpgradeCustom" style="padding: 8px 12px; font-size: 12.5px; white-space: nowrap; background: linear-gradient(135deg, #a38ebe 0%, #8772a8 100%);">✨ AI Nâng Cấp</button>
             </div>
 
@@ -1256,22 +1255,16 @@
 
             <hr style="border:none; border-top:1px dashed #d1d5db; margin: 10px 0;" />
 
-            <label style="font-size: 12.5px; font-weight: 700; color: var(--primary-color);">🌟 Từ Nâng Cấp (Văn nhã / Thành ngữ):</label>
-            <input type="text" id="inputUpgradeHanzi" class="input-field" placeholder="Ví dụ: 刻骨铭心" style="margin-top: 4px; margin-bottom: 8px; font-weight:700; color:var(--primary-color);" />
+            <label style="font-size: 12.5px; font-weight: 700; color: var(--primary-color);">🌟 Từ Nâng Cấp (Văn nhã | Thành ngữ):</label>
+            <input type="text" id="inputUpgradeHanzi" class="input-field" placeholder="Ví dụ: 铭记 | 刻骨铭心" style="margin-top: 4px; margin-bottom: 8px; font-weight:700; color:var(--primary-color);" />
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-              <div>
-                <label style="font-size: 11.5px; font-weight: 600; color: #6b7280;">Pinyin từ nâng cấp:</label>
-                <input type="text" id="inputUpgradePinyin" class="input-field" placeholder="kègǔ míngxīn" style="margin:2px 0 0 0;" />
-              </div>
-              <div>
-                <label style="font-size: 11.5px; font-weight: 600; color: #6b7280;">Từ loại (Pos):</label>
-                <input type="text" id="inputUpgradePos" class="input-field" placeholder="Thành ngữ" style="margin:2px 0 0 0;" />
-              </div>
+            <div style="margin-bottom: 8px;">
+              <label style="font-size: 11.5px; font-weight: 600; color: #6b7280;">Pinyin từ nâng cấp:</label>
+              <input type="text" id="inputUpgradePinyin" class="input-field" placeholder="míngjì | kègǔ míngxīn" style="margin:2px 0 0 0;" />
             </div>
 
             <label style="font-size: 11.5px; font-weight: 600; color: #6b7280;">Nghĩa Việt & Sắc thái nâng cấp:</label>
-            <input type="text" id="inputUpgradeVi" class="input-field" placeholder="Khắc xương ghi tâm / Khắc sâu vào tiềm thức" style="margin-top: 2px; margin-bottom: 12px;" />
+            <input type="text" id="inputUpgradeVi" class="input-field" placeholder="Khắc ghi | Khắc xương ghi tâm" style="margin-top: 2px; margin-bottom: 12px;" />
 
             <button class="primary-submit-btn" id="btnAddWordToUpgradeGroup" style="width: 100%;">➕ Lưu vào nhóm Nâng Cấp Vốn Từ</button>
           </div>
@@ -2919,11 +2912,15 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         
         const up1Hanzi = parsed.upgrade1 ? parsed.upgrade1.hanzi : (parsed.upgradedHanzi || '');
         const up2Hanzi = parsed.upgrade2 ? parsed.upgrade2.hanzi : '';
-
         inputUpgradeHanzi.value = up2Hanzi ? `${up1Hanzi} | ${up2Hanzi}` : up1Hanzi;
-        inputUpgradePinyin.value = parsed.upgrade1 ? parsed.upgrade1.pinyin : (parsed.upgradedPinyin || '');
-        inputUpgradePos.value = parsed.upgrade1 ? parsed.upgrade1.pos : (parsed.upgradedPos || '');
-        inputUpgradeVi.value = parsed.upgrade1 ? parsed.upgrade1.vietnamese : (parsed.upgradedVi || '');
+
+        const up1Pinyin = parsed.upgrade1 ? parsed.upgrade1.pinyin : (parsed.upgradedPinyin || '');
+        const up2Pinyin = parsed.upgrade2 ? parsed.upgrade2.pinyin : '';
+        inputUpgradePinyin.value = up2Pinyin ? `${up1Pinyin} | ${up2Pinyin}` : up1Pinyin;
+
+        const up1Vi = parsed.upgrade1 ? parsed.upgrade1.vietnamese : (parsed.upgradedVi || '');
+        const up2Vi = parsed.upgrade2 ? parsed.upgrade2.vietnamese : '';
+        inputUpgradeVi.value = up2Vi ? `${up1Vi} | ${up2Vi}` : up1Vi;
         
         window._tempUpgradeExamples = {
           explanation: parsed.explanation || '',
@@ -2996,7 +2993,6 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       const vietnamese = inputUpgradeBasicVi.value.trim();
       const upgradedHanzi = inputUpgradeHanzi.value.trim();
       const upgradedPinyin = inputUpgradePinyin.value.trim();
-      const upgradedPos = inputUpgradePos.value.trim();
       const upgradedVi = inputUpgradeVi.value.trim();
 
       if (!hanzi || !upgradedHanzi) {
@@ -3005,6 +3001,28 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       }
 
       const tempEx = window._tempUpgradeExamples || {};
+      let up1 = tempEx.upgrade1;
+      let up2 = tempEx.upgrade2;
+
+      // Parse manual inputs if user edited with " | "
+      if (upgradedHanzi.includes('|')) {
+        const partsHanzi = upgradedHanzi.split('|').map(s => s.trim());
+        const partsPinyin = upgradedPinyin.split('|').map(s => s.trim());
+        const partsVi = upgradedVi.split('|').map(s => s.trim());
+
+        if (partsHanzi[0]) {
+          up1 = up1 || {};
+          up1.hanzi = partsHanzi[0];
+          up1.pinyin = partsPinyin[0] || partsHanzi[0];
+          up1.vietnamese = partsVi[0] || '';
+        }
+        if (partsHanzi[1]) {
+          up2 = up2 || {};
+          up2.hanzi = partsHanzi[1];
+          up2.pinyin = partsPinyin[1] || partsHanzi[1];
+          up2.vietnamese = partsVi[1] || '';
+        }
+      }
 
       const newItem = {
         id: `upgrade_${Date.now()}`,
@@ -3013,10 +3031,10 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         vietnamese: vietnamese || '',
         upgradedHanzi: upgradedHanzi,
         upgradedPinyin: upgradedPinyin || upgradedHanzi,
-        upgradedPos: upgradedPos || '',
+        upgradedPos: '',
         upgradedVi: upgradedVi || '',
-        upgrade1: tempEx.upgrade1 || null,
-        upgrade2: tempEx.upgrade2 || null,
+        upgrade1: up1 || null,
+        upgrade2: up2 || null,
         explanation: tempEx.explanation || '',
         basicExample: tempEx.basicExample || { hanzi: `${hanzi}...`, pinyin: '', vietnamese: '' },
         upgradedExample: tempEx.upgradedExample || { hanzi: `${upgradedHanzi}...`, pinyin: '', vietnamese: '' },
@@ -3032,12 +3050,15 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       inputUpgradeBasicVi.value = '';
       inputUpgradeHanzi.value = '';
       inputUpgradePinyin.value = '';
-      inputUpgradePos.value = '';
       inputUpgradeVi.value = '';
       window._tempUpgradeExamples = null;
 
       updateCustomLevelTabCount();
       renderUpgradeGroupWords();
+      renderGroupDropdown();
+      renderVocabList();
+      showToast(`Đã thêm "${hanzi}" vào nhóm Nâng Cấp!`);
+    }
 
       if (currentLevel === 'upgrade') {
         updateGroupWordsState();
