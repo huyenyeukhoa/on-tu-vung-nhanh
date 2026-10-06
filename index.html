@@ -2252,24 +2252,28 @@ Lưu ý:
       }
     }
 
-    // Render AI Explanation inside Modal
+    // Render AI Explanation inside Modal (Standard vocabulary levels & Custom groups)
     function renderAiExplanation(data) {
       const modalCard = aiModal.querySelector('.modal-card');
       modalCard.classList.remove('transparent-loading');
       aiModal.classList.remove('loading-overlay-transparent');
+
+      const highlightTagStyle = "color: #ffffff; font-weight: 700; background: #8772a8; padding: 2px 7px; border-radius: 6px; display: inline-block; box-shadow: 0 1px 4px rgba(135,114,168,0.25);";
 
       let examplesHTML = (data.examples || []).map(ex => {
         const cleanHanzi = (ex.hanzi || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
         const cleanPinyin = (ex.pinyin || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
         const cleanVietnamese = (ex.vietnamese || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
         const escapedHanzi = cleanHanzi.replace(/'/g, "\\'");
+        const highlightedHanzi = highlightWordInSentence(cleanHanzi, data.hanzi, highlightTagStyle);
+
         return `
-          <div class="example-item">
-            <div class="example-hanzi" onclick="speakChinese('${escapedHanzi}')" title="chạm để nghe phát âm câu ví dụ">
-              ${cleanHanzi}
+          <div style="padding: 12px; background: #f3eef9; border-radius: 12px; border: 1px solid #e2d8ef;">
+            <div class="example-hanzi" onclick="speakChinese('${escapedHanzi}')" title="chạm để nghe phát âm câu ví dụ" style="font-size: 16.5px; line-height: 1.6; color: #3c2e54;">
+              ${highlightedHanzi}
             </div>
-            <div class="example-pinyin">${cleanPinyin}</div>
-            <div class="example-vietnamese">${cleanVietnamese}</div>
+            <div class="example-pinyin" style="font-size: 12.5px; color: #766299; margin-top: 4px;">${cleanPinyin}</div>
+            <div class="example-vietnamese" style="font-size: 13px; color: #4b5563; margin-top: 2px;">${cleanVietnamese}</div>
           </div>
         `;
       }).join('');
@@ -2286,19 +2290,23 @@ Lưu ý:
           ${posBadgeHTML}
         </div>
 
-        <div class="ai-section">
-          <div class="ai-section-title">💡 Ý nghĩa & Ngữ cảnh dùng</div>
-          <div style="margin-bottom: 8px;"><b>Ý nghĩa:</b> ${data.meaning || ''}</div>
-          <div style="line-height: 1.6; font-size: 14.5px;">${data.context || ''}</div>
+        <div style="background: #f3eef9; padding: 12px 14px; border-radius: 14px; border: 1px solid #e2d8ef; margin-bottom: 14px;">
+          <div style="font-size: 13px; font-weight: 700; color: #766299; margin-bottom: 4px; display:flex; align-items:center; gap:4px;">
+            <span>💡 Ý nghĩa & Ngữ cảnh dùng:</span>
+          </div>
+          <div style="margin-bottom: 4px; font-size: 13px; color: #3c2e54;"><b>Nghĩa:</b> ${data.meaning || ''}</div>
+          <div style="line-height: 1.55; font-size: 13px; color: #3c2e54;">${data.context || ''}</div>
         </div>
 
-        <div class="ai-section">
-          <div class="ai-section-title">📝 Câu ví dụ minh họa (${data.examples ? data.examples.length : 3} câu)</div>
-          <div id="examplesContainer">${examplesHTML}</div>
-          <button class="btn-load-more" id="btnLoadMoreExamples">
-            <span>➕ Xem thêm ví dụ khác</span>
-          </button>
+        <div style="font-size: 13.5px; font-weight: 700; color: #766299; margin-bottom: 8px;">📝 Các câu ví dụ minh họa (${data.examples ? data.examples.length : 3} câu):</div>
+
+        <div id="examplesContainer" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">
+          ${examplesHTML}
         </div>
+
+        <button class="btn-load-more" id="btnLoadMoreExamples">
+          <span>➕ Xem thêm ví dụ khác</span>
+        </button>
       `;
 
       document.getElementById('btnLoadMoreExamples').addEventListener('click', () => {
