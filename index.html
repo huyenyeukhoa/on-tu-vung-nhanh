@@ -3699,32 +3699,39 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
     async function fetchArticleHtmlFromUrl(targetUrl) {
       const proxies = [
         `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
       ];
 
       for (const proxyUrl of proxies) {
         try {
-          const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+          const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(9000) });
           if (res.ok) {
             const htmlText = await res.text();
             if (htmlText && htmlText.length > 50) {
               const parser = new DOMParser();
               const doc = parser.parseFromString(htmlText, 'text/html');
 
-              doc.querySelectorAll('script, style, nav, footer, header, iframe, noscript').forEach(el => el.remove());
+              doc.querySelectorAll('script, style, nav, footer, header, iframe, noscript, svg, form, button, .menu, .nav, .footer, .header, .sidebar').forEach(el => el.remove());
 
               let scrapedTitle = (doc.querySelector('title')?.textContent || doc.querySelector('h1')?.textContent || '').trim();
               
-              const paragraphs = [];
-              doc.querySelectorAll('p, article, .content, .article-body, #article').forEach(el => {
-                const txt = el.textContent.trim();
-                if (txt && /[\u4e00-\u9fa5]/.test(txt)) {
-                  paragraphs.push(txt);
+              const textBlocks = [];
+              const elements = doc.querySelectorAll('p, article, section, div, h1, h2, h3');
+              elements.forEach(el => {
+                const txt = (el.innerText || el.textContent || '').trim();
+                const cleanTxt = txt.replace(/\s+/g, ' ');
+                if (cleanTxt.length >= 10 && /[\u4e00-\u9fa5]/.test(cleanTxt)) {
+                  if (!textBlocks.some(b => b.includes(cleanTxt))) {
+                    textBlocks.push(cleanTxt);
+                  }
                 }
               });
 
-              const extractedText = paragraphs.join('\n\n').slice(0, 3500);
-              if (extractedText.length > 30) {
+              const extractedText = textBlocks.join('\n\n').slice(0, 4000);
+              const chineseCount = (extractedText.match(/[\u4e00-\u9fa5]/g) || []).length;
+
+              if (chineseCount >= 20) {
                 return { title: scrapedTitle, text: extractedText };
               }
             }
@@ -3754,21 +3761,32 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       btnAnalyzeReadingUrl.disabled = true;
       btnAnalyzeReadingUrl.innerHTML = `<img src="./loading.gif" style="width: 18px; height: 18px;" /> <span>Đang cào bài & nhờ AI tự đặt tiêu đề...</span>`;
 
-      let scrapedData = await fetchArticleHtmlFromUrl(rawUrl);
-      let contentForAi = scrapedData ? scrapedData.text : `URL bài báo: ${rawUrl}`;
-      let pageTitleHint = scrapedData ? scrapedData.title : '';
+      try {
+        let scrapedData = await fetchArticleHtmlFromUrl(rawUrl);
 
-      const todayStr = new Date().toLocaleDateString('vi-VN');
+        if (!scrapedData || !scrapedData.text || (scrapedData.text.match(/[\u4e00-\u9fa5]/g) || []).length < 20) {
+          // Switch to manual text input mode with clear notice
+          showToast('⚠️ Trang web này chặn cào bài tự động. Đã chuyển sang tab Dán Văn Bản Thủ Công!');
+          
+          const subtabReadingText = document.getElementById('subtabReadingText');
+          if (subtabReadingText) subtabReadingText.click();
 
-      const prompt = `Bạn là biên tập viên báo chí tiếng Trung cao cấp. Hãy đọc nội dung/đường link sau đây và thực hiện 3 công việc:
+          const domain = new URL(rawUrl).hostname;
+          if (readingTitleInput) readingTitleInput.value = `Bài đọc từ ${domain}`;
+          return;
+        }
+
+        let contentForAi = scrapedData.text;
+        let pageTitleHint = scrapedData.title || '';
+        const todayStr = new Date().toLocaleDateString('vi-VN');
+
+        const prompt = `Bạn là biên tập viên báo chí tiếng Trung cao cấp. Hãy đọc nội dung văn bản báo chí sau đây và thực hiện 3 công việc:
 1. Tự động đặt một Tiêu đề ngắn gọn, chuẩn xác, hấp dẫn bằng Tiếng Việt kèm Tiếng Trung (Ví dụ: "Tân Hoa Xã: Phát triển Kinh tế Trung Quốc") cho bài đọc này.
 2. Gắn Tag Ngày tạo dạng DD/MM/YYYY (hôm nay là ${todayStr}).
 3. Phân tách toàn bộ bài báo thành mảng JSON gồm các từ/cụm từ ngữ pháp chuẩn theo đúng thứ tự xuất hiện.
 
-Nội dung trích xuất từ web:
-Title hint: "${pageTitleHint}"
-URL: "${rawUrl}"
-Văn bản:
+Title hint từ web: "${pageTitleHint}"
+Văn bản bài báo:
 """
 ${contentForAi}
 """
@@ -3788,7 +3806,6 @@ Yêu cầu trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json)
   ]
 }`;
 
-      try {
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
