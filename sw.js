@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hsk-vocab-cache-v25';
+const CACHE_NAME = 'hsk-vocab-cache-v26';
 const ASSETS = [
   './',
   './index.html',
@@ -6,7 +6,8 @@ const ASSETS = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './loading.gif'
+  './loading.gif',
+  './fonts/HYZhengYuan-55W-2.otf'
 ];
 
 self.addEventListener('install', (event) => {

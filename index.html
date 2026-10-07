@@ -64,7 +64,29 @@
 
     body, input, textarea, button, select, option, label, p, div, span,
     input::placeholder, textarea::placeholder, ::placeholder {
-      font-family: var(--font-mali) !important;
+      font-family: var(--font-mali);
+    }
+
+    /* Enforce HanYiZhengYuan Font for ALL Hanzi / Chinese text elements across the entire app */
+    .hanzi-text,
+    .example-hanzi,
+    .library-word-hanzi,
+    .ai-word-title,
+    .ai-word-title span,
+    .reading-token,
+    .reading-article-title,
+    .reading-article-content,
+    .reading-word-item-hanzi,
+    #drawerHanzi,
+    .upgrade-hanzi,
+    .context-example-purple,
+    mark,
+    [lang="zh"],
+    .zh-text,
+    .upgraded-hanzi,
+    .col-main .hanzi-text,
+    #readingTextInput {
+      font-family: var(--font-hanzi) !important;
     }
 
     body {
@@ -2343,9 +2365,23 @@
     // Helper to highlight specific target word inside a sentence HTML
     function highlightWordInSentence(sentenceText, targetWord, highlightStyle) {
       if (!sentenceText || !targetWord) return sentenceText || '';
-      const escapedWord = targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const reg = new RegExp(escapedWord, 'g');
-      return sentenceText.replace(reg, `<mark style="${highlightStyle}">${targetWord}</mark>`);
+      // Extract pure Chinese character sequences from targetWord
+      const chineseWords = (targetWord.match(/[\u4e00-\u9fa5]+/g) || []).filter(w => w.length > 0);
+      if (chineseWords.length === 0) {
+        const escapedWord = targetWord.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (!escapedWord) return sentenceText;
+        const reg = new RegExp(escapedWord, 'g');
+        return sentenceText.replace(reg, `<mark style="${highlightStyle}">${targetWord.trim()}</mark>`);
+      }
+      // Sort longest first so longer phrases match before sub-words
+      chineseWords.sort((a, b) => b.length - a.length);
+      let result = sentenceText;
+      chineseWords.forEach(w => {
+        const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const reg = new RegExp(escaped, 'g');
+        result = result.replace(reg, `<mark style="${highlightStyle}">${w}</mark>`);
+      });
+      return result;
     }
 
     // Render Dedicated AI Upgrade Comparison View inside Modal (Support 2 Forms: Same Syllables & 4-Syllable Idiom)
@@ -2417,9 +2453,9 @@
       }
 
       // Highlight target Hanzi in sentences (Warm lavender purple theme)
-      const highlightBaseTag = "color: #374151; font-weight: 700; background: #e5e7eb; padding: 2px 7px; border-radius: 6px; display: inline-block;";
-      const highlightUp1Tag = "color: #ffffff; font-weight: 700; background: #8772a8; padding: 2px 7px; border-radius: 6px; display: inline-block; box-shadow: 0 1px 4px rgba(135,114,168,0.25);";
-      const highlightUp2Tag = "color: #ffffff; font-weight: 700; background: #9d6fa8; padding: 2px 7px; border-radius: 6px; display: inline-block; box-shadow: 0 1px 4px rgba(157,111,168,0.25);";
+      const highlightBaseTag = "color: #374151; font-weight: 700; background: #e2e8f0; padding: 2px 7px; border-radius: 6px; display: inline-block; font-family: var(--font-hanzi) !important;";
+      const highlightUp1Tag = "color: #ffffff; font-weight: 700; background: #766299; padding: 2px 7px; border-radius: 6px; display: inline-block; box-shadow: 0 1px 4px rgba(118,98,153,0.25); font-family: var(--font-hanzi) !important;";
+      const highlightUp2Tag = "color: #ffffff; font-weight: 700; background: #8e5899; padding: 2px 7px; border-radius: 6px; display: inline-block; box-shadow: 0 1px 4px rgba(142,88,153,0.25); font-family: var(--font-hanzi) !important;";
 
       const basicSentenceHighlighted = highlightWordInSentence(cleanBasicHanziText, data.hanzi, highlightBaseTag);
       const up1SentenceHighlighted = highlightWordInSentence(cleanUp1HanziText, up1.hanzi, highlightUp1Tag);
@@ -2699,7 +2735,7 @@ Lưu ý:
       modalCard.classList.remove('transparent-loading');
       aiModal.classList.remove('loading-overlay-transparent');
 
-      const highlightTagStyle = "color: #ffffff; font-weight: 700; background: #8772a8; padding: 2px 7px; border-radius: 6px; display: inline-block; box-shadow: 0 1px 4px rgba(135,114,168,0.25);";
+      const highlightTagStyle = "color: #ffffff; font-weight: 700; background: #766299; padding: 2px 7px; border-radius: 6px; display: inline-block; box-shadow: 0 1px 4px rgba(118,98,153,0.25); font-family: var(--font-hanzi) !important;";
 
       let examplesHTML = (data.examples || []).map(ex => {
         const cleanHanzi = (ex.hanzi || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
