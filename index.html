@@ -1308,9 +1308,9 @@
           <div style="background: #ffffff; padding: 14px; border-radius: 14px; border: 1.5px dashed #a38ebe; margin-bottom: 16px;">
             <div style="font-weight: 700; font-size: 14px; color: #111827; margin-bottom: 8px;">➕ Thêm từ mới vào nhóm</div>
             
-            <label style="font-size: 12.5px; font-weight: 600; color: #374151;">Nhập Hán tự (chỉ cần nhập chữ Hán):</label>
+            <label style="font-size: 12.5px; font-weight: 600; color: #374151;">Nhập Hán tự hoặc Tiếng Việt (AI tự tra 2 chiều):</label>
             <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-              <input type="text" id="inputCustomHanzi" class="input-field" placeholder="Ví dụ: 震慑" style="margin:0; flex:1;" />
+              <input type="text" id="inputCustomHanzi" class="input-field" placeholder="Ví dụ: 震慑 hoặc khiếp sợ..." style="margin:0; flex:1;" />
               <button class="primary-submit-btn" id="btnAiAutofillCustom" style="padding: 8px 12px; font-size: 12.5px; white-space: nowrap;">🤖 AI Tự Điền</button>
             </div>
 
@@ -3260,31 +3260,53 @@ Lưu ý:
       showToast('Đã xóa từ nâng cấp!');
     }
 
-    // AI AutoFill Custom Word Function (Normal)
+    // AI AutoFill Custom Word Function (Smart Bidirectional: Chinese <-> Vietnamese)
     async function aiAutofillCustomWord() {
-      const hanzi = inputCustomHanzi.value.trim();
-      if (!hanzi) {
-        showToast('Vui lòng nhập Hán tự!');
+      const rawHanziInput = inputCustomHanzi.value.trim();
+      const rawViInput = inputCustomVi.value.trim();
+
+      if (!rawHanziInput && !rawViInput) {
+        showToast('Vui lòng nhập Hán tự hoặc Nghĩa Tiếng Việt để AI tự điền!');
         return;
       }
 
       const apiKey = localStorage.getItem('openrouter_api_key');
       if (!apiKey) {
         apiKeyModal.classList.add('active');
-        showToast('vui lòng nhập OpenRouter API Key!');
+        showToast('Vui lòng nhập OpenRouter API Key!');
         return;
       }
 
-      btnAiAutofillCustom.innerHTML = `<span>⏳ Đang tra...</span>`;
+      btnAiAutofillCustom.innerHTML = `<span>⏳ AI đang tra...</span>`;
       btnAiAutofillCustom.disabled = true;
 
       try {
-        const prompt = `Bạn là giáo viên tiếng Trung. Hãy tra từ Hán: "${hanzi}".
-Trả về JSON thuần tuý:
+        const queryText = rawHanziInput || rawViInput;
+
+        const prompt = `Bạn là từ điển HSK thông minh cao cấp. Hãy tra cứu đầu vào: "${queryText}".
+Đầu vào này có thể là:
+- Chữ Hán Tiếng Trung (ví dụ: 震慑, 学习, 越南, 贡献)
+- Hoặc Từ/Cụm từ Tiếng Việt (ví dụ: "khiếp sợ", "học tập", "đóng góp", "thành công", "Việt Nam")
+
+Yêu cầu nhiệm vụ:
+1. Nếu đầu vào là Chữ Hán Tiếng Trung:
+   - Giữ nguyên chữ Hán đó vào trường "hanzi".
+   - Tra Pinyin chuẩn có dấu tone vào "pinyin".
+   - Tra Từ loại (động từ, danh từ, tính từ, phó từ, thành ngữ,...) vào "pos".
+   - Dịch Nghĩa Tiếng Việt ngắn gọn, chuẩn xác vào "vietnamese".
+
+2. Nếu đầu vào là Tiếng Việt:
+   - BẮT BUỘC tự động tìm/dịch sang Chữ Hán Tiếng Trung HSK/cao cấp chuẩn xác và tự nhiên nhất tương ứng với từ Tiếng Việt đó (ví dụ: "học tập" -> "学习", "khiếp sợ" -> "震慑", "đóng góp" -> "贡献").
+   - Tra Pinyin chuẩn có dấu tone của chữ Hán vừa tìm được.
+   - Tra Từ loại tương ứng.
+   - Đưa ra Nghĩa Tiếng Việt chuẩn hóa.
+
+Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 {
-  "pinyin": "Pinyin chuẩn có dấu tone (ví dụ: zhènshè)",
-  "pos": "Từ loại bằng tiếng Việt (ví dụ: động từ, danh từ, tính từ)",
-  "vietnamese": "Nghĩa tiếng Việt ngắn gọn, chuẩn xác"
+  "hanzi": "Chữ Hán Tiếng Trung chuẩn",
+  "pinyin": "pinyin có dấu tone (vd: zhènshè)",
+  "pos": "từ loại bằng tiếng Việt (vd: động từ)",
+  "vietnamese": "nghĩa tiếng Việt ngắn gọn chuẩn xác"
 }`;
 
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -3308,13 +3330,14 @@ Trả về JSON thuần tuý:
         const cleanedStr = contentStr.replace(/```json/g, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(cleanedStr);
 
+        if (parsed.hanzi) inputCustomHanzi.value = parsed.hanzi;
         if (parsed.pinyin) inputCustomPinyin.value = parsed.pinyin;
         if (parsed.pos) inputCustomPos.value = parsed.pos;
         if (parsed.vietnamese) inputCustomVi.value = parsed.vietnamese;
 
-        showToast('✨ AI đã tự động điền xong!');
+        showToast('✨ AI đã thông minh tự động điền xong!');
       } catch (err) {
-        showToast('❌ AI tra thất bại, vui lòng nhập tay!');
+        showToast('❌ AI tra thất bại, vui lòng kiểm tra lại!');
       } finally {
         btnAiAutofillCustom.innerHTML = `<span>🤖 AI Tự Điền</span>`;
         btnAiAutofillCustom.disabled = false;
@@ -3325,7 +3348,7 @@ Trả về JSON thuần tuý:
     async function aiAutofillUpgradeWord() {
       const hanzi = inputUpgradeBasicHanzi.value.trim();
       if (!hanzi) {
-        showToast('Vui lòng nhập Chữ Hán cơ bản!');
+        showToast('Vui lòng nhập Chữ Hán hoặc Tiếng Việt cơ bản!');
         return;
       }
 
@@ -3340,7 +3363,8 @@ Trả về JSON thuần tuý:
       btnAiUpgradeCustom.disabled = true;
 
       try {
-        const prompt = `Bạn là chuyên gia ngôn ngữ & giáo viên tiếng Trung cao cấp. Hãy phân tích và nâng cấp từ/cụm từ Hán ngữ cơ bản: "${hanzi}".
+        const prompt = `Bạn là chuyên gia ngôn ngữ & giáo viên tiếng Trung cao cấp. Hãy phân tích và nâng cấp từ/cụm từ cơ bản: "${hanzi}".
+Đầu vào này có thể là Chữ Hán hoặc Tiếng Việt (ví dụ: "受不了" hoặc "không chịu nổi"). Nếu là Tiếng Việt, hãy tự động nhận diện từ Hán từ gốc tương ứng (ví dụ: "không chịu nổi" -> "受不了", "ghi nhớ" -> "记住").
 
 QUY TẮC NÂNG CẤP VÀ GIỮ NGHĨA CHÍNH XÁC (CỰC KỲ QUAN TRỌNG):
 1. GIỮ NGUYÊN SẮC THÁI & HƯỚNG NGHĨA: Từ nâng cấp BẮT BUỘC phải đồng nghĩa và giữ nguyên polarity (tích cực/tiêu cực/khẩu ngữ).
