@@ -914,6 +914,30 @@
       margin: 0 !important;
     }
 
+    .tiny-para-toggle-btn {
+      font-size: 10.5px !important;
+      padding: 1.5px 6px !important;
+      border-radius: 6px !important;
+      border: 1px solid #d4c5e8 !important;
+      background: #ffffff !important;
+      color: #766299 !important;
+      font-weight: 700 !important;
+      cursor: pointer !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 2px !important;
+      margin-right: 4px !important;
+      vertical-align: middle !important;
+      transition: all 0.15s ease !important;
+      box-shadow: 0 1px 3px rgba(135,114,168,0.15) !important;
+      text-indent: 0 !important;
+    }
+
+    .tiny-para-toggle-btn:active {
+      transform: scale(0.94);
+      background: #f3eef9 !important;
+    }
+
     .token-popover-drawer {
       position: absolute;
       bottom: 0;
@@ -3710,11 +3734,13 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       btnAnalyzeReadingText.disabled = true;
       btnAnalyzeReadingText.innerHTML = `<img src="./loading.gif" style="width: 18px; height: 18px;" /> <span>AI đang phân tích & bóc tách từ...</span>`;
 
-      const prompt = `Bạn là chuyên gia bóc tách từ vựng tiếng Trung. Hãy phân tích đoạn văn sau và:
-1) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT NGẮN GỌN (CHỈ DÀI TỪ 2 ĐẾN 5 TỪ, ví dụ: "Kinh Tế Tân Hoa Xã", "Truyện Tái Ông Thất Mã", "Du Lịch Bắc Kinh", "Học Tiếng Trung"). TUYỆT ĐỐI KHÔNG ĐẶT TIÊU ĐỀ DÀI DÒNG VÀ KHÔNG ĐỂ RỖNG.
-2) Phân tách đoạn văn thành một danh sách JSON của các từ/cụm từ chuẩn ngữ pháp tiếng Trung theo đúng thứ tự xuất hiện trong văn bản.
+      const prompt = `Bạn là chuyên gia dịch thuật và bóc tách từ vựng tiếng Trung cao cấp. Hãy phân tích đoạn văn sau và:
+1) TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT NGẮN GỌN (CHỈ DÀI TỪ 2 ĐẾN 5 TỪ, ví dụ: "Kinh Tế Tân Hoa Xã", "Truyện Tái Ông Thất Mã", "Du Lịch Bắc Kinh", "Học Tiếng Trung"). TUYỆT ĐỐI KHÔNG ĐẶT TIÊU ĐỀ DÀI DÒNG VÀ KHÔNG ĐỂ RỖNG.
+2) Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo đúng ngắt đoạn của bản gốc. Với MỖI ĐOẠN VĂN:
+   - Dịch toàn bộ đoạn đó sang TIẾNG VIỆT mượt mà, chuẩn văn phong tiếng Việt.
+   - Phân tách các từ/cụm từ chuẩn ngữ pháp tiếng Trung trong đoạn kèm Pinyin và Nghĩa tiếng Việt.
 
-Đoạn văn:
+Đoạn văn gốc:
 """
 ${rawText}
 """
@@ -3722,18 +3748,23 @@ ${rawText}
 Yêu cầu định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 {
   "title": "Tiêu đề tiếng Việt ngắn gọn (chỉ từ 2 đến 5 từ)",
-  "tokens": [
+  "paragraphs": [
     {
-      "hanzi": "chữ Hán của từ hoặc cụm từ",
-      "pinyin": "phiên âm Pinyin có dấu giọng",
-      "vietnamese": "nghĩa tiếng Việt chuẩn trong ngữ cảnh bài đọc",
-      "isVocab": true (đặt true cho các từ/cụm từ vựng Hán ngữ có nghĩa, đặt false cho dấu câu như ，。！？ hoặc khoảng trắng)
+      "vietnamese": "Dịch nghĩa tiếng Việt mượt mà đầy đủ của đoạn 1",
+      "tokens": [
+        {
+          "hanzi": "chữ Hán của từ hoặc cụm từ",
+          "pinyin": "phiên âm Pinyin có dấu giọng",
+          "vietnamese": "nghĩa tiếng Việt chuẩn trong ngữ cảnh bài đọc",
+          "isVocab": true (đặt true cho từ vựng, false cho dấu câu như ，。！？)
+        }
+      ]
     }
   ]
 }
 Lưu ý quan trọng:
 - Tiêu đề "title": BẮT BUỘC bằng TIẾNG VIỆT, NGẮN GỌN CHỈ 2 ĐẾN 5 TỪ.
-- Phân tích chính xác cụm từ cố định hoặc thành ngữ thay vì xé nhỏ thành chữ Hán đơn lẻ không có nghĩa độc lập.
+- Bản dịch "vietnamese" của từng đoạn: BẮT BUỘC DỊCH TIẾNG VIỆT ĐẦY ĐỦ, MƯỢT MÀ VÀ CHUẨN NGHĨA.
 - Giữ nguyên toàn bộ nội dung bài đọc ban đầu theo đúng thứ tự văn bản gốc.`;
 
       try {
@@ -3767,17 +3798,25 @@ Lưu ý quan trọng:
           console.error('JSON parse error', e);
         }
 
+        let paragraphs = [];
         let parsedTokens = [];
         let aiAutoTitle = '';
 
         if (Array.isArray(parsedJSON)) {
           parsedTokens = parsedJSON;
+          paragraphs = [{ vietnamese: '', tokens: parsedTokens }];
         } else if (parsedJSON && typeof parsedJSON === 'object') {
-          parsedTokens = parsedJSON.tokens || [];
           aiAutoTitle = (parsedJSON.title || '').trim();
+          if (Array.isArray(parsedJSON.paragraphs) && parsedJSON.paragraphs.length > 0) {
+            paragraphs = parsedJSON.paragraphs;
+            parsedTokens = paragraphs.reduce((acc, p) => acc.concat(p.tokens || []), []);
+          } else if (Array.isArray(parsedJSON.tokens)) {
+            parsedTokens = parsedJSON.tokens;
+            paragraphs = [{ vietnamese: '', tokens: parsedTokens }];
+          }
         }
 
-        if (!Array.isArray(parsedTokens) || parsedTokens.length === 0) {
+        if (parsedTokens.length === 0 && paragraphs.length === 0) {
           throw new Error('Dữ liệu phân tích không hợp lệ.');
         }
 
@@ -3794,6 +3833,7 @@ Lưu ý quan trọng:
           id: newArticleId,
           title: articleTitle,
           rawText,
+          paragraphs: paragraphs,
           tokens: parsedTokens,
           selectedWords: [],
           createdAt: new Date().toLocaleDateString('vi-VN')
@@ -3843,6 +3883,15 @@ Lưu ý quan trọng:
       if (btnNext) btnNext.disabled = currentIndex >= readingArticles.length - 1 || currentIndex === -1;
     }
 
+    let activeParagraphToggles = {};
+
+    function toggleParagraphTranslation(pIdx) {
+      activeParagraphToggles[pIdx] = !activeParagraphToggles[pIdx];
+      const art = readingArticles.find(a => a.id === activeReadingArticleId);
+      if (art) renderReadingPassageContent(art);
+    }
+    window.toggleParagraphTranslation = toggleParagraphTranslation;
+
     // Open Interactive Reading Passage Viewer
     function openReadingViewModal(articleId) {
       const art = readingArticles.find(a => a.id === articleId);
@@ -3852,6 +3901,7 @@ Lưu ý quan trọng:
       }
 
       activeReadingArticleId = articleId;
+      activeParagraphToggles = {};
 
       if (readingInputModal) readingInputModal.classList.remove('active');
       resetModalScroll(readingViewModal);
@@ -3864,45 +3914,74 @@ Lưu ý quan trọng:
       readingViewModal.classList.add('active');
     }
 
-    // Render interactive HTML passage content with 2-character Chinese paragraph indentation
+    // Render interactive HTML passage content with 2-character Chinese paragraph indentation & paragraph translation toggles
     function renderReadingPassageContent(art) {
       if (!readingPassageContainer) return;
 
       const selectedMap = new Set((art.selectedWords || []).map(w => w.hanzi));
-      const tokens = art.tokens || [];
 
-      let paragraphsHTML = [];
-      let currentParagraphTokens = [];
-
-      function pushParagraph() {
-        if (currentParagraphTokens.length === 0) return;
-        const innerHTML = currentParagraphTokens.join('');
-        paragraphsHTML.push(`<div style="text-indent: 2em; margin-bottom: 12px; line-height: 2.0;">${innerHTML}</div>`);
-        currentParagraphTokens = [];
-      }
-
-      tokens.forEach((tok, idx) => {
-        if (!tok.isVocab) {
-          const raw = tok.hanzi || '';
-          if (raw.includes('\n')) {
-            pushParagraph();
+      // Standardize paragraphs array
+      let paragraphs = art.paragraphs;
+      if (!paragraphs || !Array.isArray(paragraphs) || paragraphs.length === 0) {
+        paragraphs = [];
+        let currentP = { vietnamese: '', tokens: [] };
+        (art.tokens || []).forEach(tok => {
+          if (!tok.isVocab && (tok.hanzi || '').includes('\n')) {
+            if (currentP.tokens.length > 0) {
+              paragraphs.push(currentP);
+              currentP = { vietnamese: '', tokens: [] };
+            }
           } else {
-            currentParagraphTokens.push(`<span>${raw}</span>`);
+            currentP.tokens.push(tok);
           }
-        } else {
-          const isSelected = selectedMap.has(tok.hanzi);
-          const selectedClass = isSelected ? 'selected' : '';
-          currentParagraphTokens.push(`<span class="reading-token ${selectedClass}" data-index="${idx}" onclick="handleReadingTokenClick('${art.id}', ${idx})">${tok.hanzi}</span>`);
-        }
-      });
-
-      pushParagraph();
-
-      if (paragraphsHTML.length === 0) {
-        readingPassageContainer.innerHTML = '<div style="text-indent: 2em; margin-bottom: 12px; line-height: 2.0;"></div>';
-      } else {
-        readingPassageContainer.innerHTML = paragraphsHTML.join('');
+        });
+        if (currentP.tokens.length > 0) paragraphs.push(currentP);
       }
+
+      let overallTokenIdx = 0;
+
+      const paragraphsHTML = paragraphs.map((para, pIdx) => {
+        const isToggledVi = !!activeParagraphToggles[pIdx];
+        const btnTitle = isToggledVi ? 'Bấm để chuyển về chữ Hán gốc' : 'Bấm để xem dịch Tiếng Việt đoạn này';
+        const btnLabel = isToggledVi ? '🔤 Hán' : '🌐 Dịch';
+
+        const tinyBtnHTML = `<button class="tiny-para-toggle-btn" onclick="toggleParagraphTranslation(${pIdx})" title="${btnTitle}">${btnLabel}</button>`;
+
+        if (isToggledVi) {
+          const viText = para.vietnamese || 'Đoạn này chưa có bản dịch.';
+          return `
+            <div style="margin-bottom: 14px; line-height: 1.8;">
+              <div style="display: flex; align-items: flex-start; gap: 6px; background: #f3eef9; padding: 10px 14px; border-radius: 12px; border-left: 4px solid #8772a8;">
+                <span style="flex-shrink: 0; margin-top: 1px;">${tinyBtnHTML}</span>
+                <div style="flex: 1; font-size: 14px; color: #4b3b66; font-style: italic; font-weight: 500;">
+                  ${viText}
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          const paraTokensHTML = (para.tokens || []).map(tok => {
+            const globalIdx = overallTokenIdx++;
+            if (!tok.isVocab) {
+              const formattedPunct = (tok.hanzi || '').replace(/\n/g, '<br/>');
+              return `<span>${formattedPunct}</span>`;
+            }
+
+            const isSelected = selectedMap.has(tok.hanzi);
+            const selectedClass = isSelected ? 'selected' : '';
+            return `<span class="reading-token ${selectedClass}" data-index="${globalIdx}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx})">${tok.hanzi}</span>`;
+          }).join('');
+
+          return `
+            <div style="text-indent: 2em; margin-bottom: 12px; line-height: 2.0; position: relative;">
+              <span style="text-indent: 0; display: inline-block; vertical-align: middle; margin-right: 4px;">${tinyBtnHTML}</span>
+              ${paraTokensHTML}
+            </div>
+          `;
+        }
+      }).join('');
+
+      readingPassageContainer.innerHTML = paragraphsHTML || '<div style="text-indent: 2em; margin-bottom: 12px; line-height: 2.0;"></div>';
     }
 
     // Token clicked inside Interactive Reader
