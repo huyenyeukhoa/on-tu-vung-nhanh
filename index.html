@@ -62,8 +62,11 @@
       height: -webkit-fill-available;
     }
 
-    body {
+    body, input, textarea, button, select, option, label, p, div, span {
       font-family: var(--font-mali);
+    }
+
+    body {
       background-color: var(--bg-color);
       color: var(--text-main);
       display: flex;
@@ -3710,25 +3713,29 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       btnAnalyzeReadingText.disabled = true;
       btnAnalyzeReadingText.innerHTML = `<img src="./loading.gif" style="width: 18px; height: 18px;" /> <span>AI đang phân tích & bóc tách từ...</span>`;
 
-      const prompt = `Bạn là chuyên gia bóc tách từ vựng tiếng Trung. Hãy phân tích đoạn văn sau và phân tách thành một danh sách JSON của các từ/cụm từ chuẩn ngữ pháp tiếng Trung theo đúng thứ tự xuất hiện trong văn bản.
+      const prompt = `Bạn là chuyên gia bóc tách từ vựng tiếng Trung. Hãy phân tích đoạn văn sau và:
+1) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT NGẮN GỌN (CHỈ DÀI TỪ 2 ĐẾN 5 TỪ, ví dụ: "Kinh Tế Tân Hoa Xã", "Truyện Tái Ông Thất Mã", "Du Lịch Bắc Kinh", "Học Tiếng Trung"). TUYỆT ĐỐI KHÔNG ĐẶT TIÊU ĐỀ DÀI DÒNG VÀ KHÔNG ĐỂ RỖNG.
+2) Phân tách đoạn văn thành một danh sách JSON của các từ/cụm từ chuẩn ngữ pháp tiếng Trung theo đúng thứ tự xuất hiện trong văn bản.
 
-Tiêu đề: "${title || 'Bài đọc'}"
 Đoạn văn:
 """
 ${rawText}
 """
 
-Yêu cầu định dạng JSON trả về (KHÔNG bọc trong markdown \`\`\`json):
-[
-  {
-    "hanzi": "chữ Hán của từ hoặc cụm từ",
-    "pinyin": "phiên âm Pinyin có dấu giọng",
-    "vietnamese": "nghĩa tiếng Việt chuẩn trong ngữ cảnh bài đọc",
-    "isVocab": true (đặt true cho các từ/cụm từ vựng Hán ngữ có nghĩa, đặt false cho dấu câu như ，。！？ hoặc khoảng trắng)
-  },
-  ...
-]
+Yêu cầu định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
+{
+  "title": "Tiêu đề tiếng Việt ngắn gọn (chỉ từ 2 đến 5 từ)",
+  "tokens": [
+    {
+      "hanzi": "chữ Hán của từ hoặc cụm từ",
+      "pinyin": "phiên âm Pinyin có dấu giọng",
+      "vietnamese": "nghĩa tiếng Việt chuẩn trong ngữ cảnh bài đọc",
+      "isVocab": true (đặt true cho các từ/cụm từ vựng Hán ngữ có nghĩa, đặt false cho dấu câu như ，。！？ hoặc khoảng trắng)
+    }
+  ]
+}
 Lưu ý quan trọng:
+- Tiêu đề "title": BẮT BUỘC bằng TIẾNG VIỆT, NGẮN GỌN CHỈ 2 ĐẾN 5 TỪ.
 - Phân tích chính xác cụm từ cố định hoặc thành ngữ thay vì xé nhỏ thành chữ Hán đơn lẻ không có nghĩa độc lập.
 - Giữ nguyên toàn bộ nội dung bài đọc ban đầu theo đúng thứ tự văn bản gốc.`;
 
@@ -3753,16 +3760,39 @@ Lưu ý quan trọng:
         }
 
         const data = await response.json();
-        let content = data.choices?.[0]?.message?.content || '[]';
+        let content = data.choices?.[0]?.message?.content || '{}';
         content = content.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
 
-        const parsedTokens = JSON.parse(content);
+        let parsedJSON = null;
+        try {
+          parsedJSON = JSON.parse(content);
+        } catch (e) {
+          console.error('JSON parse error', e);
+        }
+
+        let parsedTokens = [];
+        let aiAutoTitle = '';
+
+        if (Array.isArray(parsedJSON)) {
+          parsedTokens = parsedJSON;
+        } else if (parsedJSON && typeof parsedJSON === 'object') {
+          parsedTokens = parsedJSON.tokens || [];
+          aiAutoTitle = (parsedJSON.title || '').trim();
+        }
+
         if (!Array.isArray(parsedTokens) || parsedTokens.length === 0) {
           throw new Error('Dữ liệu phân tích không hợp lệ.');
         }
 
+        if (aiAutoTitle) {
+          const parts = aiAutoTitle.split(/\s+/);
+          if (parts.length > 5) {
+            aiAutoTitle = parts.slice(0, 5).join(' ');
+          }
+        }
+
         const newArticleId = 'art_' + Date.now();
-        const articleTitle = title || `Bài đọc ${readingArticles.length + 1}`;
+        const articleTitle = title || aiAutoTitle || `Bài đọc ${readingArticles.length + 1}`;
         const articleObj = {
           id: newArticleId,
           title: articleTitle,
@@ -3984,16 +4014,14 @@ Lưu ý quan trọng:
 
     // Delete Saved Reading Article
     function deleteReadingArticle(articleId) {
-      if (!confirm('Bạn có chắc muốn xóa bài đọc này?')) return;
+      if (!confirm('Bạn có chắc muốn xóa bài đọc này? (Từ vựng đã lưu vẫn được giữ nguyên)')) return;
 
       readingArticles = readingArticles.filter(a => a.id !== articleId);
-      customGroups = customGroups.filter(g => g.id !== 'custom_' + articleId);
 
       localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
-      localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
 
       renderSavedReadingArticles();
-      showToast('Đã xóa bài đọc!');
+      showToast('🗑️ Đã xóa bài đọc! (Từ vựng đã chọn vẫn được giữ an toàn trong Nhóm từ)');
     }
 
     // Explicitly expose reading functions to window for inline onclick handlers
