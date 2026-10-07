@@ -3864,25 +3864,45 @@ Lưu ý quan trọng:
       readingViewModal.classList.add('active');
     }
 
-    // Render interactive HTML passage content
+    // Render interactive HTML passage content with 2-character Chinese paragraph indentation
     function renderReadingPassageContent(art) {
       if (!readingPassageContainer) return;
 
       const selectedMap = new Set((art.selectedWords || []).map(w => w.hanzi));
+      const tokens = art.tokens || [];
 
-      const tokensHTML = (art.tokens || []).map((tok, idx) => {
+      let paragraphsHTML = [];
+      let currentParagraphTokens = [];
+
+      function pushParagraph() {
+        if (currentParagraphTokens.length === 0) return;
+        const innerHTML = currentParagraphTokens.join('');
+        paragraphsHTML.push(`<div style="text-indent: 2em; margin-bottom: 12px; line-height: 2.0;">${innerHTML}</div>`);
+        currentParagraphTokens = [];
+      }
+
+      tokens.forEach((tok, idx) => {
         if (!tok.isVocab) {
-          const formattedPunct = (tok.hanzi || '').replace(/\n/g, '<br/>');
-          return `<span>${formattedPunct}</span>`;
+          const raw = tok.hanzi || '';
+          if (raw.includes('\n')) {
+            pushParagraph();
+          } else {
+            currentParagraphTokens.push(`<span>${raw}</span>`);
+          }
+        } else {
+          const isSelected = selectedMap.has(tok.hanzi);
+          const selectedClass = isSelected ? 'selected' : '';
+          currentParagraphTokens.push(`<span class="reading-token ${selectedClass}" data-index="${idx}" onclick="handleReadingTokenClick('${art.id}', ${idx})">${tok.hanzi}</span>`);
         }
+      });
 
-        const isSelected = selectedMap.has(tok.hanzi);
-        const selectedClass = isSelected ? 'selected' : '';
+      pushParagraph();
 
-        return `<span class="reading-token ${selectedClass}" data-index="${idx}" onclick="handleReadingTokenClick('${art.id}', ${idx})">${tok.hanzi}</span>`;
-      }).join('');
-
-      readingPassageContainer.innerHTML = tokensHTML;
+      if (paragraphsHTML.length === 0) {
+        readingPassageContainer.innerHTML = '<div style="text-indent: 2em; margin-bottom: 12px; line-height: 2.0;"></div>';
+      } else {
+        readingPassageContainer.innerHTML = paragraphsHTML.join('');
+      }
     }
 
     // Token clicked inside Interactive Reader
