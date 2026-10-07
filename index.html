@@ -4060,6 +4060,11 @@ Lưu ý quan trọng:
       btnToggleWordInReviewList.onclick = () => toggleWordInReadingArticle(articleId, tok);
 
       if (readingTokenDrawer) readingTokenDrawer.style.display = 'block';
+
+      // Auto speak token if toolbar "tự đọc" (autoSpeakOnTick) is enabled
+      if (autoSpeakOnTick && tok.hanzi) {
+        speakChinese(tok.hanzi);
+      }
     }
 
     // Update Drawer Button Visual State
