@@ -961,42 +961,50 @@
 
     .reading-token {
       display: inline;
-      padding: 1px 2px;
+      padding: 1px 3px;
       margin: 0;
       border-radius: 4px;
       cursor: pointer;
       background: transparent;
       color: inherit;
       border: none;
-      transition: all 0.15s ease;
+      transition: background-color 0.15s ease, color 0.15s ease;
       font-weight: 500;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .reading-token:hover, .reading-token:active {
-      background: rgba(135, 114, 168, 0.25);
+    .reading-token:hover {
+      background: rgba(135, 114, 168, 0.18);
       border-radius: 4px;
     }
 
-    /* Vibrant Highlight for Currently Tapped Active Token */
+    /* Soft Purple Highlight for Currently Tapped Active Token (Matching user screenshot) */
     .reading-token.active-token {
-      background: #8772a8 !important;
-      color: #ffffff !important;
+      background: rgba(135, 114, 168, 0.28) !important;
+      color: #4b3b66 !important;
       font-weight: 700 !important;
-      border-radius: 6px !important;
-      padding: 2px 7px !important;
-      margin: 0 1px !important;
-      box-shadow: 0 3px 10px rgba(135, 114, 168, 0.45) !important;
-      transition: all 0.15s ease !important;
-      display: inline-block !important;
-      vertical-align: middle !important;
+      border-radius: 4px !important;
+      padding: 1px 4px !important;
+      margin: 0 !important;
+      display: inline !important;
+      box-shadow: none !important;
+      transition: background-color 0.15s ease, color 0.15s ease !important;
     }
 
     .reading-token.selected {
       color: #766299 !important;
       font-weight: 700 !important;
-      background: rgba(135, 114, 168, 0.12) !important;
+      background: rgba(135, 114, 168, 0.15) !important;
       border-radius: 4px !important;
-      padding: 1px 4px !important;
+      padding: 1px 3px !important;
+      margin: 0 !important;
+      display: inline !important;
+    }
+
+    .reading-token.selected.active-token {
+      background: rgba(135, 114, 168, 0.32) !important;
+      color: #3b2859 !important;
+      font-weight: 700 !important;
     }
 
     .tiny-para-toggle-btn {
@@ -4286,7 +4294,12 @@ Lưu ý quan trọng:
       localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
 
-      renderReadingPassageContent(art);
+      // Update DOM token elements directly without re-rendering entire innerHTML (prevents screen flashing)
+      document.querySelectorAll('#readingPassageContainer .reading-token').forEach(el => {
+        if (el.textContent === tok.hanzi) {
+          el.classList.toggle('selected', idx < 0);
+        }
+      });
     }
 
     // Bulk Add All Vocab Tokens in Reading Passage
