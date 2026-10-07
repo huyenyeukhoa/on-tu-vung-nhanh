@@ -2083,11 +2083,21 @@
       if (currentLevel === 'hsk6') return hsk6List;
       if (currentLevel === 'hsk79') return hsk79List;
       if (currentLevel === 'custom') {
-        if (currentCustomGroupId) {
-          const grp = customGroups.find(g => g.id === currentCustomGroupId);
-          if (grp) return grp.words || [];
+        if (!customGroups || customGroups.length === 0) {
+          customGroups = [{ id: 'default_custom', name: 'Nhóm tự tạo 1', words: [] }];
         }
-        return customGroups.reduce((acc, g) => acc.concat((g && g.words) || []), []);
+        let grp = customGroups.find(g => g.id === currentCustomGroupId);
+        if (!grp || !grp.words || grp.words.length === 0) {
+          const nonEmp = customGroups.find(g => g.words && g.words.length > 0);
+          if (nonEmp) {
+            grp = nonEmp;
+            currentCustomGroupId = grp.id;
+          } else if (!grp) {
+            grp = customGroups[0];
+            currentCustomGroupId = grp.id;
+          }
+        }
+        return grp.words || [];
       }
       if (currentLevel === 'upgrade') {
         return upgradeList;
@@ -2167,16 +2177,84 @@
 
     // Render Group Selection Dropdown & Custom Mali Font Picker List
     function renderGroupDropdown() {
+      const selectGroupEl = document.getElementById('selectGroup');
+      const listContainer = document.getElementById('groupPickerListContainer');
+      if (listContainer) listContainer.innerHTML = '';
+      if (selectGroupEl) selectGroupEl.innerHTML = '';
+
+      if (currentLevel === 'custom') {
+        if (!customGroups || customGroups.length === 0) {
+          customGroups = [{ id: 'default_custom', name: 'Nhóm tự tạo 1', words: [] }];
+        }
+
+        let activeGroup = customGroups.find(g => g.id === currentCustomGroupId);
+        if (!activeGroup || !activeGroup.words || activeGroup.words.length === 0) {
+          const nonEmp = customGroups.find(g => g.words && g.words.length > 0);
+          if (nonEmp) {
+            activeGroup = nonEmp;
+            currentCustomGroupId = activeGroup.id;
+          } else if (!activeGroup) {
+            activeGroup = customGroups[0];
+            currentCustomGroupId = activeGroup.id;
+          }
+        }
+
+        const words = activeGroup.words || [];
+        const customTextEl = document.getElementById('customGroupSelectText');
+        if (customTextEl) {
+          customTextEl.innerHTML = `📁 ${activeGroup.name} (${words.length} từ)`;
+        }
+
+        // Populate modal picker list with ALL custom groups
+        if (listContainer) {
+          customGroups.forEach(grp => {
+            const grpWords = grp.words || [];
+            const isActive = grp.id === currentCustomGroupId;
+
+            const itemDiv = document.createElement('div');
+            itemDiv.className = `group-picker-item ${isActive ? 'active' : ''}`;
+            itemDiv.style.cursor = 'pointer';
+
+            itemDiv.innerHTML = `
+              <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
+                <span style="font-size: 14px; font-weight: 700; flex-shrink:0;">${isActive ? '▶' : '📁'}</span>
+                <div style="min-width:0; flex:1;">
+                  <div style="font-size: 13.5px; font-weight: 700; color: #1f2937; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                    ${grp.name}
+                  </div>
+                </div>
+              </div>
+              <span class="group-picker-badge" style="margin-left: 6px; flex-shrink:0; background: ${grpWords.length > 0 ? '#8772a8' : '#f3f4f6'}; color: ${grpWords.length > 0 ? '#ffffff' : '#6b7280'}; font-weight: 700;">
+                ${grpWords.length} từ
+              </span>
+            `;
+
+            itemDiv.addEventListener('click', () => {
+              currentCustomGroupId = grp.id;
+              currentGroupIndex = 0;
+              resetShuffleState();
+              saveCurrentState();
+              updateGroupWordsState();
+              renderGroupDropdown();
+              renderVocabList();
+              const modal = document.getElementById('groupPickerModal');
+              if (modal) modal.classList.remove('active');
+            });
+
+            listContainer.appendChild(itemDiv);
+          });
+        }
+        if (appHeaderTitle) appHeaderTitle.textContent = `📁 Nhóm tự tạo`;
+        return;
+      }
+
+      // Standard HSK level dropdown rendering (HSK 6, HSK 7-9, etc.)
       const words = getCurrentLevelWords();
       const totalGroups = Math.max(1, Math.ceil(words.length / 100));
 
       if (isNaN(currentGroupIndex) || currentGroupIndex < 0 || currentGroupIndex >= totalGroups) {
         currentGroupIndex = 0;
       }
-
-      selectGroupEl.innerHTML = '';
-      const listContainer = document.getElementById('groupPickerListContainer');
-      if (listContainer) listContainer.innerHTML = '';
 
       const isCurrentCompleted = isGroupCompleted(currentGroupIndex);
       const curStart = words.length === 0 ? 0 : currentGroupIndex * 100 + 1;
@@ -2194,20 +2272,22 @@
       }
 
       // Populate fallback select element
-      for (let i = 0; i < totalGroups; i++) {
-        const start = words.length === 0 ? 0 : i * 100 + 1;
-        const end = Math.min((i + 1) * 100, words.length);
-        const completed = isGroupCompleted(i);
-        const compDate = groupCompletedDates[`${currentLevel}_${i}`];
+      if (selectGroupEl) {
+        for (let i = 0; i < totalGroups; i++) {
+          const start = words.length === 0 ? 0 : i * 100 + 1;
+          const end = Math.min((i + 1) * 100, words.length);
+          const completed = isGroupCompleted(i);
+          const compDate = groupCompletedDates[`${currentLevel}_${i}`];
 
-        const opt = document.createElement('option');
-        opt.value = i;
-        opt.textContent = `Nhóm ${i + 1} (${start} - ${end} từ) ${completed ? '✅ ' + formatCompletionTag(compDate) : ''}`;
-        if (i === currentGroupIndex) opt.selected = true;
-        selectGroupEl.appendChild(opt);
+          const opt = document.createElement('option');
+          opt.value = i;
+          opt.textContent = `Nhóm ${i + 1} (${start} - ${end} từ) ${completed ? '✅ ' + formatCompletionTag(compDate) : ''}`;
+          if (i === currentGroupIndex) opt.selected = true;
+          selectGroupEl.appendChild(opt);
+        }
       }
 
-      // Populate custom modal picker list item
+      // Populate custom modal picker list item for standard HSK levels
       if (listContainer) {
         let indicesToRender = [];
         for (let i = 0; i < totalGroups; i++) {
@@ -2215,7 +2295,6 @@
         }
 
         if (groupPickerTabMode === 'oldest') {
-          // Filter ONLY completed groups and sort by completedAt timestamp ASC (oldest first)
           indicesToRender = indicesToRender.filter(i => isGroupCompleted(i));
           indicesToRender.sort((a, b) => {
             const timeA = groupCompletedDates[`${currentLevel}_${a}`] || 0;
@@ -2262,7 +2341,7 @@
 
             itemDiv.addEventListener('click', () => {
               currentGroupIndex = i;
-              selectGroupEl.value = i;
+              if (selectGroupEl) selectGroupEl.value = i;
               resetShuffleState();
               saveCurrentState();
               updateGroupWordsState();
@@ -2333,7 +2412,17 @@
 
     function getGroupWordsRaw() {
       const words = getCurrentLevelWords();
-      if (isNaN(currentGroupIndex) || currentGroupIndex < 0) currentGroupIndex = 0;
+      if (currentLevel === 'custom') {
+        return words.map(item => ({
+          ...item,
+          status: getWordStatus(item.hanzi),
+          revealed: false
+        }));
+      }
+      const totalGroups = Math.max(1, Math.ceil(words.length / 100));
+      if (isNaN(currentGroupIndex) || currentGroupIndex < 0 || currentGroupIndex >= totalGroups) {
+        currentGroupIndex = 0;
+      }
       const start = currentGroupIndex * 100;
       const end = Math.min(start + 100, words.length);
       return words.slice(start, end).map(item => ({
