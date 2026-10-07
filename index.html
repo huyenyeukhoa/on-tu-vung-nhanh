@@ -891,7 +891,7 @@
       border-bottom: none;
     }
 
-    /* Reading Passage Interactive Reader Styles (Full Width & Spacious Mobile Reader) */
+    /* Reading Passage Interactive Reader Styles (Warm Study Background & Vibrant Tapped Word Highlight) */
     #readingViewModal {
       z-index: 1050 !important;
       padding: 0 !important;
@@ -906,7 +906,10 @@
       margin: 0 !important;
       box-shadow: none !important;
       border: none !important;
-      background: #ffffff;
+      background-image: url('https://i.pinimg.com/736x/b9/e1/63/b9e16339f6bb68de17a3e2f256d9746b.jpg'), url('./bg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
       display: flex;
       flex-direction: column;
     }
@@ -926,6 +929,13 @@
       }
     }
 
+    #readingViewModal .modal-header {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(226, 216, 239, 0.6);
+    }
+
     #readingViewModal .modal-body {
       padding: 8px 10px 100px 10px !important;
       flex: 1;
@@ -933,43 +943,58 @@
     }
 
     .reading-passage-box {
-      background: #faf8fc;
-      border: 1px solid #ede5f7;
-      border-radius: 12px;
-      padding: 12px 10px;
+      background: rgba(255, 255, 255, 0.93);
+      border: 1px solid rgba(226, 216, 239, 0.8);
+      border-radius: 16px;
+      padding: 14px 14px;
       font-family: var(--font-hanzi) !important;
       font-size: 20px;
       line-height: 2.1;
       color: #1f2937;
       word-break: break-all;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     .reading-token {
       display: inline;
-      padding: 0;
+      padding: 1px 2px;
       margin: 0;
-      border-radius: 0;
+      border-radius: 4px;
       cursor: pointer;
       background: transparent;
       color: inherit;
       border: none;
-      transition: color 0.15s ease, background-color 0.15s ease;
+      transition: all 0.15s ease;
       font-weight: 500;
     }
 
     .reading-token:hover, .reading-token:active {
-      background: rgba(135, 114, 168, 0.15);
-      border-radius: 3px;
+      background: rgba(135, 114, 168, 0.25);
+      border-radius: 4px;
+    }
+
+    /* Vibrant Highlight for Currently Tapped Active Token */
+    .reading-token.active-token {
+      background: #8772a8 !important;
+      color: #ffffff !important;
+      font-weight: 700 !important;
+      border-radius: 6px !important;
+      padding: 2px 7px !important;
+      margin: 0 1px !important;
+      box-shadow: 0 3px 10px rgba(135, 114, 168, 0.45) !important;
+      transition: all 0.15s ease !important;
+      display: inline-block !important;
+      vertical-align: middle !important;
     }
 
     .reading-token.selected {
-      background: transparent !important;
       color: #766299 !important;
       font-weight: 700 !important;
-      border: none !important;
-      box-shadow: none !important;
-      padding: 0 !important;
-      margin: 0 !important;
+      background: rgba(135, 114, 168, 0.12) !important;
+      border-radius: 4px !important;
+      padding: 1px 4px !important;
     }
 
     .tiny-para-toggle-btn {
@@ -4129,7 +4154,7 @@ Lưu ý quan trọng:
 
             const isSelected = selectedMap.has(tok.hanzi);
             const selectedClass = isSelected ? 'selected' : '';
-            return `<span class="reading-token ${selectedClass}" data-index="${globalIdx}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx})">${tok.hanzi}</span>`;
+            return `<span class="reading-token ${selectedClass}" data-index="${globalIdx}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)">${tok.hanzi}</span>`;
           }).join('');
 
           return `
@@ -4145,12 +4170,23 @@ Lưu ý quan trọng:
     }
 
     // Token clicked inside Interactive Reader
-    function handleReadingTokenClick(articleId, tokenIndex) {
+    function handleReadingTokenClick(articleId, tokenIndex, event) {
       const art = readingArticles.find(a => a.id === articleId);
       if (!art || !art.tokens || !art.tokens[tokenIndex]) return;
 
       const tok = art.tokens[tokenIndex];
       activeTokenItem = tok;
+
+      // Update active token highlight in passage DOM
+      document.querySelectorAll('#readingPassageContainer .reading-token').forEach(el => {
+        el.classList.remove('active-token');
+      });
+      if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active-token');
+      } else {
+        const targetEl = document.querySelector(`#readingPassageContainer .reading-token[data-index="${tokenIndex}"]`);
+        if (targetEl) targetEl.classList.add('active-token');
+      }
 
       drawerHanzi.textContent = tok.hanzi;
       drawerPinyin.textContent = tok.pinyin || '';
@@ -4395,6 +4431,9 @@ Lưu ý quan trọng:
       if (btnCloseTokenDrawer) {
         btnCloseTokenDrawer.addEventListener('click', () => {
           if (readingTokenDrawer) readingTokenDrawer.style.display = 'none';
+          document.querySelectorAll('#readingPassageContainer .reading-token').forEach(el => {
+            el.classList.remove('active-token');
+          });
         });
       }
 
