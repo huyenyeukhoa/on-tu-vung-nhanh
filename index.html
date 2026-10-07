@@ -957,11 +957,13 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.04);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
+      letter-spacing: 0 !important;
+      word-spacing: 0 !important;
     }
 
     .reading-token {
       display: inline;
-      padding: 1px 3px;
+      padding: 1px 0;
       margin: 0;
       border-radius: 4px;
       cursor: pointer;
@@ -971,11 +973,15 @@
       transition: background-color 0.15s ease, color 0.15s ease;
       font-weight: 500;
       -webkit-tap-highlight-color: transparent;
+      letter-spacing: 0 !important;
+      word-spacing: 0 !important;
     }
 
     .reading-token:hover {
       background: rgba(135, 114, 168, 0.18);
       border-radius: 4px;
+      padding: 1px 2px;
+      margin: 0 -2px;
     }
 
     /* Soft Purple Highlight for Currently Tapped Active Token (Matching user screenshot) */
@@ -984,8 +990,8 @@
       color: #4b3b66 !important;
       font-weight: 700 !important;
       border-radius: 4px !important;
-      padding: 1px 4px !important;
-      margin: 0 !important;
+      padding: 1px 2px !important;
+      margin: 0 -2px !important;
       display: inline !important;
       box-shadow: none !important;
       transition: background-color 0.15s ease, color 0.15s ease !important;
@@ -996,8 +1002,8 @@
       font-weight: 700 !important;
       background: rgba(135, 114, 168, 0.15) !important;
       border-radius: 4px !important;
-      padding: 1px 3px !important;
-      margin: 0 !important;
+      padding: 1px 2px !important;
+      margin: 0 -2px !important;
       display: inline !important;
     }
 
