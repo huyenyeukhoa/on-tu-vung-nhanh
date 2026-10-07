@@ -2611,6 +2611,101 @@
       resetModalScroll(aiModal);
     }
 
+    // Robust JSON Parser with Multi-level Auto-Repair (Handles unescaped newlines, control chars & truncation)
+    function safeParseJSON(str) {
+      if (!str || typeof str !== 'string') return {};
+
+      // 1. Remove markdown code fences
+      let cleaned = str
+        .replace(/^```json\s*/i, '')
+        .replace(/```json/gi, '')
+        .replace(/```/g, '')
+        .trim();
+
+      // 2. Extract JSON payload boundaries ({ ... } or [ ... ])
+      const firstCurly = cleaned.indexOf('{');
+      const lastCurly = cleaned.lastIndexOf('}');
+      const firstSquare = cleaned.indexOf('[');
+      const lastSquare = cleaned.lastIndexOf(']');
+
+      let start = -1;
+      let end = -1;
+
+      if (firstCurly !== -1 && (firstSquare === -1 || firstCurly < firstSquare)) {
+        start = firstCurly;
+        end = lastCurly;
+      } else if (firstSquare !== -1) {
+        start = firstSquare;
+        end = lastSquare;
+      }
+
+      if (start !== -1 && end > start) {
+        cleaned = cleaned.substring(start, end + 1);
+      }
+
+      // Attempt 1: Standard JSON parse
+      try {
+        return JSON.parse(cleaned);
+      } catch (e1) {
+        console.warn('Standard JSON.parse failed, attempting repair...', e1);
+      }
+
+      // Attempt 2: Escape raw unescaped newlines/tabs inside double-quoted string values
+      let inString = false;
+      let escapedStr = '';
+      for (let i = 0; i < cleaned.length; i++) {
+        const char = cleaned[i];
+        const prevChar = i > 0 ? cleaned[i - 1] : '';
+
+        if (char === '"' && prevChar !== '\\') {
+          inString = !inString;
+          escapedStr += char;
+        } else if (inString) {
+          if (char === '\n') escapedStr += '\\n';
+          else if (char === '\r') escapedStr += '\\r';
+          else if (char === '\t') escapedStr += '\\t';
+          else escapedStr += char;
+        } else {
+          escapedStr += char;
+        }
+      }
+
+      try {
+        return JSON.parse(escapedStr);
+      } catch (e2) {
+        console.warn('Escaped string JSON.parse failed, attempting comma repair...', e2);
+      }
+
+      // Attempt 3: Fix trailing commas and unescaped quotes
+      try {
+        let repaired = escapedStr
+          .replace(/,\s*}/g, '}')
+          .replace(/,\s*]/g, ']');
+        return JSON.parse(repaired);
+      } catch (e3) {
+        console.warn('Repaired JSON.parse failed:', e3);
+      }
+
+      // Attempt 4: Auto-close truncated JSON string/brackets
+      try {
+        let openCurlies = (escapedStr.match(/\{/g) || []).length;
+        let closeCurlies = (escapedStr.match(/\}/g) || []).length;
+        let openSquares = (escapedStr.match(/\[/g) || []).length;
+        let closeSquares = (escapedStr.match(/\]/g) || []).length;
+
+        let patched = escapedStr;
+        if (inString) patched += '"';
+        while (closeSquares < openSquares) { patched += ']'; closeSquares++; }
+        while (closeCurlies < openCurlies) { patched += '}'; closeCurlies++; }
+
+        return JSON.parse(patched);
+      } catch (e4) {
+        console.error('All JSON repair attempts failed:', e4);
+      }
+
+      throw new Error('Dữ liệu AI trả về bị lỗi cấu trúc chuỗi. Vui lòng bấm "Thử lại"!');
+    }
+
     // Fetch Single AI Explanation from OpenRouter (gemini-2.5-flash) - Returns cached or newly fetched data
     async function fetchSingleAiExplanation(hanzi, pinyin) {
       if (aiCache[hanzi] && aiCache[hanzi].context && aiCache[hanzi].context.includes('important-highlight')) {
@@ -2632,7 +2727,8 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json) với đ�
     {"hanzi": "câu chữ hán 3", "pinyin": "pinyin 3", "vietnamese": "nghĩa tiếng việt 3"}
   ]
 }
-Lưu ý:
+Lưu ý quan trọng:
+- BẮT BUỘC trả về JSON hợp lệ (Valid JSON). Không xuống dòng trực tiếp trong chuỗi.
 - Viết hoa chữ cái đầu tiên của câu và đầu tiêu đề theo đúng chuẩn chính tả tiếng Việt.
 - Tuyệt đối KHÔNG thêm icon loa 🔊 hay emoji âm thanh vào cuối câu chữ Hán, pinyin hoặc tiếng Việt.`;
 
@@ -2646,7 +2742,8 @@ Lưu ý:
         },
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash',
-          messages: [{ role: 'user', content: prompt }]
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 2500
         })
       });
 
@@ -2657,8 +2754,7 @@ Lưu ý:
 
       const data = await response.json();
       const contentStr = data.choices?.[0]?.message?.content || '{}';
-      const cleanedStr = contentStr.replace(/```json/g, '').replace(/```/g, '').trim();
-      const parsedJSON = JSON.parse(cleanedStr);
+      const parsedJSON = safeParseJSON(contentStr);
 
       parsedJSON.hanzi = hanzi;
       parsedJSON.pinyin = pinyin || '';
@@ -2924,8 +3020,8 @@ Lưu ý:
         if (!response.ok) throw new Error('lỗi tải thêm ví dụ');
 
         const resData = await response.json();
-        const cleanedStr = (resData.choices?.[0]?.message?.content || '{}').replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(cleanedStr);
+        const contentStr = resData.choices?.[0]?.message?.content || '{}';
+        const parsed = safeParseJSON(contentStr);
 
         if (parsed.examples && parsed.examples.length > 0) {
           if (!aiCache[hanzi].examples) aiCache[hanzi].examples = [];
@@ -3477,8 +3573,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 
         const data = await response.json();
         const contentStr = data.choices?.[0]?.message?.content || '{}';
-        const cleanedStr = contentStr.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(cleanedStr);
+        const parsed = safeParseJSON(contentStr);
 
         if (parsed.hanzi) inputCustomHanzi.value = parsed.hanzi;
         if (parsed.pinyin) inputCustomPinyin.value = parsed.pinyin;
@@ -3576,8 +3671,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
         const data = await response.json();
         const contentStr = data.choices?.[0]?.message?.content || '{}';
-        const cleanedStr = contentStr.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(cleanedStr);
+        const parsed = safeParseJSON(contentStr);
 
         if (parsed.pinyin) inputUpgradeBasicPinyin.value = parsed.pinyin;
         if (parsed.vietnamese) inputUpgradeBasicVi.value = parsed.vietnamese;
@@ -3966,7 +4060,7 @@ Lưu ý quan trọng:
 
         let parsedJSON = null;
         try {
-          parsedJSON = JSON.parse(content);
+          parsedJSON = safeParseJSON(content);
         } catch (e) {
           console.error('JSON parse error', e);
         }
