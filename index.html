@@ -1445,21 +1445,41 @@
         <button class="modal-close-btn" id="btnCloseReadingInputModal">✕</button>
       </div>
       <div class="modal-body">
-        <div style="background: #f3eef9; padding: 12px; border-radius: 12px; margin-bottom: 14px; border: 1px solid #e2d8ef;">
-          <div style="font-size: 13px; font-weight: 700; color: #766299; margin-bottom: 4px;">💡 Hướng dẫn:</div>
-          <div style="font-size: 12.5px; color: #4b5563; line-height: 1.5;">Dán bài báo, đoạn truyện hoặc đoạn văn tiếng Trung vào đây. AI sẽ tự động phân tích và tách từ. Bạn chỉ cần chạm vào từ trong bài đọc để thêm vào danh sách học!</div>
+        
+        <!-- Mode Switcher Subtabs -->
+        <div style="display: flex; gap: 6px; margin-bottom: 14px; background: #f3f4f6; padding: 4px; border-radius: 14px;">
+          <div id="subtabReadingUrl" style="flex:1; text-align:center; padding: 8px 6px; font-size: 12.5px; font-weight:700; border-radius: 10px; cursor:pointer; background:white; color:var(--primary-color); box-shadow: 0 2px 5px rgba(0,0,0,0.05);">🔗 Dán Link Bài Báo / Web</div>
+          <div id="subtabReadingText" style="flex:1; text-align:center; padding: 8px 6px; font-size: 12.5px; font-weight:700; border-radius: 10px; cursor:pointer; color:#6b7280;">📝 Dán Văn Bản Thủ Công</div>
         </div>
 
-        <label style="font-size: 12.5px; font-weight: 700; color: #374151;">Tên bài đọc / Tiêu đề:</label>
-        <input type="text" id="readingTitleInput" class="input-field" placeholder="Ví dụ: Báo Tân Hoa Xã - Kinh tế hoặc Truyện 塞翁失马" style="margin-top: 4px; margin-bottom: 12px;" />
+        <!-- Section 1: URL Auto Fetching -->
+        <div id="sectionReadingUrl">
+          <div style="background: #f3eef9; padding: 12px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #e2d8ef;">
+            <div style="font-size: 12.5px; color: #4b5563; line-height: 1.5;">Dán đường link (URL) bài báo tiếng Trung bất kỳ. AI sẽ <b>tự động cào bài, đặt Tiêu đề & gắn Tag ngày</b> cho bạn!</div>
+          </div>
 
-        <label style="font-size: 12.5px; font-weight: 700; color: #374151;">Đoạn văn tiếng Trung (chữ Hán):</label>
-        <textarea id="readingTextInput" class="input-field" placeholder="Dán văn bản tiếng Trung vào đây..." style="height: 160px; margin-top: 4px; margin-bottom: 14px; font-family: var(--font-hanzi); font-size: 16px; line-height: 1.6; resize: vertical;"></textarea>
+          <label style="font-size: 12.5px; font-weight: 700; color: #374151;">Đường link (URL) bài báo tiếng Trung:</label>
+          <input type="url" id="readingUrlInput" class="input-field" placeholder="Ví dụ: https://news.sina.com.cn/... hoặc link bài báo bất kỳ" style="margin-top: 4px; margin-bottom: 12px;" />
 
-        <button class="primary-submit-btn" id="btnAnalyzeReadingText" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 700; border-radius: 14px; margin-bottom: 18px;">
-          ⚡ AI Phân Tách & Tách Từ Bài Đọc
-        </button>
+          <button class="primary-submit-btn" id="btnAnalyzeReadingUrl" style="width: 100%; padding: 11px; font-size: 13.5px; font-weight: 700; border-radius: 14px; margin-bottom: 18px;">
+            ⚡ AI Lấy Bài, Đặt Tiêu Đề & Tách Từ
+          </button>
+        </div>
 
+        <!-- Section 2: Manual Text Input -->
+        <div id="sectionReadingText" style="display: none;">
+          <label style="font-size: 12.5px; font-weight: 700; color: #374151;">Tên bài đọc / Tiêu đề (Tùy chọn):</label>
+          <input type="text" id="readingTitleInput" class="input-field" placeholder="Ví dụ: Báo Tân Hoa Xã - Kinh tế hoặc Truyện 塞翁失马" style="margin-top: 4px; margin-bottom: 12px;" />
+
+          <label style="font-size: 12.5px; font-weight: 700; color: #374151;">Đoạn văn tiếng Trung (chữ Hán):</label>
+          <textarea id="readingTextInput" class="input-field" placeholder="Dán văn bản tiếng Trung vào đây..." style="height: 140px; margin-top: 4px; margin-bottom: 12px; font-family: var(--font-hanzi); font-size: 16px; line-height: 1.6; resize: vertical;"></textarea>
+
+          <button class="primary-submit-btn" id="btnAnalyzeReadingText" style="width: 100%; padding: 11px; font-size: 13.5px; font-weight: 700; border-radius: 14px; margin-bottom: 18px;">
+            ⚡ AI Phân Tách & Tách Từ Bài Đọc
+          </button>
+        </div>
+
+        <!-- Saved Articles List -->
         <div style="font-size: 13.5px; font-weight: 700; color: #766299; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
           <span>📚 Danh sách bài đọc đã lưu:</span>
           <span id="readingArticlesCount" style="font-size: 12px; color: #6b7280; font-weight: normal;">(0 bài)</span>
@@ -3632,6 +3652,9 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
     let activeTokenItem = null;
 
+    const readingUrlInput = document.getElementById('readingUrlInput');
+    const btnAnalyzeReadingUrl = document.getElementById('btnAnalyzeReadingUrl');
+
     // Render Saved Articles List inside Input Modal
     function renderSavedReadingArticles() {
       if (!savedReadingArticlesList) return;
@@ -3641,7 +3664,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       if (readingArticles.length === 0) {
         savedReadingArticlesList.innerHTML = `
           <div style="padding: 16px; text-align: center; color: #9ca3af; font-size: 13px; background: #f9fafb; border-radius: 12px; border: 1px dashed #e5e7eb;">
-            Chưa có bài đọc nào. Hãy dán bài văn tiếng Trung ở trên để AI bóc tách từ nhé!
+            Chưa có bài đọc nào. Hãy dán URL bài báo hoặc đoạn văn ở trên để AI bóc tách từ nhé!
           </div>
         `;
         return;
@@ -3649,24 +3672,193 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
       savedReadingArticlesList.innerHTML = readingArticles.map((art) => {
         const selectedCount = art.selectedWords ? art.selectedWords.length : 0;
+        const dateTag = art.dateTag || art.createdAt || new Date().toLocaleDateString('vi-VN');
+
         return `
           <div style="padding: 10px 12px; background: #ffffff; border: 1px solid #e2d8ef; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
             <div style="flex: 1; min-width: 0;">
               <div style="font-size: 13.5px; font-weight: 700; color: #111827; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
                 📖 ${art.title}
               </div>
-              <div style="font-size: 11.5px; color: #6b7280; margin-top: 2px;">
-                Đã chọn <b>${selectedCount}</b> từ ôn • Ngày: ${art.createdAt || 'Mới'}
+              <div style="font-size: 11.5px; color: #6b7280; margin-top: 3px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <span style="background: #f3eef9; color: #766299; font-size: 10.5px; padding: 1.5px 6px; border-radius: 6px; font-weight: 700; border: 1px solid #e2d8ef;">📅 ${dateTag}</span>
+                <span>Đã chọn <b>${selectedCount}</b> từ ôn</span>
               </div>
             </div>
-            <div style="display: flex; gap: 6px; flex-shrink: 0;">
-              <button class="primary-submit-btn" onclick="openReadingViewModal('${art.id}')" style="padding: 5px 9px; font-size: 11.5px; border-radius: 8px;">👁️ Đọc bài</button>
-              <button class="secondary-btn" onclick="openStudyGroupFromReading('${art.id}')" style="padding: 5px 9px; font-size: 11.5px; border-radius: 8px; border: 1px solid #8772a8; color: #8772a8;">📝 Học 2 cột</button>
-              <button class="icon-action-btn" onclick="deleteReadingArticle('${art.id}')" style="padding: 4px 6px; font-size: 13px; color: #ef4444;" title="Xóa bài đọc">🗑️</button>
+            <div style="display: flex; gap: 5px; flex-shrink: 0;">
+              <button class="primary-submit-btn" onclick="openReadingViewModal('${art.id}')" style="padding: 5px 8px; font-size: 11px; border-radius: 8px;">👁️ Đọc</button>
+              <button class="secondary-btn" onclick="openStudyGroupFromReading('${art.id}')" style="padding: 5px 8px; font-size: 11px; border-radius: 8px; border: 1px solid #8772a8; color: #8772a8;">📝 Học 2 cột</button>
+              <button class="icon-action-btn" onclick="deleteReadingArticle('${art.id}')" style="padding: 3px 5px; font-size: 12.5px; color: #ef4444;" title="Xóa bài đọc">🗑️</button>
             </div>
           </div>
         `;
       }).join('');
+    }
+
+    // Helper to fetch HTML content from external news URL via CORS proxies
+    async function fetchArticleHtmlFromUrl(targetUrl) {
+      const proxies = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+      ];
+
+      for (const proxyUrl of proxies) {
+        try {
+          const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+          if (res.ok) {
+            const htmlText = await res.text();
+            if (htmlText && htmlText.length > 50) {
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(htmlText, 'text/html');
+
+              doc.querySelectorAll('script, style, nav, footer, header, iframe, noscript').forEach(el => el.remove());
+
+              let scrapedTitle = (doc.querySelector('title')?.textContent || doc.querySelector('h1')?.textContent || '').trim();
+              
+              const paragraphs = [];
+              doc.querySelectorAll('p, article, .content, .article-body, #article').forEach(el => {
+                const txt = el.textContent.trim();
+                if (txt && /[\u4e00-\u9fa5]/.test(txt)) {
+                  paragraphs.push(txt);
+                }
+              });
+
+              const extractedText = paragraphs.join('\n\n').slice(0, 3500);
+              if (extractedText.length > 30) {
+                return { title: scrapedTitle, text: extractedText };
+              }
+            }
+          }
+        } catch (e) {
+          console.log('Proxy fetch failed for', proxyUrl, e);
+        }
+      }
+      return null;
+    }
+
+    // AI Auto Fetch, Titling & Tokenization from News Article URL
+    async function analyzeReadingUrlWithAi() {
+      const apiKey = localStorage.getItem('openrouter_api_key');
+      if (!apiKey) {
+        apiKeyModal.classList.add('active');
+        showToast('Vui lòng nhập OpenRouter API Key!');
+        return;
+      }
+
+      const rawUrl = (readingUrlInput.value || '').trim();
+      if (!rawUrl || !/^https?:\/\//i.test(rawUrl)) {
+        showToast('Vui lòng dán một đường link URL hợp lệ (bắt đầu bằng http:// hoặc https://)!');
+        return;
+      }
+
+      btnAnalyzeReadingUrl.disabled = true;
+      btnAnalyzeReadingUrl.innerHTML = `<img src="./loading.gif" style="width: 18px; height: 18px;" /> <span>Đang cào bài & nhờ AI tự đặt tiêu đề...</span>`;
+
+      let scrapedData = await fetchArticleHtmlFromUrl(rawUrl);
+      let contentForAi = scrapedData ? scrapedData.text : `URL bài báo: ${rawUrl}`;
+      let pageTitleHint = scrapedData ? scrapedData.title : '';
+
+      const todayStr = new Date().toLocaleDateString('vi-VN');
+
+      const prompt = `Bạn là biên tập viên báo chí tiếng Trung cao cấp. Hãy đọc nội dung/đường link sau đây và thực hiện 3 công việc:
+1. Tự động đặt một Tiêu đề ngắn gọn, chuẩn xác, hấp dẫn bằng Tiếng Việt kèm Tiếng Trung (Ví dụ: "Tân Hoa Xã: Phát triển Kinh tế Trung Quốc") cho bài đọc này.
+2. Gắn Tag Ngày tạo dạng DD/MM/YYYY (hôm nay là ${todayStr}).
+3. Phân tách toàn bộ bài báo thành mảng JSON gồm các từ/cụm từ ngữ pháp chuẩn theo đúng thứ tự xuất hiện.
+
+Nội dung trích xuất từ web:
+Title hint: "${pageTitleHint}"
+URL: "${rawUrl}"
+Văn bản:
+"""
+${contentForAi}
+"""
+
+Yêu cầu trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
+{
+  "title": "Tiêu đề hấp dẫn cho bài báo",
+  "dateTag": "${todayStr}",
+  "tokens": [
+    {
+      "hanzi": "chữ Hán của từ hoặc cụm từ",
+      "pinyin": "phiên âm Pinyin có dấu giọng",
+      "vietnamese": "nghĩa tiếng Việt ngắn gọn chuẩn trong ngữ cảnh",
+      "isVocab": true (true cho từ vựng Hán ngữ, false cho dấu câu hoặc khoảng trắng)
+    },
+    ...
+  ]
+}`;
+
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.href,
+            'X-Title': 'HSK Vocab App'
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [{ role: 'user', content: prompt }]
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error?.message || `Lỗi HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        let content = data.choices?.[0]?.message?.content || '{}';
+        content = content.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
+
+        const parsedResult = JSON.parse(content);
+        const parsedTokens = parsedResult.tokens || [];
+        const articleTitle = parsedResult.title || pageTitleHint || 'Bài báo tin tức';
+        const dateTag = parsedResult.dateTag || todayStr;
+
+        if (!Array.isArray(parsedTokens) || parsedTokens.length === 0) {
+          throw new Error('AI không thể bóc tách từ vựng từ đường link này.');
+        }
+
+        const newArticleId = 'art_' + Date.now();
+        const articleObj = {
+          id: newArticleId,
+          title: articleTitle,
+          url: rawUrl,
+          dateTag: dateTag,
+          rawText: contentForAi,
+          tokens: parsedTokens,
+          selectedWords: [],
+          createdAt: dateTag
+        };
+
+        readingArticles.unshift(articleObj);
+        localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+
+        // Create matching custom group
+        const customGroupId = 'custom_' + newArticleId;
+        if (!customGroups.some(g => g.id === customGroupId)) {
+          customGroups.push({
+            id: customGroupId,
+            name: `📖 ${articleTitle}`,
+            words: []
+          });
+          localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+        }
+
+        readingUrlInput.value = '';
+
+        if (readingInputModal) readingInputModal.classList.remove('active');
+        openReadingViewModal(newArticleId);
+        showToast(`🎉 AI đã lấy bài thành công! "${articleTitle}" (${dateTag})`);
+      } catch (err) {
+        console.error('Reading URL AI error:', err);
+        showToast(`❌ Lỗi AI: ${err.message}`);
+      } finally {
+        btnAnalyzeReadingUrl.disabled = false;
+        btnAnalyzeReadingUrl.innerHTML = `⚡ AI Lấy Bài, Đặt Tiêu Đề & Tách Từ`;
+      }
     }
 
     // AI Tokenize Chinese Reading Passage via Gemini 2.5 Flash
@@ -4033,6 +4225,44 @@ Lưu ý quan trọng:
 
       if (btnAnalyzeReadingText) {
         btnAnalyzeReadingText.addEventListener('click', analyzeReadingPassageWithAi);
+      }
+
+      if (btnAnalyzeReadingUrl) {
+        btnAnalyzeReadingUrl.addEventListener('click', analyzeReadingUrlWithAi);
+      }
+
+      // Reading Input Modal Subtabs (URL vs Manual Text)
+      const subtabReadingUrl = document.getElementById('subtabReadingUrl');
+      const subtabReadingText = document.getElementById('subtabReadingText');
+      const sectionReadingUrl = document.getElementById('sectionReadingUrl');
+      const sectionReadingText = document.getElementById('sectionReadingText');
+
+      if (subtabReadingUrl && subtabReadingText && sectionReadingUrl && sectionReadingText) {
+        subtabReadingUrl.addEventListener('click', () => {
+          subtabReadingUrl.style.background = 'white';
+          subtabReadingUrl.style.color = 'var(--primary-color)';
+          subtabReadingUrl.style.boxShadow = '0 2px 5px rgba(0,0,0,0.05)';
+
+          subtabReadingText.style.background = 'transparent';
+          subtabReadingText.style.color = '#6b7280';
+          subtabReadingText.style.boxShadow = 'none';
+
+          sectionReadingUrl.style.display = 'block';
+          sectionReadingText.style.display = 'none';
+        });
+
+        subtabReadingText.addEventListener('click', () => {
+          subtabReadingText.style.background = 'white';
+          subtabReadingText.style.color = 'var(--primary-color)';
+          subtabReadingText.style.boxShadow = '0 2px 5px rgba(0,0,0,0.05)';
+
+          subtabReadingUrl.style.background = 'transparent';
+          subtabReadingUrl.style.color = '#6b7280';
+          subtabReadingUrl.style.boxShadow = 'none';
+
+          sectionReadingUrl.style.display = 'none';
+          sectionReadingText.style.display = 'block';
+        });
       }
 
       if (btnCloseReadingViewModal) {
