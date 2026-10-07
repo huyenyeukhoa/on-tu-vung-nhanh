@@ -833,6 +833,11 @@
       display: inline !important;
     }
 
+    .context-example-purple {
+      color: #766299 !important;
+      font-weight: 700 !important;
+    }
+
     .ai-section {
       margin-bottom: 16px;
       background: #f9fafb;
@@ -2472,7 +2477,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json) với đ�
 {
   "pos": "Từ loại của từ này bằng tiếng Việt (ví dụ: Tính từ, Động từ, Danh từ, Phó từ, Thành ngữ,...)",
   "meaning": "Nghĩa tiếng Việt ngắn gọn, chuẩn xác",
-  "context": "Hãy giải thích cách dùng tự nhiên VÀ BẮT BUỘC KÈM THEO 2-3 VÍ DỤ TÌNH HUỐNG ĐỜI SỐNG CỤ THỂ THỰC TẾ. Viết sao cho người học dễ hình dung nhất. Trong đoạn giải thích này, BẮT BUỘC bao quanh DUY NHẤT MỘT cụm từ dài hoặc một vế câu quan trọng nhất thể hiện rõ rệt sắc thái cốt lõi của từ này bằng thẻ <span class=\\'important-highlight\\'>cụm từ/vế câu cần bôi đỏ</span>. (Lưu ý: BẮT BUỘC dùng dấu nháy đơn ' cho class). Yêu cầu cực kỳ nghiêm ngặt: Mỗi từ CHỈ ĐƯỢC BÔI ĐỎ ĐÚNG 1 VỊ TRÍ DUY NHẤT cho cụm từ mấu chốt.",
+  "context": "Hãy giải thích cách dùng tự nhiên VÀ BẮT BUỘC KÈM THEO 2-3 VÍ DỤ TÌNH HUỐNG ĐỜI SỐNG CỤ THỂ THỰC TẾ. Viết sao cho người học dễ hình dung nhất. Trong đoạn giải thích này: 1) BẮT BUỘC bao quanh DUY NHẤT MỘT cụm từ dài hoặc một vế câu quan trọng nhất thể hiện rõ rệt sắc thái cốt lõi của từ này bằng thẻ <span class=\\'important-highlight\\'>cụm từ/vế câu cần bôi đỏ</span>. (Lưu ý: BẮT BUỘC dùng dấu nháy đơn ' cho class). 2) BẮT BUỘC bao quanh TẤT CẢ các câu/dòng lấy ví dụ ngữ cảnh (bắt đầu bằng Ví dụ, Hoặc khi, Chẳng hạn...) bằng thẻ <span class=\\'context-example-purple\\'>câu ví dụ</span> để in đậm màu tím. Yêu cầu cực kỳ nghiêm ngặt: Mỗi từ CHỈ ĐƯỢC BÔI ĐỎ ĐÚNG 1 VỊ TRÍ DUY NHẤT cho cụm từ mấu chốt.",
   "examples": [
     {"hanzi": "câu chữ hán 1", "pinyin": "pinyin 1", "vietnamese": "nghĩa tiếng việt 1"},
     {"hanzi": "câu chữ hán 2", "pinyin": "pinyin 2", "vietnamese": "nghĩa tiếng việt 2"},
@@ -2656,6 +2661,17 @@ Lưu ý:
       processAiPreloadQueue();
     }
 
+    function formatContextTextWithPurpleExamples(contextText) {
+      if (!contextText) return '';
+      if (contextText.includes('context-example-purple')) return contextText;
+      const exampleRegex = /((?:Ví dụ|Hoặc khi|Hoặc như|Chẳng hạn|Ví như)[^.!?\n]*?(?:\([^)]*\)[^.!?\n]*?)*[.\n!?]?)/gi;
+      return contextText.replace(exampleRegex, function(match) {
+        const trimmed = match.trim();
+        if (!trimmed) return match;
+        return `<span class="context-example-purple">${trimmed}</span>`;
+      });
+    }
+
     // Render AI Explanation inside Modal (Standard vocabulary levels & Custom groups)
     function renderAiExplanation(data) {
       const modalCard = aiModal.querySelector('.modal-card');
@@ -2699,7 +2715,7 @@ Lưu ý:
             <span>💡 Ý nghĩa & Ngữ cảnh dùng:</span>
           </div>
           <div style="margin-bottom: 4px; font-size: 13px; color: #3c2e54;"><b>Nghĩa:</b> ${data.meaning || ''}</div>
-          <div style="line-height: 1.55; font-size: 13px; color: #3c2e54;">${data.context || ''}</div>
+          <div style="line-height: 1.55; font-size: 13px; color: #3c2e54;">${formatContextTextWithPurpleExamples(data.context || '')}</div>
         </div>
 
         <div style="font-size: 13.5px; font-weight: 700; color: #766299; margin-bottom: 8px;">📝 Các câu ví dụ minh họa (${data.examples ? data.examples.length : 3} câu):</div>
