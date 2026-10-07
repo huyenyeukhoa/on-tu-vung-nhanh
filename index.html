@@ -891,19 +891,55 @@
       border-bottom: none;
     }
 
-    /* Reading Passage Interactive Reader Styles */
+    /* Reading Passage Interactive Reader Styles (Full Width & Spacious Mobile Reader) */
     #readingViewModal {
       z-index: 1050 !important;
+      padding: 0 !important;
+    }
+
+    #readingViewModal .modal-card {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: 100% !important;
+      max-height: 100dvh !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+      border: none !important;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (min-width: 641px) {
+      #readingViewModal {
+        padding: 16px !important;
+      }
+      #readingViewModal .modal-card {
+        max-width: 680px !important;
+        max-height: 94vh !important;
+        height: auto !important;
+        border-radius: 20px !important;
+        margin: 0 auto !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
+        border: 1px solid #e5e7eb !important;
+      }
+    }
+
+    #readingViewModal .modal-body {
+      padding: 8px 10px 100px 10px !important;
+      flex: 1;
+      overflow-y: auto;
     }
 
     .reading-passage-box {
-      background: #fbf9fe;
-      border: 1px solid #e8e1f2;
-      border-radius: 16px;
-      padding: 16px 18px;
-      font-family: var(--font-hanzi);
-      font-size: 19px;
-      line-height: 2.15;
+      background: #faf8fc;
+      border: 1px solid #ede5f7;
+      border-radius: 12px;
+      padding: 12px 10px;
+      font-family: var(--font-hanzi) !important;
+      font-size: 20px;
+      line-height: 2.1;
       color: #1f2937;
       word-break: break-all;
     }
@@ -1518,7 +1554,7 @@
 
   <!-- Interactive Reading Passage View Modal -->
   <div class="modal-overlay" id="readingViewModal">
-    <div class="modal-card" style="max-width: 600px; max-height: 92vh; width: 95%; position: relative;">
+    <div class="modal-card" style="position: relative;">
       <div class="modal-header">
         <div class="modal-title" id="readingViewModalTitle" style="font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📖 Đọc bài khóa</div>
         <button class="modal-close-btn" id="btnCloseReadingViewModal">✕</button>
