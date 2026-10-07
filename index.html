@@ -951,7 +951,9 @@
       font-size: 20px;
       line-height: 2.1;
       color: #1f2937;
-      word-break: break-all;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
       box-shadow: 0 4px 20px rgba(0,0,0,0.04);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
@@ -4130,15 +4132,16 @@ Lưu ý quan trọng:
         const isToggledVi = !!activeParagraphToggles[pIdx];
         const btnTitle = isToggledVi ? 'Bấm để chuyển về chữ Hán gốc' : 'Bấm để xem dịch Tiếng Việt đoạn này';
 
-        const tinyBtnHTML = `<button class="tiny-para-toggle-btn" onclick="toggleParagraphTranslation(${pIdx})" title="${btnTitle}">🌸</button>`;
+        const purpleLeafSVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle; flex-shrink: 0;"><path d="M17 2C10 2 4 7 4 14c0 3.3 2.7 6 6 6 7 0 12-5 12-12 0-3.3-2.7-6-5-6zm-1.5 10.5L10 18l-1.5-1.5L14 11l1.5 1.5z"/></svg>`;
+        const tinyBtnHTML = `<button class="tiny-para-toggle-btn" onclick="toggleParagraphTranslation(${pIdx})" title="${btnTitle}">${purpleLeafSVG}</button>`;
 
         if (isToggledVi) {
           const viText = para.vietnamese || 'Đoạn này chưa có bản dịch.';
           return `
-            <div style="margin-bottom: 14px; line-height: 1.8;">
-              <div style="display: flex; align-items: flex-start; gap: 6px; background: #f3eef9; padding: 10px 14px; border-radius: 12px; border-left: 4px solid #8772a8;">
-                <span style="flex-shrink: 0; margin-top: 1px;">${tinyBtnHTML}</span>
-                <div style="flex: 1; font-size: 14px; color: #4b3b66; font-style: italic; font-weight: 500;">
+            <div style="margin-bottom: 14px; line-height: 1.6;">
+              <div style="display: flex; align-items: flex-start; gap: 8px; background: #f3eef9; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2d8ef;">
+                <span style="flex-shrink: 0; margin-top: 2px;">${tinyBtnHTML}</span>
+                <div style="flex: 1; font-size: 14px; color: #4b3b66; font-style: italic; font-weight: 500; font-family: var(--font-mali) !important; word-break: normal !important; overflow-wrap: break-word !important; word-wrap: break-word !important; line-height: 1.6;">
                   ${viText}
                 </div>
               </div>
