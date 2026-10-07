@@ -2392,7 +2392,7 @@ Lưu ý:
       const item = groupWords.find(v => v.id === id);
       if (item) {
         item.revealed = !item.revealed;
-        renderVocabList();
+        renderVocabList(true);
       }
     }
 
@@ -2403,8 +2403,40 @@ Lưu ý:
       groupWordsState = getGroupWords();
     }
 
+    // Scroll restoration & persistence logic
+    function restoreScrollPosition() {
+      const key = `hsk_scroll_${currentLevel}_${currentGroupIndex || 0}`;
+      const savedY = localStorage.getItem(key);
+      if (savedY !== null) {
+        const y = parseInt(savedY, 10);
+        if (!isNaN(y) && y > 0) {
+          setTimeout(() => {
+            window.scrollTo({ top: y, behavior: 'instant' });
+          }, 80);
+        }
+      }
+    }
+
+    let scrollSaveTimer = null;
+    window.addEventListener('scroll', () => {
+      if (scrollSaveTimer) clearTimeout(scrollSaveTimer);
+      scrollSaveTimer = setTimeout(() => {
+        if (currentLevel) {
+          const key = `hsk_scroll_${currentLevel}_${currentGroupIndex || 0}`;
+          localStorage.setItem(key, window.scrollY.toString());
+        }
+      }, 100);
+    }, { passive: true });
+
     // Render Main Vocabulary List
-    function renderVocabList() {
+    function renderVocabList(preserveScroll = false) {
+      const currentScrollY = preserveScroll ? (window.scrollY || window.pageYOffset || document.documentElement.scrollTop) : 0;
+      const currentHeight = vocabListEl.offsetHeight;
+
+      if (preserveScroll && currentHeight > 0) {
+        vocabListEl.style.minHeight = currentHeight + 'px';
+      }
+
       const filteredData = groupWordsState.filter(item => {
         const status = getWordStatus(item.hanzi);
         if (activeTab === 'new') return status === null;
@@ -2425,6 +2457,10 @@ Lưu ý:
           </div>
         `;
         updateCounters();
+        if (preserveScroll) {
+          window.scrollTo({ top: currentScrollY, behavior: 'instant' });
+          requestAnimationFrame(() => { vocabListEl.style.minHeight = ''; });
+        }
         return;
       }
 
@@ -2534,6 +2570,15 @@ Lưu ý:
       }
 
       updateCounters();
+
+      if (preserveScroll) {
+        window.scrollTo({ top: currentScrollY, behavior: 'instant' });
+        requestAnimationFrame(() => {
+          vocabListEl.style.minHeight = '';
+        });
+      } else {
+        restoreScrollPosition();
+      }
     }
 
     // Handle Item Marking (Check / Cross)
@@ -2560,7 +2605,7 @@ Lưu ý:
       const item = groupWordsState.find(v => v.hanzi === hanzi);
       if (item) item.revealed = true;
 
-      renderVocabList();
+      renderVocabList(true);
     }
 
     // Update Bottom Counters & Filter Tab Counts
@@ -3418,7 +3463,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         showPinyin = !showPinyin;
         btnTogglePinyin.classList.toggle('active', showPinyin);
         pinyinLabel.textContent = showPinyin ? 'pinyin: hiện' : 'pinyin: ẩn';
-        renderVocabList();
+        renderVocabList(true);
       });
 
       // Swap Columns Toggle
@@ -3426,7 +3471,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         hanziInCol1 = !hanziInCol1;
         btnSwapColumns.classList.toggle('active', !hanziInCol1);
         swapLabel.textContent = hanziInCol1 ? 'cột 1: chữ Hán' : 'cột 1: tiếng Việt';
-        renderVocabList();
+        renderVocabList(true);
       });
 
       // Always Show Column 2 Toggle
@@ -3435,7 +3480,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         btnToggleAlwaysShow.classList.toggle('active', alwaysShowCol2);
         alwaysShowLabel.textContent = alwaysShowCol2 ? 'cột 2: hiện tất cả' : 'cột 2: tick mới hiện';
         alwaysShowIcon.textContent = alwaysShowIcon ? '🔓' : '🔒';
-        renderVocabList();
+        renderVocabList(true);
       });
 
       // Auto Speak Switch
