@@ -1563,9 +1563,10 @@
         <!-- Article Switcher Bar top inside reader -->
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 10px; background: #f3eef9; padding: 6px 10px; border-radius: 12px; border: 1px solid #e2d8ef;">
           <button id="btnPrevReadingArticle" class="icon-action-btn" style="padding: 4px 6px; font-size: 12px; font-weight: 700; color: #766299;" title="Bài trước">◀</button>
-          <select id="selectReadingArticleView" class="input-field" style="margin: 0; flex: 1; min-width: 0; padding: 4px 6px; font-size: 12.5px; font-weight: 700; color: #3c2e54; background: #ffffff; border: 1px solid #d4c5e8; border-radius: 8px; font-family: var(--font-mali) !important;">
-            <!-- Rendered dynamically -->
-          </select>
+          <div id="btnCustomArticleSelect" class="custom-group-select-btn" style="margin: 0; flex: 1; min-width: 0; padding: 5px 8px; font-size: 12px; font-weight: 700; color: #3c2e54; background: #ffffff; border: 1px solid #d4c5e8; border-radius: 8px; font-family: var(--font-mali) !important; display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+            <span id="customArticleSelectText" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📖 1. Bài đọc...</span>
+            <span style="font-size: 9px; color: #766299; margin-left: 4px; flex-shrink: 0;">▼</span>
+          </div>
           <button id="btnNextReadingArticle" class="icon-action-btn" style="padding: 4px 6px; font-size: 12px; font-weight: 700; color: #766299;" title="Bài tiếp">▶</button>
           <button class="primary-submit-btn" id="btnOpenStudyGroupFromReading" style="padding: 5px 9px; font-size: 11.5px; font-weight: 700; border-radius: 8px; white-space: nowrap; flex-shrink: 0;" title="Mở giao diện ôn tập 2 cột">📝 Học 2 cột</button>
         </div>
@@ -1610,6 +1611,21 @@
         </div>
 
         <div id="groupPickerListContainer" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px;">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Styled Reading Article Picker Modal (Font Mali & Beautiful Article Cards) -->
+  <div class="modal-overlay" id="readingArticlePickerModal" style="z-index: 1070;">
+    <div class="modal-card" style="max-width: 460px; padding: 20px 16px;">
+      <div class="modal-header">
+        <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color);">📚 Danh sách bài đọc đã lưu</div>
+        <button class="modal-close-btn" id="btnCloseArticlePickerModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 10px 0 0 0;">
+        <div id="articlePickerListContainer" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px;">
           <!-- Rendered dynamically -->
         </div>
       </div>
@@ -3963,18 +3979,69 @@ Lưu ý quan trọng:
     }
 
     function populateReadingArticleViewSelect(currentId) {
-      const selectEl = document.getElementById('selectReadingArticleView');
       const btnPrev = document.getElementById('btnPrevReadingArticle');
       const btnNext = document.getElementById('btnNextReadingArticle');
-      if (!selectEl) return;
 
-      selectEl.innerHTML = readingArticles.map((art, idx) => {
-        return `<option value="${art.id}" ${art.id === currentId ? 'selected' : ''}>📖 ${idx + 1}. ${art.title}</option>`;
-      }).join('');
+      renderArticlePickerList();
 
       const currentIndex = readingArticles.findIndex(a => a.id === currentId);
       if (btnPrev) btnPrev.disabled = currentIndex <= 0;
       if (btnNext) btnNext.disabled = currentIndex >= readingArticles.length - 1 || currentIndex === -1;
+    }
+
+    function renderArticlePickerList() {
+      const listContainer = document.getElementById('articlePickerListContainer');
+      const customTextEl = document.getElementById('customArticleSelectText');
+      
+      if (!readingArticles || readingArticles.length === 0) {
+        if (customTextEl) customTextEl.textContent = '📖 Chưa có bài đọc';
+        if (listContainer) listContainer.innerHTML = '<div style="padding: 30px 15px; text-align: center; color: #9ca3af; font-size: 13.5px;">Chưa có bài đọc nào được lưu.</div>';
+        return;
+      }
+
+      const activeArt = readingArticles.find(a => a.id === activeReadingArticleId) || readingArticles[0];
+      const curIdx = readingArticles.findIndex(a => a.id === activeArt.id);
+
+      if (customTextEl) {
+        customTextEl.textContent = `📖 ${curIdx + 1}. ${activeArt.title}`;
+      }
+
+      if (listContainer) {
+        listContainer.innerHTML = '';
+        readingArticles.forEach((art, idx) => {
+          const isActive = art.id === activeReadingArticleId;
+          const selectedCount = (art.selectedWords || []).length;
+          
+          const itemDiv = document.createElement('div');
+          itemDiv.className = `group-picker-item ${isActive ? 'active' : ''}`;
+          itemDiv.style.cursor = 'pointer';
+          
+          itemDiv.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
+              <span style="font-size: 14px; font-weight: 700; flex-shrink:0;">${isActive ? '▶' : '📖'}</span>
+              <div style="min-width:0; flex:1;">
+                <div style="font-size: 13.5px; font-weight: 700; color: #1f2937; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                  ${idx + 1}. ${art.title}
+                </div>
+                <div style="font-size: 11.5px; color: #6b7280; margin-top: 2px;">
+                  ${art.paragraphs ? art.paragraphs.length : 0} đoạn văn
+                </div>
+              </div>
+            </div>
+            <span class="group-picker-badge ${selectedCount > 0 ? 'completed' : 'in-progress'}" style="margin-left: 6px; flex-shrink:0;">
+              ${selectedCount > 0 ? `📝 ${selectedCount} từ ôn` : '0 từ lưu'}
+            </span>
+          `;
+
+          itemDiv.addEventListener('click', () => {
+            openReadingViewModal(art.id);
+            const modal = document.getElementById('readingArticlePickerModal');
+            if (modal) modal.classList.remove('active');
+          });
+
+          listContainer.appendChild(itemDiv);
+        });
+      }
     }
 
     let activeParagraphToggles = {};
@@ -4337,13 +4404,30 @@ Lưu ý quan trọng:
         });
       }
 
-      const selectReadingArticleView = document.getElementById('selectReadingArticleView');
+      const btnCustomArticleSelect = document.getElementById('btnCustomArticleSelect');
+      const readingArticlePickerModal = document.getElementById('readingArticlePickerModal');
+      const btnCloseArticlePickerModal = document.getElementById('btnCloseArticlePickerModal');
       const btnPrevReadingArticle = document.getElementById('btnPrevReadingArticle');
       const btnNextReadingArticle = document.getElementById('btnNextReadingArticle');
 
-      if (selectReadingArticleView) {
-        selectReadingArticleView.addEventListener('change', (e) => {
-          if (e.target.value) openReadingViewModal(e.target.value);
+      if (btnCustomArticleSelect) {
+        btnCustomArticleSelect.addEventListener('click', () => {
+          renderArticlePickerList();
+          if (readingArticlePickerModal) readingArticlePickerModal.classList.add('active');
+        });
+      }
+
+      if (btnCloseArticlePickerModal) {
+        btnCloseArticlePickerModal.addEventListener('click', () => {
+          if (readingArticlePickerModal) readingArticlePickerModal.classList.remove('active');
+        });
+      }
+
+      if (readingArticlePickerModal) {
+        readingArticlePickerModal.addEventListener('click', (e) => {
+          if (e.target === readingArticlePickerModal) {
+            readingArticlePickerModal.classList.remove('active');
+          }
         });
       }
 
