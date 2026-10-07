@@ -1100,6 +1100,11 @@
         <span id="alwaysShowLabel">cột 2: tick mới hiện</span>
       </button>
 
+      <button class="control-btn" id="btnPreloadAiGroup" title="Tải ngầm dữ liệu AI cho cả nhóm để chạm mở popup tức thì không chờ đợi">
+        <span id="preloadAiIcon">⚡</span>
+        <span id="preloadAiLabel">nạp AI nhóm</span>
+      </button>
+
       <label class="switch-container" title="tự động đọc giọng Xiaoxiao khi tick xanh hoặc tick đỏ">
         <span>đọc khi tick</span>
         <input type="checkbox" id="switchAutoSpeak" class="switch-input" checked>
@@ -1330,6 +1335,38 @@
         <b>Cách cài đặt thủ công:</b><br>
         • <b>Chrome / Android:</b> Bấm menu 3 chấm (⋮) ở góc trên bên phải ➔ Chọn <b>"Thêm vào màn hình chính" (Add to Home screen)</b>.<br>
         • <b>Safari / iOS:</b> Bấm biểu tượng Chia sẻ (↑) ➔ Chọn <b>"Thêm vào Màn hình chính" (Add to Home Screen)</b>.
+      </div>
+    </div>
+  </div>
+
+  <!-- Pre-load AI Modal -->
+  <div class="modal-overlay" id="preloadAiModal">
+    <div class="modal-card" style="max-width: 420px; padding: 20px 16px;">
+      <div class="modal-header">
+        <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color);">⚡ Nạp Ngầm Dữ Liệu AI Chi Tiết</div>
+        <button class="modal-close-btn" id="btnClosePreloadAiModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 10px 0 0 0;">
+        <p style="font-size: 12.5px; color: #4b5563; margin-bottom: 12px; line-height: 1.5;">
+          Hệ thống sẽ tải trước giải thích & ví dụ của toàn bộ từ trong nhóm chạy ngầm. Khi bạn chạm vào chữ Hán, popup sẽ <b>mở tức thì 0 giây</b> không cần đợi API!
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;">
+          <button class="primary-submit-btn" id="btnStartPreloadCurrent" style="padding: 10px; font-size: 13px; background: #8772a8;">
+            ⚡ Nạp AI Nhóm Hiện Tại (Nhóm <span id="preloadCurrentGrpNum">1</span>)
+          </button>
+          <button class="primary-submit-btn" id="btnStartPreloadNext" style="padding: 10px; font-size: 13px; background: #766299;">
+            🚀 Nạp AI Nhóm Kế Tiếp (Nhóm <span id="preloadNextGrpNum">2</span>)
+          </button>
+          <button class="primary-submit-btn" id="btnStopPreload" style="padding: 10px; font-size: 13px; background: #ef4444; display: none;">
+            ⏸ Dừng Nạp Ngầm
+          </button>
+        </div>
+
+        <div id="preloadStatusBox" style="display: none; background: #f3eef9; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2d8ef; font-size: 12.5px; color: #4a2854; text-align: center;">
+          <div style="font-weight: 700; margin-bottom: 2px;" id="preloadStatusText">Đang nạp AI...</div>
+          <div style="font-size: 11.5px; color: #6b7280;" id="preloadStatusSubText">0 / 0 từ</div>
+        </div>
       </div>
     </div>
   </div>
@@ -2267,7 +2304,65 @@
       `;
     }
 
-    // Fetch AI Explanation from OpenRouter (gemini-2.5-flash)
+    // Fetch Single AI Explanation from OpenRouter (gemini-2.5-flash) - Returns cached or newly fetched data
+    async function fetchSingleAiExplanation(hanzi, pinyin) {
+      if (aiCache[hanzi] && aiCache[hanzi].context && aiCache[hanzi].context.includes('important-highlight')) {
+        return aiCache[hanzi];
+      }
+
+      const apiKey = localStorage.getItem('openrouter_api_key');
+      if (!apiKey) throw new Error('Vui lòng nhập OpenRouter API Key!');
+
+      const prompt = `Bạn là giáo viên tiếng Trung cao cấp. Hãy giải thích chi tiết từ HSK: "${hanzi}" (pinyin: ${pinyin || ''}).
+Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json) với định dạng:
+{
+  "pos": "Từ loại của từ này bằng tiếng Việt (ví dụ: Tính từ, Động từ, Danh từ, Phó từ, Thành ngữ,...)",
+  "meaning": "Nghĩa tiếng Việt ngắn gọn, chuẩn xác",
+  "context": "Hãy giải thích cách dùng tự nhiên VÀ BẮT BUỘC KÈM THEO 2-3 VÍ DỤ TÌNH HUỐNG ĐỜI SỐNG CỤ THỂ THỰC TẾ. Viết sao cho người học dễ hình dung nhất. Trong đoạn giải thích này, BẮT BUỘC bao quanh DUY NHẤT MỘT cụm từ dài hoặc một vế câu quan trọng nhất thể hiện rõ rệt sắc thái cốt lõi của từ này bằng thẻ <span class=\\'important-highlight\\'>cụm từ/vế câu cần bôi đỏ</span>. (Lưu ý: BẮT BUỘC dùng dấu nháy đơn ' cho class). Yêu cầu cực kỳ nghiêm ngặt: Mỗi từ CHỈ ĐƯỢC BÔI ĐỎ ĐÚNG 1 VỊ TRÍ DUY NHẤT cho cụm từ mấu chốt.",
+  "examples": [
+    {"hanzi": "câu chữ hán 1", "pinyin": "pinyin 1", "vietnamese": "nghĩa tiếng việt 1"},
+    {"hanzi": "câu chữ hán 2", "pinyin": "pinyin 2", "vietnamese": "nghĩa tiếng việt 2"},
+    {"hanzi": "câu chữ hán 3", "pinyin": "pinyin 3", "vietnamese": "nghĩa tiếng việt 3"}
+  ]
+}
+Lưu ý:
+- Viết hoa chữ cái đầu tiên của câu và đầu tiêu đề theo đúng chuẩn chính tả tiếng Việt.
+- Tuyệt đối KHÔNG thêm icon loa 🔊 hay emoji âm thanh vào cuối câu chữ Hán, pinyin hoặc tiếng Việt.`;
+
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.href,
+          'X-Title': 'HSK Vocab App'
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error?.message || `Lỗi HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      const contentStr = data.choices?.[0]?.message?.content || '{}';
+      const cleanedStr = contentStr.replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsedJSON = JSON.parse(cleanedStr);
+
+      parsedJSON.hanzi = hanzi;
+      parsedJSON.pinyin = pinyin || '';
+
+      aiCache[hanzi] = parsedJSON;
+      localStorage.setItem('hsk_ai_cache', JSON.stringify(aiCache));
+
+      return parsedJSON;
+    }
+
+    // Fetch AI Explanation for modal view
     async function fetchAiExplanation(hanzi, pinyin) {
       const apiKey = localStorage.getItem('openrouter_api_key');
       const modalCard = aiModal.querySelector('.modal-card');
@@ -2291,53 +2386,8 @@
       `;
 
       try {
-        const prompt = `Bạn là giáo viên tiếng Trung cao cấp. Hãy giải thích chi tiết từ HSK: "${hanzi}" (pinyin: ${pinyin}).
-Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json) với định dạng:
-{
-  "pos": "Từ loại của từ này bằng tiếng Việt (ví dụ: Tính từ, Động từ, Danh từ, Phó từ, Thành ngữ,...)",
-  "meaning": "Nghĩa tiếng Việt ngắn gọn, chuẩn xác",
-  "context": "Hãy giải thích cách dùng tự nhiên VÀ BẮT BUỘC KÈM THEO 2-3 VÍ DỤ TÌNH HUỐNG ĐỜI SỐNG CỤ THỂ THỰC TẾ. Viết sao cho người học dễ hình dung nhất. Trong đoạn giải thích này, BẮT BUỘC bao quanh DUY NHẤT MỘT cụm từ dài hoặc một vế câu quan trọng nhất thể hiện rõ rệt sắc thái cốt lõi của từ này bằng thẻ <span class=\\'important-highlight\\'>cụm từ/vế câu cần bôi đỏ</span>. (Lưu ý: BẮT BUỘC dùng dấu nháy đơn ' cho class). Yêu cầu cực kỳ nghiêm ngặt: Mỗi từ CHỈ ĐƯỢC BÔI ĐỎ ĐÚNG 1 VỊ TRÍ DUY NHẤT cho cụm từ mấu chốt.",
-  "examples": [
-    {"hanzi": "câu chữ hán 1", "pinyin": "pinyin 1", "vietnamese": "nghĩa tiếng việt 1"},
-    {"hanzi": "câu chữ hán 2", "pinyin": "pinyin 2", "vietnamese": "nghĩa tiếng việt 2"},
-    {"hanzi": "câu chữ hán 3", "pinyin": "pinyin 3", "vietnamese": "nghĩa tiếng việt 3"}
-  ]
-}
-Lưu ý:
-- Viết hoa chữ cái đầu tiên của câu và đầu tiêu đề theo đúng chuẩn chính tả tiếng Việt.
-- Tuyệt đối KHÔNG thêm icon loa 🔊 hay emoji âm thanh vào cuối câu chữ Hán, pinyin hoặc tiếng Việt.`;
-
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': window.location.href,
-            'X-Title': 'HSK Vocab App'
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: [{ role: 'user', content: prompt }]
-          })
-        });
-
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error?.message || `Lỗi HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        const contentStr = data.choices?.[0]?.message?.content || '{}';
-        const cleanedStr = contentStr.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsedJSON = JSON.parse(cleanedStr);
-
-        parsedJSON.hanzi = hanzi;
-        parsedJSON.pinyin = pinyin;
-
-        aiCache[hanzi] = parsedJSON;
-        localStorage.setItem('hsk_ai_cache', JSON.stringify(aiCache));
-
-        renderAiExplanation(parsedJSON);
+        const parsed = await fetchSingleAiExplanation(hanzi, pinyin);
+        renderAiExplanation(parsed);
       } catch (err) {
         console.error('AI error:', err);
         modalCard.classList.remove('transparent-loading');
@@ -2350,6 +2400,106 @@ Lưu ý:
           </div>
         `;
       }
+    }
+
+    // AI Background Queue Pre-loader Engine
+    let isPreloadingAi = false;
+    let stopPreloadFlag = false;
+    let preloadQueue = [];
+    let preloadTotal = 0;
+    let preloadDoneCount = 0;
+    let preloadGroupName = '';
+
+    function updatePreloadUIStatus() {
+      const btnLabel = document.getElementById('preloadAiLabel');
+      const btnIcon = document.getElementById('preloadAiIcon');
+      const statusBox = document.getElementById('preloadStatusBox');
+      const statusText = document.getElementById('preloadStatusText');
+      const statusSubText = document.getElementById('preloadStatusSubText');
+      const btnStop = document.getElementById('btnStopPreload');
+
+      if (isPreloadingAi) {
+        if (btnIcon) btnIcon.textContent = '⏳';
+        if (btnLabel) btnLabel.textContent = `${preloadDoneCount}/${preloadTotal}`;
+        if (statusBox) statusBox.style.display = 'block';
+        if (statusText) statusText.textContent = `⚡ AI đang nạp ngầm (${preloadGroupName})...`;
+        if (statusSubText) statusSubText.textContent = `Đã nạp ${preloadDoneCount} / ${preloadTotal} từ`;
+        if (btnStop) btnStop.style.display = 'block';
+      } else {
+        if (btnIcon) btnIcon.textContent = '⚡';
+        if (btnLabel) btnLabel.textContent = 'nạp AI nhóm';
+        if (statusBox) statusBox.style.display = 'none';
+        if (btnStop) btnStop.style.display = 'none';
+      }
+    }
+
+    async function processAiPreloadQueue() {
+      if (isPreloadingAi || preloadQueue.length === 0) return;
+      isPreloadingAi = true;
+      stopPreloadFlag = false;
+      updatePreloadUIStatus();
+
+      while (preloadQueue.length > 0 && !stopPreloadFlag) {
+        const item = preloadQueue.shift();
+        if (!item) break;
+
+        if (!aiCache[item.hanzi] || !aiCache[item.hanzi].context || !aiCache[item.hanzi].context.includes('important-highlight')) {
+          try {
+            await fetchSingleAiExplanation(item.hanzi, item.pinyin);
+          } catch (e) {
+            console.log('Preload skipped for', item.hanzi, e);
+          }
+          await new Promise(r => setTimeout(r, 350));
+        }
+
+        preloadDoneCount++;
+        updatePreloadUIStatus();
+      }
+
+      isPreloadingAi = false;
+      updatePreloadUIStatus();
+
+      if (stopPreloadFlag) {
+        showToast('⏹ Đã dừng nạp ngầm AI.');
+      } else {
+        showToast(`🎉 Đã nạp xong 100% dữ liệu AI cho ${preloadGroupName}! Chạm từ sẽ mở tức thì!`);
+      }
+    }
+
+    function startGroupAiPreload(targetGroupIndex) {
+      const apiKey = localStorage.getItem('openrouter_api_key');
+      if (!apiKey) {
+        apiKeyModal.classList.add('active');
+        showToast('Vui lòng nhập OpenRouter API Key để nạp AI!');
+        return;
+      }
+
+      const words = getCurrentLevelWords();
+      const totalGroups = Math.ceil(words.length / 100);
+      if (targetGroupIndex < 0 || targetGroupIndex >= totalGroups) {
+        showToast('Nhóm chọn không hợp lệ!');
+        return;
+      }
+
+      const start = targetGroupIndex * 100;
+      const end = Math.min(start + 100, words.length);
+      const groupSlice = words.slice(start, end);
+
+      const uncached = groupSlice.filter(w => !aiCache[w.hanzi] || !aiCache[w.hanzi].context || !aiCache[w.hanzi].context.includes('important-highlight'));
+
+      if (uncached.length === 0) {
+        showToast(`✨ Nhóm ${targetGroupIndex + 1} đã có đủ 100% dữ liệu AI trong máy!`);
+        return;
+      }
+
+      stopPreloadFlag = false;
+      preloadQueue = [...uncached];
+      preloadTotal = uncached.length;
+      preloadDoneCount = 0;
+      preloadGroupName = `Nhóm ${targetGroupIndex + 1}`;
+
+      showToast(`⚡ Đang nạp ngầm AI cho ${uncached.length} từ ở Nhóm ${targetGroupIndex + 1}...`);
+      processAiPreloadQueue();
     }
 
     // Render AI Explanation inside Modal (Standard vocabulary levels & Custom groups)
@@ -3419,6 +3569,52 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
       btnAiUpgradeCustom.addEventListener('click', aiAutofillUpgradeWord);
       btnAddWordToUpgradeGroup.addEventListener('click', addWordToUpgradeList);
+
+      // Preload AI Modal Controls
+      const btnPreloadAiGroup = document.getElementById('btnPreloadAiGroup');
+      const preloadAiModal = document.getElementById('preloadAiModal');
+      const btnClosePreloadAiModal = document.getElementById('btnClosePreloadAiModal');
+      const btnStartPreloadCurrent = document.getElementById('btnStartPreloadCurrent');
+      const btnStartPreloadNext = document.getElementById('btnStartPreloadNext');
+      const btnStopPreload = document.getElementById('btnStopPreload');
+      const preloadCurrentGrpNum = document.getElementById('preloadCurrentGrpNum');
+      const preloadNextGrpNum = document.getElementById('preloadNextGrpNum');
+
+      if (btnPreloadAiGroup) {
+        btnPreloadAiGroup.addEventListener('click', () => {
+          if (preloadCurrentGrpNum) preloadCurrentGrpNum.textContent = (currentGroupIndex + 1).toString();
+          if (preloadNextGrpNum) preloadNextGrpNum.textContent = (currentGroupIndex + 2).toString();
+          updatePreloadUIStatus();
+          if (preloadAiModal) preloadAiModal.classList.add('active');
+        });
+      }
+
+      if (btnClosePreloadAiModal) {
+        btnClosePreloadAiModal.addEventListener('click', () => {
+          if (preloadAiModal) preloadAiModal.classList.remove('active');
+        });
+      }
+
+      if (btnStartPreloadCurrent) {
+        btnStartPreloadCurrent.addEventListener('click', () => {
+          if (preloadAiModal) preloadAiModal.classList.remove('active');
+          startGroupAiPreload(currentGroupIndex);
+        });
+      }
+
+      if (btnStartPreloadNext) {
+        btnStartPreloadNext.addEventListener('click', () => {
+          if (preloadAiModal) preloadAiModal.classList.remove('active');
+          startGroupAiPreload(currentGroupIndex + 1);
+        });
+      }
+
+      if (btnStopPreload) {
+        btnStopPreload.addEventListener('click', () => {
+          stopPreloadFlag = true;
+          updatePreloadUIStatus();
+        });
+      }
 
       // Tap Mode Toggle Button
       btnToggleTapMode.addEventListener('click', () => {
