@@ -2128,8 +2128,19 @@
       }
     }
 
+    // Reset modal scroll position to top (0)
+    function resetModalScroll(modalEl) {
+      if (!modalEl) return;
+      modalEl.scrollTop = 0;
+      const card = modalEl.querySelector('.modal-card');
+      if (card) card.scrollTop = 0;
+      const body = modalEl.querySelector('.modal-body');
+      if (body) body.scrollTop = 0;
+    }
+
     // Open AI Upgrade Modal by Hanzi
     function openAiUpgradeModalByHanzi(hanzi) {
+      resetModalScroll(aiModal);
       let item = upgradeList.find(v => v.hanzi === hanzi || v.upgradedHanzi === hanzi || (v.upgrade1 && v.upgrade1.hanzi === hanzi) || (v.upgrade2 && v.upgrade2.hanzi === hanzi));
       if (!item) {
         const allWords = getCurrentLevelWords();
@@ -2147,6 +2158,7 @@
 
     // Open AI Modal (Standard)
     function openAiExplainModal(hanzi, pinyin) {
+      resetModalScroll(aiModal);
       const allWords = getCurrentLevelWords();
       const item = allWords.find(v => v.hanzi === hanzi || v.upgradedHanzi === hanzi || (v.upgrade1 && v.upgrade1.hanzi === hanzi) || (v.upgrade2 && v.upgrade2.hanzi === hanzi)) || { hanzi, pinyin, vietnamese: '' };
       
@@ -2302,6 +2314,7 @@
 
         ${examplesHTML}
       `;
+      resetModalScroll(aiModal);
     }
 
     // Fetch Single AI Explanation from OpenRouter (gemini-2.5-flash) - Returns cached or newly fetched data
@@ -2558,6 +2571,8 @@ Lưu ý:
           <span>➕ Xem thêm ví dụ khác</span>
         </button>
       `;
+
+      resetModalScroll(aiModal);
 
       document.getElementById('btnLoadMoreExamples').addEventListener('click', () => {
         fetchMoreExamples(data.hanzi, data.pinyin);
@@ -3748,6 +3763,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         aiModal.classList.remove('active');
         aiModal.classList.remove('loading-overlay-transparent');
         aiModal.querySelector('.modal-card').classList.remove('transparent-loading');
+        resetModalScroll(aiModal);
       });
 
       aiModal.addEventListener('click', (e) => {
@@ -3755,6 +3771,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           aiModal.classList.remove('active');
           aiModal.classList.remove('loading-overlay-transparent');
           aiModal.querySelector('.modal-card').classList.remove('transparent-loading');
+          resetModalScroll(aiModal);
         }
       });
 
