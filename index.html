@@ -1767,10 +1767,7 @@
       if (start >= words.length || words.length === 0) return false;
       const groupSlice = words.slice(start, end);
       if (groupSlice.length === 0) return false;
-      return groupSlice.every(w => {
-        const s = getWordStatus(w.hanzi);
-        return s === 'correct' || s === 'wrong';
-      });
+      return groupSlice.every(w => getWordStatus(w.hanzi) === 'correct');
     }
 
     function getGroupLearnedCount(groupIndex) {
@@ -1778,10 +1775,7 @@
       const start = groupIndex * 100;
       const end = Math.min(start + 100, words.length);
       const groupSlice = words.slice(start, end);
-      return groupSlice.filter(w => {
-        const s = getWordStatus(w.hanzi);
-        return s === 'correct' || s === 'wrong';
-      }).length;
+      return groupSlice.filter(w => getWordStatus(w.hanzi) === 'correct').length;
     }
 
     // Render Group Selection Dropdown & Custom Mali Font Picker List
