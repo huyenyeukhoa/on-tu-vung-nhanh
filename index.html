@@ -1336,12 +1336,19 @@
 
   <!-- Custom Styled Group Picker Modal (Font Mali & Completed Highlights) -->
   <div class="modal-overlay" id="groupPickerModal">
-    <div class="modal-card" style="max-width: 440px; padding: 20px 16px;">
+    <div class="modal-card" style="max-width: 450px; padding: 20px 16px;">
       <div class="modal-header">
         <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color);">📂 Danh sách nhóm từ vựng</div>
         <button class="modal-close-btn" id="btnCloseGroupPickerModal">✕</button>
       </div>
       <div class="modal-body" style="padding: 10px 0 0 0;">
+        
+        <!-- Sort / Filter Subtabs for Group Picker -->
+        <div style="display: flex; gap: 6px; margin-bottom: 12px; background: #f3f4f6; padding: 4px; border-radius: 12px;">
+          <div id="subtabPickerAll" style="flex:1; text-align:center; padding: 6px 8px; font-size: 12px; font-weight:700; border-radius: 9px; cursor:pointer; background:white; color:var(--primary-color); box-shadow: 0 2px 5px rgba(0,0,0,0.05);">📁 Tất cả nhóm</div>
+          <div id="subtabPickerOldest" style="flex:1; text-align:center; padding: 6px 8px; font-size: 12px; font-weight:700; border-radius: 9px; cursor:pointer; color:#6b7280;">⏳ Ôn nhóm cũ nhất</div>
+        </div>
+
         <div id="groupPickerListContainer" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px;">
           <!-- Rendered dynamically -->
         </div>
@@ -1759,6 +1766,33 @@
       return hsk79List;
     }
 
+    let groupCompletedDates = safeGetJSON('hsk_group_completed_dates', {});
+    let groupPickerTabMode = 'all'; // 'all' or 'oldest'
+
+    function saveGroupCompletedDates() {
+      localStorage.setItem('hsk_group_completed_dates', JSON.stringify(groupCompletedDates));
+    }
+
+    function formatCompletionTag(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) return '';
+      
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      const formattedDate = `${day}/${month}/${year}`;
+      
+      const diffMs = Date.now() - timestamp;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      let timeAgo = '';
+      if (diffDays <= 0) timeAgo = 'Hôm nay';
+      else if (diffDays === 1) timeAgo = 'Hôm qua';
+      else timeAgo = `${diffDays} ngày trước`;
+      
+      return `${formattedDate} (${timeAgo})`;
+    }
+
     // Group Completion Helpers
     function isGroupCompleted(groupIndex) {
       const words = getCurrentLevelWords();
@@ -1767,7 +1801,31 @@
       if (start >= words.length || words.length === 0) return false;
       const groupSlice = words.slice(start, end);
       if (groupSlice.length === 0) return false;
-      return groupSlice.every(w => getWordStatus(w.hanzi) === 'correct');
+      
+      const isDone = groupSlice.every(w => getWordStatus(w.hanzi) === 'correct');
+      const key = `${currentLevel}_${groupIndex}`;
+
+      if (isDone) {
+        if (!groupCompletedDates[key]) {
+          groupCompletedDates[key] = Date.now();
+          saveGroupCompletedDates();
+        }
+      } else {
+        if (groupCompletedDates[key]) {
+          delete groupCompletedDates[key];
+          saveGroupCompletedDates();
+        }
+      }
+
+      return isDone;
+    }
+
+    function touchGroupCompletionTimestamp(groupIndex) {
+      const key = `${currentLevel}_${groupIndex}`;
+      if (isGroupCompleted(groupIndex)) {
+        groupCompletedDates[key] = Date.now();
+        saveGroupCompletedDates();
+      }
     }
 
     function getGroupLearnedCount(groupIndex) {
@@ -1800,57 +1858,91 @@
         if (words.length === 0) {
           customTextEl.textContent = `Nhóm 1 (0 từ)`;
         } else {
-          customTextEl.innerHTML = `Nhóm ${currentGroupIndex + 1} (${curStart} - ${curEnd} từ)${isCurrentCompleted ? ' <span style="color:#10b981; font-weight:700;">✅ (Hoàn thành)</span>' : ''}`;
+          const compDate = groupCompletedDates[`${currentLevel}_${currentGroupIndex}`];
+          const tagStr = compDate ? formatCompletionTag(compDate) : 'Hoàn thành';
+          customTextEl.innerHTML = `Nhóm ${currentGroupIndex + 1} (${curStart} - ${curEnd} từ)${isCurrentCompleted ? ` <span style="color:#10b981; font-weight:700;">✅ (${tagStr})</span>` : ''}`;
         }
       }
 
+      // Populate fallback select element
       for (let i = 0; i < totalGroups; i++) {
         const start = words.length === 0 ? 0 : i * 100 + 1;
         const end = Math.min((i + 1) * 100, words.length);
         const completed = isGroupCompleted(i);
-        const learnedCount = getGroupLearnedCount(i);
-        const groupSize = words.length === 0 ? 0 : end - start + 1;
+        const compDate = groupCompletedDates[`${currentLevel}_${i}`];
 
-        // Populate fallback select element
         const opt = document.createElement('option');
         opt.value = i;
-        opt.textContent = `Nhóm ${i + 1} (${start} - ${end} từ) ${completed ? '✅' : ''}`;
+        opt.textContent = `Nhóm ${i + 1} (${start} - ${end} từ) ${completed ? '✅ ' + formatCompletionTag(compDate) : ''}`;
         if (i === currentGroupIndex) opt.selected = true;
         selectGroupEl.appendChild(opt);
+      }
 
-        // Populate custom modal picker list item (Font Mali & Completed Highlight)
-        if (listContainer) {
-          const itemDiv = document.createElement('div');
-          itemDiv.className = `group-picker-item ${i === currentGroupIndex ? 'active' : ''} ${completed ? 'completed' : ''}`;
-          
-          let badgeHTML = '';
-          if (completed) {
-            badgeHTML = `<span class="group-picker-badge completed">🎉 Hoàn thành (${learnedCount}/${groupSize})</span>`;
-          } else {
-            badgeHTML = `<span class="group-picker-badge in-progress">${learnedCount}/${groupSize} từ</span>`;
-          }
+      // Populate custom modal picker list item
+      if (listContainer) {
+        let indicesToRender = [];
+        for (let i = 0; i < totalGroups; i++) {
+          indicesToRender.push(i);
+        }
 
-          itemDiv.innerHTML = `
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span style="font-size: 14px; font-weight: 700;">${completed ? '✅' : (i === currentGroupIndex ? '▶' : '📁')}</span>
-              <div>
-                <div style="font-size: 13.5px; font-weight: 700;">Nhóm ${i + 1} (${start} - ${end} từ)</div>
-              </div>
-            </div>
-            ${badgeHTML}
-          `;
-
-          itemDiv.addEventListener('click', () => {
-            currentGroupIndex = i;
-            selectGroupEl.value = i;
-            resetShuffleState();
-            renderGroupDropdown();
-            renderVocabList();
-            const modal = document.getElementById('groupPickerModal');
-            if (modal) modal.classList.remove('active');
+        if (groupPickerTabMode === 'oldest') {
+          // Filter ONLY completed groups and sort by completedAt timestamp ASC (oldest first)
+          indicesToRender = indicesToRender.filter(i => isGroupCompleted(i));
+          indicesToRender.sort((a, b) => {
+            const timeA = groupCompletedDates[`${currentLevel}_${a}`] || 0;
+            const timeB = groupCompletedDates[`${currentLevel}_${b}`] || 0;
+            return timeA - timeB;
           });
+        }
 
-          listContainer.appendChild(itemDiv);
+        if (groupPickerTabMode === 'oldest' && indicesToRender.length === 0) {
+          listContainer.innerHTML = `
+            <div style="padding: 30px 15px; text-align: center; color: #9ca3af; font-size: 13.5px; line-height: 1.5;">
+              ⏳ Chưa có nhóm nào hoàn thành 100%.<br>Hãy học thuộc 100/100 từ trong nhóm để ghi nhận ngày hoàn thành và xếp lịch ôn tập nhé!
+            </div>
+          `;
+        } else {
+          indicesToRender.forEach(i => {
+            const start = words.length === 0 ? 0 : i * 100 + 1;
+            const end = Math.min((i + 1) * 100, words.length);
+            const completed = isGroupCompleted(i);
+            const learnedCount = getGroupLearnedCount(i);
+            const groupSize = words.length === 0 ? 0 : end - start + 1;
+            const compDate = groupCompletedDates[`${currentLevel}_${i}`];
+
+            const itemDiv = document.createElement('div');
+            itemDiv.className = `group-picker-item ${i === currentGroupIndex ? 'active' : ''} ${completed ? 'completed' : ''}`;
+            
+            let badgeHTML = '';
+            if (completed) {
+              const tagText = compDate ? formatCompletionTag(compDate) : `${learnedCount}/${groupSize}`;
+              badgeHTML = `<span class="group-picker-badge completed">🎉 ${tagText}</span>`;
+            } else {
+              badgeHTML = `<span class="group-picker-badge in-progress">${learnedCount}/${groupSize} từ</span>`;
+            }
+
+            itemDiv.innerHTML = `
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size: 14px; font-weight: 700;">${completed ? '✅' : (i === currentGroupIndex ? '▶' : '📁')}</span>
+                <div>
+                  <div style="font-size: 13.5px; font-weight: 700;">Nhóm ${i + 1} (${start} - ${end} từ)</div>
+                </div>
+              </div>
+              ${badgeHTML}
+            `;
+
+            itemDiv.addEventListener('click', () => {
+              currentGroupIndex = i;
+              selectGroupEl.value = i;
+              resetShuffleState();
+              renderGroupDropdown();
+              renderVocabList();
+              const modal = document.getElementById('groupPickerModal');
+              if (modal) modal.classList.remove('active');
+            });
+
+            listContainer.appendChild(itemDiv);
+          });
         }
       }
 
@@ -3166,6 +3258,37 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         });
       }
 
+      // Group Picker Subtabs (All Groups vs Completed Oldest First)
+      const subtabPickerAll = document.getElementById('subtabPickerAll');
+      const subtabPickerOldest = document.getElementById('subtabPickerOldest');
+      if (subtabPickerAll && subtabPickerOldest) {
+        subtabPickerAll.addEventListener('click', () => {
+          groupPickerTabMode = 'all';
+          subtabPickerAll.style.background = 'white';
+          subtabPickerAll.style.color = 'var(--primary-color)';
+          subtabPickerAll.style.boxShadow = '0 2px 5px rgba(0,0,0,0.05)';
+
+          subtabPickerOldest.style.background = 'transparent';
+          subtabPickerOldest.style.color = '#6b7280';
+          subtabPickerOldest.style.boxShadow = 'none';
+
+          renderGroupDropdown();
+        });
+
+        subtabPickerOldest.addEventListener('click', () => {
+          groupPickerTabMode = 'oldest';
+          subtabPickerOldest.style.background = 'white';
+          subtabPickerOldest.style.color = 'var(--primary-color)';
+          subtabPickerOldest.style.boxShadow = '0 2px 5px rgba(0,0,0,0.05)';
+
+          subtabPickerAll.style.background = 'transparent';
+          subtabPickerAll.style.color = '#6b7280';
+          subtabPickerAll.style.boxShadow = 'none';
+
+          renderGroupDropdown();
+        });
+      }
+
       // Shuffle Words Toggle Button
       const btnShuffleWords = document.getElementById('btnShuffleWords');
       if (btnShuffleWords) {
@@ -3339,7 +3462,8 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
               customGroups: safeGetJSON('hsk_custom_groups', []),
               upgradeWords: safeGetJSON('hsk_upgrade_words', []),
               userProgress: safeGetJSON('hsk_user_progress', {}),
-              aiCache: safeGetJSON('hsk_ai_cache', {})
+              aiCache: safeGetJSON('hsk_ai_cache', {}),
+              groupCompletedDates: safeGetJSON('hsk_group_completed_dates', {})
             };
 
             const jsonStr = JSON.stringify(backupPayload, null, 2);
@@ -3400,6 +3524,11 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
               if (parsed.aiCache && typeof parsed.aiCache === 'object') {
                 Object.assign(aiCache, parsed.aiCache);
                 localStorage.setItem('hsk_ai_cache', JSON.stringify(aiCache));
+              }
+
+              if (parsed.groupCompletedDates && typeof parsed.groupCompletedDates === 'object') {
+                groupCompletedDates = parsed.groupCompletedDates;
+                localStorage.setItem('hsk_group_completed_dates', JSON.stringify(groupCompletedDates));
               }
 
               updateCustomLevelTabCount();
