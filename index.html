@@ -861,6 +861,10 @@
     }
 
     /* Reading Passage Interactive Reader Styles */
+    #readingViewModal {
+      z-index: 1050 !important;
+    }
+
     .reading-passage-box {
       background: #fbf9fe;
       border: 1px solid #e8e1f2;
@@ -3998,6 +4002,8 @@ Lưu ý quan trọng:
       }
 
       activeReadingArticleId = articleId;
+
+      if (readingInputModal) readingInputModal.classList.remove('active');
       resetModalScroll(readingViewModal);
       if (readingTokenDrawer) readingTokenDrawer.style.display = 'none';
 
@@ -4285,6 +4291,22 @@ Lưu ý quan trọng:
       if (btnCloseReadingViewModal) {
         btnCloseReadingViewModal.addEventListener('click', () => {
           readingViewModal.classList.remove('active');
+        });
+      }
+
+      if (readingInputModal) {
+        readingInputModal.addEventListener('click', (e) => {
+          if (e.target === readingInputModal) {
+            readingInputModal.classList.remove('active');
+          }
+        });
+      }
+
+      if (readingViewModal) {
+        readingViewModal.addEventListener('click', (e) => {
+          if (e.target === readingViewModal) {
+            readingViewModal.classList.remove('active');
+          }
         });
       }
 
