@@ -2137,6 +2137,8 @@
               currentGroupIndex = i;
               selectGroupEl.value = i;
               resetShuffleState();
+              saveCurrentState();
+              updateGroupWordsState();
               renderGroupDropdown();
               renderVocabList();
               const modal = document.getElementById('groupPickerModal');
@@ -4170,6 +4172,7 @@ Lưu ý quan trọng:
         resetShuffleState();
         saveCurrentState();
         updateGroupWordsState();
+        renderGroupDropdown();
         renderVocabList();
       });
 
