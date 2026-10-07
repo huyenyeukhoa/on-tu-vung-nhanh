@@ -3734,8 +3734,12 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       btnAnalyzeReadingText.disabled = true;
       btnAnalyzeReadingText.innerHTML = `<img src="./loading.gif" style="width: 18px; height: 18px;" /> <span>AI đang phân tích & bóc tách từ...</span>`;
 
-      const prompt = `Bạn là chuyên gia dịch thuật và bóc tách từ vựng tiếng Trung cao cấp. Hãy phân tích đoạn văn sau và:
-1) TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT NGẮN GỌN (CHỈ DÀI TỪ 2 ĐẾN 5 TỪ, ví dụ: "Kinh Tế Tân Hoa Xã", "Truyện Tái Ông Thất Mã", "Du Lịch Bắc Kinh", "Học Tiếng Trung"). TUYỆT ĐỐI KHÔNG ĐẶT TIÊU ĐỀ DÀI DÒNG VÀ KHÔNG ĐỂ RỖNG.
+      const prompt = `Bạn là chuyên gia dịch thuật và biên tập báo chí Tiếng Việt cao cấp. Hãy phân tích đoạn văn sau và:
+1) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ, ĐÚNG VĂN PHONG TIẾNG VIỆT (dài từ 3 đến 6 từ, ví dụ: "Hợp Tác Đa Phương Việt Nam", "Ngoại Giao Khu Vực APEC", "Kinh Tế Và Du Lịch Tân Hoa Xã", "Truyện Tái Ông Thất Mã").
+   LƯU Ý CỰC KỲ QUAN TRỌNG VỀ ĐẶT TIÊU ĐỀ:
+   - Phải giữ trọn vẹn danh từ riêng và từ ghép tiếng Việt (ví dụ: "Việt Nam", "Trung Quốc", "Đông Nam Á"). TUYỆT ĐỐI KHÔNG ngắt cụt từ kiểu "Việt" hay "Trung".
+   - Tiêu đề phải đọc xuôi tai, mượt mà và chính xác ý nghĩa chính của bài đọc.
+
 2) Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo đúng ngắt đoạn của bản gốc. Với MỖI ĐOẠN VĂN:
    - Dịch toàn bộ đoạn đó sang TIẾNG VIỆT mượt mà, chuẩn văn phong tiếng Việt.
    - Phân tách các từ/cụm từ chuẩn ngữ pháp tiếng Trung trong đoạn kèm Pinyin và Nghĩa tiếng Việt.
@@ -3747,7 +3751,7 @@ ${rawText}
 
 Yêu cầu định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 {
-  "title": "Tiêu đề tiếng Việt ngắn gọn (chỉ từ 2 đến 5 từ)",
+  "title": "Tiêu đề tiếng Việt tự nhiên mượt mà (3 đến 6 từ)",
   "paragraphs": [
     {
       "vietnamese": "Dịch nghĩa tiếng Việt mượt mà đầy đủ của đoạn 1",
@@ -3763,7 +3767,7 @@ Yêu cầu định dạng JSON trả về thuần tuý (KHÔNG bọc trong markd
   ]
 }
 Lưu ý quan trọng:
-- Tiêu đề "title": BẮT BUỘC bằng TIẾNG VIỆT, NGẮN GỌN CHỈ 2 ĐẾN 5 TỪ.
+- Tiêu đề "title": BẮT BUỘC DÙNG TIẾNG VIỆT CHUẨN, MƯỢT MÀ, TỰ NHIÊN, KHÔNG CẮT CỤT TỪ (ví dụ: "Hợp Tác Đa Phương Việt Nam").
 - Bản dịch "vietnamese" của từng đoạn: BẮT BUỘC DỊCH TIẾNG VIỆT ĐẦY ĐỦ, MƯỢT MÀ VÀ CHUẨN NGHĨA.
 - Giữ nguyên toàn bộ nội dung bài đọc ban đầu theo đúng thứ tự văn bản gốc.`;
 
@@ -3821,10 +3825,7 @@ Lưu ý quan trọng:
         }
 
         if (aiAutoTitle) {
-          const parts = aiAutoTitle.split(/\s+/);
-          if (parts.length > 5) {
-            aiAutoTitle = parts.slice(0, 5).join(' ');
-          }
+          aiAutoTitle = aiAutoTitle.replace(/^["'“`]+|["'”`]+$/g, '').trim();
         }
 
         const newArticleId = 'art_' + Date.now();
