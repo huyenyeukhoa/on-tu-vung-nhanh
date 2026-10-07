@@ -860,6 +860,71 @@
       border-bottom: none;
     }
 
+    /* Reading Passage Interactive Reader Styles */
+    .reading-passage-box {
+      background: #fbf9fe;
+      border: 1px solid #e8e1f2;
+      border-radius: 16px;
+      padding: 16px 18px;
+      font-family: var(--font-hanzi);
+      font-size: 19px;
+      line-height: 2.15;
+      color: #1f2937;
+      word-break: break-all;
+    }
+
+    .reading-token {
+      display: inline-block;
+      padding: 1px 4px;
+      margin: 1px 1px;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #f0e8f8;
+      color: #3c2e54;
+      border: 1px solid #dfd3ee;
+      transition: all 0.15s ease;
+      font-weight: 500;
+    }
+
+    .reading-token:hover, .reading-token:active {
+      background: #dcd0ef;
+      transform: translateY(-1px);
+    }
+
+    .reading-token.selected {
+      background: linear-gradient(135deg, #8772a8 0%, #6f5992 100%);
+      color: #ffffff !important;
+      border-color: #6f5992;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(135,114,168,0.35);
+    }
+
+    .reading-token.selected::after {
+      content: ' ✓';
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .token-popover-drawer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border-top: 1.5px solid #e2d8ef;
+      box-shadow: 0 -8px 24px rgba(0,0,0,0.15);
+      padding: 14px 18px 16px 18px;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      z-index: 100;
+      animation: slideUpDrawer 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUpDrawer {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
     .example-hanzi {
       font-family: var(--font-hanzi);
       font-size: 17.5px;
@@ -1037,6 +1102,7 @@
     <div class="header-right">
       <button class="icon-action-btn" id="btnPwaInstallHeader" title="Cài đặt ứng dụng vào điện thoại" style="display:none;">📲</button>
       <button class="icon-action-btn" id="btnOpenLibrary" title="Thư viện tra cứu & Đánh dấu tiến độ">📚</button>
+      <button class="icon-action-btn" id="btnOpenReadingMode" title="Học từ vựng qua bài đọc">📖</button>
       <button class="icon-action-btn" id="btnOpenCustomGroups" title="Tạo nhóm từ riêng & AI điền">📁</button>
       <button class="icon-action-btn" id="btnApiKey" title="cài đặt OpenRouter API Key">🔑</button>
       <button class="icon-action-btn" id="btnTogglePanel" title="hiện/ẩn tùy chỉnh toolbar">⚙️</button>
@@ -1367,6 +1433,82 @@
           <div style="font-weight: 700; margin-bottom: 2px;" id="preloadStatusText">Đang nạp AI...</div>
           <div style="font-size: 11.5px; color: #6b7280;" id="preloadStatusSubText">0 / 0 từ</div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reading Passage Input & AI Tokenizer Modal -->
+  <div class="modal-overlay" id="readingInputModal">
+    <div class="modal-card" style="max-width: 520px; max-height: 90vh;">
+      <div class="modal-header">
+        <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color);">📖 Học từ vựng từ bài đọc</div>
+        <button class="modal-close-btn" id="btnCloseReadingInputModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: #f3eef9; padding: 12px; border-radius: 12px; margin-bottom: 14px; border: 1px solid #e2d8ef;">
+          <div style="font-size: 13px; font-weight: 700; color: #766299; margin-bottom: 4px;">💡 Hướng dẫn:</div>
+          <div style="font-size: 12.5px; color: #4b5563; line-height: 1.5;">Dán bài báo, đoạn truyện hoặc đoạn văn tiếng Trung vào đây. AI sẽ tự động phân tích và tách từ. Bạn chỉ cần chạm vào từ trong bài đọc để thêm vào danh sách học!</div>
+        </div>
+
+        <label style="font-size: 12.5px; font-weight: 700; color: #374151;">Tên bài đọc / Tiêu đề:</label>
+        <input type="text" id="readingTitleInput" class="input-field" placeholder="Ví dụ: Báo Tân Hoa Xã - Kinh tế hoặc Truyện 塞翁失马" style="margin-top: 4px; margin-bottom: 12px;" />
+
+        <label style="font-size: 12.5px; font-weight: 700; color: #374151;">Đoạn văn tiếng Trung (chữ Hán):</label>
+        <textarea id="readingTextInput" class="input-field" placeholder="Dán văn bản tiếng Trung vào đây..." style="height: 160px; margin-top: 4px; margin-bottom: 14px; font-family: var(--font-hanzi); font-size: 16px; line-height: 1.6; resize: vertical;"></textarea>
+
+        <button class="primary-submit-btn" id="btnAnalyzeReadingText" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 700; border-radius: 14px; margin-bottom: 18px;">
+          ⚡ AI Phân Tách & Tách Từ Bài Đọc
+        </button>
+
+        <div style="font-size: 13.5px; font-weight: 700; color: #766299; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <span>📚 Danh sách bài đọc đã lưu:</span>
+          <span id="readingArticlesCount" style="font-size: 12px; color: #6b7280; font-weight: normal;">(0 bài)</span>
+        </div>
+        <div id="savedReadingArticlesList" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+          <!-- Saved articles list rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Reading Passage View Modal -->
+  <div class="modal-overlay" id="readingViewModal">
+    <div class="modal-card" style="max-width: 600px; max-height: 92vh; width: 95%; position: relative;">
+      <div class="modal-header">
+        <div class="modal-title" id="readingViewModalTitle" style="font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📖 Đọc bài khóa</div>
+        <button class="modal-close-btn" id="btnCloseReadingViewModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding-bottom: 80px; position: relative;">
+        <!-- Action bar top inside reader -->
+        <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+          <button class="secondary-btn" id="btnSelectAllReadingTokens" style="flex: 1; padding: 7px 10px; font-size: 12.5px; border-radius: 10px; border: 1px solid #8772a8; color: #8772a8; font-weight: 600;">⚡ Thêm tất cả từ vào list</button>
+          <button class="primary-submit-btn" id="btnOpenStudyGroupFromReading" style="flex: 1; padding: 7px 10px; font-size: 12.5px; border-radius: 10px;">📝 Học nhóm từ bài này (2 cột)</button>
+        </div>
+
+        <div style="font-size: 12px; color: #6b7280; margin-bottom: 10px; text-align: center;">
+          💡 <i>Chạm vào từ để xem Pinyin/Nghĩa & bôi tím từ để đưa vào list ôn tập!</i>
+        </div>
+
+        <!-- Passage Container -->
+        <div id="readingPassageContainer" class="reading-passage-box">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Bottom Inspector Drawer for Tapped Token -->
+      <div id="readingTokenDrawer" class="token-popover-drawer" style="display: none;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="drawerHanzi" style="font-family: var(--font-hanzi); font-size: 24px; font-weight: 700; color: #111827;"></span>
+            <span id="drawerPinyin" style="font-size: 14px; font-weight: 700; color: var(--primary-color);"></span>
+            <button class="icon-action-btn" id="btnSpeakDrawerWord" style="padding: 2px 6px; font-size: 14px;" title="Nghe phát âm">🔊</button>
+          </div>
+          <button id="btnCloseTokenDrawer" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #9ca3af;">✕</button>
+        </div>
+        <div id="drawerMeaning" style="font-size: 13.5px; color: #374151; margin-bottom: 10px; line-height: 1.4;"></div>
+        <button id="btnToggleWordInReviewList" class="primary-submit-btn" style="width: 100%; padding: 9px; font-size: 13px; font-weight: 700; border-radius: 12px;">
+          ➕ Thêm vào list ôn tập bài này
+        </button>
       </div>
     </div>
   </div>
@@ -3456,6 +3598,380 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
       // Shuffle Words Toggle Button
       const btnShuffleWords = document.getElementById('btnShuffleWords');
+
+    // ==========================================
+    // READING PASSAGE VOCABULARY LEARNER LOGIC
+    // ==========================================
+    let readingArticles = safeGetJSON('hsk_reading_articles', []);
+    if (!Array.isArray(readingArticles)) readingArticles = [];
+    let activeReadingArticleId = null;
+
+    const btnOpenReadingMode = document.getElementById('btnOpenReadingMode');
+    const readingInputModal = document.getElementById('readingInputModal');
+    const btnCloseReadingInputModal = document.getElementById('btnCloseReadingInputModal');
+    const readingTitleInput = document.getElementById('readingTitleInput');
+    const readingTextInput = document.getElementById('readingTextInput');
+    const btnAnalyzeReadingText = document.getElementById('btnAnalyzeReadingText');
+    const savedReadingArticlesList = document.getElementById('savedReadingArticlesList');
+    const readingArticlesCount = document.getElementById('readingArticlesCount');
+
+    const readingViewModal = document.getElementById('readingViewModal');
+    const btnCloseReadingViewModal = document.getElementById('btnCloseReadingViewModal');
+    const readingViewModalTitle = document.getElementById('readingViewModalTitle');
+    const readingPassageContainer = document.getElementById('readingPassageContainer');
+    const btnSelectAllReadingTokens = document.getElementById('btnSelectAllReadingTokens');
+    const btnOpenStudyGroupFromReading = document.getElementById('btnOpenStudyGroupFromReading');
+
+    const readingTokenDrawer = document.getElementById('readingTokenDrawer');
+    const drawerHanzi = document.getElementById('drawerHanzi');
+    const drawerPinyin = document.getElementById('drawerPinyin');
+    const drawerMeaning = document.getElementById('drawerMeaning');
+    const btnSpeakDrawerWord = document.getElementById('btnSpeakDrawerWord');
+    const btnToggleWordInReviewList = document.getElementById('btnToggleWordInReviewList');
+    const btnCloseTokenDrawer = document.getElementById('btnCloseTokenDrawer');
+
+    let activeTokenItem = null;
+
+    // Render Saved Articles List inside Input Modal
+    function renderSavedReadingArticles() {
+      if (!savedReadingArticlesList) return;
+      if (!readingArticlesCount) return;
+      readingArticlesCount.textContent = `(${readingArticles.length} bài)`;
+
+      if (readingArticles.length === 0) {
+        savedReadingArticlesList.innerHTML = `
+          <div style="padding: 16px; text-align: center; color: #9ca3af; font-size: 13px; background: #f9fafb; border-radius: 12px; border: 1px dashed #e5e7eb;">
+            Chưa có bài đọc nào. Hãy dán bài văn tiếng Trung ở trên để AI bóc tách từ nhé!
+          </div>
+        `;
+        return;
+      }
+
+      savedReadingArticlesList.innerHTML = readingArticles.map((art) => {
+        const selectedCount = art.selectedWords ? art.selectedWords.length : 0;
+        return `
+          <div style="padding: 10px 12px; background: #ffffff; border: 1px solid #e2d8ef; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 13.5px; font-weight: 700; color: #111827; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                📖 ${art.title}
+              </div>
+              <div style="font-size: 11.5px; color: #6b7280; margin-top: 2px;">
+                Đã chọn <b>${selectedCount}</b> từ ôn • Ngày: ${art.createdAt || 'Mới'}
+              </div>
+            </div>
+            <div style="display: flex; gap: 6px; flex-shrink: 0;">
+              <button class="primary-submit-btn" onclick="openReadingViewModal('${art.id}')" style="padding: 5px 9px; font-size: 11.5px; border-radius: 8px;">👁️ Đọc bài</button>
+              <button class="secondary-btn" onclick="openStudyGroupFromReading('${art.id}')" style="padding: 5px 9px; font-size: 11.5px; border-radius: 8px; border: 1px solid #8772a8; color: #8772a8;">📝 Học 2 cột</button>
+              <button class="icon-action-btn" onclick="deleteReadingArticle('${art.id}')" style="padding: 4px 6px; font-size: 13px; color: #ef4444;" title="Xóa bài đọc">🗑️</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // AI Tokenize Chinese Reading Passage via Gemini 2.5 Flash
+    async function analyzeReadingPassageWithAi() {
+      const apiKey = localStorage.getItem('openrouter_api_key');
+      if (!apiKey) {
+        apiKeyModal.classList.add('active');
+        showToast('Vui lòng nhập OpenRouter API Key!');
+        return;
+      }
+
+      const title = (readingTitleInput.value || '').trim();
+      const rawText = (readingTextInput.value || '').trim();
+
+      if (!rawText) {
+        showToast('Vui lòng nhập hoặc dán đoạn văn tiếng Trung!');
+        return;
+      }
+
+      btnAnalyzeReadingText.disabled = true;
+      btnAnalyzeReadingText.innerHTML = `<img src="./loading.gif" style="width: 18px; height: 18px;" /> <span>AI đang phân tích & bóc tách từ...</span>`;
+
+      const prompt = `Bạn là chuyên gia bóc tách từ vựng tiếng Trung. Hãy phân tích đoạn văn sau và phân tách thành một danh sách JSON của các từ/cụm từ chuẩn ngữ pháp tiếng Trung theo đúng thứ tự xuất hiện trong văn bản.
+
+Tiêu đề: "${title || 'Bài đọc'}"
+Đoạn văn:
+"""
+${rawText}
+"""
+
+Yêu cầu định dạng JSON trả về (KHÔNG bọc trong markdown \`\`\`json):
+[
+  {
+    "hanzi": "chữ Hán của từ hoặc cụm từ",
+    "pinyin": "phiên âm Pinyin có dấu giọng",
+    "vietnamese": "nghĩa tiếng Việt chuẩn trong ngữ cảnh bài đọc",
+    "isVocab": true (đặt true cho các từ/cụm từ vựng Hán ngữ có nghĩa, đặt false cho dấu câu như ，。！？ hoặc khoảng trắng)
+  },
+  ...
+]
+Lưu ý quan trọng:
+- Phân tích chính xác cụm từ cố định hoặc thành ngữ thay vì xé nhỏ thành chữ Hán đơn lẻ không có nghĩa độc lập.
+- Giữ nguyên toàn bộ nội dung bài đọc ban đầu theo đúng thứ tự văn bản gốc.`;
+
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.href,
+            'X-Title': 'HSK Vocab App'
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [{ role: 'user', content: prompt }]
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error?.message || `Lỗi HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        let content = data.choices?.[0]?.message?.content || '[]';
+        content = content.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
+
+        const parsedTokens = JSON.parse(content);
+        if (!Array.isArray(parsedTokens) || parsedTokens.length === 0) {
+          throw new Error('Dữ liệu phân tích không hợp lệ.');
+        }
+
+        const newArticleId = 'art_' + Date.now();
+        const articleTitle = title || `Bài đọc ${readingArticles.length + 1}`;
+        const articleObj = {
+          id: newArticleId,
+          title: articleTitle,
+          rawText,
+          tokens: parsedTokens,
+          selectedWords: [],
+          createdAt: new Date().toLocaleDateString('vi-VN')
+        };
+
+        readingArticles.unshift(articleObj);
+        localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+
+        // Create matching custom group for study list 2-column
+        const customGroupId = 'custom_' + newArticleId;
+        if (!customGroups.some(g => g.id === customGroupId)) {
+          customGroups.push({
+            id: customGroupId,
+            name: `📖 ${articleTitle}`,
+            words: []
+          });
+          localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+        }
+
+        readingTextInput.value = '';
+        readingTitleInput.value = '';
+
+        if (readingInputModal) readingInputModal.classList.remove('active');
+        openReadingViewModal(newArticleId);
+        showToast('🎉 Phân tích bài đọc thành công! Chạm vào từ để chọn ôn tập.');
+      } catch (err) {
+        console.error('Reading AI analysis error:', err);
+        showToast(`❌ Lỗi AI: ${err.message}`);
+      } finally {
+        btnAnalyzeReadingText.disabled = false;
+        btnAnalyzeReadingText.innerHTML = `⚡ AI Phân Tách & Tách Từ Bài Đọc`;
+      }
+    }
+
+    // Open Interactive Reading Passage Viewer
+    function openReadingViewModal(articleId) {
+      const art = readingArticles.find(a => a.id === articleId);
+      if (!art) {
+        showToast('Không tìm thấy bài đọc!');
+        return;
+      }
+
+      activeReadingArticleId = articleId;
+      resetModalScroll(readingViewModal);
+      if (readingTokenDrawer) readingTokenDrawer.style.display = 'none';
+
+      readingViewModalTitle.textContent = `📖 ${art.title}`;
+      renderReadingPassageContent(art);
+
+      readingViewModal.classList.add('active');
+    }
+
+    // Render interactive HTML passage content
+    function renderReadingPassageContent(art) {
+      if (!readingPassageContainer) return;
+
+      const selectedMap = new Set((art.selectedWords || []).map(w => w.hanzi));
+
+      const tokensHTML = (art.tokens || []).map((tok, idx) => {
+        if (!tok.isVocab) {
+          const formattedPunct = (tok.hanzi || '').replace(/\n/g, '<br/>');
+          return `<span>${formattedPunct}</span>`;
+        }
+
+        const isSelected = selectedMap.has(tok.hanzi);
+        const selectedClass = isSelected ? 'selected' : '';
+
+        return `<span class="reading-token ${selectedClass}" data-index="${idx}" onclick="handleReadingTokenClick('${art.id}', ${idx})">${tok.hanzi}</span>`;
+      }).join('');
+
+      readingPassageContainer.innerHTML = tokensHTML;
+    }
+
+    // Token clicked inside Interactive Reader
+    function handleReadingTokenClick(articleId, tokenIndex) {
+      const art = readingArticles.find(a => a.id === articleId);
+      if (!art || !art.tokens || !art.tokens[tokenIndex]) return;
+
+      const tok = art.tokens[tokenIndex];
+      activeTokenItem = tok;
+
+      drawerHanzi.textContent = tok.hanzi;
+      drawerPinyin.textContent = tok.pinyin || '';
+      drawerMeaning.textContent = `Nghĩa: ${tok.vietnamese || ''}`;
+      btnSpeakDrawerWord.onclick = () => speakChinese(tok.hanzi);
+
+      const isSelected = (art.selectedWords || []).some(w => w.hanzi === tok.hanzi);
+      updateDrawerButtonState(isSelected);
+
+      btnToggleWordInReviewList.onclick = () => toggleWordInReadingArticle(articleId, tok);
+
+      if (readingTokenDrawer) readingTokenDrawer.style.display = 'block';
+    }
+
+    // Update Drawer Button Visual State
+    function updateDrawerButtonState(isSelected) {
+      if (!btnToggleWordInReviewList) return;
+      if (isSelected) {
+        btnToggleWordInReviewList.style.background = '#6b7280';
+        btnToggleWordInReviewList.innerHTML = '✓ Đã có trong list ôn (Chạm để bỏ)';
+      } else {
+        btnToggleWordInReviewList.style.background = '#8772a8';
+        btnToggleWordInReviewList.innerHTML = '➕ Thêm vào list ôn tập bài này';
+      }
+    }
+
+    // Toggle word in reading article review list & sync to customGroup
+    function toggleWordInReadingArticle(articleId, tok) {
+      const art = readingArticles.find(a => a.id === articleId);
+      if (!art) return;
+
+      if (!art.selectedWords) art.selectedWords = [];
+      const idx = art.selectedWords.findIndex(w => w.hanzi === tok.hanzi);
+
+      let customGroup = customGroups.find(g => g.id === 'custom_' + articleId);
+      if (!customGroup) {
+        customGroup = { id: 'custom_' + articleId, name: `📖 ${art.title}`, words: [] };
+        customGroups.push(customGroup);
+      }
+
+      if (idx >= 0) {
+        art.selectedWords.splice(idx, 1);
+        if (customGroup.words) {
+          customGroup.words = customGroup.words.filter(w => w.hanzi !== tok.hanzi);
+        }
+        showToast(`🗑️ Đã bỏ "${tok.hanzi}" khỏi list ôn!`);
+        updateDrawerButtonState(false);
+      } else {
+        const wordObj = {
+          hanzi: tok.hanzi,
+          pinyin: tok.pinyin,
+          pos: 'từ vựng',
+          vietnamese: tok.vietnamese
+        };
+        art.selectedWords.push(wordObj);
+        if (!customGroup.words) customGroup.words = [];
+        if (!customGroup.words.some(w => w.hanzi === tok.hanzi)) {
+          customGroup.words.push(wordObj);
+        }
+        showToast(`➕ Đã thêm "${tok.hanzi}" vào list ôn!`);
+        updateDrawerButtonState(true);
+      }
+
+      localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+      localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+
+      renderReadingPassageContent(art);
+    }
+
+    // Bulk Add All Vocab Tokens in Reading Passage
+    function selectAllReadingTokens(articleId) {
+      const art = readingArticles.find(a => a.id === articleId);
+      if (!art || !art.tokens) return;
+
+      if (!art.selectedWords) art.selectedWords = [];
+
+      let customGroup = customGroups.find(g => g.id === 'custom_' + articleId);
+      if (!customGroup) {
+        customGroup = { id: 'custom_' + articleId, name: `📖 ${art.title}`, words: [] };
+        customGroups.push(customGroup);
+      }
+      if (!customGroup.words) customGroup.words = [];
+
+      let addedCount = 0;
+      art.tokens.forEach(tok => {
+        if (tok.isVocab && tok.hanzi) {
+          if (!art.selectedWords.some(w => w.hanzi === tok.hanzi)) {
+            const wordObj = { hanzi: tok.hanzi, pinyin: tok.pinyin, pos: 'từ vựng', vietnamese: tok.vietnamese };
+            art.selectedWords.push(wordObj);
+            customGroup.words.push(wordObj);
+            addedCount++;
+          }
+        }
+      });
+
+      localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+      localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+
+      renderReadingPassageContent(art);
+      showToast(`⚡ Đã thêm ${addedCount} từ vựng vào list ôn!`);
+    }
+
+    // Jump from Reading View directly to 2-Column Study View
+    function openStudyGroupFromReading(articleId) {
+      const art = readingArticles.find(a => a.id === articleId);
+      if (!art) return;
+
+      const customGroupId = 'custom_' + articleId;
+      let group = customGroups.find(g => g.id === customGroupId);
+      if (!group) {
+        group = { id: customGroupId, name: `📖 ${art.title}`, words: art.selectedWords || [] };
+        customGroups.push(group);
+        localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+      }
+
+      currentLevel = 'custom';
+      currentCustomGroupId = customGroupId;
+      currentGroupIndex = 0;
+
+      if (readingViewModal) readingViewModal.classList.remove('active');
+      if (readingInputModal) readingInputModal.classList.remove('active');
+
+      document.querySelectorAll('.level-tab').forEach(t => {
+        t.classList.toggle('active', t.getAttribute('data-level') === 'custom');
+      });
+
+      updateGroupWordsState();
+      renderGroupDropdown();
+      renderVocabList();
+
+      showToast(`📝 Đang mở giao diện ôn tập 2 cột cho bài: "${art.title}"`);
+    }
+
+    // Delete Saved Reading Article
+    function deleteReadingArticle(articleId) {
+      if (!confirm('Bạn có chắc muốn xóa bài đọc này?')) return;
+
+      readingArticles = readingArticles.filter(a => a.id !== articleId);
+      customGroups = customGroups.filter(g => g.id !== 'custom_' + articleId);
+
+      localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+      localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+
+      renderSavedReadingArticles();
+      showToast('Đã xóa bài đọc!');
+    }
       if (btnShuffleWords) {
         btnShuffleWords.addEventListener('click', toggleShuffle);
       }
@@ -3499,6 +4015,49 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         renderLibraryResults();
         libraryModal.classList.add('active');
       });
+
+      // Open Reading Mode Input Modal
+      if (btnOpenReadingMode) {
+        btnOpenReadingMode.addEventListener('click', () => {
+          renderSavedReadingArticles();
+          resetModalScroll(readingInputModal);
+          readingInputModal.classList.add('active');
+        });
+      }
+
+      if (btnCloseReadingInputModal) {
+        btnCloseReadingInputModal.addEventListener('click', () => {
+          readingInputModal.classList.remove('active');
+        });
+      }
+
+      if (btnAnalyzeReadingText) {
+        btnAnalyzeReadingText.addEventListener('click', analyzeReadingPassageWithAi);
+      }
+
+      if (btnCloseReadingViewModal) {
+        btnCloseReadingViewModal.addEventListener('click', () => {
+          readingViewModal.classList.remove('active');
+        });
+      }
+
+      if (btnCloseTokenDrawer) {
+        btnCloseTokenDrawer.addEventListener('click', () => {
+          if (readingTokenDrawer) readingTokenDrawer.style.display = 'none';
+        });
+      }
+
+      if (btnSelectAllReadingTokens) {
+        btnSelectAllReadingTokens.addEventListener('click', () => {
+          if (activeReadingArticleId) selectAllReadingTokens(activeReadingArticleId);
+        });
+      }
+
+      if (btnOpenStudyGroupFromReading) {
+        btnOpenStudyGroupFromReading.addEventListener('click', () => {
+          if (activeReadingArticleId) openStudyGroupFromReading(activeReadingArticleId);
+        });
+      }
 
       btnCloseLibraryModal.addEventListener('click', () => {
         libraryModal.classList.remove('active');
