@@ -4790,18 +4790,13 @@ Lưu ý quan trọng:
       const voiceObj = QWEN_VOICES.find(v => v.id === voiceId);
       if (!voiceObj) return;
 
-      const oldVoice = getActiveQwenVoice();
-      if (oldVoice !== voiceId) {
-        localStorage.setItem('hsk_qwen_tts_voice', voiceId);
-        qwenAudioCache = {};
-        if (isQwenAudioPlaying || isQwenAudioPaused) {
-          stopReadingPassageAudio(true);
-        }
-      }
+      localStorage.setItem('hsk_qwen_tts_voice', voiceId);
+      qwenAudioCache = {};
+      stopReadingPassageAudio(true);
 
       closeQwenVoicePickerModal();
       showToast(`🎙️ Đã chọn giọng AI: ${voiceObj.id} (${voiceObj.category === 'male' ? 'Nam' : 'Nữ'})`);
-      updateAudioBtnUI(isQwenAudioPlaying, isQwenAudioPaused);
+      updateAudioBtnUI(false, false);
     }
     window.selectQwenVoice = selectQwenVoice;
 
@@ -5091,15 +5086,29 @@ Lưu ý quan trọng:
       utter.lang = 'zh-CN';
       utter.rate = 0.9;
 
-      const voices = window.speechSynthesis.getVoices();
-      const maleVoice = voices.find(v => v.lang.startsWith('zh') && (
-        v.name.includes('Yunxi') ||
-        v.name.includes('Yunyang') ||
-        v.name.includes('Kangkang') ||
-        v.name.toLowerCase().includes('male')
-      )) || voices.find(v => v.lang.startsWith('zh'));
+      const activeVoice = getActiveQwenVoice();
+      const activeVoiceObj = QWEN_VOICES.find(v => v.id === activeVoice) || QWEN_VOICES[0];
+      const isFemale = activeVoiceObj.category === 'female';
 
-      if (maleVoice) utter.voice = maleVoice;
+      const voices = window.speechSynthesis.getVoices();
+      let matchedVoice = null;
+      if (isFemale) {
+        matchedVoice = voices.find(v => v.lang.startsWith('zh') && (
+          v.name.includes('Xiaoxiao') ||
+          v.name.includes('Xiaoyi') ||
+          v.name.includes('Hiuga') ||
+          v.name.toLowerCase().includes('female')
+        )) || voices.find(v => v.lang.startsWith('zh'));
+      } else {
+        matchedVoice = voices.find(v => v.lang.startsWith('zh') && (
+          v.name.includes('Yunxi') ||
+          v.name.includes('Yunyang') ||
+          v.name.includes('Kangkang') ||
+          v.name.toLowerCase().includes('male')
+        )) || voices.find(v => v.lang.startsWith('zh'));
+      }
+
+      if (matchedVoice) utter.voice = matchedVoice;
 
       utter.onend = () => stopReadingPassageAudio(true);
       utter.onerror = () => stopReadingPassageAudio(true);
@@ -5110,13 +5119,19 @@ Lưu ý quan trọng:
       updateAudioBtnUI(true, false);
 
       window.speechSynthesis.speak(utter);
-      showToast('🔊 Đang đọc bài (Giọng Nam Phổ Thông)...');
+      showToast(`🔊 Đang đọc bài (${isFemale ? 'Giọng Nữ' : 'Giọng Nam'} Phổ Thông)...`);
     }
 
     function stopReadingPassageAudio(resetState = true) {
       if (qwenAudioPlayer) {
-        qwenAudioPlayer.pause();
-        if (resetState) qwenAudioPlayer.currentTime = 0;
+        try {
+          qwenAudioPlayer.pause();
+          if (resetState) {
+            qwenAudioPlayer.currentTime = 0;
+            qwenAudioPlayer.removeAttribute('src');
+            qwenAudioPlayer.load();
+          }
+        } catch(e) {}
       }
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel();
