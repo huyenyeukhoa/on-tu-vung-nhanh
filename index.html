@@ -5055,6 +5055,164 @@ ${chunkText}
     let isQwenAudioPaused = false;
     let webSpeechAudioUtterance = null;
 
+    // ==========================================
+    // INDEXEDDB & CACHE STORAGE FOR QWEN AUDIO
+    // (Unlimited device storage for large TTS audio files)
+    // ==========================================
+    const AUDIO_DB_NAME = 'HSK_Audio_DB';
+    const AUDIO_STORE_NAME = 'qwen_audio_files';
+
+    function openAudioDB() {
+      return new Promise((resolve) => {
+        if (!window.indexedDB) return resolve(null);
+        try {
+          const req = indexedDB.open(AUDIO_DB_NAME, 1);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(AUDIO_STORE_NAME)) {
+              db.createObjectStore(AUDIO_STORE_NAME);
+            }
+          };
+          req.onsuccess = (e) => resolve(e.target.result);
+          req.onerror = () => resolve(null);
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    }
+
+    async function saveQwenAudioPersistent(artId, blobOrBase64) {
+      if (!artId) return;
+      const key = String(artId);
+      let blob = null;
+      let base64Str = '';
+
+      if (blobOrBase64 instanceof Blob) {
+        blob = blobOrBase64;
+      } else if (typeof blobOrBase64 === 'string' && blobOrBase64.startsWith('data:')) {
+        base64Str = blobOrBase64;
+        try {
+          const res = await fetch(blobOrBase64);
+          blob = await res.blob();
+        } catch (e) {}
+      }
+
+      if (base64Str) {
+        qwenAudioCache[key] = base64Str;
+      }
+
+      // 1. Save to CacheStorage API
+      if (blob && window.caches) {
+        try {
+          const cache = await caches.open('hsk-qwen-audio-cache-v1');
+          const response = new Response(blob.slice(0, blob.size, 'audio/mp3'), {
+            headers: { 'Content-Type': 'audio/mp3' }
+          });
+          await cache.put(`/qwen_audio_${key}.mp3`, response);
+        } catch (err) {
+          console.warn('CacheStorage put warning:', err);
+        }
+      }
+
+      // 2. Save to IndexedDB
+      if (blob) {
+        try {
+          const db = await openAudioDB();
+          if (db) {
+            const tx = db.transaction(AUDIO_STORE_NAME, 'readwrite');
+            const store = tx.objectStore(AUDIO_STORE_NAME);
+            store.put(blob, key);
+          }
+        } catch (err) {
+          console.warn('IndexedDB put warning:', err);
+        }
+      }
+
+      // 3. Try saving small base64 strings to localStorage (< 150KB)
+      if (base64Str && base64Str.length < 150000) {
+        try {
+          localStorage.setItem('hsk_qwen_audio_cache', JSON.stringify(qwenAudioCache));
+        } catch (e) {
+          console.warn('localStorage audio cache quota reached, using IndexedDB/CacheStorage.');
+        }
+      }
+    }
+
+    async function getQwenAudioPersistent(artId) {
+      if (!artId) return null;
+      const key = String(artId);
+
+      // 1. Check Memory Cache
+      if (qwenAudioCache[key]) {
+        return qwenAudioCache[key];
+      }
+
+      // 2. Check CacheStorage API
+      if (window.caches) {
+        try {
+          const cache = await caches.open('hsk-qwen-audio-cache-v1');
+          const matched = await cache.match(`/qwen_audio_${key}.mp3`);
+          if (matched) {
+            const blob = await matched.blob();
+            if (blob && blob.size > 0) {
+              const objectUrl = URL.createObjectURL(blob);
+              qwenAudioCache[key] = objectUrl;
+              return objectUrl;
+            }
+          }
+        } catch (err) {
+          console.warn('CacheStorage get warning:', err);
+        }
+      }
+
+      // 3. Check IndexedDB
+      try {
+        const db = await openAudioDB();
+        if (db) {
+          const blob = await new Promise((resolve) => {
+            const tx = db.transaction(AUDIO_STORE_NAME, 'readonly');
+            const store = tx.objectStore(AUDIO_STORE_NAME);
+            const req = store.get(key);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => resolve(null);
+          });
+          if (blob && blob instanceof Blob && blob.size > 0) {
+            const objectUrl = URL.createObjectURL(blob);
+            qwenAudioCache[key] = objectUrl;
+            return objectUrl;
+          }
+        }
+      } catch (err) {
+        console.warn('IndexedDB get warning:', err);
+      }
+
+      return null;
+    }
+
+    async function deleteQwenAudioPersistent(artId) {
+      if (!artId) return;
+      const key = String(artId);
+      delete qwenAudioCache[key];
+      try {
+        localStorage.setItem('hsk_qwen_audio_cache', JSON.stringify(qwenAudioCache));
+      } catch (e) {}
+
+      if (window.caches) {
+        try {
+          const cache = await caches.open('hsk-qwen-audio-cache-v1');
+          await cache.delete(`/qwen_audio_${key}.mp3`);
+        } catch (e) {}
+      }
+
+      try {
+        const db = await openAudioDB();
+        if (db) {
+          const tx = db.transaction(AUDIO_STORE_NAME, 'readwrite');
+          tx.objectStore(AUDIO_STORE_NAME).delete(key);
+        }
+      } catch (e) {}
+    }
+
     function getReadingAudioSpeed() {
       const saved = localStorage.getItem('hsk_reading_audio_speed');
       const parsed = parseFloat(saved);
@@ -5231,10 +5389,12 @@ ${chunkText}
       stopReadingPassageAudio(false);
       updateAudioBtnUI(true, false);
 
-      const cachedAudio = qwenAudioCache[art.id] || art.audioUrl;
+      let cachedAudio = await getQwenAudioPersistent(art.id);
+      if (!cachedAudio && art.audioUrl) {
+        cachedAudio = art.audioUrl;
+      }
+
       if (cachedAudio) {
-        qwenAudioCache[art.id] = cachedAudio;
-        art.audioUrl = cachedAudio;
         playQwenAudioUrl(cachedAudio);
         return;
       }
@@ -5281,10 +5441,7 @@ ${chunkText}
               const base64Audio = resData.choices?.[0]?.message?.audio?.data;
               if (base64Audio) {
                 const audioUrl = `data:audio/mp3;base64,${base64Audio}`;
-                qwenAudioCache[art.id] = audioUrl;
-                art.audioUrl = audioUrl;
-                localStorage.setItem('hsk_qwen_audio_cache', JSON.stringify(qwenAudioCache));
-                localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+                await saveQwenAudioPersistent(art.id, audioUrl);
                 if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
                 playQwenAudioUrl(audioUrl);
                 return;
@@ -5292,21 +5449,11 @@ ${chunkText}
             }
           } else {
             const blob = await response.blob();
-            const base64Url = await new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result);
-              reader.onerror = reject;
-              reader.readAsDataURL(blob);
-            });
-            if (base64Url) {
-              qwenAudioCache[art.id] = base64Url;
-              art.audioUrl = base64Url;
-              localStorage.setItem('hsk_qwen_audio_cache', JSON.stringify(qwenAudioCache));
-              localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
-              if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
-              playQwenAudioUrl(base64Url);
-              return;
-            }
+            await saveQwenAudioPersistent(art.id, blob);
+            const playUrl = await getQwenAudioPersistent(art.id);
+            if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+            playQwenAudioUrl(playUrl || URL.createObjectURL(blob));
+            return;
           }
         } catch (apiErr) {
           console.warn('Qwen TTS API fetch warning, fallback to Neural Male Voice:', apiErr);
@@ -5692,12 +5839,11 @@ ${chunkText}
       if (!confirm('Bạn có chắc muốn xóa bài đọc này? (Từ vựng đã lưu vẫn được giữ nguyên)')) return;
 
       readingArticles = readingArticles.filter(a => a.id !== articleId);
-      if (qwenAudioCache && qwenAudioCache[articleId]) {
-        delete qwenAudioCache[articleId];
-        localStorage.setItem('hsk_qwen_audio_cache', JSON.stringify(qwenAudioCache));
-      }
+      deleteQwenAudioPersistent(articleId);
 
-      localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+      try {
+        localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+      } catch(e) {}
       if (typeof triggerDebouncedCloudSave === 'function') {
         triggerDebouncedCloudSave();
       }
