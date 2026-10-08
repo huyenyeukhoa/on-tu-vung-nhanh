@@ -2279,6 +2279,7 @@
         aiCache: aiCache || {},
         groupCompletedDates: groupCompletedDates || {},
         readingArticles: readingArticles || [],
+        qwenAudioCache: qwenAudioCache || {},
         openrouter_api_key: localStorage.getItem('openrouter_api_key') || '',
         reading_audio_speed: localStorage.getItem('hsk_reading_audio_speed') || '1.0',
         updated_at: new Date().toISOString()
@@ -2428,6 +2429,10 @@
           if (rowData.groupCompletedDates && typeof rowData.groupCompletedDates === 'object') {
             Object.assign(groupCompletedDates, rowData.groupCompletedDates);
             localStorage.setItem('hsk_group_completed_dates', JSON.stringify(groupCompletedDates));
+          }
+          if (rowData.qwenAudioCache && typeof rowData.qwenAudioCache === 'object') {
+            qwenAudioCache = Object.assign({}, rowData.qwenAudioCache, qwenAudioCache);
+            localStorage.setItem('hsk_qwen_audio_cache', JSON.stringify(qwenAudioCache));
           }
           if (rowData.openrouter_api_key && !localStorage.getItem('openrouter_api_key')) {
             localStorage.setItem('openrouter_api_key', rowData.openrouter_api_key);
@@ -5045,7 +5050,7 @@ ${chunkText}
     // FULL PASSAGE AUDIO PLAYER & SPEED CONTROLLER
     // ==========================================
     let qwenAudioPlayer = new Audio();
-    let qwenAudioCache = {};
+    let qwenAudioCache = safeGetJSON('hsk_qwen_audio_cache', {});
     let isQwenAudioPlaying = false;
     let isQwenAudioPaused = false;
     let webSpeechAudioUtterance = null;
@@ -5225,12 +5230,16 @@ ${chunkText}
 
       stopReadingPassageAudio(false);
       updateAudioBtnUI(true, false);
-      showToast(`🔊 AI Qwen (Giọng Nam loongjohn - ${speed}x) đang tải âm thanh...`);
 
-      if (qwenAudioCache[art.id]) {
-        playQwenAudioUrl(qwenAudioCache[art.id]);
+      const cachedAudio = qwenAudioCache[art.id] || art.audioUrl;
+      if (cachedAudio) {
+        qwenAudioCache[art.id] = cachedAudio;
+        art.audioUrl = cachedAudio;
+        playQwenAudioUrl(cachedAudio);
         return;
       }
+
+      showToast(`🔊 AI Qwen (Giọng Nam loongjohn - ${speed}x) đang tạo audio bài đọc...`);
 
       const apiKey = localStorage.getItem('openrouter_api_key');
 
@@ -5273,16 +5282,31 @@ ${chunkText}
               if (base64Audio) {
                 const audioUrl = `data:audio/mp3;base64,${base64Audio}`;
                 qwenAudioCache[art.id] = audioUrl;
+                art.audioUrl = audioUrl;
+                localStorage.setItem('hsk_qwen_audio_cache', JSON.stringify(qwenAudioCache));
+                localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+                if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
                 playQwenAudioUrl(audioUrl);
                 return;
               }
             }
           } else {
             const blob = await response.blob();
-            const audioUrl = URL.createObjectURL(blob);
-            qwenAudioCache[art.id] = audioUrl;
-            playQwenAudioUrl(audioUrl);
-            return;
+            const base64Url = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+            if (base64Url) {
+              qwenAudioCache[art.id] = base64Url;
+              art.audioUrl = base64Url;
+              localStorage.setItem('hsk_qwen_audio_cache', JSON.stringify(qwenAudioCache));
+              localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+              if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+              playQwenAudioUrl(base64Url);
+              return;
+            }
           }
         } catch (apiErr) {
           console.warn('Qwen TTS API fetch warning, fallback to Neural Male Voice:', apiErr);
@@ -5668,6 +5692,10 @@ ${chunkText}
       if (!confirm('Bạn có chắc muốn xóa bài đọc này? (Từ vựng đã lưu vẫn được giữ nguyên)')) return;
 
       readingArticles = readingArticles.filter(a => a.id !== articleId);
+      if (qwenAudioCache && qwenAudioCache[articleId]) {
+        delete qwenAudioCache[articleId];
+        localStorage.setItem('hsk_qwen_audio_cache', JSON.stringify(qwenAudioCache));
+      }
 
       localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
       if (typeof triggerDebouncedCloudSave === 'function') {
