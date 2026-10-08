@@ -4883,27 +4883,33 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
           const prompt = `Bạn là chuyên gia ngôn ngữ Tiếng Trung và biên tập viên dịch thuật cao cấp. Hãy phân tích đoạn văn tiếng Trung sau (phần ${i + 1}/${chunks.length}):
 
-1) DỊCH SÁT NGHĨA THEO ĐÚNG TỪ/CỤM TỪ (CỰC KỲ QUAN TRỌNG):
-   - Trong mảng tokens, trường "vietnamese" của từng token BẮT BUỘC chỉ được dịch **ĐÚNG SÁT NGHĨA CỦA CHÍNH CỤM TỪ HÁN ĐÓ**!
-   - TUYỆT ĐỐI KHÔNG đem nghĩa của các từ xung quanh hoặc ngữ cảnh cả câu dài dịch tràn vào nghĩa của cụm từ!
-   - **Ví dụ SAI**: "原则上" ➔ vietnamese: "về mặt nguyên tắc thì chúng ta nên làm..." (SAI vì dịch thừa từ bên ngoài).
-   - **Ví dụ SAI**: "他们五个人" ➔ vietnamese: "lần gặp mặt của năm người họ" (SAI vì thêm chữ "lần gặp mặt của" vốn thuộc về từ ngữ khác).
-   - **Ví dụ ĐÚNG**: "他们五个人" ➔ vietnamese: "5 người họ" hoặc "5 người bọn họ" (ĐÚNG chuẩn nghĩa của cụm).
+1) QUY TẮC GOM CỤM TỪ & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH (CỰC KỲ QUAN TRỌNG):
+   - BẮT BUỘC gom các cụm từ ghép, cụm ngữ pháp hay, cụm diễn đạt hoàn chỉnh thành 1 token có nghĩa tự nhiên để người học bấm vào hiểu được cả cụm!
+   - Ví dụ gom cụm chuẩn: "很感兴趣的样子" (dáng vẻ rất hứng thú), "刚起了一个头" (vừa mới mở đầu / vừa mới cất lời), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ / kỳ lạ), "一落千丈" (tuột dốc không phanh), "硬生生" (cứng rắn / sống sượng), "首次会面" (cuộc gặp đầu tiên), "半年以来" (nửa năm qua).
+   - TUYỆT ĐỐI KHÔNG xé lẻ vụn vặt 1-2 chữ đơn như "起" hay "感" hay "感兴趣" khi chúng nằm trong một cụm diễn đạt đầy đủ như "很感兴趣的样子" hay "刚起了一个头"!
 
-2) TỰ ĐỘNG CHỈNH SỬA LỖI GRAMMAR "地" / "的" (RẤT QUAN TRỌNG):
-   - Kiểm tra văn bản gốc: Trong tiếng Trung, khi đứng trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (ví dụ: "头也不回地走了", "气愤地着", "高兴地笑"), nếu bài gốc viết sai thành chữ "的", bạn BẮT BUỘC phải tự động sửa lại thành chữ "地" đúng chuẩn ngữ pháp!
+2) QUY TẮC NGHĨA VIỆT CỦA CỤM TỪ:
+   - Trong mảng tokens, trường "vietnamese" BẮT BUỘC dịch ĐÚNG SÁT NGHĨA CỦA CHÍNH CỤM TỪ HÁN ĐÓ!
+   - Tuyệt đối không thêm các từ ngữ cảnh ở xa ngoài phạm vi cụm từ đó vào nghĩa tiếng Việt.
+   - **Ví dụ**:
+     - Token "很感兴趣的样子" ➔ vietnamese: "dáng vẻ rất hứng thú" (ĐÚNG, dịch chuẩn nghĩa cả cụm)
+     - Token "刚起了一个头" ➔ vietnamese: "vừa mới mở đầu" (ĐÚNG, dịch chuẩn nghĩa cả cụm)
+     - Token "他们五个人" ➔ vietnamese: "5 người bọn họ" (ĐÚNG - KHÔNG dịch thành "lần gặp mặt của 5 người họ" vì "lần gặp mặt" thuộc về từ khác).
 
-3) QUY TẮC KHÔNG DÍNH "的" VÀ "与" VÀO ĐẦU CỤM TỪ:
-   - TUYỆT ĐỐI KHÔNG ghép trợ từ "的" vào đầu cụm từ (Ví dụ: KHÔNG tạo token "的首次会面", mà BẮT BUỘC tách thành 2 token: token "的" riêng (isVocab: false) và token "首次会面" riêng (isVocab: true)).
-   - TUYỆT ĐỐI KHÔNG ghép liên từ "与" vào đầu từ B trong "A 与 B" (Ví dụ: KHÔNG tạo token "与佐野", mà BẮT BUỘC tách thành: "A", "与", "B" thành các token riêng biệt).
-   - GOM CỤM TỪ NGHĨA TỰ NHIÊN: Gom các cụm từ ghép, danh từ, thành ngữ có nghĩa mượt mà hoàn chỉnh ("首次会面", "飞碟射击", "职场美女", "半年以来", "一落千丈", "硬生生", "头也不回地", "滑冰场"). KHÔNG xé lẻ vụn vặt 1 chữ!
+3) QUY TẮC VỀ TRỢ TỪ "的" VÀ LIÊN TỪ "与":
+   - Nếu trợ từ "的" nối 2 cụm danh từ riêng lẻ (như "半年以来" + "的" + "首次会面"), hãy tách chữ "的" thành 1 token riêng (isVocab: false).
+   - Nhưng nếu "的" nằm trong cấu trúc trọn vẹn (như "很感兴趣的样子"), hãy GIỮ NGUYÊN cả cụm "很感兴趣的样子"!
+   - KHÔNG ghép liên từ "与" vào đầu từ B trong "A 与 B" (Ví dụ: tách "大小姐", "与", "佐野").
 
-4) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU:
+4) TỰ ĐỘNG SỬA LỖI GRAMMAR "地" / "的":
+   - Trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (như "头也不回地走了", "气愤地着", "高兴地笑"), nếu bài gốc viết sai thành chữ "的", bạn BẮT BUỘC sửa thành "地" đúng chuẩn ngữ pháp!
+
+5) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU:
    - BẮT BUỘC bổ sung và chuẩn hóa dấu câu tiếng Trung (，, 。, ！, ？, ：“”, 《》) nếu bài gốc thiếu hoặc dính liền chữ.
    - Giữ lại đầy đủ mọi dấu câu trong mảng tokens (với dấu câu set "isVocab": false, "pinyin": "", "vietnamese": "").
 
-${isFirstChunk ? `5) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ (3 đến 6 từ).` : ''}
-${isFirstChunk ? '6)' : '5)'} Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo ngắt đoạn gốc:
+${isFirstChunk ? `6) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ (3 đến 6 từ).` : ''}
+${isFirstChunk ? '7)' : '6)'} Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo ngắt đoạn gốc:
    - Dịch toàn bộ đoạn đó sang TIẾNG VIỆT mượt mà, chuẩn ngữ cảnh.
    - Phân tách thành chuỗi các CỤM TỪ / DẤU CÂU nối tiếp nhau hoàn chỉnh thành đoạn văn.
 
@@ -4919,16 +4925,21 @@ ${chunkText}
     {
       "vietnamese": "Dịch nghĩa tiếng Việt mượt mà đầy đủ của đoạn",
       "tokens": [
-        { "hanzi": "原则上", "pinyin": "yuán zé shàng", "vietnamese": "về mặt nguyên tắc", "isVocab": true },
-        { "hanzi": "他们五个人", "pinyin": "tā men wǔ gè rén", "vietnamese": "5 người bọn họ", "isVocab": true },
-        { "hanzi": "半年以来", "pinyin": "bàn nián yǐ lái", "vietnamese": "nửa năm trở lại đây", "isVocab": true },
-        { "hanzi": "的", "pinyin": "", "vietnamese": "", "isVocab": false },
-        { "hanzi": "首次会面", "pinyin": "shǒu cì huì miàn", "vietnamese": "cuộc gặp đầu tiên", "isVocab": true },
+        { "hanzi": "看着", "pinyin": "kàn zhe", "vietnamese": "nhìn thấy", "isVocab": true },
+        { "hanzi": "柯南", "pinyin": "kē nán", "vietnamese": "Conan", "isVocab": true },
+        { "hanzi": "很感兴趣的样子", "pinyin": "hěn gǎn xìng qù de yàng zi", "vietnamese": "dáng vẻ rất hứng thú", "isVocab": true },
         { "hanzi": "，", "pinyin": "", "vietnamese": "", "isVocab": false },
         { "hanzi": "大小姐", "pinyin": "dà xiǎo jiě", "vietnamese": "tiểu thư", "isVocab": true },
-        { "hanzi": "与", "pinyin": "yǔ", "vietnamese": "và", "isVocab": true },
-        { "hanzi": "佐野", "pinyin": "zuǒ yě", "vietnamese": "Sano", "isVocab": true },
+        { "hanzi": "的故事", "pinyin": "de gù shi", "vietnamese": "câu chuyện của", "isVocab": true },
+        { "hanzi": "刚起了一个头", "pinyin": "gāng qǐ le yī gè tóu", "vietnamese": "vừa mới mở đầu", "isVocab": true },
+        { "hanzi": "就", "pinyin": "jiù", "vietnamese": "thì", "isVocab": true },
+        { "hanzi": "被", "pinyin": "bèi", "vietnamese": "bị", "isVocab": true },
+        { "hanzi": "玉田儿", "pinyin": "yù tián ér", "vietnamese": "Tam Điền Nhi", "isVocab": true },
+        { "hanzi": "硬生生", "pinyin": "yìng shēng shēng", "vietnamese": "cứng rắn", "isVocab": true },
+        { "hanzi": "怼了回去", "pinyin": "duì le huí qù", "vietnamese": "bật lại / cãi lại", "isVocab": true },
         { "hanzi": "，", "pinyin": "", "vietnamese": "", "isVocab": false },
+        { "hanzi": "然后", "pinyin": "rán hòu", "vietnamese": "sau đó", "isVocab": true },
+        { "hanzi": "气愤地", "pinyin": "qì fèn de", "vietnamese": "tức giận", "isVocab": true },
         { "hanzi": "头也不回地", "pinyin": "tóu yě bù huí de", "vietnamese": "không ngoảnh đầu lại", "isVocab": true },
         { "hanzi": "走了", "pinyin": "zǒu le", "vietnamese": "bỏ đi", "isVocab": true }
       ]
