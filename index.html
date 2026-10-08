@@ -4883,20 +4883,22 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
           const prompt = `Bạn là chuyên gia ngôn ngữ Tiếng Trung và biên tập viên dịch thuật cao cấp. Hãy phân tích đoạn văn tiếng Trung sau (phần ${i + 1}/${chunks.length}):
 
-1) GOM CỤM TỪ NGHĨA TỰ NHIÊN (CỰC KỲ QUAN TRỌNG):
-   - BẮT BUỘC gom các từ ghép, cụm từ cố định, thành ngữ, hoặc các cụm từ có nghĩa đi liền nhau thành **CỤM TỪ MƯỢT MÀ HOÀN CHỈNH** (Ví dụ: "像往常一样", "飞碟射击", "职场美女", "半年以来", "一落千丈", "硬生生", "头也不回", "胡子拉碴", "滑冰场").
-   - TUYỆT ĐỐI KHÔNG xé lẻ rời rạc thành từng chữ đơn 1-2 từ (như "像", "往常", "一样", "飞碟", "射击") gây vụn vặt và khó đọc! Hãy gom thành cụm giàu ý nghĩa, tự nhiên và dễ học!
+1) TỰ ĐỘNG CHỈNH SỬA LỖI GRAMMAR "地" / "的" (RẤT QUAN TRỌNG):
+   - Kiểm tra văn bản gốc: Trong tiếng Trung, khi đứng trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (ví dụ: "头也不回地走了", "气愤地着", "高兴地笑"), nếu bài gốc viết sai thành chữ "的", bạn BẮT BUỘC phải tự động sửa lại thành chữ "地" đúng chuẩn ngữ pháp!
 
-2) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU:
-   - Nếu bài gốc thiếu dấu câu, đặt sai vị trí hoặc dính chữ không có dấu câu, BẮT BUỘC tự bổ sung và chỉnh sửa đầy đủ các dấu câu chuẩn tiếng Trung (，, 。, ！, ？, ：“”, 《》) đúng ngữ pháp và nhịp ngắt nghỉ tự nhiên!
-   - BẮT BUỘC giữ lại đầy đủ mọi dấu câu trong mảng tokens (với dấu câu set "isVocab": false, "pinyin": "", "vietnamese": "").
+2) QUY TẮC KHÔNG DÍNH "的" VÀ "与" VÀO ĐẦU CỤM TỪ:
+   - TUYỆT ĐỐI KHÔNG ghép trợ từ "的" vào đầu cụm từ (Ví dụ: KHÔNG tạo token "的首次会面", mà BẮT BUỘC tách thành 2 token: token "的" riêng (isVocab: false) và token "首次会面" riêng (isVocab: true)).
+   - TUYỆT ĐỐI KHÔNG ghép liên từ "与" vào đầu từ B trong "A 与 B" (Ví dụ: KHÔNG tạo token "与佐野", mà BẮT BUỘC tách thành: "A", "与", "B" thành các token riêng biệt).
+   - GOM CỤM TỪ NGHĨA TỰ NHIÊN: Gom các cụm từ ghép, danh từ, thành ngữ có nghĩa mượt mà hoàn chỉnh ("首次会面", "飞碟射击", "职场美女", "半年以来", "一落千丈", "硬生生", "头也不回地", "滑冰场"). KHÔNG xé lẻ vụn vặt 1 chữ!
 
-${isFirstChunk ? `3) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ (3 đến 6 từ).` : ''}
-${isFirstChunk ? '4)' : '3)'} Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo ngắt đoạn gốc:
+3) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU:
+   - BẮT BUỘC bổ sung và chuẩn hóa dấu câu tiếng Trung (，, 。, ！, ？, ：“”, 《》) nếu bài gốc thiếu hoặc dính liền chữ.
+   - Giữ lại đầy đủ mọi dấu câu trong mảng tokens (với dấu câu set "isVocab": false, "pinyin": "", "vietnamese": "").
+
+${isFirstChunk ? `4) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ (3 đến 6 từ).` : ''}
+${isFirstChunk ? '5)' : '4)'} Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo ngắt đoạn gốc:
    - Dịch toàn bộ đoạn đó sang TIẾNG VIỆT mượt mà, chuẩn ngữ cảnh.
    - Phân tách thành chuỗi các CỤM TỪ / DẤU CÂU nối tiếp nhau hoàn chỉnh thành đoạn văn.
-   - Với từ/cụm từ chữ Hán: "isVocab": true, kèm "pinyin" (có dấu đầy đủ của cả cụm) và "vietnamese" (nghĩa cả cụm).
-   - Với các DẤU CÂU (，, 。, ！, ？, ：“”, 《》): "isVocab": false, "pinyin": "", "vietnamese": "".
 
 Đoạn văn gốc:
 """
@@ -4910,12 +4912,16 @@ ${chunkText}
     {
       "vietnamese": "Dịch nghĩa tiếng Việt mượt mà đầy đủ của đoạn",
       "tokens": [
-        { "hanzi": "那天晚上", "pinyin": "nà tiān wǎn shang", "vietnamese": "tối hôm đó", "isVocab": true },
-        { "hanzi": "柯南与小兰", "pinyin": "kē nán yǔ xiǎo lán", "vietnamese": "Conan và Ran", "isVocab": true },
-        { "hanzi": "像往常一样", "pinyin": "xiàng wǎng cháng yí yàng", "vietnamese": "như thường lệ", "isVocab": true },
+        { "hanzi": "半年以来", "pinyin": "bàn nián yǐ lái", "vietnamese": "nửa năm trở lại đây", "isVocab": true },
+        { "hanzi": "的", "pinyin": "", "vietnamese": "", "isVocab": false },
+        { "hanzi": "首次会面", "pinyin": "shǒu cì huì miàn", "vietnamese": "cuộc gặp đầu tiên", "isVocab": true },
         { "hanzi": "，", "pinyin": "", "vietnamese": "", "isVocab": false },
-        { "hanzi": "来到了滑冰场", "pinyin": "lái dào le huá bīng chǎng", "vietnamese": "đã đến sân trượt băng", "isVocab": true },
-        { "hanzi": "，", "pinyin": "", "vietnamese": "", "isVocab": false }
+        { "hanzi": "大小姐", "pinyin": "dà xiǎo jiě", "vietnamese": "tiểu thư", "isVocab": true },
+        { "hanzi": "与", "pinyin": "yǔ", "vietnamese": "và", "isVocab": true },
+        { "hanzi": "佐野", "pinyin": "zuǒ yě", "vietnamese": "Sano", "isVocab": true },
+        { "hanzi": "，", "pinyin": "", "vietnamese": "", "isVocab": false },
+        { "hanzi": "头也不回地", "pinyin": "tóu yě bù huí de", "vietnamese": "không ngoảnh đầu lại", "isVocab": true },
+        { "hanzi": "走了", "pinyin": "zǒu le", "vietnamese": "bỏ đi", "isVocab": true }
       ]
     }
   ]
