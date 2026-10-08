@@ -4724,9 +4724,18 @@ Lưu ý quan trọng:
     let webSpeechAudioUtterance = null;
 
     async function toggleReadingPassageAudio() {
-      if (!activeReadingArticleId) return;
-      const art = readingArticles.find(a => a.id === activeReadingArticleId);
-      if (!art) return;
+      if (!activeReadingArticleId && readingArticles.length > 0) {
+        activeReadingArticleId = readingArticles[0].id;
+      }
+      if (!activeReadingArticleId) {
+        showToast('Không tìm thấy bài đọc!');
+        return;
+      }
+      const art = readingArticles.find(a => String(a.id) === String(activeReadingArticleId)) || readingArticles[0];
+      if (!art) {
+        showToast('Không tìm thấy nội dung bài đọc!');
+        return;
+      }
 
       // Tap 2: Currently Playing -> Pause Audio
       if (isQwenAudioPlaying && !isQwenAudioPaused) {
@@ -4761,7 +4770,15 @@ Lưu ý quan trọng:
       }
 
       // Tap 1: Start New Play
-      const textToRead = (art.content || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|📖|📝/g, '').trim();
+      let rawText = art.content || '';
+      if (!rawText && art.paragraphs && Array.isArray(art.paragraphs)) {
+        rawText = art.paragraphs.map(p => (p.tokens || []).map(t => t.hanzi).join('')).join('\n');
+      }
+      if (!rawText && art.tokens && Array.isArray(art.tokens)) {
+        rawText = art.tokens.map(t => t.hanzi).join('');
+      }
+
+      const textToRead = (rawText || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|📖|📝/g, '').trim();
       if (!textToRead) {
         showToast('Bài đọc không có nội dung!');
         return;
@@ -4921,6 +4938,7 @@ Lưu ý quan trọng:
         btn.title = 'Chạm để Đọc bài (Giọng Nam AI Qwen - loongjohn)';
       }
     }
+    window.toggleReadingPassageAudio = toggleReadingPassageAudio;
 
     // Open Interactive Reading Passage Viewer
     function openReadingViewModal(articleId) {
