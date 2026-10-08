@@ -1714,6 +1714,33 @@
     </div>
   </div>
 
+  <!-- Qwen TTS Audio Voice Picker Modal (8 Voices: 4 Male + 4 Female) -->
+  <div class="modal-overlay" id="qwenVoicePickerModal" style="z-index: 1080;">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title" style="font-size: 15.5px; font-weight: 700; color: #5e4b7e;">🎙️ Chọn giọng đọc AI Qwen</div>
+        <button class="modal-close-btn" id="btnCloseQwenVoicePickerModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 12px 10px;">
+        <div style="font-size: 12px; color: #6b7280; margin-bottom: 10px; background: #f3eef9; padding: 8px 10px; border-radius: 10px; border: 1px solid #e2d8ef;">
+          ✨ <b>Mẹo:</b> Chạm vào 1 giọng đọc bất kỳ bên dưới để đổi giọng đọc ngay lập tục.
+        </div>
+
+        <!-- Section 1: Male Voices -->
+        <div style="font-size: 13px; font-weight: 700; color: #766299; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+          <span>♂️ 1. Các giọng Nam tiêu biểu:</span>
+        </div>
+        <div id="qwenMaleVoiceList" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px;"></div>
+
+        <!-- Section 2: Female Voices -->
+        <div style="font-size: 13px; font-weight: 700; color: #8e5899; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+          <span>♀️ 2. Các giọng Nữ tiêu biểu:</span>
+        </div>
+        <div id="qwenFemaleVoiceList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Custom Styled Group Picker Modal (Font Mali & Completed Highlights) -->
   <div class="modal-overlay" id="groupPickerModal">
     <div class="modal-card" style="max-width: 450px; padding: 20px 16px;">
@@ -4377,6 +4404,21 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         });
       }
 
+      const btnCloseQwenVoicePickerModal = document.getElementById('btnCloseQwenVoicePickerModal');
+      const qwenVoicePickerModal = document.getElementById('qwenVoicePickerModal');
+      if (btnCloseQwenVoicePickerModal) {
+        btnCloseQwenVoicePickerModal.addEventListener('click', () => {
+          if (qwenVoicePickerModal) qwenVoicePickerModal.classList.remove('active');
+        });
+      }
+      if (qwenVoicePickerModal) {
+        qwenVoicePickerModal.addEventListener('click', (e) => {
+          if (e.target === qwenVoicePickerModal) {
+            qwenVoicePickerModal.classList.remove('active');
+          }
+        });
+      }
+
       // Group Picker Subtabs (All Groups vs Completed Oldest First)
       const subtabPickerAll = document.getElementById('subtabPickerAll');
       const subtabPickerOldest = document.getElementById('subtabPickerOldest');
@@ -4715,13 +4757,171 @@ Lưu ý quan trọng:
     window.toggleParagraphTranslation = toggleParagraphTranslation;
 
     // ==========================================
-    // FULL PASSAGE AUDIO PLAYER (Qwen Audio 3.0 TTS Flash - Voice: loongjohn)
+    // FULL PASSAGE AUDIO PLAYER (Qwen Audio 3.0 TTS Flash - 8 Voices Support)
     // ==========================================
+    const QWEN_VOICES = [
+      // Male voices
+      { id: 'loongjohn', name: 'loongjohn', category: 'male', tag: '(Giọng Nam bạn đang dùng)', desc: 'Giọng nam trầm ấm, rõ chữ, chuẩn phong cách phát thanh viên / giáo viên giảng bài. Rất hợp để đọc văn bản & bài đọc HSK.' },
+      { id: 'loongtom', name: 'loongtom', category: 'male', tag: '', desc: 'Giọng nam trẻ trung, năng động, ngữ điệu tự nhiên như người thật giao tiếp hằng ngày.' },
+      { id: 'loongzhe', name: 'loongzhe', category: 'male', tag: '', desc: 'Giọng nam trung niên, chất giọng uy nghiêm, đứng đắn, phù hợp đọc phóng sự/báo chí.' },
+      { id: 'loonghu', name: 'loonghu', category: 'male', tag: '', desc: 'Giọng nam dày dặn, ấm áp, nhịp đọc từ tốn.' },
+      // Female voices
+      { id: 'loongstella', name: 'loongstella', category: 'female', tag: '', desc: 'Giọng nữ chuẩn phổ thông, ngữ điệu tự nhiên, truyền cảm.' },
+      { id: 'loongbella', name: 'loongbella', category: 'female', tag: '', desc: 'Giọng nữ đọc tin tức / sách nói chuyên nghiệp, rõ ràng.' },
+      { id: 'loongluna', name: 'loongluna', category: 'female', tag: '', desc: 'Giọng nữ trẻ, ngọt ngào, tươi vui.' },
+      { id: 'loongmian', name: 'loongmian', category: 'female', tag: '', desc: 'Giọng nữ nhẹ nhàng, du dương, dễ nghe.' }
+    ];
+
     let qwenAudioPlayer = new Audio();
     let qwenAudioCache = {};
     let isQwenAudioPlaying = false;
     let isQwenAudioPaused = false;
     let webSpeechAudioUtterance = null;
+
+    function getActiveQwenVoice() {
+      const saved = localStorage.getItem('hsk_qwen_tts_voice');
+      if (saved && QWEN_VOICES.some(v => v.id === saved)) {
+        return saved;
+      }
+      return 'loongjohn';
+    }
+
+    function selectQwenVoice(voiceId) {
+      const voiceObj = QWEN_VOICES.find(v => v.id === voiceId);
+      if (!voiceObj) return;
+
+      const oldVoice = getActiveQwenVoice();
+      if (oldVoice !== voiceId) {
+        localStorage.setItem('hsk_qwen_tts_voice', voiceId);
+        qwenAudioCache = {};
+        if (isQwenAudioPlaying || isQwenAudioPaused) {
+          stopReadingPassageAudio(true);
+        }
+      }
+
+      closeQwenVoicePickerModal();
+      showToast(`🎙️ Đã chọn giọng AI: ${voiceObj.id} (${voiceObj.category === 'male' ? 'Nam' : 'Nữ'})`);
+      updateAudioBtnUI(isQwenAudioPlaying, isQwenAudioPaused);
+    }
+    window.selectQwenVoice = selectQwenVoice;
+
+    function renderQwenVoicePickerList() {
+      const maleContainer = document.getElementById('qwenMaleVoiceList');
+      const femaleContainer = document.getElementById('qwenFemaleVoiceList');
+      if (!maleContainer || !femaleContainer) return;
+
+      const currentVoiceId = getActiveQwenVoice();
+
+      function buildItemHTML(v) {
+        const isSelected = v.id === currentVoiceId;
+        const isMale = v.category === 'male';
+        const activeBorderColor = isMale ? '#766299' : '#8e5899';
+        const activeBg = isMale ? '#f4effa' : '#faeffa';
+
+        return `
+          <div onclick="selectQwenVoice('${v.id}')" style="
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1.5px solid ${isSelected ? activeBorderColor : '#e5e7eb'};
+            background: ${isSelected ? activeBg : '#ffffff'};
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: ${isSelected ? '0 3px 10px rgba(118,98,153,0.12)' : 'none'};
+          " onmouseover="this.style.borderColor='${activeBorderColor}'" onmouseout="this.style.borderColor='${isSelected ? activeBorderColor : '#e5e7eb'}'">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <code style="font-family: 'Courier New', monospace; font-weight: 700; font-size: 13.5px; background: ${isSelected ? activeBorderColor : '#eedefc'}; color: ${isSelected ? '#ffffff' : '#4a2e78'}; padding: 2px 7px; border-radius: 6px;">${v.name}</code>
+                ${v.tag ? `<span style="font-size: 11px; font-style: italic; color: #6b7280;">${v.tag}</span>` : ''}
+              </div>
+              <span style="font-size: 14px; color: ${isSelected ? activeBorderColor : '#d1d5db'};">${isSelected ? '🔘' : '⚪'}</span>
+            </div>
+            <div style="font-size: 12px; color: #4b5563; line-height: 1.4; margin-top: 2px;">
+              ${v.desc}
+            </div>
+          </div>
+        `;
+      }
+
+      maleContainer.innerHTML = QWEN_VOICES.filter(v => v.category === 'male').map(buildItemHTML).join('');
+      femaleContainer.innerHTML = QWEN_VOICES.filter(v => v.category === 'female').map(buildItemHTML).join('');
+    }
+
+    function openQwenVoicePickerModal() {
+      const modal = document.getElementById('qwenVoicePickerModal');
+      if (!modal) return;
+      renderQwenVoicePickerList();
+      modal.classList.add('active');
+    }
+    window.openQwenVoicePickerModal = openQwenVoicePickerModal;
+
+    function closeQwenVoicePickerModal() {
+      const modal = document.getElementById('qwenVoicePickerModal');
+      if (!modal) return;
+      modal.classList.remove('active');
+    }
+    window.closeQwenVoicePickerModal = closeQwenVoicePickerModal;
+
+    // Attach Long Press to Book Icon 📖
+    function attachBookIconLongPress(element) {
+      if (!element) return;
+      let timer = null;
+      let isLongPress = false;
+      let startX = 0, startY = 0;
+
+      function startHold(e) {
+        isLongPress = false;
+        if (e.touches && e.touches[0]) {
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+        }
+        timer = setTimeout(() => {
+          isLongPress = true;
+          if (navigator.vibrate) {
+            try { navigator.vibrate(40); } catch(ex) {}
+          }
+          openQwenVoicePickerModal();
+        }, 400);
+      }
+
+      function cancelHold() {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+      }
+
+      function endHold(e) {
+        cancelHold();
+        if (!isLongPress) {
+          toggleReadingPassageAudio();
+        }
+        if (e.type === 'touchend' && e.cancelable) {
+          e.preventDefault();
+        }
+      }
+
+      function moveHold(e) {
+        if (e.touches && e.touches[0]) {
+          const diffX = Math.abs(e.touches[0].clientX - startX);
+          const diffY = Math.abs(e.touches[0].clientY - startY);
+          if (diffX > 10 || diffY > 10) {
+            cancelHold();
+          }
+        }
+      }
+
+      element.addEventListener('mousedown', startHold);
+      element.addEventListener('mouseup', endHold);
+      element.addEventListener('mouseleave', cancelHold);
+
+      element.addEventListener('touchstart', startHold, { passive: false });
+      element.addEventListener('touchend', endHold, { passive: false });
+      element.addEventListener('touchmove', moveHold, { passive: true });
+      element.addEventListener('touchcancel', cancelHold);
+    }
 
     async function toggleReadingPassageAudio() {
       if (!activeReadingArticleId && readingArticles.length > 0) {
@@ -4784,12 +4984,17 @@ Lưu ý quan trọng:
         return;
       }
 
+      const activeVoice = getActiveQwenVoice();
+      const activeVoiceObj = QWEN_VOICES.find(v => v.id === activeVoice) || QWEN_VOICES[0];
+      const voiceLabel = `Giọng ${activeVoiceObj.category === 'male' ? 'Nam' : 'Nữ'} ${activeVoice}`;
+
       stopReadingPassageAudio(false);
       updateAudioBtnUI(true, false);
-      showToast('🔊 AI Qwen (Giọng Nam loongjohn) đang tải âm thanh...');
+      showToast(`🔊 AI Qwen (${voiceLabel}) đang tải âm thanh...`);
 
-      if (qwenAudioCache[art.id]) {
-        playQwenAudioUrl(qwenAudioCache[art.id]);
+      const cacheKey = `${art.id}_${activeVoice}`;
+      if (qwenAudioCache[cacheKey]) {
+        playQwenAudioUrl(qwenAudioCache[cacheKey]);
         return;
       }
 
@@ -4807,7 +5012,7 @@ Lưu ý quan trọng:
             body: JSON.stringify({
               model: 'qwen/qwen-audio-3.0-tts-flash',
               input: textToRead,
-              voice: 'loongjohn',
+              voice: activeVoice,
               response_format: 'mp3'
             })
           });
@@ -4824,7 +5029,7 @@ Lưu ý quan trọng:
                 model: 'qwen/qwen-audio-3.0-tts-flash',
                 messages: [{ role: 'user', content: textToRead }],
                 modalities: ['text', 'audio'],
-                audio: { voice: 'loongjohn', format: 'mp3' }
+                audio: { voice: activeVoice, format: 'mp3' }
               })
             });
 
@@ -4833,7 +5038,7 @@ Lưu ý quan trọng:
               const base64Audio = resData.choices?.[0]?.message?.audio?.data;
               if (base64Audio) {
                 const audioUrl = `data:audio/mp3;base64,${base64Audio}`;
-                qwenAudioCache[art.id] = audioUrl;
+                qwenAudioCache[cacheKey] = audioUrl;
                 playQwenAudioUrl(audioUrl);
                 return;
               }
@@ -4841,7 +5046,7 @@ Lưu ý quan trọng:
           } else {
             const blob = await response.blob();
             const audioUrl = URL.createObjectURL(blob);
-            qwenAudioCache[art.id] = audioUrl;
+            qwenAudioCache[cacheKey] = audioUrl;
             playQwenAudioUrl(audioUrl);
             return;
           }
@@ -4924,18 +5129,23 @@ Lưu ý quan trọng:
     function updateAudioBtnUI(isPlaying, isPaused) {
       const btn = document.getElementById('btnHeaderAudioToggle');
       if (!btn) return;
+
+      const activeVoice = getActiveQwenVoice();
+      const voiceObj = QWEN_VOICES.find(v => v.id === activeVoice) || QWEN_VOICES[0];
+      const voiceLabel = `Giọng ${voiceObj.category === 'male' ? 'Nam' : 'Nữ'} ${voiceObj.id}`;
+
       if (isPlaying && !isPaused) {
         btn.classList.add('playing');
         btn.textContent = '⏸️';
-        btn.title = 'Chạm để tạm dừng đọc bài';
+        btn.title = `Chạm để tạm dừng. (${voiceLabel}, ấn giữ để đổi giọng)`;
       } else if (isPaused) {
         btn.classList.remove('playing');
         btn.textContent = '📖';
-        btn.title = 'Chạm để tiếp tục đọc bài';
+        btn.title = `Chạm để tiếp tục. (${voiceLabel}, ấn giữ để đổi giọng)`;
       } else {
         btn.classList.remove('playing');
         btn.textContent = '📖';
-        btn.title = 'Chạm để Đọc bài (Giọng Nam AI Qwen - loongjohn)';
+        btn.title = `Chạm để Đọc bài (${voiceLabel}). Ấn giữ để đổi giọng.`;
       }
     }
     window.toggleReadingPassageAudio = toggleReadingPassageAudio;
@@ -4964,10 +5174,11 @@ Lưu ý quan trọng:
 
       const btnAudioToggle = document.getElementById('btnHeaderAudioToggle');
       if (btnAudioToggle) {
-        btnAudioToggle.onclick = (e) => {
-          e.stopPropagation();
-          toggleReadingPassageAudio();
-        };
+        btnAudioToggle.onclick = null;
+        if (!btnAudioToggle.dataset.longPressAttached) {
+          attachBookIconLongPress(btnAudioToggle);
+          btnAudioToggle.dataset.longPressAttached = 'true';
+        }
       }
 
       populateReadingArticleViewSelect(articleId);
