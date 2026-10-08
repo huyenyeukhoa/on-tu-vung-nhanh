@@ -1714,16 +1714,16 @@
     </div>
   </div>
 
-  <!-- Qwen TTS Audio Voice Picker Modal (8 Voices: 4 Male + 4 Female) -->
+  <!-- Qwen & OpenRouter TTS Audio Voice Picker Modal (8 Voices: 4 Male + 4 Female) -->
   <div class="modal-overlay" id="qwenVoicePickerModal" style="z-index: 1080;">
     <div class="modal-card" style="max-width: 480px;">
       <div class="modal-header">
-        <div class="modal-title" style="font-size: 15.5px; font-weight: 700; color: #5e4b7e;">🎙️ Chọn giọng đọc AI Qwen</div>
+        <div class="modal-title" style="font-size: 15.5px; font-weight: 700; color: #5e4b7e;">🎙️ Chọn giọng đọc AI (OpenRouter)</div>
         <button class="modal-close-btn" id="btnCloseQwenVoicePickerModal">✕</button>
       </div>
       <div class="modal-body" style="padding: 12px 10px;">
         <div style="font-size: 12px; color: #6b7280; margin-bottom: 10px; background: #f3eef9; padding: 8px 10px; border-radius: 10px; border: 1px solid #e2d8ef;">
-          ✨ <b>Mẹo:</b> Chạm vào 1 giọng đọc bất kỳ bên dưới để đổi giọng đọc ngay lập tục.
+          ✨ <b>Mẹo:</b> 8 Giọng đọc bên dưới hỗ trợ trực tiếp 100% trên OpenRouter. Chạm vào 1 giọng để đổi ngay!
         </div>
 
         <!-- Section 1: Male Voices -->
@@ -4757,19 +4757,19 @@ Lưu ý quan trọng:
     window.toggleParagraphTranslation = toggleParagraphTranslation;
 
     // ==========================================
-    // FULL PASSAGE AUDIO PLAYER (Qwen Audio 3.0 TTS Flash - 8 Voices Support)
+    // FULL PASSAGE AUDIO PLAYER (OpenRouter Audio TTS Support - 8 Active Voices)
     // ==========================================
     const QWEN_VOICES = [
       // Male voices
-      { id: 'loongjohn', name: 'loongjohn', category: 'male', tag: '(Giọng Nam bạn đang dùng)', desc: 'Giọng nam trầm ấm, rõ chữ, chuẩn phong cách phát thanh viên / giáo viên giảng bài. Rất hợp để đọc văn bản & bài đọc HSK.' },
-      { id: 'loongtom', name: 'loongtom', category: 'male', tag: '', desc: 'Giọng nam trẻ trung, năng động, ngữ điệu tự nhiên như người thật giao tiếp hằng ngày.' },
-      { id: 'loongzhe', name: 'loongzhe', category: 'male', tag: '', desc: 'Giọng nam trung niên, chất giọng uy nghiêm, đứng đắn, phù hợp đọc phóng sự/báo chí.' },
-      { id: 'loonghu', name: 'loonghu', category: 'male', tag: '', desc: 'Giọng nam dày dặn, ấm áp, nhịp đọc từ tốn.' },
+      { id: 'loongjohn', name: 'loongjohn', category: 'male', tag: '(Giọng Qwen Nam Giáo viên)', desc: 'Giọng Nam AI Qwen: Trầm ấm, rõ chữ, chuẩn phong cách phát thanh viên / giáo viên giảng bài.' },
+      { id: 'longanhuan_v3.6', name: 'longanhuan_v3.6', category: 'male', tag: '(Giọng Qwen Nam Tin tức)', desc: 'Giọng Nam AI Qwen: Đọc tin tức & báo chí chuyên nghiệp, truyền cảm.' },
+      { id: 'onyx', name: 'onyx', category: 'male', tag: '(Giọng Nam AI Trầm)', desc: 'Giọng Nam AI: Dày dặn, ấm áp, nhịp đọc từ tốn, giọng chuẩn.' },
+      { id: 'echo', name: 'echo', category: 'male', tag: '(Giọng Nam AI Trẻ)', desc: 'Giọng Nam AI: Trẻ trung, năng động, ngữ điệu tự nhiên hằng ngày.' },
       // Female voices
-      { id: 'loongstella', name: 'loongstella', category: 'female', tag: '', desc: 'Giọng nữ chuẩn phổ thông, ngữ điệu tự nhiên, truyền cảm.' },
-      { id: 'loongbella', name: 'loongbella', category: 'female', tag: '', desc: 'Giọng nữ đọc tin tức / sách nói chuyên nghiệp, rõ ràng.' },
-      { id: 'loongluna', name: 'loongluna', category: 'female', tag: '', desc: 'Giọng nữ trẻ, ngọt ngào, tươi vui.' },
-      { id: 'loongmian', name: 'loongmian', category: 'female', tag: '', desc: 'Giọng nữ nhẹ nhàng, du dương, dễ nghe.' }
+      { id: 'nova', name: 'nova', category: 'female', tag: '(Giọng Nữ AI Trẻ)', desc: 'Giọng Nữ AI: Trẻ trung, ngọt ngào, tươi vui, phát âm cực chuẩn.' },
+      { id: 'shimmer', name: 'shimmer', category: 'female', tag: '(Giọng Nữ AI Du dương)', desc: 'Giọng Nữ AI: Nhẹ nhàng, du dương, dễ nghe, phong cách đọc truyện.' },
+      { id: 'alloy', name: 'alloy', category: 'female', tag: '(Giọng Nữ AI Chuẩn)', desc: 'Giọng Nữ AI: Chuẩn phổ thông, ngữ điệu tự nhiên, rõ ràng.' },
+      { id: 'fable', name: 'fable', category: 'female', tag: '(Giọng Nữ Kể chuyện)', desc: 'Giọng AI Kể chuyện: Ngữ điệu sâu lắng, mượt mà.' }
     ];
 
     let qwenAudioPlayer = new Audio();
@@ -4795,7 +4795,7 @@ Lưu ý quan trọng:
       stopReadingPassageAudio(true);
 
       closeQwenVoicePickerModal();
-      showToast(`🎙️ Đã chọn giọng AI: ${voiceObj.id} (${voiceObj.category === 'male' ? 'Nam' : 'Nữ'})`);
+      showToast(`🎙️ Đã chọn giọng AI: ${voiceObj.name} (${voiceObj.category === 'male' ? 'Nam' : 'Nữ'})`);
       updateAudioBtnUI(false, false);
     }
     window.selectQwenVoice = selectQwenVoice;
@@ -4981,11 +4981,11 @@ Lưu ý quan trọng:
 
       const activeVoice = getActiveQwenVoice();
       const activeVoiceObj = QWEN_VOICES.find(v => v.id === activeVoice) || QWEN_VOICES[0];
-      const voiceLabel = `Giọng ${activeVoiceObj.category === 'male' ? 'Nam' : 'Nữ'} ${activeVoice}`;
+      const voiceLabel = `Giọng ${activeVoiceObj.category === 'male' ? 'Nam' : 'Nữ'} ${activeVoiceObj.name}`;
 
       stopReadingPassageAudio(false);
       updateAudioBtnUI(true, false);
-      showToast(`🔊 AI Qwen (${voiceLabel}) đang tải âm thanh...`);
+      showToast(`🔊 AI OpenRouter (${voiceLabel}) đang tải âm thanh...`);
 
       const cacheKey = `${art.id}_${activeVoice}`;
       if (qwenAudioCache[cacheKey]) {
@@ -4994,10 +4994,13 @@ Lưu ý quan trọng:
       }
 
       const apiKey = localStorage.getItem('openrouter_api_key');
+      const isQwenModelVoice = (activeVoice === 'loongjohn' || activeVoice === 'longanhuan_v3.6');
 
       if (apiKey) {
         try {
-          // OpenRouter Audio Speech Endpoint (/audio/speech)
+          // Determine primary TTS model on OpenRouter
+          const primaryModel = isQwenModelVoice ? 'qwen/qwen-audio-3.0-tts-flash' : 'openai/tts-1';
+
           let response = await fetch('https://openrouter.ai/api/v1/audio/speech', {
             method: 'POST',
             headers: {
@@ -5005,40 +5008,31 @@ Lưu ý quan trọng:
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              model: 'qwen/qwen-audio-3.0-tts-flash',
+              model: primaryModel,
               input: textToRead,
               voice: activeVoice,
               response_format: 'mp3'
             })
           });
 
-          if (!response.ok) {
-            // Chat completions fallback with audio output
-            response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          // Fallback to OpenAI TTS endpoint if qwen endpoint fails
+          if (!response.ok && isQwenModelVoice) {
+            response = await fetch('https://openrouter.ai/api/v1/audio/speech', {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({
-                model: 'qwen/qwen-audio-3.0-tts-flash',
-                messages: [{ role: 'user', content: textToRead }],
-                modalities: ['text', 'audio'],
-                audio: { voice: activeVoice, format: 'mp3' }
+                model: 'openai/tts-1',
+                input: textToRead,
+                voice: 'onyx',
+                response_format: 'mp3'
               })
             });
+          }
 
-            if (response.ok) {
-              const resData = await response.json();
-              const base64Audio = resData.choices?.[0]?.message?.audio?.data;
-              if (base64Audio) {
-                const audioUrl = `data:audio/mp3;base64,${base64Audio}`;
-                qwenAudioCache[cacheKey] = audioUrl;
-                playQwenAudioUrl(audioUrl);
-                return;
-              }
-            }
-          } else {
+          if (response.ok) {
             const blob = await response.blob();
             const audioUrl = URL.createObjectURL(blob);
             qwenAudioCache[cacheKey] = audioUrl;
@@ -5046,8 +5040,9 @@ Lưu ý quan trọng:
             return;
           }
         } catch (apiErr) {
-          console.warn('Qwen TTS API fetch warning, fallback to Neural Male Voice:', apiErr);
+          console.warn('OpenRouter TTS API fetch warning:', apiErr);
         }
+      }
       }
 
       playWebSpeechMaleFallback(textToRead);
