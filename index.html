@@ -2042,6 +2042,9 @@
     if (!Array.isArray(readingArticles)) readingArticles = [];
     let activeReadingArticleId = null;
 
+    let deletedReadingArticleIds = safeGetJSON('hsk_deleted_article_ids', []);
+    if (!Array.isArray(deletedReadingArticleIds)) deletedReadingArticleIds = [];
+
     function saveReadingArticlesToStorage() {
       try {
         const cleanArticles = (readingArticles || []).map(art => {
@@ -2293,13 +2296,15 @@
       isCloudSyncing = true;
       updateCloudStatusBadge('🟡 Đang lưu...', false);
 
+      const deletedSet = new Set((deletedReadingArticleIds || []).map(String));
       const payloadData = {
         customGroups: customGroups || [],
         upgradeWords: upgradeList || [],
         userProgress: userProgress || {},
         aiCache: aiCache || {},
         groupCompletedDates: groupCompletedDates || {},
-        readingArticles: readingArticles || [],
+        readingArticles: (readingArticles || []).filter(a => !deletedSet.has(String(a.id))),
+        deletedReadingArticleIds: deletedReadingArticleIds || [],
         qwenAudioCache: qwenAudioCache || {},
         openrouter_api_key: localStorage.getItem('openrouter_api_key') || '',
         reading_audio_speed: localStorage.getItem('hsk_reading_audio_speed') || '1.0',
@@ -2409,11 +2414,22 @@
             localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
           }
 
-          // Smart merge reading articles (non-destructive for selectedWords & articles)
+          // Smart merge deleted article IDs
+          if (Array.isArray(rowData.deletedReadingArticleIds)) {
+            const mergedDeleted = new Set([...deletedReadingArticleIds.map(String), ...rowData.deletedReadingArticleIds.map(String)]);
+            deletedReadingArticleIds = Array.from(mergedDeleted);
+            localStorage.setItem('hsk_deleted_article_ids', JSON.stringify(deletedReadingArticleIds));
+          }
+
+          const deletedSet = new Set((deletedReadingArticleIds || []).map(String));
+
+          // Smart merge reading articles (excluding deleted ones!)
           if (Array.isArray(rowData.readingArticles)) {
-            const mergedArticles = [...rowData.readingArticles];
+            const cloudArticles = rowData.readingArticles.filter(ca => !deletedSet.has(String(ca.id)));
+            const mergedArticles = [...cloudArticles];
             (readingArticles || []).forEach(localArt => {
-              const cloudIdx = mergedArticles.findIndex(ca => ca.id === localArt.id);
+              if (deletedSet.has(String(localArt.id))) return;
+              const cloudIdx = mergedArticles.findIndex(ca => String(ca.id) === String(localArt.id));
               if (cloudIdx === -1) {
                 mergedArticles.unshift(localArt);
               } else {
@@ -2427,7 +2443,7 @@
                 });
               }
             });
-            readingArticles = mergedArticles;
+            readingArticles = mergedArticles.filter(a => !deletedSet.has(String(a.id)));
             saveReadingArticlesToStorage();
           }
 
@@ -5896,16 +5912,23 @@ ${chunkText}
     function deleteReadingArticle(articleId) {
       if (!confirm('Bạn có chắc muốn xóa bài đọc này? (Từ vựng đã lưu vẫn được giữ nguyên)')) return;
 
-      readingArticles = readingArticles.filter(a => a.id !== articleId);
-      deleteQwenAudioPersistent(articleId);
+      const artIdStr = String(articleId);
+      readingArticles = readingArticles.filter(a => String(a.id) !== artIdStr);
+      if (!deletedReadingArticleIds.includes(artIdStr)) {
+        deletedReadingArticleIds.push(artIdStr);
+        localStorage.setItem('hsk_deleted_article_ids', JSON.stringify(deletedReadingArticleIds));
+      }
 
+      deleteQwenAudioPersistent(artIdStr);
       saveReadingArticlesToStorage();
-      if (typeof triggerDebouncedCloudSave === 'function') {
-        triggerDebouncedCloudSave();
+
+      // Trigger cloud save immediately so Supabase updates right away
+      if (typeof saveToCloud === 'function') {
+        saveToCloud(false);
       }
 
       renderSavedReadingArticles();
-      showToast('🗑️ Đã xóa bài đọc! (Từ vựng đã chọn vẫn được giữ an toàn trong Nhóm từ)');
+      showToast('🗑️ Đã xóa bài đọc thành công!');
     }
 
     // Explicitly expose reading functions to window for inline onclick handlers
