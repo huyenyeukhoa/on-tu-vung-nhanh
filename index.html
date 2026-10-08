@@ -2042,6 +2042,27 @@
     if (!Array.isArray(readingArticles)) readingArticles = [];
     let activeReadingArticleId = null;
 
+    function saveReadingArticlesToStorage() {
+      try {
+        const cleanArticles = (readingArticles || []).map(art => {
+          if (art && art.audioUrl && art.audioUrl.length > 500) {
+            const { audioUrl, ...rest } = art;
+            return rest;
+          }
+          return art;
+        });
+        localStorage.setItem('hsk_reading_articles', JSON.stringify(cleanArticles));
+      } catch (e) {
+        console.warn('saveReadingArticlesToStorage quota warning:', e);
+      }
+    }
+    window.saveReadingArticlesToStorage = saveReadingArticlesToStorage;
+
+    // Automatically strip heavy audioUrl strings from localStorage readingArticles to free up quota
+    if (readingArticles.some(a => a && a.audioUrl && a.audioUrl.length > 500)) {
+      saveReadingArticlesToStorage();
+    }
+
     // User Learning Progress mapped by Hanzi safely in localStorage
     let userProgress = safeGetJSON('hsk_user_progress', {});
     if (typeof userProgress !== 'object' || userProgress === null) userProgress = {};
@@ -2407,7 +2428,7 @@
               }
             });
             readingArticles = mergedArticles;
-            localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+            saveReadingArticlesToStorage();
           }
 
           // Smart merge upgrade words
@@ -4844,12 +4865,18 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           const isFirstChunk = (i === 0);
           const chunkText = chunks[i];
 
-          const prompt = `Bạn là chuyên gia dịch thuật và biên tập báo chí Tiếng Việt cao cấp. Hãy phân tích đoạn văn tiếng Trung sau (phần ${i + 1}/${chunks.length}) và:
+          const prompt = `Bạn là chuyên gia ngôn ngữ Tiếng Trung và dịch thuật cao cấp. Hãy phân tích đoạn văn tiếng Trung sau (phần ${i + 1}/${chunks.length}):
 
-${isFirstChunk ? `1) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ, ĐÚNG VĂN PHONG TIẾNG VIỆT (3 đến 6 từ).` : ''}
-${isFirstChunk ? '2)' : '1)'} Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo đúng ngắt đoạn gốc:
+1) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU (RẤT QUAN TRỌNG):
+   - Hãy kiểm tra kỹ văn bản. Nếu bài gốc thiếu dấu câu, ngắt nghỉ sai vị trí hoặc dính liền chữ không có dấu câu, BẮT BUỘC bạn phải tự chỉnh sửa và bổ sung đầy đủ các dấu câu chuẩn tiếng Trung (，, 。, ！, ？, ：“”, 《》) đúng ngữ pháp và nhịp ngắt nghỉ tự nhiên!
+   - BẮT BUỘC giữ lại và phân tách đầy đủ mọi dấu câu vào mảng tokens (với dấu câu thì set "isVocab": false, "pinyin": "", "vietnamese": ""). Tuyệt đối KHÔNG được xóa bỏ hay nuốt mất dấu câu!
+
+${isFirstChunk ? `2) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ (3 đến 6 từ).` : ''}
+${isFirstChunk ? '3)' : '2)'} Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo ngắt đoạn gốc:
    - Dịch toàn bộ đoạn đó sang TIẾNG VIỆT mượt mà, chuẩn ngữ cảnh.
-   - Phân tách các từ/cụm từ chuẩn ngữ pháp tiếng Trung trong đoạn kèm Pinyin và Nghĩa tiếng Việt.
+   - Phân tách thành các token (từ/cụm từ/dấu câu) nối tiếp nhau hoàn chỉnh thành đoạn văn.
+   - Với từ vựng/cụm từ chữ Hán: "isVocab": true, kèm "pinyin" (có dấu) và "vietnamese" (nghĩa).
+   - Với các DẤU CÂU (，, 。, ！, ？, ：“”, 《》, etc.): "isVocab": false, "pinyin": "", "vietnamese": "".
 
 Đoạn văn gốc:
 """
@@ -4863,12 +4890,10 @@ ${chunkText}
     {
       "vietnamese": "Dịch nghĩa tiếng Việt mượt mà đầy đủ của đoạn",
       "tokens": [
-        {
-          "hanzi": "chữ Hán từ/cụm từ",
-          "pinyin": "pinyin có dấu",
-          "vietnamese": "nghĩa tiếng Việt",
-          "isVocab": true
-        }
+        { "hanzi": "那天", "pinyin": "nà tiān", "vietnamese": "hôm đó", "isVocab": true },
+        { "hanzi": "晚上", "pinyin": "wǎn shang", "vietnamese": "buổi tối", "isVocab": true },
+        { "hanzi": "，", "pinyin": "", "vietnamese": "", "isVocab": false },
+        { "hanzi": "柯南", "pinyin": "kē nán", "vietnamese": "Conan", "isVocab": true }
       ]
     }
   ]
@@ -4940,7 +4965,7 @@ ${chunkText}
         };
 
         readingArticles.unshift(articleObj);
-        localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+        saveReadingArticlesToStorage();
         if (typeof triggerDebouncedCloudSave === 'function') {
           triggerDebouncedCloudSave();
         }
@@ -5115,7 +5140,7 @@ ${chunkText}
       if (art) {
         art.audioUrl = base64Url;
         try {
-          localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+          saveReadingArticlesToStorage();
         } catch(e) {}
       }
 
@@ -5220,7 +5245,7 @@ ${chunkText}
       if (art) delete art.audioUrl;
 
       try {
-        localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+        saveReadingArticlesToStorage();
       } catch (e) {}
 
       if (window.caches) {
@@ -5774,7 +5799,7 @@ ${chunkText}
         updateDrawerButtonState(true);
       }
 
-      localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+      saveReadingArticlesToStorage();
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
       if (typeof triggerDebouncedCloudSave === 'function') {
         triggerDebouncedCloudSave();
@@ -5814,7 +5839,7 @@ ${chunkText}
         }
       });
 
-      localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+      saveReadingArticlesToStorage();
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
       if (typeof triggerDebouncedCloudSave === 'function') {
         triggerDebouncedCloudSave();
@@ -5868,9 +5893,7 @@ ${chunkText}
       readingArticles = readingArticles.filter(a => a.id !== articleId);
       deleteQwenAudioPersistent(articleId);
 
-      try {
-        localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
-      } catch(e) {}
+      saveReadingArticlesToStorage();
       if (typeof triggerDebouncedCloudSave === 'function') {
         triggerDebouncedCloudSave();
       }
