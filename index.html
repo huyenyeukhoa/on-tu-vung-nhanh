@@ -1714,6 +1714,32 @@
     </div>
   </div>
 
+  <!-- Reading Audio Speed Picker Modal -->
+  <div class="modal-overlay" id="readingSpeedPickerModal" style="z-index: 1080;">
+    <div class="modal-card" style="max-width: 380px; padding: 18px 16px;">
+      <div class="modal-header" style="margin-bottom: 12px;">
+        <div class="modal-title" style="font-size: 15.5px; font-weight: 700; color: #5e4b7e; display: flex; align-items: center; gap: 6px;">
+          <span>🚀 Điều chỉnh tốc độ đọc</span>
+        </div>
+        <button class="modal-close-btn" id="btnCloseSpeedPickerModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 4px 0 0 0;">
+        <div style="font-size: 12px; color: #6b7280; margin-bottom: 12px; background: #f3eef9; padding: 8px 10px; border-radius: 10px; border: 1px solid #e2d8ef; display: flex; align-items: center; justify-content: space-between;">
+          <span>Tốc độ hiện tại:</span>
+          <span id="currentSpeedDisplayBadge" style="font-size: 13px; font-weight: 800; background: #766299; color: white; padding: 2px 9px; border-radius: 10px;">1.0x</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+          <button class="speed-preset-btn" data-speed="0.75" style="padding: 10px 4px; font-size: 13px; font-weight: 700; border: 1.5px solid #d4c5e8; border-radius: 12px; background: white; color: #5e4b7e; cursor: pointer;">0.75x</button>
+          <button class="speed-preset-btn active" data-speed="1.0" style="padding: 10px 4px; font-size: 13px; font-weight: 700; border: 1.5px solid #766299; border-radius: 12px; background: #766299; color: white; cursor: pointer;">1.0x</button>
+          <button class="speed-preset-btn" data-speed="1.25" style="padding: 10px 4px; font-size: 13px; font-weight: 700; border: 1.5px solid #d4c5e8; border-radius: 12px; background: white; color: #5e4b7e; cursor: pointer;">1.25x</button>
+          <button class="speed-preset-btn" data-speed="1.5" style="padding: 10px 4px; font-size: 13px; font-weight: 700; border: 1.5px solid #d4c5e8; border-radius: 12px; background: white; color: #5e4b7e; cursor: pointer;">1.5x</button>
+          <button class="speed-preset-btn" data-speed="1.75" style="padding: 10px 4px; font-size: 13px; font-weight: 700; border: 1.5px solid #d4c5e8; border-radius: 10px; background: white; color: #5e4b7e; cursor: pointer;">1.75x</button>
+          <button class="speed-preset-btn" data-speed="2.0" style="padding: 10px 4px; font-size: 13px; font-weight: 700; border: 1.5px solid #d4c5e8; border-radius: 12px; background: white; color: #5e4b7e; cursor: pointer;">2.0x</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Custom Styled Group Picker Modal (Font Mali & Completed Highlights) -->
   <div class="modal-overlay" id="groupPickerModal">
     <div class="modal-card" style="max-width: 450px; padding: 20px 16px;">
@@ -4715,13 +4741,122 @@ Lưu ý quan trọng:
     window.toggleParagraphTranslation = toggleParagraphTranslation;
 
     // ==========================================
-    // FULL PASSAGE AUDIO PLAYER (Qwen Audio 3.0 TTS Flash - Voice: loongjohn)
+    // FULL PASSAGE AUDIO PLAYER & SPEED CONTROLLER
     // ==========================================
     let qwenAudioPlayer = new Audio();
     let qwenAudioCache = {};
     let isQwenAudioPlaying = false;
     let isQwenAudioPaused = false;
     let webSpeechAudioUtterance = null;
+
+    function getReadingAudioSpeed() {
+      const saved = localStorage.getItem('hsk_reading_audio_speed');
+      const parsed = parseFloat(saved);
+      if (!isNaN(parsed) && parsed >= 0.5 && parsed <= 3.0) {
+        return parsed;
+      }
+      return 1.0;
+    }
+
+    function setReadingAudioSpeed(speed) {
+      localStorage.setItem('hsk_reading_audio_speed', speed);
+      if (qwenAudioPlayer) {
+        qwenAudioPlayer.playbackRate = speed;
+      }
+      updateSpeedUI(speed);
+      closeReadingSpeedPickerModal();
+      showToast(`🚀 Đã chỉnh tốc độ đọc: ${speed}x`);
+      updateAudioBtnUI(isQwenAudioPlaying, isQwenAudioPaused);
+    }
+    window.setReadingAudioSpeed = setReadingAudioSpeed;
+
+    function updateSpeedUI(speed) {
+      const badge = document.getElementById('currentSpeedDisplayBadge');
+      if (badge) badge.textContent = `${speed}x`;
+
+      document.querySelectorAll('.speed-preset-btn').forEach(btn => {
+        const s = parseFloat(btn.getAttribute('data-speed'));
+        const isActive = Math.abs(s - speed) < 0.01;
+        btn.classList.toggle('active', isActive);
+        btn.style.background = isActive ? '#766299' : '#ffffff';
+        btn.style.color = isActive ? '#ffffff' : '#5e4b7e';
+        btn.style.borderColor = isActive ? '#766299' : '#d4c5e8';
+      });
+    }
+
+    function openReadingSpeedPickerModal() {
+      const modal = document.getElementById('readingSpeedPickerModal');
+      if (!modal) return;
+      updateSpeedUI(getReadingAudioSpeed());
+      modal.classList.add('active');
+    }
+    window.openReadingSpeedPickerModal = openReadingSpeedPickerModal;
+
+    function closeReadingSpeedPickerModal() {
+      const modal = document.getElementById('readingSpeedPickerModal');
+      if (!modal) return;
+      modal.classList.remove('active');
+    }
+    window.closeReadingSpeedPickerModal = closeReadingSpeedPickerModal;
+
+    // Attach Long Press to Book Icon 📖
+    function attachBookIconLongPress(element) {
+      if (!element) return;
+      let timer = null;
+      let isLongPress = false;
+      let startX = 0, startY = 0;
+
+      function startHold(e) {
+        isLongPress = false;
+        if (e.touches && e.touches[0]) {
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+        }
+        timer = setTimeout(() => {
+          isLongPress = true;
+          if (navigator.vibrate) {
+            try { navigator.vibrate(40); } catch(ex) {}
+          }
+          openReadingSpeedPickerModal();
+        }, 400);
+      }
+
+      function cancelHold() {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+      }
+
+      function endHold(e) {
+        cancelHold();
+        if (!isLongPress) {
+          toggleReadingPassageAudio();
+        }
+        if (e.type === 'touchend' && e.cancelable) {
+          e.preventDefault();
+        }
+      }
+
+      function moveHold(e) {
+        if (e.touches && e.touches[0]) {
+          const diffX = Math.abs(e.touches[0].clientX - startX);
+          const diffY = Math.abs(e.touches[0].clientY - startY);
+          if (diffX > 10 || diffY > 10) {
+            cancelHold();
+          }
+        }
+      }
+
+      element.addEventListener('mousedown', startHold);
+      element.addEventListener('mouseup', endHold);
+      element.addEventListener('mouseleave', cancelHold);
+
+      element.addEventListener('touchstart', startHold, { passive: false });
+      element.addEventListener('touchend', endHold, { passive: false });
+      element.addEventListener('touchmove', moveHold, { passive: true });
+      element.addEventListener('touchcancel', cancelHold);
+    }
 
     async function toggleReadingPassageAudio() {
       if (!activeReadingArticleId && readingArticles.length > 0) {
@@ -4736,6 +4871,8 @@ Lưu ý quan trọng:
         showToast('Không tìm thấy nội dung bài đọc!');
         return;
       }
+
+      const speed = getReadingAudioSpeed();
 
       // Tap 2: Currently Playing -> Pause Audio
       if (isQwenAudioPlaying && !isQwenAudioPaused) {
@@ -4754,6 +4891,7 @@ Lưu ý quan trọng:
       if (isQwenAudioPaused) {
         if (qwenAudioPlayer.src && qwenAudioPlayer.paused) {
           try {
+            qwenAudioPlayer.playbackRate = speed;
             await qwenAudioPlayer.play();
             isQwenAudioPaused = false;
             updateAudioBtnUI(true, false);
@@ -4786,7 +4924,7 @@ Lưu ý quan trọng:
 
       stopReadingPassageAudio(false);
       updateAudioBtnUI(true, false);
-      showToast('🔊 AI Qwen (Giọng Nam loongjohn) đang tải âm thanh...');
+      showToast(`🔊 AI Qwen (Giọng Nam loongjohn - ${speed}x) đang tải âm thanh...`);
 
       if (qwenAudioCache[art.id]) {
         playQwenAudioUrl(qwenAudioCache[art.id]);
@@ -4855,6 +4993,8 @@ Lưu ý quan trọng:
 
     function playQwenAudioUrl(audioUrl) {
       qwenAudioPlayer.src = audioUrl;
+      const speed = getReadingAudioSpeed();
+      qwenAudioPlayer.playbackRate = speed;
       isQwenAudioPlaying = true;
       isQwenAudioPaused = false;
       updateAudioBtnUI(true, false);
@@ -4882,9 +5022,10 @@ Lưu ý quan trọng:
       }
       window.speechSynthesis.cancel();
 
+      const speed = getReadingAudioSpeed();
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = 'zh-CN';
-      utter.rate = 0.9;
+      utter.rate = speed * 0.9;
 
       const voices = window.speechSynthesis.getVoices();
       const maleVoice = voices.find(v => v.lang.startsWith('zh') && (
@@ -4905,7 +5046,7 @@ Lưu ý quan trọng:
       updateAudioBtnUI(true, false);
 
       window.speechSynthesis.speak(utter);
-      showToast('🔊 Đang đọc bài (Giọng Nam Phổ Thông)...');
+      showToast(`🔊 Đang đọc bài (Giọng Nam Phổ Thông - ${speed}x)...`);
     }
 
     function stopReadingPassageAudio(resetState = true) {
@@ -4924,18 +5065,19 @@ Lưu ý quan trọng:
     function updateAudioBtnUI(isPlaying, isPaused) {
       const btn = document.getElementById('btnHeaderAudioToggle');
       if (!btn) return;
+      const speed = getReadingAudioSpeed();
       if (isPlaying && !isPaused) {
         btn.classList.add('playing');
         btn.textContent = '⏸️';
-        btn.title = 'Chạm để tạm dừng đọc bài';
+        btn.title = `Chạm để tạm dừng (${speed}x)`;
       } else if (isPaused) {
         btn.classList.remove('playing');
         btn.textContent = '📖';
-        btn.title = 'Chạm để tiếp tục đọc bài';
+        btn.title = `Chạm để đọc tiếp (${speed}x)`;
       } else {
         btn.classList.remove('playing');
         btn.textContent = '📖';
-        btn.title = 'Chạm để Đọc bài (Giọng Nam AI Qwen - loongjohn)';
+        btn.title = `Chạm để Đọc bài (${speed}x). Ấn giữ để chỉnh tốc độ.`;
       }
     }
     window.toggleReadingPassageAudio = toggleReadingPassageAudio;
@@ -4964,10 +5106,11 @@ Lưu ý quan trọng:
 
       const btnAudioToggle = document.getElementById('btnHeaderAudioToggle');
       if (btnAudioToggle) {
-        btnAudioToggle.onclick = (e) => {
-          e.stopPropagation();
-          toggleReadingPassageAudio();
-        };
+        btnAudioToggle.onclick = null;
+        if (!btnAudioToggle.dataset.longPressAttached) {
+          attachBookIconLongPress(btnAudioToggle);
+          btnAudioToggle.dataset.longPressAttached = 'true';
+        }
       }
 
       populateReadingArticleViewSelect(articleId);
@@ -5755,6 +5898,28 @@ Lưu ý quan trọng:
           }
         });
       }
+
+      // Reading Speed Picker Modal Listeners
+      const btnCloseSpeedPickerModal = document.getElementById('btnCloseSpeedPickerModal');
+      const readingSpeedPickerModal = document.getElementById('readingSpeedPickerModal');
+      if (btnCloseSpeedPickerModal) {
+        btnCloseSpeedPickerModal.addEventListener('click', closeReadingSpeedPickerModal);
+      }
+      if (readingSpeedPickerModal) {
+        readingSpeedPickerModal.addEventListener('click', (e) => {
+          if (e.target === readingSpeedPickerModal) {
+            closeReadingSpeedPickerModal();
+          }
+        });
+      }
+      document.querySelectorAll('.speed-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const speed = parseFloat(btn.getAttribute('data-speed'));
+          if (!isNaN(speed)) {
+            setReadingAudioSpeed(speed);
+          }
+        });
+      });
     }
 
     // Initialize Page (Guaranteed execution on all mobile browsers & WebViews)
