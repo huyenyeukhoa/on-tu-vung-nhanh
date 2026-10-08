@@ -1936,6 +1936,7 @@
 
     // AI Cache object safely
     const aiCache = safeGetJSON('hsk_ai_cache', {});
+    const aiCompareCache = safeGetJSON('hsk_ai_compare_cache', {});
 
     // DOM Elements
     const vocabListEl = document.getElementById('vocabList');
@@ -2694,16 +2695,32 @@
         <div style="background: linear-gradient(135deg, #f3eef9 0%, #ffffff 100%); padding: 14px; border-radius: 16px; border: 1px solid rgba(135,114,168,0.25); margin-bottom: 12px; box-shadow: 0 4px 12px rgba(135,114,168,0.1);">
           <div style="font-size: 12px; font-weight: 700; color: #8772a8; margin-bottom: 4px; letter-spacing: 0.5px;">✨ NÂNG CẤP VỐN TỪ TIẾNG TRUNG</div>
           
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
             <div style="flex: 1;">
               <span style="font-size: 18px; font-weight: 700; color: #374151;">${data.hanzi}</span>
               <span style="font-size: 12px; color: var(--text-muted);">(${data.pinyin})</span>
               <div style="font-size: 12.5px; color: #6b7280; margin-top: 2px;">Từ gốc: <b>${data.vietnamese}</b></div>
             </div>
+            <button id="btnToggleCompareInput" style="background: #f3eef9; border: 1.5px solid #d4c5e8; color: #766299; font-weight: 700; font-size: 12px; padding: 5px 10px; border-radius: 18px; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(118,98,153,0.12); flex-shrink: 0; font-family: var(--font-mali);" title="Chạm để nhập chữ Hán cần phân biệt">
+              <span>⚖️ Phân biệt từ</span>
+            </button>
           </div>
 
           ${topBannerUpgradeHTML}
         </div>
+
+        <div id="compareInputContainer" style="display: none; margin-bottom: 14px; background: #f8f5fc; border: 1.5px dashed #c4b5fd; padding: 10px 12px; border-radius: 14px;">
+          <div style="font-size: 12px; font-weight: 700; color: #766299; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+            <span>⚖️ Nhập từ Hán để phân biệt với "${data.hanzi}":</span>
+            <span style="font-size: 11.5px; color: #9ca3af; cursor: pointer;" onclick="document.getElementById('compareInputContainer').style.display='none'">✕ đóng</span>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="compareWordInput" placeholder="Ví dụ: 进步" style="flex: 1; padding: 8px 12px; border: 1.5px solid #c4b5fd; border-radius: 10px; font-size: 14px; font-family: var(--font-mali); outline: none;" />
+            <button id="btnSubmitCompare" class="primary-submit-btn" style="padding: 8px 13px; font-size: 12.5px; border-radius: 10px; font-weight: 700; flex-shrink: 0;">⚡ AI Phân biệt</button>
+          </div>
+        </div>
+
+        <div id="compareResultContainer"></div>
 
         <!-- Direct Sentence Transformation Section -->
         <div style="font-size: 13.5px; font-weight: 700; color: #766299; margin-bottom: 8px;">🔄 Các câu ví dụ đối chiếu:</div>
@@ -2711,6 +2728,39 @@
         ${examplesHTML}
       `;
       resetModalScroll(aiModal);
+
+      const btnToggleCompare = document.getElementById('btnToggleCompareInput');
+      const compareContainer = document.getElementById('compareInputContainer');
+      const compareInput = document.getElementById('compareWordInput');
+      const btnSubmitCompare = document.getElementById('btnSubmitCompare');
+
+      if (btnToggleCompare && compareContainer && compareInput) {
+        btnToggleCompare.addEventListener('click', () => {
+          const isHidden = compareContainer.style.display === 'none' || !compareContainer.style.display;
+          compareContainer.style.display = isHidden ? 'block' : 'none';
+          if (isHidden) {
+            setTimeout(() => {
+              compareInput.focus();
+            }, 80);
+          }
+        });
+      }
+
+      const runCompare = () => {
+        const targetWord = compareInput.value.trim();
+        if (!targetWord) {
+          showToast('Vui lòng nhập chữ Hán cần phân biệt!');
+          return;
+        }
+        handleDoCompareWords(data.hanzi, targetWord);
+      };
+
+      if (btnSubmitCompare) btnSubmitCompare.addEventListener('click', runCompare);
+      if (compareInput) {
+        compareInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') runCompare();
+        });
+      }
     }
 
     // Robust JSON Parser with Multi-level Auto-Repair (Handles unescaped newlines, control chars & truncation)
@@ -2806,6 +2856,196 @@
       }
 
       throw new Error('Dữ liệu AI trả về bị lỗi cấu trúc chuỗi. Vui lòng bấm "Thử lại"!');
+    }
+
+    // Fetch AI Word Distinction / Comparison Data from OpenRouter (gemini-2.5-flash)
+    async function fetchAiCompareWords(wordA, wordB) {
+      const cacheKey = `${wordA}_vs_${wordB}`;
+      const reverseCacheKey = `${wordB}_vs_${wordA}`;
+
+      if (aiCompareCache[cacheKey]) return aiCompareCache[cacheKey];
+      if (aiCompareCache[reverseCacheKey]) return aiCompareCache[reverseCacheKey];
+
+      const apiKey = localStorage.getItem('openrouter_api_key');
+      if (!apiKey) throw new Error('Vui lòng nhập OpenRouter API Key!');
+
+      const prompt = `Bạn là giáo viên tiếng Trung cao cấp. Hãy phân biệt ngắn gọn, tinh tế và chuẩn xác giữa 2 từ: "${wordA}" và "${wordB}".
+
+Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json) có cấu trúc BẮT BUỘC như sau:
+{
+  "core_difference": "Giải thích ngắn gọn 2-3 câu về điểm khác nhau cốt lõi nhất giữa ${wordA} và ${wordB} (sắc thái, phạm vi dùng). Trong đoạn này, BẮT BUỘC bao quanh DUY NHẤT MỘT cụm từ dài/vế câu mấu chốt bằng thẻ <span class=\\'important-highlight\\'>cụm từ mấu chốt</span> (dùng dấu nháy đơn ' cho class) để bôi đỏ.",
+  "words": [
+    {
+      "word": "${wordA}",
+      "pinyin": "pinyin của ${wordA}",
+      "pos": "từ loại của ${wordA}",
+      "meaning": "nghĩa tiếng Việt ngắn gọn của ${wordA}",
+      "example_cn": "1 câu ví dụ chữ Hán ngắn gọn chuẩn xác dùng từ ${wordA}",
+      "example_pinyin": "pinyin ví dụ",
+      "example_vi": "dịch nghĩa tiếng Việt câu ví dụ",
+      "why_this_word": "Giải thích rõ ràng tại sao câu này dùng ${wordA} mà KHÔNG DÙNG ${wordB} (nêu rõ điểm khác biệt ngữ pháp/tình huống quyết định)."
+    },
+    {
+      "word": "${wordB}",
+      "pinyin": "pinyin của ${wordB}",
+      "pos": "từ loại của ${wordB}",
+      "meaning": "nghĩa tiếng Việt ngắn gọn của ${wordB}",
+      "example_cn": "1 câu ví dụ chữ Hán ngắn gọn chuẩn xác dùng từ ${wordB}",
+      "example_pinyin": "pinyin ví dụ",
+      "example_vi": "dịch nghĩa tiếng Việt câu ví dụ",
+      "why_this_word": "Giải thích rõ ràng tại sao câu này dùng ${wordB} mà KHÔNG DÙNG ${wordA} (nêu rõ điểm khác biệt ngữ pháp/tình huống quyết định)."
+    }
+  ]
+}
+
+Lưu ý:
+- BẮT BUỘC trả về Valid JSON. Tuyệt đối không thêm text ngoài JSON.
+- Mỗi từ chỉ đúng 1 câu ví dụ chất lượng.
+- Phần "why_this_word" phải giải thích cụ thể lý do ngữ pháp/ngữ cảnh khiến từ này phù hợp mà từ kia không phù hợp.`;
+
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.href,
+          'X-Title': 'HSK Vocab App'
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 2000
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error?.message || `Lỗi HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      const contentStr = data.choices?.[0]?.message?.content || '{}';
+      const parsedJSON = safeParseJSON(contentStr);
+
+      aiCompareCache[cacheKey] = parsedJSON;
+      try { localStorage.setItem('hsk_ai_compare_cache', JSON.stringify(aiCompareCache)); } catch(e){}
+
+      return parsedJSON;
+    }
+
+    // Render Distinction / Comparison Card inside Modal
+    function renderAiCompareResult(containerEl, compareData, wordA, wordB) {
+      if (!containerEl || !compareData) return;
+
+      const words = compareData.words || [];
+      const itemA = words.find(w => w.word === wordA) || words[0] || { word: wordA, pinyin: '', pos: '', meaning: '', example_cn: '', example_pinyin: '', example_vi: '', why_this_word: '' };
+      const itemB = words.find(w => w.word === wordB) || words[1] || { word: wordB, pinyin: '', pos: '', meaning: '', example_cn: '', example_pinyin: '', example_vi: '', why_this_word: '' };
+
+      const highlightBaseTag = "color: #ffffff; font-weight: 700; background: #766299; padding: 2px 7px; border-radius: 6px; display: inline-block; font-family: var(--font-hanzi) !important;";
+      const highlightCompareTag = "color: #ffffff; font-weight: 700; background: #2563eb; padding: 2px 7px; border-radius: 6px; display: inline-block; font-family: var(--font-hanzi) !important;";
+
+      const exAHighlighted = highlightWordInSentence(itemA.example_cn || '', itemA.word, highlightBaseTag);
+      const exBHighlighted = highlightWordInSentence(itemB.example_cn || '', itemB.word, highlightCompareTag);
+
+      const escapedExAHanzi = (itemA.example_cn || '').replace(/'/g, "\\'");
+      const escapedExBHanzi = (itemB.example_cn || '').replace(/'/g, "\\'");
+
+      containerEl.innerHTML = `
+        <div style="background: linear-gradient(135deg, #f5f0fb 0%, #ffffff 100%); border: 1.5px solid #d4c5e8; border-radius: 16px; padding: 14px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(118,98,153,0.12);">
+          <div style="font-size: 13.5px; font-weight: 700; color: #5e4b7e; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+            <span>⚖️ So sánh phân biệt: <b style="color: #766299; font-size: 16px;">${itemA.word}</b> <i>vs</i> <b style="color: #2563eb; font-size: 16px;">${itemB.word}</b></span>
+            <button onclick="document.getElementById('compareResultContainer').innerHTML=''" style="background: none; border: none; color: #9ca3af; font-size: 14px; cursor: pointer;">✕</button>
+          </div>
+
+          <!-- Core Difference Box -->
+          <div style="background: #ffffff; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2d8ef; margin-bottom: 12px; line-height: 1.55; font-size: 13px; color: #3c2e54;">
+            <div style="font-weight: 700; color: #766299; margin-bottom: 3px; font-size: 12.5px;">💡 Điểm khác nhau cốt lõi:</div>
+            ${compareData.core_difference || ''}
+          </div>
+
+          <!-- Word A Card -->
+          <div style="background: #ffffff; padding: 12px; border-radius: 12px; border: 1px solid #e2d8ef; margin-bottom: 10px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <div>
+                <b style="font-size: 17px; color: #766299; font-family: var(--font-hanzi);">${itemA.word}</b>
+                <span style="font-size: 12px; color: #6b7280; margin-left: 4px;">(${itemA.pinyin || ''})</span>
+              </div>
+              ${itemA.pos ? `<span class="word-pos-tag">${itemA.pos}</span>` : ''}
+            </div>
+            <div style="font-size: 12.5px; color: #374151; margin-bottom: 8px;"><b>Nghĩa:</b> ${itemA.meaning || ''}</div>
+
+            <div style="padding: 10px; background: #f3eef9; border-radius: 10px; border: 1px solid #e2d8ef;">
+              <div class="example-hanzi" onclick="speakChinese('${escapedExAHanzi}')" title="chạm nghe phát âm" style="font-size: 15.5px; line-height: 1.5; color: #3c2e54;">
+                ${exAHighlighted}
+              </div>
+              ${itemA.example_pinyin ? `<div style="font-size: 12px; color: #766299; margin-top: 3px;">${itemA.example_pinyin}</div>` : ''}
+              <div style="font-size: 12.5px; color: #4b5563; margin-top: 2px;">${itemA.example_vi || ''}</div>
+
+              ${itemA.why_this_word ? `
+                <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #d4c5e8; font-size: 12px; color: #5e4b7e; line-height: 1.45;">
+                  <b style="color: #766299;">👉 Vì sao dùng ${itemA.word} mà không dùng ${itemB.word}:</b><br/>
+                  ${itemA.why_this_word}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Word B Card -->
+          <div style="background: #ffffff; padding: 12px; border-radius: 12px; border: 1px solid #dbeafe;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <div>
+                <b style="font-size: 17px; color: #2563eb; font-family: var(--font-hanzi);">${itemB.word}</b>
+                <span style="font-size: 12px; color: #6b7280; margin-left: 4px;">(${itemB.pinyin || ''})</span>
+              </div>
+              ${itemB.pos ? `<span class="word-pos-tag" style="background:#eff6ff; color:#2563eb; border-color:#bfdbfe;">${itemB.pos}</span>` : ''}
+            </div>
+            <div style="font-size: 12.5px; color: #374151; margin-bottom: 8px;"><b>Nghĩa:</b> ${itemB.meaning || ''}</div>
+
+            <div style="padding: 10px; background: #eff6ff; border-radius: 10px; border: 1px solid #bfdbfe;">
+              <div class="example-hanzi" onclick="speakChinese('${escapedExBHanzi}')" title="chạm nghe phát âm" style="font-size: 15.5px; line-height: 1.5; color: #1e3a8a;">
+                ${exBHighlighted}
+              </div>
+              ${itemB.example_pinyin ? `<div style="font-size: 12px; color: #2563eb; margin-top: 3px;">${itemB.example_pinyin}</div>` : ''}
+              <div style="font-size: 12.5px; color: #4b5563; margin-top: 2px;">${itemB.example_vi || ''}</div>
+
+              ${itemB.why_this_word ? `
+                <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #bfdbfe; font-size: 12px; color: #1e40af; line-height: 1.45;">
+                  <b style="color: #2563eb;">👉 Vì sao dùng ${itemB.word} mà không dùng ${itemA.word}:</b><br/>
+                  ${itemB.why_this_word}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Handle Trigger Compare Action
+    async function handleDoCompareWords(wordA, wordB) {
+      const containerEl = document.getElementById('compareResultContainer');
+      if (!containerEl) return;
+
+      containerEl.innerHTML = `
+        <div style="padding: 16px 12px; text-align: center; background: #f9f6fc; border-radius: 14px; border: 1.5px dashed #d4c5e8; margin-bottom: 14px; color: #766299; font-size: 13.5px; font-weight: 700;">
+          <img src="./loading.gif" style="width: 22px; height: 22px; vertical-align: middle; margin-right: 6px;" />
+          <span>AI đang phân biệt "${wordA}" và "${wordB}"...</span>
+        </div>
+      `;
+
+      try {
+        const compareData = await fetchAiCompareWords(wordA, wordB);
+        renderAiCompareResult(containerEl, compareData, wordA, wordB);
+      } catch (err) {
+        console.error('AI compare error:', err);
+        containerEl.innerHTML = `
+          <div style="padding: 14px; background: #fef2f2; border-radius: 12px; border: 1px solid #fecaca; color: #dc2626; margin-bottom: 14px; font-size: 13px;">
+            <b style="font-size: 13.5px;">❌ Không thể tải phân biệt AI:</b> ${err.message}
+            <div style="margin-top: 8px;">
+              <button class="primary-submit-btn" style="padding: 5px 12px; font-size: 12px;" onclick="handleDoCompareWords('${wordA}', '${wordB}')">Thử lại</button>
+            </div>
+          </div>
+        `;
+      }
     }
 
     // Fetch Single AI Explanation from OpenRouter (gemini-2.5-flash) - Returns cached or newly fetched data
@@ -3047,14 +3287,34 @@ Lưu ý quan trọng:
       const posBadgeHTML = data.pos ? `<span class="word-pos-tag">${data.pos}</span>` : '';
 
       aiModalBody.innerHTML = `
-        <div class="ai-word-title">
-          <span>${data.hanzi}</span>
-          <button class="icon-action-btn" onclick="speakChinese('${data.hanzi}')" title="phát âm từ này giọng Xiaoxiao">🔊</button>
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
+          <div>
+            <div class="ai-word-title">
+              <span>${data.hanzi}</span>
+              <button class="icon-action-btn" onclick="speakChinese('${data.hanzi}')" title="phát âm từ này giọng Xiaoxiao">🔊</button>
+            </div>
+            <div class="ai-word-pinyin">
+              <span>${data.pinyin}</span>
+              ${posBadgeHTML}
+            </div>
+          </div>
+          <button id="btnToggleCompareInput" style="margin-top: 2px; background: #f3eef9; border: 1.5px solid #d4c5e8; color: #766299; font-weight: 700; font-size: 12.5px; padding: 5px 11px; border-radius: 18px; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 6px rgba(118,98,153,0.12); flex-shrink: 0; font-family: var(--font-mali);" title="Chạm để nhập chữ Hán cần phân biệt">
+            <span>⚖️ Phân biệt từ</span>
+          </button>
         </div>
-        <div class="ai-word-pinyin">
-          <span>${data.pinyin}</span>
-          ${posBadgeHTML}
+
+        <div id="compareInputContainer" style="display: none; margin-bottom: 14px; background: #f8f5fc; border: 1.5px dashed #c4b5fd; padding: 10px 12px; border-radius: 14px;">
+          <div style="font-size: 12px; font-weight: 700; color: #766299; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+            <span>⚖️ Nhập từ Hán để phân biệt với "${data.hanzi}":</span>
+            <span style="font-size: 11.5px; color: #9ca3af; cursor: pointer;" onclick="document.getElementById('compareInputContainer').style.display='none'">✕ đóng</span>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="compareWordInput" placeholder="Ví dụ: 进步" style="flex: 1; padding: 8px 12px; border: 1.5px solid #c4b5fd; border-radius: 10px; font-size: 14px; font-family: var(--font-mali); outline: none;" />
+            <button id="btnSubmitCompare" class="primary-submit-btn" style="padding: 8px 13px; font-size: 12.5px; border-radius: 10px; font-weight: 700; flex-shrink: 0;">⚡ AI Phân biệt</button>
+          </div>
         </div>
+
+        <div id="compareResultContainer"></div>
 
         <div style="background: #f3eef9; padding: 12px 14px; border-radius: 14px; border: 1px solid #e2d8ef; margin-bottom: 14px;">
           <div style="font-size: 13px; font-weight: 700; color: #766299; margin-bottom: 4px; display:flex; align-items:center; gap:4px;">
@@ -3076,6 +3336,39 @@ Lưu ý quan trọng:
       `;
 
       resetModalScroll(aiModal);
+
+      const btnToggleCompare = document.getElementById('btnToggleCompareInput');
+      const compareContainer = document.getElementById('compareInputContainer');
+      const compareInput = document.getElementById('compareWordInput');
+      const btnSubmitCompare = document.getElementById('btnSubmitCompare');
+
+      if (btnToggleCompare && compareContainer && compareInput) {
+        btnToggleCompare.addEventListener('click', () => {
+          const isHidden = compareContainer.style.display === 'none' || !compareContainer.style.display;
+          compareContainer.style.display = isHidden ? 'block' : 'none';
+          if (isHidden) {
+            setTimeout(() => {
+              compareInput.focus();
+            }, 80);
+          }
+        });
+      }
+
+      const runCompare = () => {
+        const targetWord = compareInput.value.trim();
+        if (!targetWord) {
+          showToast('Vui lòng nhập chữ Hán cần phân biệt!');
+          return;
+        }
+        handleDoCompareWords(data.hanzi, targetWord);
+      };
+
+      if (btnSubmitCompare) btnSubmitCompare.addEventListener('click', runCompare);
+      if (compareInput) {
+        compareInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') runCompare();
+        });
+      }
 
       document.getElementById('btnLoadMoreExamples').addEventListener('click', () => {
         fetchMoreExamples(data.hanzi, data.pinyin);
