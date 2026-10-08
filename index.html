@@ -3452,6 +3452,7 @@ Lưu ý quan trọng:
 
       aiCache[hanzi] = parsedJSON;
       localStorage.setItem('hsk_ai_cache', JSON.stringify(aiCache));
+      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
 
       return parsedJSON;
     }
@@ -3771,6 +3772,7 @@ Lưu ý:
           if (!aiCache[hanzi].examples) aiCache[hanzi].examples = [];
           aiCache[hanzi].examples.push(...parsed.examples);
           localStorage.setItem('hsk_ai_cache', JSON.stringify(aiCache));
+          if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
           renderAiExplanation(aiCache[hanzi]);
           showToast('Đã thêm 3 câu ví dụ mới!');
         }
@@ -5931,6 +5933,7 @@ ${chunkText}
           customGroups.push(newGrp);
           currentCustomGroupId = newGrp.id;
           localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+          if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
           renderCustomGroupSelect();
           showToast(`Đã tạo nhóm "${name.trim()}"`);
         }
@@ -6109,6 +6112,8 @@ ${chunkText}
                 groupCompletedDates = parsed.groupCompletedDates;
                 localStorage.setItem('hsk_group_completed_dates', JSON.stringify(groupCompletedDates));
               }
+
+              if (typeof saveToCloud === 'function') saveToCloud(false);
 
               updateCustomLevelTabCount();
               updateGroupWordsState();
