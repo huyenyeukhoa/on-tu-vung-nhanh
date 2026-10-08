@@ -746,7 +746,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 10px 6px;
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
@@ -772,10 +772,10 @@
 
     .modal-card {
       background: #ffffff;
-      border-radius: 20px;
+      border-radius: 18px;
       width: 100%;
-      max-width: 480px;
-      max-height: 85vh;
+      max-width: 520px;
+      max-height: 88vh;
       display: flex;
       flex-direction: column;
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -804,7 +804,7 @@
 
     /* Minimal Clean Header with Close Button Only */
     .modal-header {
-      padding: 12px 16px 8px 16px;
+      padding: 10px 12px 6px 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -838,7 +838,7 @@
     }
 
     .modal-body {
-      padding: 16px 18px;
+      padding: 12px 10px;
       overflow-y: auto;
       flex: 1;
       font-size: 14px;
@@ -2986,70 +2986,66 @@ Lưu ý:
       const escapedExBHanzi = (itemB.example_cn || '').replace(/'/g, "\\'");
 
       containerEl.innerHTML = `
-        <div style="background: linear-gradient(135deg, #f5f0fb 0%, #ffffff 100%); border: 1.5px solid #d4c5e8; border-radius: 16px; padding: 14px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(118,98,153,0.12);">
-          <div style="font-size: 13.5px; font-weight: 700; color: #5e4b7e; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
-            <span>⚖️ So sánh phân biệt: <b style="color: #766299; font-size: 16px;">${itemA.word}</b> <i>vs</i> <b style="color: #8e5899; font-size: 16px;">${itemB.word}</b></span>
-            <button onclick="document.getElementById('compareResultContainer').innerHTML=''" style="background: none; border: none; color: #9ca3af; font-size: 14px; cursor: pointer;">✕</button>
+        <div style="margin-bottom: 12px; width: 100%;">
+          <div style="font-size: 13.5px; font-weight: 700; color: #5e4b7e; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 2px;">
+            <span>⚖️ So sánh: <b style="color: #766299; font-size: 16px;">${itemA.word}</b> <i>vs</i> <b style="color: #8e5899; font-size: 16px;">${itemB.word}</b></span>
+            <button onclick="document.getElementById('compareResultContainer').innerHTML=''" style="background: none; border: none; color: #9ca3af; font-size: 15px; cursor: pointer; padding: 2px 6px;" title="Đóng so sánh">✕</button>
           </div>
 
           <!-- Core Difference Box -->
-          <div style="background: #ffffff; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2d8ef; margin-bottom: 12px; line-height: 1.55; font-size: 13px; color: #3c2e54;">
+          <div style="background: #fcf9fe; padding: 10px 12px; border-radius: 12px; border: 1.5px solid #d4c5e8; margin-bottom: 10px; line-height: 1.55; font-size: 13px; color: #3c2e54;">
             <div style="font-weight: 700; color: #766299; margin-bottom: 3px; font-size: 12.5px;">💡 Điểm khác nhau cốt lõi:</div>
             ${compareData.core_difference || ''}
           </div>
 
-          <!-- Word A Card -->
-          <div style="background: #ffffff; padding: 12px; border-radius: 12px; border: 1px solid #e2d8ef; margin-bottom: 10px;">
+          <!-- Word A Card (Single clean card) -->
+          <div style="background: #f8f5fc; padding: 12px; border-radius: 12px; border: 1.5px solid #d4c5e8; margin-bottom: 10px;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
               <div>
-                <b style="font-size: 17px; color: #766299; font-family: var(--font-hanzi);">${itemA.word}</b>
-                <span style="font-size: 12px; color: #6b7280; margin-left: 4px;">(${itemA.pinyin || ''})</span>
+                <b style="font-size: 17.5px; color: #766299; font-family: var(--font-hanzi);">${itemA.word}</b>
+                <span style="font-size: 12.5px; color: #6b7280; margin-left: 4px;">(${itemA.pinyin || ''})</span>
               </div>
               ${itemA.pos ? `<span class="word-pos-tag">${itemA.pos}</span>` : ''}
             </div>
-            <div style="font-size: 12.5px; color: #374151; margin-bottom: 8px;"><b>Nghĩa:</b> ${itemA.meaning || ''}</div>
+            <div style="font-size: 13px; color: #374151; margin-bottom: 8px;"><b>Nghĩa:</b> ${itemA.meaning || ''}</div>
 
-            <div style="padding: 10px; background: #f3eef9; border-radius: 10px; border: 1px solid #e2d8ef;">
-              <div class="example-hanzi" onclick="speakChinese('${escapedExAHanzi}')" title="chạm nghe phát âm" style="font-size: 15.5px; line-height: 1.5; color: #3c2e54;">
-                ${exAHighlighted}
-              </div>
-              ${itemA.example_pinyin ? `<div style="font-size: 12px; color: #766299; margin-top: 3px;">${itemA.example_pinyin}</div>` : ''}
-              <div style="font-size: 12.5px; color: #4b5563; margin-top: 2px;">${itemA.example_vi || ''}</div>
-
-              ${itemA.why_this_word ? `
-                <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #d4c5e8; font-size: 12px; color: #5e4b7e; line-height: 1.45;">
-                  <b style="color: #766299;">👉 Vì sao dùng ${itemA.word} mà không dùng ${itemB.word}:</b><br/>
-                  ${itemA.why_this_word}
-                </div>
-              ` : ''}
+            <div class="example-hanzi" onclick="speakChinese('${escapedExAHanzi}')" title="chạm nghe phát âm" style="font-size: 16px; line-height: 1.55; color: #3c2e54; margin-top: 4px;">
+              ${exAHighlighted}
             </div>
+            ${itemA.example_pinyin ? `<div style="font-size: 12px; color: #766299; margin-top: 3px;">${itemA.example_pinyin}</div>` : ''}
+            <div style="font-size: 13px; color: #4b5563; margin-top: 2px;">${itemA.example_vi || ''}</div>
+
+            ${itemA.why_this_word ? `
+              <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #d4c5e8; font-size: 12.5px; color: #5e4b7e; line-height: 1.5;">
+                <b style="color: #766299;">👉 Vì sao dùng ${itemA.word} mà không dùng ${itemB.word}:</b><br/>
+                ${itemA.why_this_word}
+              </div>
+            ` : ''}
           </div>
 
-          <!-- Word B Card -->
-          <div style="background: #ffffff; padding: 12px; border-radius: 12px; border: 1px solid #e9d5ff;">
+          <!-- Word B Card (Single clean card) -->
+          <div style="background: #fdf4ff; padding: 12px; border-radius: 12px; border: 1.5px solid #f0abfc; margin-bottom: 10px;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
               <div>
-                <b style="font-size: 17px; color: #8e5899; font-family: var(--font-hanzi);">${itemB.word}</b>
-                <span style="font-size: 12px; color: #6b7280; margin-left: 4px;">(${itemB.pinyin || ''})</span>
+                <b style="font-size: 17.5px; color: #8e5899; font-family: var(--font-hanzi);">${itemB.word}</b>
+                <span style="font-size: 12.5px; color: #6b7280; margin-left: 4px;">(${itemB.pinyin || ''})</span>
               </div>
-              ${itemB.pos ? `<span class="word-pos-tag" style="background:#fdf4ff; color:#8e5899; border-color:#f5d0fe;">${itemB.pos}</span>` : ''}
+              ${itemB.pos ? `<span class="word-pos-tag" style="background:#ffffff; color:#8e5899; border-color:#f5d0fe;">${itemB.pos}</span>` : ''}
             </div>
-            <div style="font-size: 12.5px; color: #374151; margin-bottom: 8px;"><b>Nghĩa:</b> ${itemB.meaning || ''}</div>
+            <div style="font-size: 13px; color: #374151; margin-bottom: 8px;"><b>Nghĩa:</b> ${itemB.meaning || ''}</div>
 
-            <div style="padding: 10px; background: #fdf4ff; border-radius: 10px; border: 1px solid #f5d0fe;">
-              <div class="example-hanzi" onclick="speakChinese('${escapedExBHanzi}')" title="chạm nghe phát âm" style="font-size: 15.5px; line-height: 1.5; color: #4c1d95;">
-                ${exBHighlighted}
+            <div class="example-hanzi" onclick="speakChinese('${escapedExBHanzi}')" title="chạm nghe phát âm" style="font-size: 16px; line-height: 1.55; color: #4c1d95; margin-top: 4px;">
+              ${exBHighlighted}
+            </div>
+            ${itemB.example_pinyin ? `<div style="font-size: 12px; color: #8e5899; margin-top: 3px;">${itemB.example_pinyin}</div>` : ''}
+            <div style="font-size: 13px; color: #4b5563; margin-top: 2px;">${itemB.example_vi || ''}</div>
+
+            ${itemB.why_this_word ? `
+              <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #f5d0fe; font-size: 12.5px; color: #581c87; line-height: 1.5;">
+                <b style="color: #8e5899;">👉 Vì sao dùng ${itemB.word} mà không dùng ${itemA.word}:</b><br/>
+                ${itemB.why_this_word}
               </div>
-              ${itemB.example_pinyin ? `<div style="font-size: 12px; color: #8e5899; margin-top: 3px;">${itemB.example_pinyin}</div>` : ''}
-              <div style="font-size: 12.5px; color: #4b5563; margin-top: 2px;">${itemB.example_vi || ''}</div>
-
-              ${itemB.why_this_word ? `
-                <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #f5d0fe; font-size: 12px; color: #581c87; line-height: 1.45;">
-                  <b style="color: #8e5899;">👉 Vì sao dùng ${itemB.word} mà không dùng ${itemA.word}:</b><br/>
-                  ${itemB.why_this_word}
-                </div>
-              ` : ''}
-            </div>
+            ` : ''}
           </div>
         </div>
       `;
