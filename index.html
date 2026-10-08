@@ -60,6 +60,7 @@
     html {
       height: 100%;
       height: -webkit-fill-available;
+      background-color: var(--bg-color);
     }
 
     body, input, textarea, button, select, option, label, p, div, span,
@@ -190,16 +191,26 @@
 
     /* Collapsible Top Panel */
     .top-collapsible-panel {
-      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+      transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
       max-height: 280px;
       opacity: 1;
       overflow: hidden;
+      will-change: max-height, opacity;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      transform: translateZ(0);
     }
 
     .top-collapsible-panel.collapsed {
       max-height: 0;
       opacity: 0;
       border: none;
+      pointer-events: none;
+    }
+
+    .top-collapsible-panel.collapsed * {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
     }
 
     /* Level Selector Tabs */
@@ -730,20 +741,25 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(5px);
-      z-index: 200;
+      background: rgba(17, 24, 39, 0.55);
+      z-index: 250;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 16px;
       opacity: 0;
+      visibility: hidden;
       pointer-events: none;
-      transition: opacity 0.25s ease;
+      transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: opacity, visibility;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      transform: translateZ(0);
     }
 
     .modal-overlay.active {
       opacity: 1;
+      visibility: visible;
       pointer-events: auto;
     }
 
@@ -765,7 +781,10 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
       overflow: hidden;
       transform: translateY(15px);
-      transition: transform 0.25s ease, background 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, box-shadow 0.2s ease;
+      will-change: transform;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
     }
 
     /* Transparent Floating Modal state during loading (no white background box) */
@@ -1064,7 +1083,11 @@
       border-top-left-radius: 20px;
       border-top-right-radius: 20px;
       z-index: 100;
-      animation: slideUpDrawer 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+      will-change: transform, opacity;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      transform: translateZ(0);
     }
 
     @keyframes slideUpDrawer {
