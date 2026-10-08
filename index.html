@@ -5424,15 +5424,15 @@ ${chunkText}
           }).join('');
 
           return `
-            <div style="text-indent: 2em; margin-bottom: 12px; line-height: 2.0; position: relative;">
-              <span style="text-indent: 0; display: inline-block; vertical-align: middle; margin-right: 4px;">${tinyBtnHTML}</span>
+            <div style="margin-bottom: 14px; line-height: 2.0; position: relative;">
+              <span style="display: inline-block; vertical-align: middle; margin-right: 6px;">${tinyBtnHTML}</span>
               ${paraTokensHTML}
             </div>
           `;
         }
       }).join('');
 
-      readingPassageContainer.innerHTML = paragraphsHTML || '<div style="text-indent: 2em; margin-bottom: 12px; line-height: 2.0;"></div>';
+      readingPassageContainer.innerHTML = paragraphsHTML || '<div style="margin-bottom: 14px; line-height: 2.0;"></div>';
     }
 
     // Token clicked inside Interactive Reader
