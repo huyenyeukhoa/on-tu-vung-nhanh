@@ -1714,6 +1714,78 @@
     </div>
   </div>
 
+  <!-- Reading Audio Settings Modal (Playback Speed & Custom MP3 Upload) -->
+  <div class="modal-overlay" id="readingAudioSettingsModal" style="z-index: 1080;">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <div class="modal-title" style="font-size: 15.5px; font-weight: 700; color: #5e4b7e; display: flex; align-items: center; gap: 6px;">
+          <span>⚙️ Cài đặt Âm thanh Bài đọc</span>
+        </div>
+        <button class="modal-close-btn" id="btnCloseAudioSettingsModal">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 14px 12px;">
+        
+        <!-- Section 1: Playback Speed Control -->
+        <div style="margin-bottom: 16px; background: #f7f4fb; padding: 12px; border-radius: 14px; border: 1px solid #e7def2;">
+          <div style="font-size: 13px; font-weight: 700; color: #5e4b7e; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+            <span>🚀 Tốc độ đọc:</span>
+            <span id="currentSpeedDisplayBadge" style="font-size: 12px; font-weight: 800; background: #766299; color: white; padding: 2px 8px; border-radius: 10px;">1.0x</span>
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="speed-preset-btn" data-speed="0.75" style="flex: 1; min-width: 50px; padding: 7px 4px; font-size: 12px; font-weight: 700; border: 1.5px solid #d4c5e8; border-radius: 10px; background: white; color: #5e4b7e; cursor: pointer;">0.75x</button>
+            <button class="speed-preset-btn active" data-speed="1.0" style="flex: 1; min-width: 50px; padding: 7px 4px; font-size: 12px; font-weight: 700; border: 1.5px solid #766299; border-radius: 10px; background: #766299; color: white; cursor: pointer;">1.0x</button>
+            <button class="speed-preset-btn" data-speed="1.25" style="flex: 1; min-width: 50px; padding: 7px 4px; font-size: 12px; font-weight: 700; border: 1.5px solid #d4c5e8; border-radius: 10px; background: white; color: #5e4b7e; cursor: pointer;">1.25x</button>
+            <button class="speed-preset-btn" data-speed="1.5" style="flex: 1; min-width: 50px; padding: 7px 4px; font-size: 12px; font-weight: 700; border: 1.5px solid #d4c5e8; border-radius: 10px; background: white; color: #5e4b7e; cursor: pointer;">1.5x</button>
+            <button class="speed-preset-btn" data-speed="1.75" style="flex: 1; min-width: 50px; padding: 7px 4px; font-size: 12px; font-weight: 700; border: 1.5px solid #d4c5e8; border-radius: 10px; background: white; color: #5e4b7e; cursor: pointer;">1.75x</button>
+            <button class="speed-preset-btn" data-speed="2.0" style="flex: 1; min-width: 50px; padding: 7px 4px; font-size: 12px; font-weight: 700; border: 1.5px solid #d4c5e8; border-radius: 10px; background: white; color: #5e4b7e; cursor: pointer;">2.0x</button>
+          </div>
+        </div>
+
+        <!-- Section 2: Audio Source Selection (AI Qwen vs Custom MP3) -->
+        <div style="background: #f7f4fb; padding: 12px; border-radius: 14px; border: 1px solid #e7def2;">
+          <div style="font-size: 13px; font-weight: 700; color: #5e4b7e; margin-bottom: 10px;">
+            🔊 Nguồn phát âm thanh bài này:
+          </div>
+
+          <!-- Radio Option 1: AI Qwen -->
+          <div id="optionAudioModeQwen" onclick="setAudioSourceMode('qwen')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; border: 1.5px solid #766299; background: #f4effa; cursor: pointer; margin-bottom: 8px;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <div style="font-size: 13px; font-weight: 700; color: #3c2e54; display: flex; align-items: center; gap: 6px;">
+                <span>🎙️ Giọng Nam AI Qwen</span>
+                <span style="font-size: 11px; background: #eedefc; color: #4a2e78; padding: 1px 6px; border-radius: 6px; font-weight: 700;">loongjohn</span>
+              </div>
+              <div style="font-size: 11.5px; color: #6b7280;">Tạo giọng đọc AI tự động cho bài này</div>
+            </div>
+            <span id="radioQwenCheck" style="font-size: 15px; color: #766299;">🔘</span>
+          </div>
+
+          <!-- Radio Option 2: Custom MP3 -->
+          <div id="optionAudioModeCustom" onclick="setAudioSourceMode('custom_mp3')" style="display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1.5px solid #e5e7eb; background: #ffffff; cursor: pointer;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <div style="font-size: 13px; font-weight: 700; color: #3c2e54; display: flex; align-items: center; gap: 6px;">
+                  <span>📁 File MP3 riêng của bài này</span>
+                </div>
+                <div id="customMp3StatusText" style="font-size: 11.5px; color: #6b7280;">Chưa nạp file MP3 nào cho bài này</div>
+              </div>
+              <span id="radioCustomCheck" style="font-size: 15px; color: #d1d5db;">⚪</span>
+            </div>
+
+            <!-- Upload File & Action Container -->
+            <div id="customMp3ActionsContainer" style="margin-top: 4px; display: flex; gap: 6px; align-items: center;">
+              <label for="inputUploadCustomMp3" style="flex: 1; text-align: center; background: #766299; color: white; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="event.stopPropagation();">
+                <span>📤 Tải file MP3 (.mp3) lên</span>
+              </label>
+              <input type="file" id="inputUploadCustomMp3" accept="audio/*" style="display: none;">
+              <button id="btnDeleteCustomMp3" onclick="event.stopPropagation(); deleteCurrentArticleMp3();" style="display: none; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer;" title="Xóa file MP3 đã tải">🗑️ Xóa MP3</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- Custom Styled Group Picker Modal (Font Mali & Completed Highlights) -->
   <div class="modal-overlay" id="groupPickerModal">
     <div class="modal-card" style="max-width: 450px; padding: 20px 16px;">
@@ -4405,6 +4477,52 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           subtabPickerAll.style.boxShadow = 'none';
 
           renderGroupDropdown();
+      // Reading Audio Settings Modal Listeners
+      const btnCloseAudioSettingsModal = document.getElementById('btnCloseAudioSettingsModal');
+      const readingAudioSettingsModal = document.getElementById('readingAudioSettingsModal');
+      if (btnCloseAudioSettingsModal && readingAudioSettingsModal) {
+        btnCloseAudioSettingsModal.addEventListener('click', () => {
+          readingAudioSettingsModal.classList.remove('active');
+        });
+        readingAudioSettingsModal.addEventListener('click', (e) => {
+          if (e.target === readingAudioSettingsModal) {
+            readingAudioSettingsModal.classList.remove('active');
+          }
+        });
+      }
+
+      document.querySelectorAll('.speed-preset-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const speed = parseFloat(btn.getAttribute('data-speed'));
+          if (!isNaN(speed)) {
+            setReadingAudioSpeed(speed);
+          }
+        });
+      });
+
+      const inputUploadMp3 = document.getElementById('inputUploadCustomMp3');
+      if (inputUploadMp3) {
+        inputUploadMp3.addEventListener('change', async (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          if (!activeReadingArticleId) {
+            showToast('Không xác định được bài đọc!');
+            return;
+          }
+
+          if (file.size > 25 * 1024 * 1024) {
+            showToast('⚠️ File âm thanh quá lớn (> 25MB)!');
+            return;
+          }
+
+          showToast(`⏳ Đang lưu file "${file.name}"...`);
+          await saveArticleAudioBlob(activeReadingArticleId, file, file.name);
+          qwenAudioCache = {};
+          stopReadingPassageAudio(true);
+
+          showToast(`✅ Đã nạp MP3 thành công! Click 📖 sẽ phát MP3 này.`);
+          renderAudioSettingsModalUI();
         });
       }
 
@@ -4725,6 +4843,272 @@ Lưu ý quan trọng:
 
     async function toggleReadingPassageAudio() {
       if (!activeReadingArticleId && readingArticles.length > 0) {
+    // ==========================================
+    // FULL PASSAGE AUDIO PLAYER & CUSTOM MP3 STORAGE
+    // ==========================================
+
+    // --- IndexedDB for Article Custom MP3 Files ---
+    const DB_NAME = 'HSK_ReadingAudioDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'article_mp3s';
+
+    function openAudioDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+          }
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function saveArticleAudioBlob(articleId, fileBlob, fileName) {
+      try {
+        const db = await openAudioDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        await new Promise((resolve, reject) => {
+          const req = store.put({ blob: fileBlob, name: fileName, updatedAt: Date.now() }, String(articleId));
+          req.onsuccess = resolve;
+          req.onerror = reject;
+        });
+        localStorage.setItem(`hsk_audio_mode_${articleId}`, 'custom_mp3');
+        localStorage.setItem(`hsk_audio_name_${articleId}`, fileName);
+      } catch(e) {
+        console.error('Save audio DB error:', e);
+      }
+    }
+
+    async function getArticleAudioBlob(articleId) {
+      try {
+        const db = await openAudioDB();
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        return new Promise((resolve) => {
+          const req = store.get(String(articleId));
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => resolve(null);
+        });
+      } catch(e) {
+        return null;
+      }
+    }
+
+    async function removeArticleAudioBlob(articleId) {
+      try {
+        const db = await openAudioDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.delete(String(articleId));
+        localStorage.removeItem(`hsk_audio_mode_${articleId}`);
+        localStorage.removeItem(`hsk_audio_name_${articleId}`);
+      } catch(e) {}
+    }
+
+    // --- Audio Speed Control ---
+    function getReadingAudioSpeed() {
+      const saved = localStorage.getItem('hsk_reading_audio_speed');
+      const parsed = parseFloat(saved);
+      if (!isNaN(parsed) && parsed >= 0.5 && parsed <= 3.0) {
+        return parsed;
+      }
+      return 1.0;
+    }
+
+    function setReadingAudioSpeed(speed) {
+      localStorage.setItem('hsk_reading_audio_speed', speed);
+      if (qwenAudioPlayer) {
+        qwenAudioPlayer.playbackRate = speed;
+      }
+      updateSpeedUI(speed);
+      showToast(`🚀 Đã đổi tốc độ đọc: ${speed}x`);
+    }
+    window.setReadingAudioSpeed = setReadingAudioSpeed;
+
+    function updateSpeedUI(speed) {
+      const badge = document.getElementById('currentSpeedDisplayBadge');
+      if (badge) badge.textContent = `${speed}x`;
+
+      document.querySelectorAll('.speed-preset-btn').forEach(btn => {
+        const s = parseFloat(btn.getAttribute('data-speed'));
+        const isActive = Math.abs(s - speed) < 0.01;
+        btn.classList.toggle('active', isActive);
+        btn.style.background = isActive ? '#766299' : '#ffffff';
+        btn.style.color = isActive ? '#ffffff' : '#5e4b7e';
+        btn.style.borderColor = isActive ? '#766299' : '#d4c5e8';
+      });
+    }
+
+    // --- Audio Settings Modal & Source Mode Toggle ---
+    let qwenAudioPlayer = new Audio();
+    let qwenAudioCache = {};
+    let isQwenAudioPlaying = false;
+    let isQwenAudioPaused = false;
+    let webSpeechAudioUtterance = null;
+
+    function openReadingAudioSettingsModal() {
+      const modal = document.getElementById('readingAudioSettingsModal');
+      if (!modal) return;
+      renderAudioSettingsModalUI();
+      modal.classList.add('active');
+    }
+    window.openReadingAudioSettingsModal = openReadingAudioSettingsModal;
+
+    function closeReadingAudioSettingsModal() {
+      const modal = document.getElementById('readingAudioSettingsModal');
+      if (!modal) return;
+      modal.classList.remove('active');
+    }
+    window.closeReadingAudioSettingsModal = closeReadingAudioSettingsModal;
+
+    async function renderAudioSettingsModalUI() {
+      if (!activeReadingArticleId) return;
+      const currentSpeed = getReadingAudioSpeed();
+      updateSpeedUI(currentSpeed);
+
+      const mode = localStorage.getItem(`hsk_audio_mode_${activeReadingArticleId}`) || 'qwen';
+      const customMp3Data = await getArticleAudioBlob(activeReadingArticleId);
+      const statusText = document.getElementById('customMp3StatusText');
+      const btnDelete = document.getElementById('btnDeleteCustomMp3');
+
+      if (customMp3Data && customMp3Data.blob) {
+        if (statusText) statusText.innerHTML = `🎵 <b>File MP3:</b> ${customMp3Data.name || 'audio.mp3'}`;
+        if (btnDelete) btnDelete.style.display = 'block';
+      } else {
+        if (statusText) statusText.textContent = 'Chưa nạp file MP3 nào cho bài này';
+        if (btnDelete) btnDelete.style.display = 'none';
+      }
+
+      updateAudioModeSelectionUI(mode, !!(customMp3Data && customMp3Data.blob));
+    }
+
+    function updateAudioModeSelectionUI(mode, hasCustomMp3) {
+      const qwenOption = document.getElementById('optionAudioModeQwen');
+      const customOption = document.getElementById('optionAudioModeCustom');
+      const radioQwen = document.getElementById('radioQwenCheck');
+      const radioCustom = document.getElementById('radioCustomCheck');
+
+      if (mode === 'custom_mp3' && hasCustomMp3) {
+        if (qwenOption) {
+          qwenOption.style.borderColor = '#e5e7eb';
+          qwenOption.style.background = '#ffffff';
+        }
+        if (customOption) {
+          customOption.style.borderColor = '#766299';
+          customOption.style.background = '#f4effa';
+        }
+        if (radioQwen) { radioQwen.textContent = '⚪'; radioQwen.style.color = '#d1d5db'; }
+        if (radioCustom) { radioCustom.textContent = '🔘'; radioCustom.style.color = '#766299'; }
+      } else {
+        if (qwenOption) {
+          qwenOption.style.borderColor = '#766299';
+          qwenOption.style.background = '#f4effa';
+        }
+        if (customOption) {
+          customOption.style.borderColor = '#e5e7eb';
+          customOption.style.background = '#ffffff';
+        }
+        if (radioQwen) { radioQwen.textContent = '🔘'; radioQwen.style.color = '#766299'; }
+        if (radioCustom) { radioCustom.textContent = '⚪'; radioCustom.style.color = '#d1d5db'; }
+      }
+    }
+
+    async function setAudioSourceMode(mode) {
+      if (!activeReadingArticleId) return;
+
+      if (mode === 'custom_mp3') {
+        const customMp3Data = await getArticleAudioBlob(activeReadingArticleId);
+        if (!customMp3Data || !customMp3Data.blob) {
+          showToast('⚠️ Bài này chưa có file MP3! Hãy nhấn "Tải file MP3 lên" bên dưới.');
+          return;
+        }
+        localStorage.setItem(`hsk_audio_mode_${activeReadingArticleId}`, 'custom_mp3');
+        showToast('🎵 Đã chuyển sang phát File MP3 riêng bài này');
+      } else {
+        localStorage.setItem(`hsk_audio_mode_${activeReadingArticleId}`, 'qwen');
+        showToast('🎙️ Đã chuyển sang phát Giọng Nam AI Qwen');
+      }
+
+      stopReadingPassageAudio(true);
+      renderAudioSettingsModalUI();
+    }
+    window.setAudioSourceMode = setAudioSourceMode;
+
+    async function deleteCurrentArticleMp3() {
+      if (!activeReadingArticleId) return;
+      await removeArticleAudioBlob(activeReadingArticleId);
+      qwenAudioCache = {};
+      stopReadingPassageAudio(true);
+      showToast('🗑️ Đã xóa file MP3. Đã tự động chuyển về Giọng AI Qwen.');
+      renderAudioSettingsModalUI();
+    }
+    window.deleteCurrentArticleMp3 = deleteCurrentArticleMp3;
+
+    // Attach Long Press to Book Icon 📖
+    function attachBookIconLongPress(element) {
+      if (!element) return;
+      let timer = null;
+      let isLongPress = false;
+      let startX = 0, startY = 0;
+
+      function startHold(e) {
+        isLongPress = false;
+        if (e.touches && e.touches[0]) {
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+        }
+        timer = setTimeout(() => {
+          isLongPress = true;
+          if (navigator.vibrate) {
+            try { navigator.vibrate(40); } catch(ex) {}
+          }
+          openReadingAudioSettingsModal();
+        }, 400);
+      }
+
+      function cancelHold() {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+      }
+
+      function endHold(e) {
+        cancelHold();
+        if (!isLongPress) {
+          toggleReadingPassageAudio();
+        }
+        if (e.type === 'touchend' && e.cancelable) {
+          e.preventDefault();
+        }
+      }
+
+      function moveHold(e) {
+        if (e.touches && e.touches[0]) {
+          const diffX = Math.abs(e.touches[0].clientX - startX);
+          const diffY = Math.abs(e.touches[0].clientY - startY);
+          if (diffX > 10 || diffY > 10) {
+            cancelHold();
+          }
+        }
+      }
+
+      element.addEventListener('mousedown', startHold);
+      element.addEventListener('mouseup', endHold);
+      element.addEventListener('mouseleave', cancelHold);
+
+      element.addEventListener('touchstart', startHold, { passive: false });
+      element.addEventListener('touchend', endHold, { passive: false });
+      element.addEventListener('touchmove', moveHold, { passive: true });
+      element.addEventListener('touchcancel', cancelHold);
+    }
+
+    async function toggleReadingPassageAudio() {
+      if (!activeReadingArticleId && readingArticles.length > 0) {
         activeReadingArticleId = readingArticles[0].id;
       }
       if (!activeReadingArticleId) {
@@ -4736,6 +5120,8 @@ Lưu ý quan trọng:
         showToast('Không tìm thấy nội dung bài đọc!');
         return;
       }
+
+      const speed = getReadingAudioSpeed();
 
       // Tap 2: Currently Playing -> Pause Audio
       if (isQwenAudioPlaying && !isQwenAudioPaused) {
@@ -4754,6 +5140,7 @@ Lưu ý quan trọng:
       if (isQwenAudioPaused) {
         if (qwenAudioPlayer.src && qwenAudioPlayer.paused) {
           try {
+            qwenAudioPlayer.playbackRate = speed;
             await qwenAudioPlayer.play();
             isQwenAudioPaused = false;
             updateAudioBtnUI(true, false);
@@ -4769,7 +5156,20 @@ Lưu ý quan trọng:
         }
       }
 
-      // Tap 1: Start New Play
+      // Check if custom MP3 is active for this article
+      const audioMode = localStorage.getItem(`hsk_audio_mode_${art.id}`) || 'qwen';
+      if (audioMode === 'custom_mp3') {
+        const customAudio = await getArticleAudioBlob(art.id);
+        if (customAudio && customAudio.blob) {
+          const customUrl = URL.createObjectURL(customAudio.blob);
+          stopReadingPassageAudio(false);
+          showToast(`🎵 Đang phát MP3 bài đọc (${customAudio.name || 'File MP3'}) - ${speed}x...`);
+          playQwenAudioUrl(customUrl);
+          return;
+        }
+      }
+
+      // Tap 1: Start New Play with AI Qwen (loongjohn)
       let rawText = art.content || '';
       if (!rawText && art.paragraphs && Array.isArray(art.paragraphs)) {
         rawText = art.paragraphs.map(p => (p.tokens || []).map(t => t.hanzi).join('')).join('\n');
@@ -4786,7 +5186,7 @@ Lưu ý quan trọng:
 
       stopReadingPassageAudio(false);
       updateAudioBtnUI(true, false);
-      showToast('🔊 AI Qwen (Giọng Nam loongjohn) đang tải âm thanh...');
+      showToast(`🔊 AI Qwen (Giọng Nam loongjohn - ${speed}x) đang tải âm thanh...`);
 
       if (qwenAudioCache[art.id]) {
         playQwenAudioUrl(qwenAudioCache[art.id]);
@@ -4797,7 +5197,6 @@ Lưu ý quan trọng:
 
       if (apiKey) {
         try {
-          // OpenRouter Audio Speech Endpoint (/audio/speech)
           let response = await fetch('https://openrouter.ai/api/v1/audio/speech', {
             method: 'POST',
             headers: {
@@ -4813,7 +5212,6 @@ Lưu ý quan trọng:
           });
 
           if (!response.ok) {
-            // Chat completions fallback with audio output
             response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
               method: 'POST',
               headers: {
@@ -4846,7 +5244,7 @@ Lưu ý quan trọng:
             return;
           }
         } catch (apiErr) {
-          console.warn('Qwen TTS API fetch warning, fallback to Neural Male Voice:', apiErr);
+          console.warn('Qwen TTS API fetch warning:', apiErr);
         }
       }
 
@@ -4855,6 +5253,8 @@ Lưu ý quan trọng:
 
     function playQwenAudioUrl(audioUrl) {
       qwenAudioPlayer.src = audioUrl;
+      const speed = getReadingAudioSpeed();
+      qwenAudioPlayer.playbackRate = speed;
       isQwenAudioPlaying = true;
       isQwenAudioPaused = false;
       updateAudioBtnUI(true, false);
@@ -4882,9 +5282,10 @@ Lưu ý quan trọng:
       }
       window.speechSynthesis.cancel();
 
+      const speed = getReadingAudioSpeed();
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = 'zh-CN';
-      utter.rate = 0.9;
+      utter.rate = speed * 0.9;
 
       const voices = window.speechSynthesis.getVoices();
       const maleVoice = voices.find(v => v.lang.startsWith('zh') && (
@@ -4905,13 +5306,19 @@ Lưu ý quan trọng:
       updateAudioBtnUI(true, false);
 
       window.speechSynthesis.speak(utter);
-      showToast('🔊 Đang đọc bài (Giọng Nam Phổ Thông)...');
+      showToast(`🔊 Đang đọc bài (Giọng Nam Phổ Thông - ${speed}x)...`);
     }
 
     function stopReadingPassageAudio(resetState = true) {
       if (qwenAudioPlayer) {
-        qwenAudioPlayer.pause();
-        if (resetState) qwenAudioPlayer.currentTime = 0;
+        try {
+          qwenAudioPlayer.pause();
+          if (resetState) {
+            qwenAudioPlayer.currentTime = 0;
+            qwenAudioPlayer.removeAttribute('src');
+            qwenAudioPlayer.load();
+          }
+        } catch(e) {}
       }
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel();
@@ -4924,18 +5331,20 @@ Lưu ý quan trọng:
     function updateAudioBtnUI(isPlaying, isPaused) {
       const btn = document.getElementById('btnHeaderAudioToggle');
       if (!btn) return;
+      const speed = getReadingAudioSpeed();
+
       if (isPlaying && !isPaused) {
         btn.classList.add('playing');
         btn.textContent = '⏸️';
-        btn.title = 'Chạm để tạm dừng đọc bài';
+        btn.title = `Chạm để tạm dừng đọc bài (${speed}x)`;
       } else if (isPaused) {
         btn.classList.remove('playing');
         btn.textContent = '📖';
-        btn.title = 'Chạm để tiếp tục đọc bài';
+        btn.title = `Chạm để tiếp tục đọc bài (${speed}x)`;
       } else {
         btn.classList.remove('playing');
         btn.textContent = '📖';
-        btn.title = 'Chạm để Đọc bài (Giọng Nam AI Qwen - loongjohn)';
+        btn.title = `Chạm để Đọc bài (${speed}x). Ấn giữ để Cài đặt & Nạp file MP3.`;
       }
     }
     window.toggleReadingPassageAudio = toggleReadingPassageAudio;
@@ -4964,10 +5373,11 @@ Lưu ý quan trọng:
 
       const btnAudioToggle = document.getElementById('btnHeaderAudioToggle');
       if (btnAudioToggle) {
-        btnAudioToggle.onclick = (e) => {
-          e.stopPropagation();
-          toggleReadingPassageAudio();
-        };
+        btnAudioToggle.onclick = null;
+        if (!btnAudioToggle.dataset.longPressAttached) {
+          attachBookIconLongPress(btnAudioToggle);
+          btnAudioToggle.dataset.longPressAttached = 'true';
+        }
       }
 
       populateReadingArticleViewSelect(articleId);
