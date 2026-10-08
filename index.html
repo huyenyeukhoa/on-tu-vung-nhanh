@@ -981,6 +981,38 @@
       overflow-y: auto;
     }
 
+    .reading-audio-btn {
+      background: none;
+      border: none;
+      font-size: 19px;
+      cursor: pointer;
+      padding: 3px 6px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease, background 0.15s ease;
+      line-height: 1;
+      vertical-align: middle;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .reading-audio-btn:active {
+      transform: scale(1.2);
+    }
+
+    .reading-audio-btn.playing {
+      animation: pulseAudioRing 1.2s infinite ease-in-out;
+      background: #f3eef9;
+    }
+
+    @keyframes pulseAudioRing {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(135,114,168,0.4); }
+      50% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(135,114,168,0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(135,114,168,0); }
+    }
+
     .reading-passage-box {
       background: rgba(255, 255, 255, 0.93);
       border: 1px solid rgba(226, 216, 239, 0.8);
@@ -1640,7 +1672,10 @@
   <div class="modal-overlay" id="readingViewModal">
     <div class="modal-card" style="position: relative;">
       <div class="modal-header">
-        <div class="modal-title" id="readingViewModalTitle" style="font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📖 Đọc bài khóa</div>
+        <div class="modal-title" id="readingViewModalTitle" style="font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 4px;">
+          <button id="btnHeaderAudioToggle" class="reading-audio-btn" title="Chạm để Đọc / Dừng toàn bộ bài (Giọng Nam AI Qwen - loongjohn)">📖</button>
+          <span id="readingViewModalTitleText" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Đọc bài khóa</span>
+        </div>
         <button class="modal-close-btn" id="btnCloseReadingViewModal">✕</button>
       </div>
       <div class="modal-body" style="padding-bottom: 80px; position: relative;">
@@ -4679,12 +4714,224 @@ Lưu ý quan trọng:
     }
     window.toggleParagraphTranslation = toggleParagraphTranslation;
 
+    // ==========================================
+    // FULL PASSAGE AUDIO PLAYER (Qwen Audio 3.0 TTS Flash - Voice: loongjohn)
+    // ==========================================
+    let qwenAudioPlayer = new Audio();
+    let qwenAudioCache = {};
+    let isQwenAudioPlaying = false;
+    let isQwenAudioPaused = false;
+    let webSpeechAudioUtterance = null;
+
+    async function toggleReadingPassageAudio() {
+      if (!activeReadingArticleId) return;
+      const art = readingArticles.find(a => a.id === activeReadingArticleId);
+      if (!art) return;
+
+      // Tap 2: Currently Playing -> Pause Audio
+      if (isQwenAudioPlaying && !isQwenAudioPaused) {
+        if (!qwenAudioPlayer.paused) {
+          qwenAudioPlayer.pause();
+        } else if (window.speechSynthesis && window.speechSynthesis.speaking) {
+          window.speechSynthesis.pause();
+        }
+        isQwenAudioPaused = true;
+        updateAudioBtnUI(false, true);
+        showToast('⏸️ Đã tạm dừng đọc bài');
+        return;
+      }
+
+      // Tap 3: Currently Paused -> Resume Audio
+      if (isQwenAudioPaused) {
+        if (qwenAudioPlayer.src && qwenAudioPlayer.paused) {
+          try {
+            await qwenAudioPlayer.play();
+            isQwenAudioPaused = false;
+            updateAudioBtnUI(true, false);
+            showToast('▶️ Đang đọc tiếp bài...');
+            return;
+          } catch (e) {}
+        } else if (window.speechSynthesis && window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+          isQwenAudioPaused = false;
+          updateAudioBtnUI(true, false);
+          showToast('▶️ Đang đọc tiếp bài...');
+          return;
+        }
+      }
+
+      // Tap 1: Start New Play
+      const textToRead = (art.content || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|📖|📝/g, '').trim();
+      if (!textToRead) {
+        showToast('Bài đọc không có nội dung!');
+        return;
+      }
+
+      stopReadingPassageAudio(false);
+      updateAudioBtnUI(true, false);
+      showToast('🔊 AI Qwen (Giọng Nam loongjohn) đang tải âm thanh...');
+
+      if (qwenAudioCache[art.id]) {
+        playQwenAudioUrl(qwenAudioCache[art.id]);
+        return;
+      }
+
+      const apiKey = localStorage.getItem('openrouter_api_key');
+
+      if (apiKey) {
+        try {
+          // OpenRouter Audio Speech Endpoint (/audio/speech)
+          let response = await fetch('https://openrouter.ai/api/v1/audio/speech', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'qwen/qwen-audio-3.0-tts-flash',
+              input: textToRead,
+              voice: 'loongjohn',
+              response_format: 'mp3'
+            })
+          });
+
+          if (!response.ok) {
+            // Chat completions fallback with audio output
+            response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                model: 'qwen/qwen-audio-3.0-tts-flash',
+                messages: [{ role: 'user', content: textToRead }],
+                modalities: ['text', 'audio'],
+                audio: { voice: 'loongjohn', format: 'mp3' }
+              })
+            });
+
+            if (response.ok) {
+              const resData = await response.json();
+              const base64Audio = resData.choices?.[0]?.message?.audio?.data;
+              if (base64Audio) {
+                const audioUrl = `data:audio/mp3;base64,${base64Audio}`;
+                qwenAudioCache[art.id] = audioUrl;
+                playQwenAudioUrl(audioUrl);
+                return;
+              }
+            }
+          } else {
+            const blob = await response.blob();
+            const audioUrl = URL.createObjectURL(blob);
+            qwenAudioCache[art.id] = audioUrl;
+            playQwenAudioUrl(audioUrl);
+            return;
+          }
+        } catch (apiErr) {
+          console.warn('Qwen TTS API fetch warning, fallback to Neural Male Voice:', apiErr);
+        }
+      }
+
+      playWebSpeechMaleFallback(textToRead);
+    }
+
+    function playQwenAudioUrl(audioUrl) {
+      qwenAudioPlayer.src = audioUrl;
+      isQwenAudioPlaying = true;
+      isQwenAudioPaused = false;
+      updateAudioBtnUI(true, false);
+
+      qwenAudioPlayer.onended = () => {
+        stopReadingPassageAudio(true);
+      };
+
+      qwenAudioPlayer.onerror = () => {
+        const art = readingArticles.find(a => a.id === activeReadingArticleId);
+        if (art) playWebSpeechMaleFallback(art.content);
+      };
+
+      qwenAudioPlayer.play().catch(e => {
+        const art = readingArticles.find(a => a.id === activeReadingArticleId);
+        if (art) playWebSpeechMaleFallback(art.content);
+      });
+    }
+
+    function playWebSpeechMaleFallback(text) {
+      if (!('speechSynthesis' in window)) {
+        showToast('Trình duyệt không hỗ trợ phát âm!');
+        stopReadingPassageAudio(true);
+        return;
+      }
+      window.speechSynthesis.cancel();
+
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'zh-CN';
+      utter.rate = 0.9;
+
+      const voices = window.speechSynthesis.getVoices();
+      const maleVoice = voices.find(v => v.lang.startsWith('zh') && (
+        v.name.includes('Yunxi') ||
+        v.name.includes('Yunyang') ||
+        v.name.includes('Kangkang') ||
+        v.name.toLowerCase().includes('male')
+      )) || voices.find(v => v.lang.startsWith('zh'));
+
+      if (maleVoice) utter.voice = maleVoice;
+
+      utter.onend = () => stopReadingPassageAudio(true);
+      utter.onerror = () => stopReadingPassageAudio(true);
+
+      webSpeechAudioUtterance = utter;
+      isQwenAudioPlaying = true;
+      isQwenAudioPaused = false;
+      updateAudioBtnUI(true, false);
+
+      window.speechSynthesis.speak(utter);
+      showToast('🔊 Đang đọc bài (Giọng Nam Phổ Thông)...');
+    }
+
+    function stopReadingPassageAudio(resetState = true) {
+      if (qwenAudioPlayer) {
+        qwenAudioPlayer.pause();
+        if (resetState) qwenAudioPlayer.currentTime = 0;
+      }
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      isQwenAudioPlaying = false;
+      isQwenAudioPaused = false;
+      updateAudioBtnUI(false, false);
+    }
+
+    function updateAudioBtnUI(isPlaying, isPaused) {
+      const btn = document.getElementById('btnHeaderAudioToggle');
+      if (!btn) return;
+      if (isPlaying && !isPaused) {
+        btn.classList.add('playing');
+        btn.textContent = '⏸️';
+        btn.title = 'Chạm để tạm dừng đọc bài';
+      } else if (isPaused) {
+        btn.classList.remove('playing');
+        btn.textContent = '📖';
+        btn.title = 'Chạm để tiếp tục đọc bài';
+      } else {
+        btn.classList.remove('playing');
+        btn.textContent = '📖';
+        btn.title = 'Chạm để Đọc bài (Giọng Nam AI Qwen - loongjohn)';
+      }
+    }
+
     // Open Interactive Reading Passage Viewer
     function openReadingViewModal(articleId) {
       const art = readingArticles.find(a => a.id === articleId);
       if (!art) {
         showToast('Không tìm thấy bài đọc!');
         return;
+      }
+
+      if (activeReadingArticleId !== articleId) {
+        stopReadingPassageAudio(true);
       }
 
       activeReadingArticleId = articleId;
@@ -4694,7 +4941,17 @@ Lưu ý quan trọng:
       resetModalScroll(readingViewModal);
       if (readingTokenDrawer) readingTokenDrawer.style.display = 'none';
 
-      readingViewModalTitle.textContent = `📖 ${art.title}`;
+      const titleText = document.getElementById('readingViewModalTitleText');
+      if (titleText) titleText.textContent = art.title;
+
+      const btnAudioToggle = document.getElementById('btnHeaderAudioToggle');
+      if (btnAudioToggle) {
+        btnAudioToggle.onclick = (e) => {
+          e.stopPropagation();
+          toggleReadingPassageAudio();
+        };
+      }
+
       populateReadingArticleViewSelect(articleId);
       renderReadingPassageContent(art);
 
@@ -5045,6 +5302,7 @@ Lưu ý quan trọng:
       if (btnCloseReadingViewModal) {
         btnCloseReadingViewModal.addEventListener('click', () => {
           readingViewModal.classList.remove('active');
+          stopReadingPassageAudio(true);
         });
       }
 
@@ -5060,6 +5318,7 @@ Lưu ý quan trọng:
         readingViewModal.addEventListener('click', (e) => {
           if (e.target === readingViewModal) {
             readingViewModal.classList.remove('active');
+            stopReadingPassageAudio(true);
           }
         });
       }
