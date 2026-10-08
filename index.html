@@ -525,6 +525,18 @@
       background-color: rgba(249, 250, 251, 0.8);
     }
 
+    .vocab-item.row-fade-out {
+      opacity: 0;
+      transform: scale(0.96);
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      margin: 0;
+      border: none;
+      overflow: hidden;
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
     /* Column Styles */
     .col-main {
       padding-right: 8px;
@@ -3432,14 +3444,115 @@ Lưu ý:
       }
     }
 
+    // Helper function to build row HTML content string
+    function buildRowContent(item) {
+      const status = getWordStatus(item.hanzi);
+      const isCol2Visible = alwaysShowCol2 || status !== null || item.revealed;
+
+      const safeHanzi = (item.hanzi || '').replace(/\\/g, "\\\\").replace(/'/g, "\\\\'");
+      const safePinyin = (item.pinyin || '').replace(/\\/g, "\\\\").replace(/'/g, "\\\\'");
+      const safeId = (item.id || item.hanzi || '').replace(/\\/g, "\\\\").replace(/'/g, "\\\\'");
+
+      let col1HTML = '';
+      let col2HTML = '';
+
+      if (currentLevel === 'upgrade') {
+        const basicBlock = `
+          ${showPinyin ? `<div class="pinyin-text">${item.pinyin || ''}</div>` : ''}
+          <div class="hanzi-text" onclick="handleHanziClick('${safeHanzi}', '${safePinyin}')" title="chạm để xem chi tiết so sánh & ví dụ">
+            ${item.hanzi}
+          </div>
+          <div class="vietnamese-text">${item.vietnamese || ''}</div>
+        `;
+
+        let upgradedBlock = '';
+        if (item.upgrade1 && item.upgrade2) {
+          upgradedBlock = `
+            <div style="font-size: 12.5px; line-height: 1.45; text-align: left; padding: 2px 0;">
+              <div style="margin-bottom: 4px; cursor: pointer;" onclick="handleHanziClick('${safeHanzi}', '${safePinyin}')" title="chạm để xem chi tiết đối chiếu 3 câu">
+                <span style="color:#766299; font-weight:700; font-size: 13px;">🔹</span> 
+                <b style="color:var(--primary-color); font-size: 14.5px;">${item.upgrade1.hanzi}</b> 
+                ${showPinyin ? `<span style="font-size:11px; color:#6b7280;">(${item.upgrade1.pinyin})</span>` : ''}
+                <div style="font-size:11.5px; color:#374151; margin-top:1px;">${item.upgrade1.vietnamese}</div>
+              </div>
+              <div style="cursor: pointer;" onclick="handleHanziClick('${safeHanzi}', '${safePinyin}')" title="chạm để xem chi tiết đối chiếu 3 câu">
+                <span style="color:#8e5899; font-weight:700; font-size: 13px;">🌟</span> 
+                <b style="color:#8e5899; font-size: 14.5px;">${item.upgrade2.hanzi}</b> 
+                ${showPinyin ? `<span style="font-size:11px; color:#6b7280;">(${item.upgrade2.pinyin})</span>` : ''}
+                <div style="font-size:11.5px; color:#374151; margin-top:1px;">${item.upgrade2.vietnamese}</div>
+              </div>
+            </div>
+          `;
+        } else {
+          upgradedBlock = `
+            ${showPinyin ? `<div class="pinyin-text" style="color:var(--primary-color);">${item.upgradedPinyin || ''}</div>` : ''}
+            <div class="hanzi-text" style="color:var(--primary-color);" onclick="handleHanziClick('${safeHanzi}', '${safePinyin}')" title="chạm để xem chi tiết so sánh & ví dụ">
+              ${item.upgradedHanzi || ''} ${item.upgradedPos ? `<span class="word-pos-tag" style="vertical-align:middle; font-size:10px;">${item.upgradedPos}</span>` : ''}
+            </div>
+            <div class="vietnamese-text" style="color:#374151; font-weight:600;">${item.upgradedVi || ''}</div>
+          `;
+        }
+
+        const blankBlockUpgrade = `
+          <div class="col-empty-blank" onclick="toggleRevealItem('${safeId}', event)" title="chạm để hiện đáp án từ nâng cấp">
+            <span style="font-size: 11.5px; opacity: 0.85; color: var(--primary-color); font-weight:700;">✨ Ẩn từ nâng cấp</span>
+          </div>
+        `;
+
+        col1HTML = `<div class="col-main">${basicBlock}</div>`;
+        col2HTML = `<div class="col-main">${isCol2Visible ? upgradedBlock : blankBlockUpgrade}</div>`;
+      } else {
+        const hanziBlock = `
+          ${showPinyin ? `<div class="pinyin-text">${item.pinyin || ''}</div>` : ''}
+          <div class="hanzi-text" onclick="handleHanziClick('${safeHanzi}', '${safePinyin}')" title="${tapHanziMode === 'speak' ? 'chạm để nghe phát âm' : 'chạm để tra giải thích AI'}">
+            ${item.hanzi}
+          </div>
+        `;
+
+        const vietnameseBlock = `
+          <div class="vietnamese-text">${item.vietnamese || ''}</div>
+        `;
+
+        const blankBlock = `
+          <div class="col-empty-blank" onclick="toggleRevealItem('${safeId}', event)"></div>
+        `;
+
+        if (hanziInCol1) {
+          col1HTML = `<div class="col-main">${hanziBlock}</div>`;
+          col2HTML = `<div class="col-main">${isCol2Visible ? vietnameseBlock : blankBlock}</div>`;
+        } else {
+          col1HTML = `<div class="col-main">${vietnameseBlock}</div>`;
+          col2HTML = `<div class="col-main">${isCol2Visible ? hanziBlock : blankBlock}</div>`;
+        }
+      }
+
+      const isCrossActive = status === 'wrong' ? 'active' : '';
+      const isCheckActive = status === 'correct' ? 'active' : '';
+
+      return `
+        ${col1HTML}
+        ${col2HTML}
+        <div class="actions-cell">
+          <button class="btn-circle btn-cross ${isCrossActive}" onclick="handleMark('${safeHanzi}', 'wrong', event)" title="chưa thuộc (✕)">✕</button>
+          <button class="btn-circle btn-check ${isCheckActive}" onclick="handleMark('${safeHanzi}', 'correct', event)" title="đã thuộc (✓)">✓</button>
+        </div>
+      `;
+    }
+
     // Toggle reveal state for an item on tap
     function toggleRevealItem(id, event) {
       if (event) event.stopPropagation();
       const groupWords = getGroupWords();
-      const item = groupWords.find(v => v.id === id);
+      const item = groupWords.find(v => v.id === id || v.hanzi === id);
       if (item) {
         item.revealed = !item.revealed;
-        renderVocabList(true);
+        const targetRow = vocabListEl.querySelector(`.vocab-item[data-id="${CSS.escape ? CSS.escape(item.id || item.hanzi) : (item.id || item.hanzi)}"]`) ||
+                          vocabListEl.querySelector(`.vocab-item[data-hanzi="${CSS.escape ? CSS.escape(item.hanzi) : item.hanzi}"]`);
+        if (targetRow) {
+          targetRow.innerHTML = buildRowContent(item);
+        } else {
+          renderVocabList(true);
+        }
       }
     }
 
@@ -3491,29 +3604,6 @@ Lưu ý:
         return true;
       });
 
-      vocabListEl.innerHTML = '';
-
-      // Prepend Back to Reading Passage Banner if studying a Reading Article group
-      if (currentLevel === 'custom' && currentCustomGroupId) {
-        const matchingArt = readingArticles.find(a => 'custom_' + a.id === currentCustomGroupId || a.id === currentCustomGroupId.replace('custom_', ''));
-        if (matchingArt) {
-          const backBanner = document.createElement('div');
-          backBanner.style.cssText = 'margin-bottom: 12px; background: linear-gradient(135deg, #f3eef9 0%, #ffffff 100%); padding: 10px 14px; border-radius: 14px; border: 1.5px solid #d4c5e8; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 8px rgba(135,114,168,0.1);';
-          backBanner.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
-              <span style="font-size: 15px; font-weight: 700; color: #766299;">◀</span>
-              <div style="min-width: 0; flex: 1;">
-                <div style="font-size: 11.5px; font-weight: 700; color: #766299;">Quay lại bài đọc:</div>
-                <div style="font-size: 13px; font-weight: 700; color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📖 ${matchingArt.title}</div>
-              </div>
-            </div>
-            <button class="primary-submit-btn" style="padding: 6px 11px; font-size: 12px; font-weight: 700; border-radius: 9px; flex-shrink: 0; margin-left: 6px;">📖 Đọc bài</button>
-          `;
-          backBanner.onclick = () => openReadingViewModal(matchingArt.id);
-          vocabListEl.appendChild(backBanner);
-        }
-      }
-
       if (filteredData.length === 0) {
         let emptyMsg = 'Không có từ nào trong mục này.';
         if (activeTab === 'new') emptyMsg = '🎉 Bạn đã thuộc tất cả từ trong nhóm này!';
@@ -3532,113 +3622,46 @@ Lưu ý:
         return;
       }
 
+      const fragment = document.createDocumentFragment();
+
+      // Prepend Back to Reading Passage Banner if studying a Reading Article group
+      if (currentLevel === 'custom' && currentCustomGroupId) {
+        const matchingArt = readingArticles.find(a => 'custom_' + a.id === currentCustomGroupId || a.id === currentCustomGroupId.replace('custom_', ''));
+        if (matchingArt) {
+          const backBanner = document.createElement('div');
+          backBanner.style.cssText = 'margin-bottom: 12px; background: linear-gradient(135deg, #f3eef9 0%, #ffffff 100%); padding: 10px 14px; border-radius: 14px; border: 1.5px solid #d4c5e8; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 8px rgba(135,114,168,0.1);';
+          backBanner.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+              <span style="font-size: 15px; font-weight: 700; color: #766299;">◀</span>
+              <div style="min-width: 0; flex: 1;">
+                <div style="font-size: 11.5px; font-weight: 700; color: #766299;">Quay lại bài đọc:</div>
+                <div style="font-size: 13px; font-weight: 700; color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📖 ${matchingArt.title}</div>
+              </div>
+            </div>
+            <button class="primary-submit-btn" style="padding: 6px 11px; font-size: 12px; font-weight: 700; border-radius: 9px; flex-shrink: 0; margin-left: 6px;">📖 Đọc bài</button>
+          `;
+          backBanner.onclick = () => openReadingViewModal(matchingArt.id);
+          fragment.appendChild(backBanner);
+        }
+      }
+
       filteredData.forEach(item => {
         if (!item || !item.hanzi) return;
         try {
           const row = document.createElement('div');
           row.className = 'vocab-item';
+          row.setAttribute('data-hanzi', item.hanzi);
+          row.setAttribute('data-id', item.id || item.hanzi);
 
-          const status = getWordStatus(item.hanzi);
-          const isCol2Visible = alwaysShowCol2 || status !== null || item.revealed;
-
-          const safeHanzi = (item.hanzi || '').replace(/\\/g, "\\\\").replace(/'/g, "\\\\'");
-          const safePinyin = (item.pinyin || '').replace(/\\/g, "\\\\").replace(/'/g, "\\\\'");
-          const safeId = (item.id || item.hanzi || '').replace(/\\/g, "\\\\").replace(/'/g, "\\\\'");
-
-          let col1HTML = '';
-          let col2HTML = '';
-
-          if (currentLevel === 'upgrade') {
-            // Special Mode: Nâng cấp vốn từ
-            // Column 1: Basic Word
-            const basicBlock = `
-              ${showPinyin ? `<div class="pinyin-text">${item.pinyin || ''}</div>` : ''}
-              <div class="hanzi-text" onclick="handleHanziClick('${safeHanzi}', '${safePinyin}')" title="chạm để xem chi tiết so sánh & ví dụ">
-                ${item.hanzi}
-              </div>
-              <div class="vietnamese-text">${item.vietnamese || ''}</div>
-            `;
-
-            // Column 2: Upgraded Word (2 Dạng: 1 - Cùng âm tiết, 2 - Thành ngữ 4 chữ)
-            let upgradedBlock = '';
-            if (item.upgrade1 && item.upgrade2) {
-              upgradedBlock = `
-                <div style="font-size: 12.5px; line-height: 1.45; text-align: left; padding: 2px 0;">
-                  <div style="margin-bottom: 4px; cursor: pointer;" onclick="handleHanziClick('${safeHanzi}', '${safePinyin}')" title="chạm để xem chi tiết đối chiếu 3 câu">
-                    <span style="color:#766299; font-weight:700; font-size: 13px;">🔹</span> 
-                    <b style="color:var(--primary-color); font-size: 14.5px;">${item.upgrade1.hanzi}</b> 
-                    ${showPinyin ? `<span style="font-size:11px; color:#6b7280;">(${item.upgrade1.pinyin})</span>` : ''}
-                    <div style="font-size:11.5px; color:#374151; margin-top:1px;">${item.upgrade1.vietnamese}</div>
-                  </div>
-                  <div style="cursor: pointer;" onclick="handleHanziClick('${safeHanzi}', '${safePinyin}')" title="chạm để xem chi tiết đối chiếu 3 câu">
-                    <span style="color:#8e5899; font-weight:700; font-size: 13px;">🌟</span> 
-                    <b style="color:#8e5899; font-size: 14.5px;">${item.upgrade2.hanzi}</b> 
-                    ${showPinyin ? `<span style="font-size:11px; color:#6b7280;">(${item.upgrade2.pinyin})</span>` : ''}
-                    <div style="font-size:11.5px; color:#374151; margin-top:1px;">${item.upgrade2.vietnamese}</div>
-                  </div>
-                </div>
-              `;
-            } else {
-              upgradedBlock = `
-                ${showPinyin ? `<div class="pinyin-text" style="color:var(--primary-color);">${item.upgradedPinyin || ''}</div>` : ''}
-                <div class="hanzi-text" style="color:var(--primary-color);" onclick="handleHanziClick('${safeHanzi}', '${safePinyin}')" title="chạm để xem chi tiết so sánh & ví dụ">
-                  ${item.upgradedHanzi || ''} ${item.upgradedPos ? `<span class="word-pos-tag" style="vertical-align:middle; font-size:10px;">${item.upgradedPos}</span>` : ''}
-                </div>
-                <div class="vietnamese-text" style="color:#374151; font-weight:600;">${item.upgradedVi || ''}</div>
-              `;
-            }
-
-            const blankBlockUpgrade = `
-              <div class="col-empty-blank" onclick="toggleRevealItem('${safeId}', event)" title="chạm để hiện đáp án từ nâng cấp">
-                <span style="font-size: 11.5px; opacity: 0.85; color: var(--primary-color); font-weight:700;">✨ Ẩn từ nâng cấp</span>
-              </div>
-            `;
-
-            col1HTML = `<div class="col-main">${basicBlock}</div>`;
-            col2HTML = `<div class="col-main">${isCol2Visible ? upgradedBlock : blankBlockUpgrade}</div>`;
-          } else {
-            // Standard Level Modes (HSK 6, HSK 7-9, Custom)
-            const hanziBlock = `
-              ${showPinyin ? `<div class="pinyin-text">${item.pinyin || ''}</div>` : ''}
-              <div class="hanzi-text" onclick="handleHanziClick('${safeHanzi}', '${safePinyin}')" title="${tapHanziMode === 'speak' ? 'chạm để nghe phát âm' : 'chạm để tra giải thích AI'}">
-                ${item.hanzi}
-              </div>
-            `;
-
-            const vietnameseBlock = `
-              <div class="vietnamese-text">${item.vietnamese || ''}</div>
-            `;
-
-            const blankBlock = `
-              <div class="col-empty-blank" onclick="toggleRevealItem('${safeId}', event)"></div>
-            `;
-
-            if (hanziInCol1) {
-              col1HTML = `<div class="col-main">${hanziBlock}</div>`;
-              col2HTML = `<div class="col-main">${isCol2Visible ? vietnameseBlock : blankBlock}</div>`;
-            } else {
-              col1HTML = `<div class="col-main">${vietnameseBlock}</div>`;
-              col2HTML = `<div class="col-main">${isCol2Visible ? hanziBlock : blankBlock}</div>`;
-            }
-          }
-
-          const isCrossActive = status === 'wrong' ? 'active' : '';
-          const isCheckActive = status === 'correct' ? 'active' : '';
-
-          row.innerHTML = `
-            ${col1HTML}
-            ${col2HTML}
-            <div class="actions-cell">
-              <button class="btn-circle btn-cross ${isCrossActive}" onclick="handleMark('${safeHanzi}', 'wrong', event)" title="chưa thuộc (✕)">✕</button>
-              <button class="btn-circle btn-check ${isCheckActive}" onclick="handleMark('${safeHanzi}', 'correct', event)" title="đã thuộc (✓)">✓</button>
-            </div>
-          `;
-
-          vocabListEl.appendChild(row);
+          row.innerHTML = buildRowContent(item);
+          fragment.appendChild(row);
         } catch (rowErr) {
           console.error('Error rendering row item:', item, rowErr);
         }
       });
+
+      vocabListEl.innerHTML = '';
+      vocabListEl.appendChild(fragment);
 
       if (!showPinyin) {
         vocabContainerEl.classList.add('pinyin-hidden');
@@ -3658,14 +3681,17 @@ Lưu ý:
       }
     }
 
-    // Handle Item Marking (Check / Cross)
+    // Handle Item Marking (Check / Cross) with smooth in-place update
     function handleMark(hanzi, newStatus, event) {
       if (event) event.stopPropagation();
       const currentStatus = getWordStatus(hanzi);
+      let updatedStatus;
 
       if (currentStatus === newStatus) {
+        updatedStatus = null;
         setWordStatus(hanzi, null);
       } else {
+        updatedStatus = newStatus;
         setWordStatus(hanzi, newStatus);
         
         if (autoSpeakOnTick) {
@@ -3682,7 +3708,34 @@ Lưu ý:
       const item = groupWordsState.find(v => v.hanzi === hanzi);
       if (item) item.revealed = true;
 
-      renderVocabList(true);
+      const safeSelector = CSS && CSS.escape ? CSS.escape(hanzi) : hanzi.replace(/"/g, '\\"');
+      const targetRow = vocabListEl.querySelector(`.vocab-item[data-hanzi="${safeSelector}"]`);
+
+      const belongsInTab = (activeTab === 'all') ||
+                           (activeTab === 'new' && updatedStatus === null) ||
+                           (activeTab === 'review' && updatedStatus === 'wrong');
+
+      if (targetRow && item) {
+        if (belongsInTab) {
+          // Row stays in current tab: update in-place immediately, zero reflow flash
+          targetRow.innerHTML = buildRowContent(item);
+          updateCounters();
+        } else {
+          // Row leaves current tab: animate out smoothly
+          targetRow.classList.add('row-fade-out');
+          updateCounters();
+          setTimeout(() => {
+            if (targetRow.parentNode) {
+              targetRow.remove();
+            }
+            if (vocabListEl.querySelectorAll('.vocab-item').length === 0) {
+              renderVocabList(true);
+            }
+          }, 180);
+        }
+      } else {
+        renderVocabList(true);
+      }
     }
 
     // Update Bottom Counters & Filter Tab Counts
