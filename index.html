@@ -4643,9 +4643,6 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         });
       }
 
-      // Shuffle Words Toggle Button
-      const btnShuffleWords = document.getElementById('btnShuffleWords');
-
     // ==========================================
     // READING PASSAGE VOCABULARY LEARNER LOGIC
     // ==========================================
@@ -4716,10 +4713,46 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       }).join('');
     }
 
-    // Helper to fetch HTML content from external news URL via CORS proxies
+    // Helper to split long Chinese text into manageable chunks (~400-600 characters max)
+    function splitTextIntoChunks(text, maxChars = 500) {
+      if (!text || text.length <= maxChars) return [text];
+      
+      const paragraphs = text.split(/\n+/).map(p => p.trim()).filter(Boolean);
+      const chunks = [];
+      let currentChunk = '';
 
+      for (const p of paragraphs) {
+        if ((currentChunk.length + p.length + 1) <= maxChars) {
+          currentChunk += (currentChunk ? '\n\n' : '') + p;
+        } else {
+          if (currentChunk) {
+            chunks.push(currentChunk);
+            currentChunk = '';
+          }
+          if (p.length > maxChars) {
+            const sentences = p.match(/[^。！？；]+[。！？；]?/g) || [p];
+            let subChunk = '';
+            for (const s of sentences) {
+              if ((subChunk.length + s.length) <= maxChars) {
+                subChunk += s;
+              } else {
+                if (subChunk) chunks.push(subChunk);
+                subChunk = s;
+              }
+            }
+            if (subChunk) chunks.push(subChunk);
+          } else {
+            currentChunk = p;
+          }
+        }
+      }
+      if (currentChunk) {
+        chunks.push(currentChunk);
+      }
+      return chunks.length > 0 ? chunks : [text];
+    }
 
-    // AI Tokenize Chinese Reading Passage via Gemini 2.5 Flash
+    // AI Tokenize Chinese Reading Passage via Gemini 2.5 Flash with Chunking & Progress %
     async function analyzeReadingPassageWithAi() {
       const apiKey = localStorage.getItem('openrouter_api_key');
       if (!apiKey) {
@@ -4737,100 +4770,101 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       }
 
       btnAnalyzeReadingText.disabled = true;
-      btnAnalyzeReadingText.innerHTML = `<img src="./loading.gif" style="width: 18px; height: 18px;" /> <span>AI đang phân tích & bóc tách từ...</span>`;
 
-      const prompt = `Bạn là chuyên gia dịch thuật và biên tập báo chí Tiếng Việt cao cấp. Hãy phân tích đoạn văn sau và:
-1) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ, ĐÚNG VĂN PHONG TIẾNG VIỆT (dài từ 3 đến 6 từ, ví dụ: "Hợp Tác Đa Phương Việt Nam", "Ngoại Giao Khu Vực APEC", "Kinh Tế Và Du Lịch Tân Hoa Xã", "Truyện Tái Ông Thất Mã").
-   LƯU Ý CỰC KỲ QUAN TRỌNG VỀ ĐẶT TIÊU ĐỀ:
-   - Phải giữ trọn vẹn danh từ riêng và từ ghép tiếng Việt (ví dụ: "Việt Nam", "Trung Quốc", "Đông Nam Á"). TUYỆT ĐỐI KHÔNG ngắt cụt từ kiểu "Việt" hay "Trung".
-   - Tiêu đề phải đọc xuôi tai, mượt mà và chính xác ý nghĩa chính của bài đọc.
+      const chunks = splitTextIntoChunks(rawText, 550);
+      let allParagraphs = [];
+      let allTokens = [];
+      let aiAutoTitle = '';
 
-2) Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo đúng ngắt đoạn của bản gốc. Với MỖI ĐOẠN VĂN:
-   - Dịch toàn bộ đoạn đó sang TIẾNG VIỆT mượt mà, chuẩn văn phong tiếng Việt.
+      try {
+        for (let i = 0; i < chunks.length; i++) {
+          const pct = Math.round(((i + 1) / chunks.length) * 100);
+          btnAnalyzeReadingText.innerHTML = `<img src="./loading.gif" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 4px;" /> Đang tạo bài ${pct}%`;
+
+          const isFirstChunk = (i === 0);
+          const chunkText = chunks[i];
+
+          const prompt = `Bạn là chuyên gia dịch thuật và biên tập báo chí Tiếng Việt cao cấp. Hãy phân tích đoạn văn tiếng Trung sau (phần ${i + 1}/${chunks.length}) và:
+
+${isFirstChunk ? `1) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ, ĐÚNG VĂN PHONG TIẾNG VIỆT (3 đến 6 từ).` : ''}
+${isFirstChunk ? '2)' : '1)'} Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo đúng ngắt đoạn gốc:
+   - Dịch toàn bộ đoạn đó sang TIẾNG VIỆT mượt mà, chuẩn ngữ cảnh.
    - Phân tách các từ/cụm từ chuẩn ngữ pháp tiếng Trung trong đoạn kèm Pinyin và Nghĩa tiếng Việt.
 
 Đoạn văn gốc:
 """
-${rawText}
+${chunkText}
 """
 
-Yêu cầu định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
+Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown):
 {
-  "title": "Tiêu đề tiếng Việt tự nhiên mượt mà (3 đến 6 từ)",
+  ${isFirstChunk ? '"title": "Tiêu đề tiếng Việt tự nhiên mượt mà",' : ''}
   "paragraphs": [
     {
-      "vietnamese": "Dịch nghĩa tiếng Việt mượt mà đầy đủ của đoạn 1",
+      "vietnamese": "Dịch nghĩa tiếng Việt mượt mà đầy đủ của đoạn",
       "tokens": [
         {
-          "hanzi": "chữ Hán của từ hoặc cụm từ",
-          "pinyin": "phiên âm Pinyin có dấu giọng",
-          "vietnamese": "nghĩa tiếng Việt chuẩn trong ngữ cảnh bài đọc",
-          "isVocab": true (đặt true cho từ vựng, false cho dấu câu như ，。！？)
+          "hanzi": "chữ Hán từ/cụm từ",
+          "pinyin": "pinyin có dấu",
+          "vietnamese": "nghĩa tiếng Việt",
+          "isVocab": true
         }
       ]
     }
   ]
-}
-Lưu ý quan trọng:
-- Tiêu đề "title": BẮT BUỘC DÙNG TIẾNG VIỆT CHUẨN, MƯỢT MÀ, TỰ NHIÊN, KHÔNG CẮT CỤT TỪ (ví dụ: "Hợp Tác Đa Phương Việt Nam").
-- Bản dịch "vietnamese" của từng đoạn: BẮT BUỘC DỊCH TIẾNG VIỆT ĐẦY ĐỦ, MƯỢT MÀ VÀ CHUẨN NGHĨA.
-- Giữ nguyên toàn bộ nội dung bài đọc ban đầu theo đúng thứ tự văn bản gốc.`;
+}`;
 
-      try {
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': window.location.href,
-            'X-Title': 'HSK Vocab App'
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: [{ role: 'user', content: prompt }]
-          })
-        });
+          try {
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': window.location.href,
+                'X-Title': 'HSK Vocab App'
+              },
+              body: JSON.stringify({
+                model: 'google/gemini-2.5-flash',
+                messages: [{ role: 'user', content: prompt }]
+              })
+            });
 
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error?.message || `Lỗi HTTP ${response.status}`);
-        }
+            if (!response.ok) {
+              const errData = await response.json().catch(() => ({}));
+              throw new Error(errData.error?.message || `Lỗi HTTP ${response.status}`);
+            }
 
-        const data = await response.json();
-        let content = data.choices?.[0]?.message?.content || '{}';
-        content = content.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
+            const data = await response.json();
+            let content = data.choices?.[0]?.message?.content || '{}';
+            content = content.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
 
-        let parsedJSON = null;
-        try {
-          parsedJSON = safeParseJSON(content);
-        } catch (e) {
-          console.error('JSON parse error', e);
-        }
-
-        let paragraphs = [];
-        let parsedTokens = [];
-        let aiAutoTitle = '';
-
-        if (Array.isArray(parsedJSON)) {
-          parsedTokens = parsedJSON;
-          paragraphs = [{ vietnamese: '', tokens: parsedTokens }];
-        } else if (parsedJSON && typeof parsedJSON === 'object') {
-          aiAutoTitle = (parsedJSON.title || '').trim();
-          if (Array.isArray(parsedJSON.paragraphs) && parsedJSON.paragraphs.length > 0) {
-            paragraphs = parsedJSON.paragraphs;
-            parsedTokens = paragraphs.reduce((acc, p) => acc.concat(p.tokens || []), []);
-          } else if (Array.isArray(parsedJSON.tokens)) {
-            parsedTokens = parsedJSON.tokens;
-            paragraphs = [{ vietnamese: '', tokens: parsedTokens }];
+            let parsedJSON = safeParseJSON(content);
+            if (parsedJSON && typeof parsedJSON === 'object') {
+              if (isFirstChunk && parsedJSON.title) {
+                aiAutoTitle = parsedJSON.title.replace(/^["'“`]+|["'”`]+$/g, '').trim();
+              }
+              if (Array.isArray(parsedJSON.paragraphs)) {
+                allParagraphs = allParagraphs.concat(parsedJSON.paragraphs);
+                parsedJSON.paragraphs.forEach(p => {
+                  if (Array.isArray(p.tokens)) {
+                    allTokens = allTokens.concat(p.tokens);
+                  }
+                });
+              } else if (Array.isArray(parsedJSON.tokens)) {
+                allParagraphs.push({ vietnamese: '', tokens: parsedJSON.tokens });
+                allTokens = allTokens.concat(parsedJSON.tokens);
+              }
+            } else {
+              allParagraphs.push({ vietnamese: '', tokens: [{ hanzi: chunkText, pinyin: '', vietnamese: '', isVocab: false }] });
+            }
+          } catch (chunkErr) {
+            console.warn(`Chunk ${i+1} AI analysis fallback:`, chunkErr);
+            allParagraphs.push({ vietnamese: '', tokens: [{ hanzi: chunkText, pinyin: '', vietnamese: '', isVocab: false }] });
           }
         }
 
-        if (parsedTokens.length === 0 && paragraphs.length === 0) {
-          throw new Error('Dữ liệu phân tích không hợp lệ.');
-        }
-
-        if (aiAutoTitle) {
-          aiAutoTitle = aiAutoTitle.replace(/^["'“`]+|["'”`]+$/g, '').trim();
+        if (allParagraphs.length === 0) {
+          throw new Error('Không thể phân tích dữ liệu bài đọc.');
         }
 
         const newArticleId = 'art_' + Date.now();
@@ -4839,14 +4873,17 @@ Lưu ý quan trọng:
           id: newArticleId,
           title: articleTitle,
           rawText,
-          paragraphs: paragraphs,
-          tokens: parsedTokens,
+          paragraphs: allParagraphs,
+          tokens: allTokens,
           selectedWords: [],
           createdAt: new Date().toLocaleDateString('vi-VN')
         };
 
         readingArticles.unshift(articleObj);
         localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+        if (typeof triggerDebouncedCloudSave === 'function') {
+          triggerDebouncedCloudSave();
+        }
 
         // Create matching custom group for study list 2-column
         const customGroupId = 'custom_' + newArticleId;
@@ -4864,7 +4901,7 @@ Lưu ý quan trọng:
 
         if (readingInputModal) readingInputModal.classList.remove('active');
         openReadingViewModal(newArticleId);
-        showToast('🎉 Phân tích bài đọc thành công! Chạm vào từ để chọn ôn tập.');
+        showToast(`🎉 Đã tạo bài đọc thành công (${chunks.length} phần)!`);
       } catch (err) {
         console.error('Reading AI analysis error:', err);
         showToast(`❌ Lỗi AI: ${err.message}`);
