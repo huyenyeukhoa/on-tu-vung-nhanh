@@ -2325,7 +2325,7 @@
       if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
       cloudSyncTimer = setTimeout(() => {
         saveToCloud(false);
-      }, 2500);
+      }, 800);
     }
     window.triggerDebouncedCloudSave = triggerDebouncedCloudSave;
 
@@ -2359,31 +2359,77 @@
         }
 
         if (rowData && typeof rowData === 'object') {
-          if (Array.isArray(rowData.customGroups)) {
-            customGroups = rowData.customGroups;
-            localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-          }
-          if (Array.isArray(rowData.upgradeWords)) {
-            upgradeList = rowData.upgradeWords;
-            localStorage.setItem('hsk_upgrade_words', JSON.stringify(upgradeList));
-          }
+          // Smart merge user progress
           if (rowData.userProgress && typeof rowData.userProgress === 'object') {
-            userProgress = rowData.userProgress;
+            userProgress = Object.assign({}, rowData.userProgress, userProgress);
             localStorage.setItem('hsk_user_progress', JSON.stringify(userProgress));
           }
+
+          // Smart merge custom groups (non-destructive for local words & groups)
+          if (Array.isArray(rowData.customGroups)) {
+            const mergedGroups = [...rowData.customGroups];
+            (customGroups || []).forEach(localG => {
+              const cloudIdx = mergedGroups.findIndex(cg => cg.id === localG.id);
+              if (cloudIdx === -1) {
+                mergedGroups.push(localG);
+              } else {
+                const cloudG = mergedGroups[cloudIdx];
+                const cloudWordSet = new Set((cloudG.words || []).map(w => w.hanzi));
+                (localG.words || []).forEach(lw => {
+                  if (!cloudWordSet.has(lw.hanzi)) {
+                    if (!cloudG.words) cloudG.words = [];
+                    cloudG.words.push(lw);
+                  }
+                });
+              }
+            });
+            customGroups = mergedGroups;
+            localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+          }
+
+          // Smart merge reading articles (non-destructive for selectedWords & articles)
+          if (Array.isArray(rowData.readingArticles)) {
+            const mergedArticles = [...rowData.readingArticles];
+            (readingArticles || []).forEach(localArt => {
+              const cloudIdx = mergedArticles.findIndex(ca => ca.id === localArt.id);
+              if (cloudIdx === -1) {
+                mergedArticles.unshift(localArt);
+              } else {
+                const cloudArt = mergedArticles[cloudIdx];
+                const cloudSelectedSet = new Set((cloudArt.selectedWords || []).map(w => w.hanzi));
+                (localArt.selectedWords || []).forEach(lw => {
+                  if (!cloudSelectedSet.has(lw.hanzi)) {
+                    if (!cloudArt.selectedWords) cloudArt.selectedWords = [];
+                    cloudArt.selectedWords.push(lw);
+                  }
+                });
+              }
+            });
+            readingArticles = mergedArticles;
+            localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+          }
+
+          // Smart merge upgrade words
+          if (Array.isArray(rowData.upgradeWords)) {
+            const mergedUpgrade = [...rowData.upgradeWords];
+            (upgradeList || []).forEach(lu => {
+              if (!mergedUpgrade.some(cu => cu.id === lu.id || cu.hanzi === lu.hanzi)) {
+                mergedUpgrade.push(lu);
+              }
+            });
+            upgradeList = mergedUpgrade;
+            localStorage.setItem('hsk_upgrade_words', JSON.stringify(upgradeList));
+          }
+
           if (rowData.aiCache && typeof rowData.aiCache === 'object') {
             Object.assign(aiCache, rowData.aiCache);
             localStorage.setItem('hsk_ai_cache', JSON.stringify(aiCache));
           }
           if (rowData.groupCompletedDates && typeof rowData.groupCompletedDates === 'object') {
-            groupCompletedDates = rowData.groupCompletedDates;
+            Object.assign(groupCompletedDates, rowData.groupCompletedDates);
             localStorage.setItem('hsk_group_completed_dates', JSON.stringify(groupCompletedDates));
           }
-          if (Array.isArray(rowData.readingArticles)) {
-            readingArticles = rowData.readingArticles;
-            localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
-          }
-          if (rowData.openrouter_api_key) {
+          if (rowData.openrouter_api_key && !localStorage.getItem('openrouter_api_key')) {
             localStorage.setItem('openrouter_api_key', rowData.openrouter_api_key);
           }
           if (rowData.reading_audio_speed) {
@@ -2395,6 +2441,9 @@
           renderGroupDropdown();
           renderVocabList();
           updateCloudStatusBadge('🟢 Đã đồng bộ', false);
+
+          // Guarantee Cloud has the merged data
+          saveToCloud(false);
 
           if (isManual) {
             showToast('🎉 Đã khôi phục dữ liệu từ Đám mây Supabase!');
@@ -4227,6 +4276,7 @@ Lưu ý:
       if (group) {
         group.words.splice(index, 1);
         localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+        if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
         updateCustomLevelTabCount();
         renderCustomGroupSelect();
         if (currentLevel === 'custom') {
@@ -4241,6 +4291,7 @@ Lưu ý:
     function deleteUpgradeWord(index) {
       upgradeList.splice(index, 1);
       localStorage.setItem('hsk_upgrade_words', JSON.stringify(upgradeList));
+      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
       updateCustomLevelTabCount();
       renderUpgradeGroupWords();
       if (currentLevel === 'upgrade') {
@@ -4479,6 +4530,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       });
 
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
 
       // Reset form
       inputCustomHanzi.value = '';
@@ -4553,6 +4605,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
       upgradeList.push(newItem);
       localStorage.setItem('hsk_upgrade_words', JSON.stringify(upgradeList));
+      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
 
       // Reset form
       inputUpgradeBasicHanzi.value = '';
@@ -5523,6 +5576,9 @@ ${chunkText}
 
       localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+      if (typeof triggerDebouncedCloudSave === 'function') {
+        triggerDebouncedCloudSave();
+      }
 
       // Update DOM token elements directly without re-rendering entire innerHTML (prevents screen flashing)
       document.querySelectorAll('#readingPassageContainer .reading-token').forEach(el => {
@@ -5560,6 +5616,9 @@ ${chunkText}
 
       localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+      if (typeof triggerDebouncedCloudSave === 'function') {
+        triggerDebouncedCloudSave();
+      }
 
       renderReadingPassageContent(art);
       showToast(`⚡ Đã thêm ${addedCount} từ vựng vào list ôn!`);
@@ -5580,6 +5639,9 @@ ${chunkText}
         group.name = `📖 ${art.title}`;
       }
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+      if (typeof triggerDebouncedCloudSave === 'function') {
+        triggerDebouncedCloudSave();
+      }
 
       currentLevel = 'custom';
       currentCustomGroupId = customGroupId;
@@ -5606,6 +5668,9 @@ ${chunkText}
       readingArticles = readingArticles.filter(a => a.id !== articleId);
 
       localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+      if (typeof triggerDebouncedCloudSave === 'function') {
+        triggerDebouncedCloudSave();
+      }
 
       renderSavedReadingArticles();
       showToast('🗑️ Đã xóa bài đọc! (Từ vựng đã chọn vẫn được giữ an toàn trong Nhóm từ)');
