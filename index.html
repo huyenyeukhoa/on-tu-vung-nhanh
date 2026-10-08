@@ -4883,20 +4883,27 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
           const prompt = `Bạn là chuyên gia ngôn ngữ Tiếng Trung và biên tập viên dịch thuật cao cấp. Hãy phân tích đoạn văn tiếng Trung sau (phần ${i + 1}/${chunks.length}):
 
-1) TỰ ĐỘNG CHỈNH SỬA LỖI GRAMMAR "地" / "的" (RẤT QUAN TRỌNG):
+1) DỊCH SÁT NGHĨA THEO ĐÚNG TỪ/CỤM TỪ (CỰC KỲ QUAN TRỌNG):
+   - Trong mảng tokens, trường "vietnamese" của từng token BẮT BUỘC chỉ được dịch **ĐÚNG SÁT NGHĨA CỦA CHÍNH CỤM TỪ HÁN ĐÓ**!
+   - TUYỆT ĐỐI KHÔNG đem nghĩa của các từ xung quanh hoặc ngữ cảnh cả câu dài dịch tràn vào nghĩa của cụm từ!
+   - **Ví dụ SAI**: "原则上" ➔ vietnamese: "về mặt nguyên tắc thì chúng ta nên làm..." (SAI vì dịch thừa từ bên ngoài).
+   - **Ví dụ SAI**: "他们五个人" ➔ vietnamese: "lần gặp mặt của năm người họ" (SAI vì thêm chữ "lần gặp mặt của" vốn thuộc về từ ngữ khác).
+   - **Ví dụ ĐÚNG**: "他们五个人" ➔ vietnamese: "5 người họ" hoặc "5 người bọn họ" (ĐÚNG chuẩn nghĩa của cụm).
+
+2) TỰ ĐỘNG CHỈNH SỬA LỖI GRAMMAR "地" / "的" (RẤT QUAN TRỌNG):
    - Kiểm tra văn bản gốc: Trong tiếng Trung, khi đứng trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (ví dụ: "头也不回地走了", "气愤地着", "高兴地笑"), nếu bài gốc viết sai thành chữ "的", bạn BẮT BUỘC phải tự động sửa lại thành chữ "地" đúng chuẩn ngữ pháp!
 
-2) QUY TẮC KHÔNG DÍNH "的" VÀ "与" VÀO ĐẦU CỤM TỪ:
+3) QUY TẮC KHÔNG DÍNH "的" VÀ "与" VÀO ĐẦU CỤM TỪ:
    - TUYỆT ĐỐI KHÔNG ghép trợ từ "的" vào đầu cụm từ (Ví dụ: KHÔNG tạo token "的首次会面", mà BẮT BUỘC tách thành 2 token: token "的" riêng (isVocab: false) và token "首次会面" riêng (isVocab: true)).
    - TUYỆT ĐỐI KHÔNG ghép liên từ "与" vào đầu từ B trong "A 与 B" (Ví dụ: KHÔNG tạo token "与佐野", mà BẮT BUỘC tách thành: "A", "与", "B" thành các token riêng biệt).
    - GOM CỤM TỪ NGHĨA TỰ NHIÊN: Gom các cụm từ ghép, danh từ, thành ngữ có nghĩa mượt mà hoàn chỉnh ("首次会面", "飞碟射击", "职场美女", "半年以来", "一落千丈", "硬生生", "头也不回地", "滑冰场"). KHÔNG xé lẻ vụn vặt 1 chữ!
 
-3) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU:
+4) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU:
    - BẮT BUỘC bổ sung và chuẩn hóa dấu câu tiếng Trung (，, 。, ！, ？, ：“”, 《》) nếu bài gốc thiếu hoặc dính liền chữ.
    - Giữ lại đầy đủ mọi dấu câu trong mảng tokens (với dấu câu set "isVocab": false, "pinyin": "", "vietnamese": "").
 
-${isFirstChunk ? `4) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ (3 đến 6 từ).` : ''}
-${isFirstChunk ? '5)' : '4)'} Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo ngắt đoạn gốc:
+${isFirstChunk ? `5) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ (3 đến 6 từ).` : ''}
+${isFirstChunk ? '6)' : '5)'} Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo ngắt đoạn gốc:
    - Dịch toàn bộ đoạn đó sang TIẾNG VIỆT mượt mà, chuẩn ngữ cảnh.
    - Phân tách thành chuỗi các CỤM TỪ / DẤU CÂU nối tiếp nhau hoàn chỉnh thành đoạn văn.
 
@@ -4912,6 +4919,8 @@ ${chunkText}
     {
       "vietnamese": "Dịch nghĩa tiếng Việt mượt mà đầy đủ của đoạn",
       "tokens": [
+        { "hanzi": "原则上", "pinyin": "yuán zé shàng", "vietnamese": "về mặt nguyên tắc", "isVocab": true },
+        { "hanzi": "他们五个人", "pinyin": "tā men wǔ gè rén", "vietnamese": "5 người bọn họ", "isVocab": true },
         { "hanzi": "半年以来", "pinyin": "bàn nián yǐ lái", "vietnamese": "nửa năm trở lại đây", "isVocab": true },
         { "hanzi": "的", "pinyin": "", "vietnamese": "", "isVocab": false },
         { "hanzi": "首次会面", "pinyin": "shǒu cì huì miàn", "vietnamese": "cuộc gặp đầu tiên", "isVocab": true },
