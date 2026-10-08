@@ -20,8 +20,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Ôn HSK">
 
-  <!-- Load HSK Dictionary Data File -->
+  <!-- Load HSK Dictionary Data File & Supabase SDK -->
   <script src="./hsk_dictionary.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     /* Custom OTF Font for Hanzi */
@@ -1560,9 +1561,24 @@
       </div>
       <div class="modal-body" style="padding: 10px 0 0 0;">
         
+        <!-- Section 0: Supabase Cloud Sync (Tự động đồng bộ Đám mây) -->
+        <div style="background: #eef2ff; padding: 12px 14px; border-radius: 14px; border: 1px solid #c7d2fe; margin-bottom: 14px;">
+          <div style="font-size: 13.5px; font-weight: 700; color: #3730a3; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+            <span>☁️ Đồng Bộ Đám Mây (Supabase)</span>
+            <span id="cloudStatusBadge" style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #dcfce7; color: #166534;">🟢 Đã kết nối</span>
+          </div>
+          <p style="font-size: 12px; color: #4338ca; margin-bottom: 10px; line-height: 1.45;">
+            Tự động đồng bộ tiến độ học, nhóm tự tạo & bài đọc giữa các thiết bị mà không cần xuất file thủ công.
+          </p>
+          <div style="display: flex; gap: 8px;">
+            <button class="primary-submit-btn" id="btnPushToCloud" style="flex: 1; padding: 8px 10px; font-size: 12px; background: #4f46e5;">☁️ Đẩy lên Cloud</button>
+            <button class="primary-submit-btn" id="btnPullFromCloud" style="flex: 1; padding: 8px 10px; font-size: 12px; background: #4338ca;">📥 Tải từ Cloud</button>
+          </div>
+        </div>
+
         <!-- Section 1: Backup & Restore (Tải file dự phòng) -->
         <div style="background: #f3eef9; padding: 12px 14px; border-radius: 14px; border: 1px solid #e2d8ef; margin-bottom: 14px;">
-          <div style="font-size: 13.5px; font-weight: 700; color: #766299; margin-bottom: 4px;">💾 Sao Lưu & Khôi Phục Dữ Liệu</div>
+          <div style="font-size: 13.5px; font-weight: 700; color: #766299; margin-bottom: 4px;">💾 Sao Lưu & Khôi Phục File Manual (.json)</div>
           <p style="font-size: 12px; color: #4b5563; margin-bottom: 10px; line-height: 1.45;">
             Tải bản sao lưu file <code>.json</code> để lưu cất giữ an toàn trên máy/Google Drive hoặc chuyển sang thiết bị khác.
           </p>
@@ -2164,6 +2180,9 @@
       try {
         localStorage.setItem('hsk_user_progress', JSON.stringify(userProgress));
       } catch (e) {}
+      if (typeof triggerDebouncedCloudSave === 'function') {
+        triggerDebouncedCloudSave();
+      }
     }
 
     // Helper to update Custom & Upgrade Level Tab word count
@@ -2206,7 +2225,197 @@
 
     function saveGroupCompletedDates() {
       localStorage.setItem('hsk_group_completed_dates', JSON.stringify(groupCompletedDates));
+      if (typeof triggerDebouncedCloudSave === 'function') {
+        triggerDebouncedCloudSave();
+      }
     }
+
+    // ==========================================
+    // SUPABASE CLOUD STORAGE SYNC MODULE
+    // ==========================================
+    const SUPABASE_URL = 'https://tjtgsisohrkiojgonuem.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqdGdzaXNvaHJraW9qZ29udWVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0Njk3NDUsImV4cCI6MjEwNzA0NTc0NX0.TFta09Skktb-PWzbhvlD6ovVwnBo7tcQk7cwHI5qeio';
+
+    let supabaseClient = null;
+    function getSupabaseClient() {
+      if (!supabaseClient && window.supabase && typeof window.supabase.createClient === 'function') {
+        try {
+          supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch(e) {
+          console.warn('Supabase client init warning:', e);
+        }
+      }
+      return supabaseClient;
+    }
+
+    let cloudSyncTimer = null;
+    let isCloudSyncing = false;
+
+    function updateCloudStatusBadge(text, isError = false) {
+      const badge = document.getElementById('cloudStatusBadge');
+      if (!badge) return;
+      badge.textContent = text;
+      if (isError) {
+        badge.style.background = '#fee2e2';
+        badge.style.color = '#991b1b';
+      } else if (text.includes('Đang')) {
+        badge.style.background = '#fef3c7';
+        badge.style.color = '#92400e';
+      } else {
+        badge.style.background = '#dcfce7';
+        badge.style.color = '#166534';
+      }
+    }
+
+    async function saveToCloud(isManual = false) {
+      if (isCloudSyncing) return;
+      isCloudSyncing = true;
+      updateCloudStatusBadge('🟡 Đang lưu...', false);
+
+      const payloadData = {
+        customGroups: customGroups || [],
+        upgradeWords: upgradeList || [],
+        userProgress: userProgress || {},
+        aiCache: aiCache || {},
+        groupCompletedDates: groupCompletedDates || {},
+        readingArticles: readingArticles || [],
+        openrouter_api_key: localStorage.getItem('openrouter_api_key') || '',
+        reading_audio_speed: localStorage.getItem('hsk_reading_audio_speed') || '1.0',
+        updated_at: new Date().toISOString()
+      };
+
+      try {
+        const client = getSupabaseClient();
+        if (client) {
+          const { error } = await client
+            .from('hsk_user_data')
+            .upsert({ id: 'default_user', data: payloadData, updated_at: new Date().toISOString() });
+          if (error) throw error;
+        } else {
+          const resp = await fetch(`${SUPABASE_URL}/rest/v1/hsk_user_data`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify({ id: 'default_user', data: payloadData, updated_at: new Date().toISOString() })
+          });
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        }
+
+        updateCloudStatusBadge('🟢 Đã đồng bộ', false);
+        if (isManual) {
+          showToast('☁️ Đã sao lưu dữ liệu lên Đám mây Supabase!');
+        }
+      } catch (err) {
+        console.error('Supabase save error:', err);
+        updateCloudStatusBadge('🔴 Lỗi kết nối', true);
+        if (isManual) {
+          showToast('❌ Lỗi kết nối Đám mây Supabase!');
+        }
+      } finally {
+        isCloudSyncing = false;
+      }
+    }
+    window.saveToCloud = saveToCloud;
+
+    function triggerDebouncedCloudSave() {
+      if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+      cloudSyncTimer = setTimeout(() => {
+        saveToCloud(false);
+      }, 2500);
+    }
+    window.triggerDebouncedCloudSave = triggerDebouncedCloudSave;
+
+    async function loadFromCloud(isManual = false) {
+      updateCloudStatusBadge('🟡 Đang tải...', false);
+      try {
+        let rowData = null;
+        const client = getSupabaseClient();
+        if (client) {
+          const { data, error } = await client
+            .from('hsk_user_data')
+            .select('data')
+            .eq('id', 'default_user')
+            .maybeSingle();
+          if (error) throw error;
+          if (data && data.data) rowData = data.data;
+        } else {
+          const resp = await fetch(`${SUPABASE_URL}/rest/v1/hsk_user_data?id=eq.default_user&select=data`, {
+            method: 'GET',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+          });
+          if (resp.ok) {
+            const arr = await resp.json();
+            if (arr && arr.length > 0 && arr[0].data) {
+              rowData = arr[0].data;
+            }
+          }
+        }
+
+        if (rowData && typeof rowData === 'object') {
+          if (Array.isArray(rowData.customGroups)) {
+            customGroups = rowData.customGroups;
+            localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+          }
+          if (Array.isArray(rowData.upgradeWords)) {
+            upgradeList = rowData.upgradeWords;
+            localStorage.setItem('hsk_upgrade_words', JSON.stringify(upgradeList));
+          }
+          if (rowData.userProgress && typeof rowData.userProgress === 'object') {
+            userProgress = rowData.userProgress;
+            localStorage.setItem('hsk_user_progress', JSON.stringify(userProgress));
+          }
+          if (rowData.aiCache && typeof rowData.aiCache === 'object') {
+            Object.assign(aiCache, rowData.aiCache);
+            localStorage.setItem('hsk_ai_cache', JSON.stringify(aiCache));
+          }
+          if (rowData.groupCompletedDates && typeof rowData.groupCompletedDates === 'object') {
+            groupCompletedDates = rowData.groupCompletedDates;
+            localStorage.setItem('hsk_group_completed_dates', JSON.stringify(groupCompletedDates));
+          }
+          if (Array.isArray(rowData.readingArticles)) {
+            readingArticles = rowData.readingArticles;
+            localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles));
+          }
+          if (rowData.openrouter_api_key) {
+            localStorage.setItem('openrouter_api_key', rowData.openrouter_api_key);
+          }
+          if (rowData.reading_audio_speed) {
+            localStorage.setItem('hsk_reading_audio_speed', rowData.reading_audio_speed);
+          }
+
+          updateCustomLevelTabCount();
+          updateGroupWordsState();
+          renderGroupDropdown();
+          renderVocabList();
+          updateCloudStatusBadge('🟢 Đã đồng bộ', false);
+
+          if (isManual) {
+            showToast('🎉 Đã khôi phục dữ liệu từ Đám mây Supabase!');
+          } else {
+            showToast('☁️ Đã đồng bộ từ Đám mây Supabase!');
+          }
+        } else {
+          updateCloudStatusBadge('🟢 Đã kết nối', false);
+          if (isManual) {
+            showToast('ℹ️ Chưa có bản lưu nào trên Đám mây!');
+          }
+        }
+      } catch (err) {
+        console.error('Supabase load error:', err);
+        updateCloudStatusBadge('🔴 Lỗi tải', true);
+        if (isManual) {
+          showToast('❌ Không thể kết nối Đám mây Supabase!');
+        }
+      }
+    }
+    window.loadFromCloud = loadFromCloud;
 
     function formatCompletionTag(timestamp) {
       if (!timestamp) return '';
@@ -5703,10 +5912,21 @@ Lưu ý quan trọng:
           localStorage.setItem('openrouter_api_key', val);
           showToast('đã lưu OpenRouter API Key!');
           apiKeyModal.classList.remove('active');
+          triggerDebouncedCloudSave();
         } else {
           showToast('vui lòng nhập API Key hợp lệ!');
         }
       });
+
+      // Supabase Cloud Push & Pull Buttons
+      const btnPushToCloud = document.getElementById('btnPushToCloud');
+      const btnPullFromCloud = document.getElementById('btnPullFromCloud');
+      if (btnPushToCloud) {
+        btnPushToCloud.addEventListener('click', () => saveToCloud(true));
+      }
+      if (btnPullFromCloud) {
+        btnPullFromCloud.addEventListener('click', () => loadFromCloud(true));
+      }
 
       // Export Backup JSON File
       const btnExportBackup = document.getElementById('btnExportBackup');
@@ -5942,6 +6162,9 @@ Lưu ý quan trọng:
       updateGroupWordsState();
       renderGroupDropdown();
       renderVocabList();
+
+      // Automatically sync and load latest data from Supabase Cloud
+      loadFromCloud(false);
     }
 
     if (document.readyState === 'loading') {
