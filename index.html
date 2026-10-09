@@ -148,6 +148,8 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      min-width: 0;
+      flex: 1 1 auto;
     }
 
     .back-btn {
@@ -163,9 +165,14 @@
       font-size: 16.5px;
       font-weight: 700;
       color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
     }
 
     .header-right {
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -1301,7 +1308,7 @@
   <header class="app-header">
     <div class="header-left">
       <button class="back-btn" title="quay lại">‹</button>
-      <div class="header-title" id="appHeaderTitle">复习单词 (HSK 7-9)</div>
+      <div class="header-title" id="appHeaderTitle">HSK 7-9</div>
     </div>
     <div class="header-right">
       <button class="icon-action-btn" id="btnPwaInstallHeader" title="Cài đặt ứng dụng vào điện thoại" style="display:none;">📲</button>
@@ -2896,7 +2903,7 @@
             listContainer.appendChild(itemDiv);
           });
         }
-        if (appHeaderTitle) appHeaderTitle.textContent = currentCustomGroupId === 'all_custom_groups' ? `🌟 Tất cả nhóm tự tạo` : `📁 Nhóm tự tạo`;
+        if (appHeaderTitle) appHeaderTitle.textContent = currentCustomGroupId === 'all_custom_groups' ? `🌟 Ôn tổng` : `📁 Tự tạo`;
         return;
       }
 
@@ -3009,10 +3016,10 @@
       }
 
       // Update Header Title
-      if (currentLevel === 'hsk6') appHeaderTitle.textContent = `复习单词 (HSK 6)`;
-      else if (currentLevel === 'hsk79') appHeaderTitle.textContent = `复习单词 (HSK 7-9)`;
-      else if (currentLevel === 'upgrade') appHeaderTitle.textContent = `✨ Nâng cấp vốn từ`;
-      else appHeaderTitle.textContent = `📁 Nhóm tự tạo`;
+      if (currentLevel === 'hsk6') appHeaderTitle.textContent = `HSK 6`;
+      else if (currentLevel === 'hsk79') appHeaderTitle.textContent = `HSK 7-9`;
+      else if (currentLevel === 'upgrade') appHeaderTitle.textContent = `✨ Nâng cấp`;
+      else appHeaderTitle.textContent = `📁 Tự tạo`;
     }
 
     // Shuffle State & Logic
