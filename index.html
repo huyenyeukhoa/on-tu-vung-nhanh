@@ -289,6 +289,7 @@
     /* Custom Group Select Button Trigger (Font Mali) */
     .custom-group-select-btn {
       flex: 1;
+      min-width: 0;
       padding: 6px 12px;
       border-radius: 12px;
       border: 1.5px solid var(--primary-color);
@@ -1336,7 +1337,7 @@
     <div class="group-bar" id="groupBar">
       <button class="group-nav-btn" id="btnPrevGroup" title="Nhóm trước">‹</button>
       <div class="custom-group-select-btn" id="btnCustomGroupSelect" title="Chọn nhóm ôn tập">
-        <span id="customGroupSelectText">Nhóm 1 (1 - 100 từ)</span>
+        <span id="customGroupSelectText" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1 1 auto;">Nhóm 1 (1 - 100 từ)</span>
         <span class="select-arrow">▼</span>
       </div>
       <select class="group-select" id="selectGroup" style="display:none;"></select>
@@ -2962,8 +2963,12 @@
           customTextEl.textContent = `Nhóm 1 (0 từ)`;
         } else {
           const compDate = groupCompletedDates[`${currentLevel}_${currentGroupIndex}`];
-          const tagStr = compDate ? formatCompletionTag(compDate) : 'Hoàn thành';
-          customTextEl.innerHTML = `Nhóm ${currentGroupIndex + 1} (${curStart} - ${curEnd} từ)${isCurrentCompleted ? ` <span style="color:#10b981; font-weight:700;">✅ (${tagStr})</span>` : ''}`;
+          let shortTag = '';
+          if (compDate) {
+            const d = new Date(compDate);
+            shortTag = ` ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+          }
+          customTextEl.innerHTML = `Nhóm ${currentGroupIndex + 1} (${curStart}-${curEnd})${isCurrentCompleted ? ` <span style="color:#766299; font-weight:700;">💜${shortTag}</span>` : ''}`;
         }
       }
 
