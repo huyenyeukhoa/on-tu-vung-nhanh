@@ -513,7 +513,7 @@
     .vocab-container {
       flex: 1;
       overflow-y: auto;
-      padding: 10px 12px calc(var(--bottom-bar-height) + 16px) 12px;
+      padding: 10px 12px calc(48px + env(safe-area-inset-bottom, 0px)) 12px;
       -webkit-overflow-scrolling: touch;
     }
 
@@ -1398,7 +1398,7 @@
   </main>
 
   <!-- Fixed Bottom Bar -->
-  <footer class="bottom-bar">
+  <footer class="bottom-bar" style="display: none;">
     <div class="counters-group">
       <div class="counter-badge correct">
         <div class="icon-badge correct">✓</div>
