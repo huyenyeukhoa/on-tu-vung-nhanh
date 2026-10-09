@@ -113,7 +113,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background-image: url('https://i.pinimg.com/736x/b9/e1/63/b9e16339f6bb68de17a3e2f256d9746b.jpg'), url('./bg.jpg');
+      background-image: var(--app-bg-image, url('https://i.pinimg.com/736x/b9/e1/63/b9e16339f6bb68de17a3e2f256d9746b.jpg'), url('./bg.jpg'));
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -947,7 +947,7 @@
       margin: 0 !important;
       box-shadow: none !important;
       border: none !important;
-      background-image: url('https://i.pinimg.com/736x/b9/e1/63/b9e16339f6bb68de17a3e2f256d9746b.jpg'), url('./bg.jpg');
+      background-image: var(--app-bg-image, url('https://i.pinimg.com/736x/b9/e1/63/b9e16339f6bb68de17a3e2f256d9746b.jpg'), url('./bg.jpg'));
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -1574,6 +1574,25 @@
           <div style="display: flex; gap: 8px;">
             <button class="primary-submit-btn" id="btnPushToCloud" style="flex: 1; padding: 8px 10px; font-size: 12px; background: #4f46e5;">☁️ Đẩy lên Cloud</button>
             <button class="primary-submit-btn" id="btnPullFromCloud" style="flex: 1; padding: 8px 10px; font-size: 12px; background: #4338ca;">📥 Tải từ Cloud</button>
+          </div>
+        </div>
+
+        <!-- Section 0.3: Custom Background Image (local only) -->
+        <div style="background: #fdf4ff; padding: 12px 14px; border-radius: 14px; border: 1px solid #f0d9fb; margin-bottom: 14px;">
+          <div style="font-size: 13.5px; font-weight: 700; color: #86198f; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+            <span>🖼️ Ảnh Nền Ứng Dụng</span>
+            <span id="bgStatusBadge" style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #f3e8ff; color: #7e22ce;">Mặc định</span>
+          </div>
+          <p style="font-size: 12px; color: #a21caf; margin-bottom: 10px; line-height: 1.45;">
+            Ảnh nền chỉ lưu trên máy này. Mở app ở máy khác sẽ hiện ảnh mặc định.
+          </p>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <div id="bgPreviewThumb" style="width: 54px; height: 72px; border-radius: 10px; flex-shrink: 0; background-size: cover; background-position: center; border: 1.5px solid #e9d5ff; box-shadow: 0 2px 6px rgba(134,25,143,0.12); background-image: var(--app-bg-image, url('https://i.pinimg.com/736x/b9/e1/63/b9e16339f6bb68de17a3e2f256d9746b.jpg'), url('./bg.jpg'));"></div>
+            <div style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
+              <button class="primary-submit-btn" id="btnChangeBackground" style="width: 100%; padding: 8px 10px; font-size: 12px; background: #a855f7;">🖼️ Đổi ảnh nền</button>
+              <button class="primary-submit-btn" id="btnResetBackground" style="width: 100%; padding: 7px 10px; font-size: 12px; background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; box-shadow: none;">↩️ Dùng ảnh mặc định</button>
+            </div>
+            <input type="file" id="inputBackgroundFile" accept="image/*" style="display: none;" />
           </div>
         </div>
 
@@ -6876,6 +6895,137 @@ ${chunkText}
           showToast('vui lòng nhập API Key hợp lệ!');
         }
       });
+
+      // ==========================================
+      // CUSTOM BACKGROUND IMAGE (LOCAL DEVICE ONLY - IndexedDB, not synced to cloud)
+      // ==========================================
+      const BG_DB_NAME = 'hsk_custom_bg_db';
+      const BG_STORE = 'bg';
+      let currentBgObjectUrl = null;
+
+      function openBgDb() {
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(BG_DB_NAME, 1);
+          req.onupgradeneeded = () => {
+            if (!req.result.objectStoreNames.contains(BG_STORE)) req.result.createObjectStore(BG_STORE);
+          };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      }
+      async function bgDbPut(blob) {
+        const db = await openBgDb();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(BG_STORE, 'readwrite');
+          tx.objectStore(BG_STORE).put(blob, 'current');
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+      }
+      async function bgDbGet() {
+        const db = await openBgDb();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(BG_STORE, 'readonly');
+          const req = tx.objectStore(BG_STORE).get('current');
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => reject(req.error);
+        });
+      }
+      async function bgDbDelete() {
+        const db = await openBgDb();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(BG_STORE, 'readwrite');
+          tx.objectStore(BG_STORE).delete('current');
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+      }
+
+      function applyBackgroundBlob(blob) {
+        const badge = document.getElementById('bgStatusBadge');
+        if (currentBgObjectUrl) {
+          URL.revokeObjectURL(currentBgObjectUrl);
+          currentBgObjectUrl = null;
+        }
+        if (blob) {
+          currentBgObjectUrl = URL.createObjectURL(blob);
+          document.documentElement.style.setProperty('--app-bg-image', `url("${currentBgObjectUrl}")`);
+          if (badge) badge.textContent = 'Ảnh tuỳ chỉnh';
+        } else {
+          document.documentElement.style.removeProperty('--app-bg-image');
+          if (badge) badge.textContent = 'Mặc định';
+        }
+      }
+
+      // Resize & compress picked image (max 1600px, JPEG) to keep storage small and rendering fast
+      function compressImageFile(file, maxSize = 1600, quality = 0.85) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          const url = URL.createObjectURL(file);
+          img.onload = () => {
+            let { width, height } = img;
+            const scale = Math.min(1, maxSize / Math.max(width, height));
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            URL.revokeObjectURL(url);
+            canvas.toBlob(b => b ? resolve(b) : reject(new Error('Không nén được ảnh')), 'image/jpeg', quality);
+          };
+          img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('File ảnh không hợp lệ')); };
+          img.src = url;
+        });
+      }
+
+      async function loadCustomBackground() {
+        try {
+          const blob = await bgDbGet();
+          if (blob) applyBackgroundBlob(blob);
+        } catch (e) {
+          console.warn('Load custom background warning:', e);
+        }
+      }
+
+      const btnChangeBackground = document.getElementById('btnChangeBackground');
+      const btnResetBackground = document.getElementById('btnResetBackground');
+      const inputBackgroundFile = document.getElementById('inputBackgroundFile');
+
+      if (btnChangeBackground && inputBackgroundFile) {
+        btnChangeBackground.addEventListener('click', () => inputBackgroundFile.click());
+        inputBackgroundFile.addEventListener('change', async (e) => {
+          const file = e.target.files && e.target.files[0];
+          inputBackgroundFile.value = '';
+          if (!file) return;
+          if (!file.type.startsWith('image/')) {
+            showToast('❌ Vui lòng chọn file ảnh!');
+            return;
+          }
+          try {
+            showToast('🖼️ Đang xử lý ảnh nền...');
+            const blob = await compressImageFile(file);
+            await bgDbPut(blob);
+            applyBackgroundBlob(blob);
+            showToast('✅ Đã đổi ảnh nền (lưu trên máy này)!');
+          } catch (err) {
+            console.error('Change background error:', err);
+            showToast('❌ Không thể đổi ảnh nền: ' + err.message);
+          }
+        });
+      }
+
+      if (btnResetBackground) {
+        btnResetBackground.addEventListener('click', async () => {
+          try {
+            await bgDbDelete();
+          } catch (e) {}
+          applyBackgroundBlob(null);
+          showToast('↩️ Đã khôi phục ảnh nền mặc định!');
+        });
+      }
+
+      loadCustomBackground();
 
       // Supabase Cloud Push & Pull Buttons
       const btnPushToCloud = document.getElementById('btnPushToCloud');
