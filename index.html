@@ -5313,12 +5313,19 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         const prompt = `Bạn là chuyên gia ngôn ngữ & giáo viên tiếng Trung cao cấp. Hãy phân tích và nâng cấp từ/cụm từ cơ bản: "${hanzi}".
 Đầu vào này có thể là Chữ Hán hoặc Tiếng Việt (ví dụ: "受不了" hoặc "không chịu nổi"). Nếu là Tiếng Việt, hãy tự động nhận diện từ Hán từ gốc tương ứng (ví dụ: "không chịu nổi" -> "受不了", "ghi nhớ" -> "记住").
 
-QUY TẮC NÂNG CẤP VÀ GIỮ NGHĨA CHÍNH XÁC (CỰC KỲ QUAN TRỌNG):
-1. GIỮ NGUYÊN SẮC THÁI & HƯỚNG NGHĨA: Từ nâng cấp BẮT BUỘC phải đồng nghĩa và giữ nguyên polarity (tích cực/tiêu cực/khẩu ngữ).
-   - VÍ DỤ CẢNH BÁO: Từ "${hanzi}" nếu mang nghĩa tiêu cực như "受不了" (không chịu nổi, suy sụp) -> TUYỆT ĐỐI KHÔNG chọn "忍受" (vì "忍受" là chịu đựng, ngược hướng ý nghĩa!). Phải nâng cấp thành "崩溃" (suy sụp) hoặc "难以忍受" / "不堪重负".
-2. HAI DẠNG NÂNG CẤP TRỰC TIẾP & SÁT NGHĨA NHẤT:
-   - Dạng 1 (upgrade1): Từ/cụm từ nâng cấp văn viết chuẩn (书面语, 2-3 âm tiết) diễn tả CÙNG HÀM Ý TRỰC TIẾP ở mức độ trang trọng/sắc sảo hơn (vd: 记住 -> 铭记; 受不了 -> 崩溃 / 难以忍受; 努力 -> 勤奋 / 拼搏; 害怕 -> 畏惧).
-   - Dạng 2 (upgrade2): THÀNH NGỮ 4 ÂM TIẾT (成语 - 4 chữ Hán) TRỰC TIẾP VÀ SÁT NGHĨA NHẤT. Hãy chọn thành ngữ có độ tương đồng nghĩa cao nhất, tránh chọn thành ngữ bị thu hẹp hoặc lệch qua thái độ chuyên biệt (vd: 努力 -> 全力以赴 / 奋发图强; 记住 -> 刻骨铭心; 受不了 -> 苦不堪言 / 痛不欲生; 害怕 -> 胆战心惊).
+QUY TẮC NÂNG CẤP VÀ GIỮ NGHĨA CHÍNH XÁC (CỰC KỲ NGHIÊM NGẶT - CẤM SAI LỆCH NGHĨA):
+1. GIỮ NGUYÊN NÉT NGHĨA CỐT LÕI & CẤU TRÚC NGỮ PHÁP (TỪ LOẠI / HƯỚNG NGHĨA):
+   - Từ nâng cấp BẮT BUỘC phải đồng nghĩa 100% về bản chất và thay thế tương đương được cho từ gốc trong ngữ cảnh.
+   - NẾU TỪ GỐC MÔ TẢ TÍNH CHẤT SỰ VẬT/CÂU CHUYỆN (như 有意思, 好看) -> Thành ngữ Dạng 2 BẮT BUỘC phải là thành ngữ tính từ tả đặc điểm sự vật/bài viết (như 引人入胜, 精彩纷呈). TUYỆT ĐỐI KHÔNG chọn "津津有味" (vì "津津有味" là trạng ngữ tả thái độ say sưa của con người, không thể tả câu chuyện!).
+   - NẾU TỪ GỐC MÔ TẢ XU HƯỚNG / MỨC ĐỘ (như 越来越, 日益 - ngày càng) -> Thành ngữ Dạng 2 BẮT BUỘC phải tả xu hướng mức độ tăng dần (như 与日俱增, 蒸蒸日上). TUYỆT ĐỐI KHÔNG chọn "日积月累" (vì "日积月累" là tích lũy dần dần, sai hẳn nét nghĩa ngày càng!).
+   - NẾU TỪ GỐC MANG NGHĨA TIÊU CỰC (như 受不了 - không chịu nổi) -> TUYỆT ĐỐI KHÔNG chọn "忍受" (vì "忍受" là chịu đựng, ngược hướng ý nghĩa!). Phải nâng cấp thành "崩溃" hoặc "难以忍受" / "苦不堪言".
+
+2. CẤM BẪY CHỮ HÁN GIỐNG NHAU (WORD-ASSOCIATION TRAP):
+   - Tuyệt đối KHÔNG chọn một thành ngữ chỉ vì nó chứa 1 chữ Hán trùng với từ gốc (ví dụ: thấy "日" chọn "日积月累" cho "越来越", hoặc thấy "意思/味" chọn "津津有味" cho "有意思") nếu nét nghĩa cốt lõi không khớp 1:1.
+
+3. HAI DẠNG NÂNG CẤP TRỰC TIẾP & SÁT NGHĨA NHẤT:
+   - Dạng 1 (upgrade1): Từ/cụm từ nâng cấp văn viết chuẩn (书面语, 2-3 âm tiết) diễn tả CÙNG HÀM Ý TRỰC TIẾP ở mức độ trang trọng/sắc sảo hơn (vd: 记住 -> 铭记; 受不了 -> 崩溃 / 难以忍受; 努力 -> 勤奋 / 拼搏; 越来越 -> 日益).
+   - Dạng 2 (upgrade2): THÀNH NGỮ 4 ÂM TIẾT (成语 - 4 chữ Hán) ĐỒNG NGHĨA & SÁT NGHĨA NHẤT VỚI TỪ GỐC (vd: 有意思 -> 引人入胜 / 趣味盎然; 越来越 -> 与日俱增 / 蒸蒸日上; 记住 -> 刻骨铭心; 受不了 -> 苦不堪言 / 痛不欲生; 努力 -> 全力以赴 / 奋发图强).
 
 Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 {
@@ -5338,7 +5345,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
     }
   },
   "upgrade2": {
-    "hanzi": "Thành ngữ 4 âm tiết (vd: 苦不堪言 hoặc 刻骨铭心)",
+    "hanzi": "Thành ngữ 4 âm tiết (vd: 引人入胜 hoặc 刻骨铭心)",
     "pinyin": "pinyin dạng 2",
     "pos": "Thành ngữ (4 âm tiết)",
     "vietnamese": "Nghĩa tiếng Việt Dạng 2",
