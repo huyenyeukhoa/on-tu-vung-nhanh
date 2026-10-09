@@ -343,18 +343,18 @@
       font-weight: 700 !important;
     }
 
-    /* Completed Group Highlight */
+    /* Completed Group Highlight (lavender purple theme) */
     .group-picker-item.completed {
-      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
-      border: 1.5px solid #10b981 !important;
-      color: #065f46 !important;
+      background: linear-gradient(135deg, #f5f0fb 0%, #e9ddf7 100%) !important;
+      border: 1.5px solid #9b87c4 !important;
+      color: #5b4785 !important;
       font-weight: 700 !important;
-      box-shadow: 0 3px 10px rgba(16, 185, 129, 0.15) !important;
+      box-shadow: 0 3px 10px rgba(135, 114, 168, 0.18) !important;
     }
 
     .group-picker-item.completed.active {
-      border: 2.5px solid #059669 !important;
-      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25) !important;
+      border: 2.5px solid #766299 !important;
+      box-shadow: 0 4px 14px rgba(118, 98, 153, 0.28) !important;
     }
 
     .group-picker-badge {
@@ -366,9 +366,9 @@
     }
 
     .group-picker-badge.completed {
-      background: #10b981;
+      background: #8772a8;
       color: #ffffff;
-      box-shadow: 0 2px 6px rgba(16,185,129,0.3);
+      box-shadow: 0 2px 6px rgba(135,114,168,0.35);
     }
 
     .group-picker-badge.in-progress {
@@ -2806,7 +2806,33 @@
 
         // Populate modal picker list with ALL custom groups
         if (listContainer) {
-          // 1. Render Top Item: Tất cả nhóm tự tạo
+          // Track completion dates for custom groups (key: custom_<groupId>)
+          let customDatesChanged = false;
+          const customGroupInfo = customGroups.map(grp => {
+            const grpWords = grp.words || [];
+            const learned = grpWords.filter(w => w && getWordStatus(w.hanzi) === 'correct').length;
+            const done = grpWords.length > 0 && learned === grpWords.length;
+            const dateKey = `custom_${grp.id}`;
+            if (done && !groupCompletedDates[dateKey]) {
+              groupCompletedDates[dateKey] = Date.now();
+              customDatesChanged = true;
+            } else if (!done && groupCompletedDates[dateKey]) {
+              delete groupCompletedDates[dateKey];
+              customDatesChanged = true;
+            }
+            return { grp, learned, done, date: groupCompletedDates[dateKey] || 0 };
+          });
+          if (customDatesChanged) saveGroupCompletedDates();
+
+          let groupsToRender;
+          if (groupPickerTabMode === 'oldest') {
+            groupsToRender = customGroupInfo.filter(info => info.done).sort((a, b) => a.date - b.date);
+          } else {
+            groupsToRender = customGroupInfo.filter(info => !info.done);
+          }
+
+          // 1. Render Top Item: Tất cả nhóm tự tạo (only in "Tất cả nhóm" tab)
+          if (groupPickerTabMode !== 'oldest') {
           const isAllActive = currentCustomGroupId === 'all_custom_groups';
           const allDiv = document.createElement('div');
           allDiv.className = `group-picker-item ${isAllActive ? 'active' : ''}`;
@@ -2854,25 +2880,36 @@
           const hr = document.createElement('div');
           hr.style.cssText = 'margin: 6px 0; border-bottom: 1px dashed #e5e7eb;';
           listContainer.appendChild(hr);
+          }
+
+          if (groupsToRender.length === 0) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.style.cssText = 'padding: 24px 15px; text-align: center; color: #9ca3af; font-size: 13.5px; line-height: 1.5;';
+            emptyDiv.innerHTML = groupPickerTabMode === 'oldest'
+              ? '⏳ Chưa có nhóm tự tạo nào thuộc 100%.<br>Tick đúng hết từ trong nhóm để nhóm chuyển sang đây nhé!'
+              : '🎉 Tất cả nhóm tự tạo đã thuộc hết!<br>Xem tab <b>⏳ Ôn nhóm cũ nhất</b> để ôn lại.';
+            listContainer.appendChild(emptyDiv);
+          }
 
           // 2. Render individual custom groups
-          customGroups.forEach(grp => {
+          groupsToRender.forEach(info => {
+            const grp = info.grp;
             const grpWords = grp.words || [];
             const isActive = grp.id === currentCustomGroupId;
-            const grpLearned = grpWords.filter(w => w && getWordStatus(w.hanzi) === 'correct').length;
-            const grpDone = grpWords.length > 0 && grpLearned === grpWords.length;
+            const grpLearned = info.learned;
+            const grpDone = info.done;
 
             const itemDiv = document.createElement('div');
             itemDiv.className = `group-picker-item ${isActive ? 'active' : ''} ${grpDone ? 'completed' : ''}`;
             itemDiv.style.cursor = 'pointer';
 
             const grpBadgeHTML = grpDone
-              ? `<span class="group-picker-badge completed" style="flex-shrink:0;">🎉 ${grpLearned}/${grpWords.length} từ</span>`
+              ? `<span class="group-picker-badge completed" style="flex-shrink:0;">🎉 ${info.date ? formatCompletionTag(info.date) : `${grpLearned}/${grpWords.length} từ`}</span>`
               : `<span class="group-picker-badge in-progress" style="flex-shrink:0;">${grpLearned}/${grpWords.length} từ</span>`;
 
             itemDiv.innerHTML = `
               <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
-                <span style="font-size: 14px; font-weight: 700; flex-shrink:0;">${grpDone ? '✅' : (isActive ? '▶' : '📁')}</span>
+                <span style="font-size: 14px; font-weight: 700; flex-shrink:0;">${grpDone ? '💜' : (isActive ? '▶' : '📁')}</span>
                 <div style="min-width:0; flex:1;">
                   <div style="font-size: 13.5px; font-weight: 700; color: #1f2937; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
                     ${grp.name}
@@ -2960,9 +2997,18 @@
             const timeB = groupCompletedDates[`${currentLevel}_${b}`] || 0;
             return timeA - timeB;
           });
+        } else {
+          // "Tất cả nhóm" tab: only groups that are NOT fully ticked yet
+          indicesToRender = indicesToRender.filter(i => !isGroupCompleted(i));
         }
 
-        if (groupPickerTabMode === 'oldest' && indicesToRender.length === 0) {
+        if (groupPickerTabMode !== 'oldest' && indicesToRender.length === 0) {
+          listContainer.innerHTML = `
+            <div style="padding: 30px 15px; text-align: center; color: #9ca3af; font-size: 13.5px; line-height: 1.5;">
+              🎉 Tất cả nhóm đã thuộc hết!<br>Xem tab <b>⏳ Ôn nhóm cũ nhất</b> để ôn lại.
+            </div>
+          `;
+        } else if (groupPickerTabMode === 'oldest' && indicesToRender.length === 0) {
           listContainer.innerHTML = `
             <div style="padding: 30px 15px; text-align: center; color: #9ca3af; font-size: 13.5px; line-height: 1.5;">
               ⏳ Chưa có nhóm nào hoàn thành 100%.<br>Hãy học thuộc 100/100 từ trong nhóm để ghi nhận ngày hoàn thành và xếp lịch ôn tập nhé!
@@ -2990,7 +3036,7 @@
 
             itemDiv.innerHTML = `
               <div style="display:flex; align-items:center; gap:8px;">
-                <span style="font-size: 14px; font-weight: 700;">${completed ? '✅' : (i === currentGroupIndex ? '▶' : '📁')}</span>
+                <span style="font-size: 14px; font-weight: 700;">${completed ? '💜' : (i === currentGroupIndex ? '▶' : '📁')}</span>
                 <div>
                   <div style="font-size: 13.5px; font-weight: 700;">Nhóm ${i + 1} (${start} - ${end} từ)</div>
                 </div>
