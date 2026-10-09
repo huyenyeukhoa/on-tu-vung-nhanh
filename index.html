@@ -1473,9 +1473,10 @@
           <!-- Select or Create Group -->
           <div style="margin-bottom: 16px; background: #f9fafb; padding: 12px; border-radius: 14px; border: 1px solid #f0f0f0;">
             <label style="font-weight: 700; font-size: 13px; color: #8772a8;">Chọn nhóm từ:</label>
-            <div style="display: flex; gap: 8px; margin-top: 6px; align-items: center;">
+            <div style="display: flex; gap: 6px; margin-top: 6px; align-items: center;">
               <select class="library-select" id="selectCustomGroupManager" style="flex: 1; min-width: 0; width: 100%;"></select>
-              <button class="primary-submit-btn" id="btnCreateNewCustomGroup" style="padding: 6px 10px; font-size: 12px; border-radius: 12px; flex-shrink: 0; white-space: nowrap;">+ Nhóm mới</button>
+              <button class="primary-submit-btn" id="btnCreateNewCustomGroup" style="padding: 6px 9px; font-size: 11.5px; border-radius: 12px; flex-shrink: 0; white-space: nowrap;">+ Nhóm mới</button>
+              <button class="icon-action-btn" id="btnDeleteCurrentCustomGroup" style="padding: 6px 9px; font-size: 11.5px; border-radius: 12px; flex-shrink: 0; white-space: nowrap; background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; font-weight: 700;" title="Xóa nhóm từ này">🗑️ Xóa nhóm</button>
             </div>
           </div>
 
@@ -1789,6 +1790,21 @@
         <div id="articlePickerListContainer" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px;">
           <!-- Rendered dynamically -->
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generic Confirmation Modal (Pop-up xác nhận xóa từ / nhóm từ) -->
+  <div class="modal-overlay" id="confirmModal" style="z-index: 2000;">
+    <div class="modal-card" style="max-width: 380px; text-align: center; padding: 24px 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+      <div style="font-size: 42px; margin-bottom: 8px; line-height: 1;">⚠️</div>
+      <div class="modal-title" id="confirmModalTitle" style="font-size: 17px; font-weight: 700; color: #111827; margin-bottom: 8px;">Xác nhận xóa</div>
+      <div id="confirmModalMessage" style="font-size: 14px; color: #4b5563; margin-bottom: 20px; line-height: 1.5; word-break: break-word;">
+        Bạn có chắc chắn muốn xóa không?
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button class="secondary-btn" id="btnConfirmCancel" style="flex: 1; padding: 10px; font-size: 13.5px; font-weight: 700; border-radius: 12px;">Hủy</button>
+        <button class="primary-submit-btn" id="btnConfirmOk" style="flex: 1; padding: 10px; font-size: 13.5px; font-weight: 700; border-radius: 12px; background: #ef4444; border-color: #ef4444;">Xóa</button>
       </div>
     </div>
   </div>
@@ -2155,6 +2171,95 @@
     const btnAiUpgradeCustom = document.getElementById('btnAiUpgradeCustom');
     const btnAddWordToUpgradeGroup = document.getElementById('btnAddWordToUpgradeGroup');
     const upgradeGroupWordsList = document.getElementById('upgradeGroupWordsList');
+
+    // ==========================================
+    // REUSABLE CONFIRM MODAL & LONG PRESS HELPER
+    // ==========================================
+    let confirmModalCallback = null;
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmModalTitle = document.getElementById('confirmModalTitle');
+    const confirmModalMessage = document.getElementById('confirmModalMessage');
+    const btnConfirmCancel = document.getElementById('btnConfirmCancel');
+    const btnConfirmOk = document.getElementById('btnConfirmOk');
+
+    function showConfirmModal({ title = 'Xác nhận xóa', message = 'Bạn có chắc chắn muốn xóa không?', confirmText = 'Xóa', cancelText = 'Hủy', onConfirm }) {
+      if (!confirmModal) return;
+      confirmModalTitle.textContent = title;
+      confirmModalMessage.innerHTML = message;
+      btnConfirmOk.textContent = confirmText;
+      btnConfirmCancel.textContent = cancelText;
+      confirmModalCallback = onConfirm;
+
+      confirmModal.classList.add('active');
+    }
+
+    function closeConfirmModal() {
+      if (confirmModal) confirmModal.classList.remove('active');
+      confirmModalCallback = null;
+    }
+
+    if (btnConfirmCancel) {
+      btnConfirmCancel.addEventListener('click', closeConfirmModal);
+    }
+
+    if (btnConfirmOk) {
+      btnConfirmOk.addEventListener('click', () => {
+        const cb = confirmModalCallback;
+        closeConfirmModal();
+        if (typeof cb === 'function') cb();
+      });
+    }
+
+    if (confirmModal) {
+      confirmModal.addEventListener('click', (e) => {
+        if (e.target === confirmModal) closeConfirmModal();
+      });
+    }
+
+    // Long Press Helper Function (detects 500ms press without scrolling)
+    function addLongPressListener(element, callback, duration = 500) {
+      if (!element) return;
+      let timer = null;
+      let startX = 0, startY = 0;
+
+      function start(e) {
+        if (e.touches && e.touches.length > 1) return;
+        const touch = e.touches ? e.touches[0] : e;
+        startX = touch.clientX;
+        startY = touch.clientY;
+
+        timer = setTimeout(() => {
+          if (navigator.vibrate) navigator.vibrate(40);
+          callback(e);
+        }, duration);
+      }
+
+      function cancel() {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+      }
+
+      function move(e) {
+        if (!timer) return;
+        const touch = e.touches ? e.touches[0] : e;
+        const dist = Math.hypot(touch.clientX - startX, touch.clientY - startY);
+        if (dist > 10) {
+          cancel();
+        }
+      }
+
+      element.addEventListener('touchstart', start, { passive: true });
+      element.addEventListener('touchend', cancel);
+      element.addEventListener('touchcancel', cancel);
+      element.addEventListener('touchmove', move, { passive: true });
+
+      element.addEventListener('mousedown', start);
+      element.addEventListener('mouseup', cancel);
+      element.addEventListener('mouseleave', cancel);
+      element.addEventListener('mousemove', move);
+    }
 
     // Initialize Dictionary Data from hsk_dictionary.js
     function initDictionaryData() {
@@ -2614,10 +2719,17 @@
                   </div>
                 </div>
               </div>
-              <span class="group-picker-badge" style="margin-left: 6px; flex-shrink:0; background: ${grpWords.length > 0 ? '#8772a8' : '#f3f4f6'}; color: ${grpWords.length > 0 ? '#ffffff' : '#6b7280'}; font-weight: 700;">
-                ${grpWords.length} từ
-              </span>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span class="group-picker-badge" style="flex-shrink:0; background: ${grpWords.length > 0 ? '#8772a8' : '#f3f4f6'}; color: ${grpWords.length > 0 ? '#ffffff' : '#6b7280'}; font-weight: 700;">
+                  ${grpWords.length} từ
+                </span>
+                <button class="icon-action-btn" style="padding: 2px 6px; font-size: 12px; color: #ef4444; border:none; background:none; cursor:pointer;" onclick="event.stopPropagation(); deleteCustomGroup('${grp.id}')" title="Nhấn hoặc giữ để xóa nhóm từ này">🗑️</button>
+              </div>
             `;
+
+            addLongPressListener(itemDiv, () => {
+              deleteCustomGroup(grp.id);
+            });
 
             itemDiv.addEventListener('click', () => {
               currentCustomGroupId = grp.id;
@@ -4035,6 +4147,27 @@ Lưu ý:
           row.setAttribute('data-id', item.id || item.hanzi);
 
           row.innerHTML = buildRowContent(item);
+
+          // Enable long-press confirmation popup to delete word on custom/upgrade level
+          addLongPressListener(row, () => {
+            if (currentLevel === 'custom') {
+              const group = customGroups.find(g => g.id === currentCustomGroupId);
+              if (group) {
+                const wIdx = group.words.findIndex(w => w.hanzi === item.hanzi);
+                if (wIdx !== -1) {
+                  deleteCustomWord(wIdx);
+                  return;
+                }
+              }
+            } else if (currentLevel === 'upgrade') {
+              const uIdx = upgradeList.findIndex(w => (w.upgradedHanzi || w.hanzi) === item.hanzi || w.hanzi === item.hanzi);
+              if (uIdx !== -1) {
+                deleteUpgradeWord(uIdx);
+                return;
+              }
+            }
+          });
+
           fragment.appendChild(row);
         } catch (rowErr) {
           console.error('Error rendering row item:', item, rowErr);
@@ -4275,20 +4408,23 @@ Lưu ý:
       const group = customGroups.find(g => g.id === currentCustomGroupId) || customGroups[0];
       customGroupWordsList.innerHTML = '';
 
-      if (!group || group.words.length === 0) {
+      if (!group || !group.words || group.words.length === 0) {
         customGroupWordsList.innerHTML = `<div style="padding: 15px; text-align: center; color: #9ca3af; font-size: 13px;">Nhóm này chưa có từ nào. Hãy nhập Hán tự ở trên!</div>`;
         return;
       }
 
       group.words.forEach((w, index) => {
         const div = document.createElement('div');
-        div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; font-size: 13.5px;';
+        div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; font-size: 13.5px; user-select: none; border-radius: 8px; transition: background 0.2s; cursor: pointer;';
         div.innerHTML = `
           <div>
             <b>${w.hanzi}</b> <span style="color: var(--primary-color);">(${w.pinyin})</span>: ${w.vietnamese}
           </div>
-          <button style="border:none; background:none; color: var(--red-color); cursor:pointer; font-weight:700; font-size: 14px;" onclick="deleteCustomWord(${index})">✕</button>
+          <button style="border:none; background:none; color: var(--red-color); cursor:pointer; font-weight:700; font-size: 14px; padding: 4px 8px;" onclick="event.stopPropagation(); deleteCustomWord(${index})" title="Nhấn hoặc giữ để xóa từ">✕</button>
         `;
+        addLongPressListener(div, () => {
+          deleteCustomWord(index);
+        });
         customGroupWordsList.appendChild(div);
       });
     }
@@ -4303,47 +4439,102 @@ Lưu ý:
 
       upgradeList.forEach((w, index) => {
         const div = document.createElement('div');
-        div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; font-size: 13.5px;';
+        div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; font-size: 13.5px; user-select: none; border-radius: 8px; transition: background 0.2s; cursor: pointer;';
         div.innerHTML = `
           <div>
             <b>${w.hanzi}</b> ➔ <b style="color: var(--primary-color);">${w.upgradedHanzi}</b> <span style="color: #6b7280; font-size: 12px;">(${w.upgradedPinyin})</span>
             <div style="font-size: 12px; color: #4b5563;">${w.upgradedVi}</div>
           </div>
-          <button style="border:none; background:none; color: var(--red-color); cursor:pointer; font-weight:700; font-size: 14px;" onclick="deleteUpgradeWord(${index})">✕</button>
+          <button style="border:none; background:none; color: var(--red-color); cursor:pointer; font-weight:700; font-size: 14px; padding: 4px 8px;" onclick="event.stopPropagation(); deleteUpgradeWord(${index})" title="Nhấn hoặc giữ để xóa từ">✕</button>
         `;
+        addLongPressListener(div, () => {
+          deleteUpgradeWord(index);
+        });
         upgradeGroupWordsList.appendChild(div);
       });
     }
 
     function deleteCustomWord(index) {
       const group = customGroups.find(g => g.id === currentCustomGroupId);
-      if (group) {
-        group.words.splice(index, 1);
-        localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-        if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
-        updateCustomLevelTabCount();
-        renderCustomGroupSelect();
-        if (currentLevel === 'custom') {
-          updateGroupWordsState();
-          renderGroupDropdown();
-          renderVocabList();
-        }
-        showToast('Đã xóa từ!');
+      if (group && group.words && group.words[index]) {
+        const targetWord = group.words[index];
+        showConfirmModal({
+          title: 'Xác nhận xóa từ',
+          message: `Bạn có chắc chắn muốn xóa từ <b style="color:var(--primary-color); font-size:16px;">${targetWord.hanzi}</b> (${targetWord.pinyin || ''}) khỏi nhóm <b>${group.name}</b> không?`,
+          confirmText: 'Xóa từ',
+          onConfirm: () => {
+            group.words.splice(index, 1);
+            localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+            if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+            updateCustomLevelTabCount();
+            renderCustomGroupSelect();
+            if (currentLevel === 'custom') {
+              updateGroupWordsState();
+              renderGroupDropdown();
+              renderVocabList();
+            }
+            showToast(`🗑️ Đã xóa từ "${targetWord.hanzi}"!`);
+          }
+        });
       }
     }
 
     function deleteUpgradeWord(index) {
-      upgradeList.splice(index, 1);
-      localStorage.setItem('hsk_upgrade_words', JSON.stringify(upgradeList));
-      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
-      updateCustomLevelTabCount();
-      renderUpgradeGroupWords();
-      if (currentLevel === 'upgrade') {
-        updateGroupWordsState();
-        renderGroupDropdown();
-        renderVocabList();
+      if (upgradeList && upgradeList[index]) {
+        const targetWord = upgradeList[index];
+        const displayHanzi = targetWord.upgradedHanzi || targetWord.hanzi;
+        showConfirmModal({
+          title: 'Xác nhận xóa từ nâng cấp',
+          message: `Bạn có chắc chắn muốn xóa từ nâng cấp <b style="color:var(--primary-color); font-size:16px;">${displayHanzi}</b> (${targetWord.upgradedPinyin || targetWord.pinyin || ''}) không?`,
+          confirmText: 'Xóa từ',
+          onConfirm: () => {
+            upgradeList.splice(index, 1);
+            localStorage.setItem('hsk_upgrade_words', JSON.stringify(upgradeList));
+            if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+            updateCustomLevelTabCount();
+            renderUpgradeGroupWords();
+            if (currentLevel === 'upgrade') {
+              updateGroupWordsState();
+              renderGroupDropdown();
+              renderVocabList();
+            }
+            showToast(`🗑️ Đã xóa từ nâng cấp "${displayHanzi}"!`);
+          }
+        });
       }
-      showToast('Đã xóa từ nâng cấp!');
+    }
+
+    function deleteCustomGroup(groupId) {
+      const targetGroupId = groupId || currentCustomGroupId;
+      const group = customGroups.find(g => g.id === targetGroupId);
+      if (!group) return;
+
+      const wordCount = group.words ? group.words.length : 0;
+      showConfirmModal({
+        title: 'Xác nhận xóa nhóm từ',
+        message: `Bạn có chắc chắn muốn xóa nhóm từ <b style="color:var(--primary-color); font-size:15px;">${group.name}</b> (${wordCount} từ) không?<br/><span style="font-size:12.5px; color:#ef4444; margin-top:6px; display:inline-block;">⚠️ Hành động này sẽ xóa toàn bộ từ trong nhóm này!</span>`,
+        confirmText: 'Xóa nhóm',
+        onConfirm: () => {
+          const idx = customGroups.findIndex(g => g.id === targetGroupId);
+          if (idx !== -1) {
+            customGroups.splice(idx, 1);
+          }
+          if (customGroups.length === 0) {
+            customGroups.push({ id: 'custom_1', name: 'Nhóm tự chọn 1', words: [] });
+          }
+          currentCustomGroupId = customGroups[0].id;
+          localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+          if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+          updateCustomLevelTabCount();
+          renderCustomGroupSelect();
+          if (currentLevel === 'custom') {
+            updateGroupWordsState();
+            renderGroupDropdown();
+            renderVocabList();
+          }
+          showToast(`🗑️ Đã xóa nhóm từ "${group.name}" thành công!`);
+        }
+      });
     }
 
     // AI AutoFill Custom Word Function (Smart Bidirectional: Chinese <-> Vietnamese)
@@ -6217,6 +6408,28 @@ ${chunkText}
           showToast(`Đã tạo nhóm "${name.trim()}"`);
         }
       });
+
+      const btnDeleteCurrentCustomGroup = document.getElementById('btnDeleteCurrentCustomGroup');
+      if (btnDeleteCurrentCustomGroup) {
+        btnDeleteCurrentCustomGroup.addEventListener('click', () => {
+          deleteCustomGroup(currentCustomGroupId);
+        });
+      }
+
+      if (selectCustomGroupManager) {
+        addLongPressListener(selectCustomGroupManager, () => {
+          deleteCustomGroup(currentCustomGroupId);
+        });
+      }
+
+      const customGroupSelectText = document.getElementById('customGroupSelectText');
+      if (customGroupSelectText) {
+        addLongPressListener(customGroupSelectText, () => {
+          if (currentLevel === 'custom') {
+            deleteCustomGroup(currentCustomGroupId);
+          }
+        });
+      }
 
       btnAiAutofillCustom.addEventListener('click', aiAutofillCustomWord);
       btnAddWordToCustomGroup.addEventListener('click', addWordToCustomGroup);
