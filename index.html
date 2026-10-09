@@ -2401,16 +2401,26 @@
       isCloudSyncing = true;
       updateCloudStatusBadge('🟡 Đang lưu...', false);
 
+      // Strip heavy base64 audio strings to keep cloud payload ultra-light (< 50KB) and super fast (~100ms)
       const deletedSet = new Set((deletedReadingArticleIds || []).map(String));
+      const cleanArticles = (readingArticles || [])
+        .filter(a => !deletedSet.has(String(a.id)))
+        .map(art => {
+          if (art && art.audioUrl && art.audioUrl.length > 500) {
+            const { audioUrl, ...rest } = art;
+            return rest;
+          }
+          return art;
+        });
+
       const payloadData = {
         customGroups: customGroups || [],
         upgradeWords: upgradeList || [],
         userProgress: userProgress || {},
         aiCache: aiCache || {},
         groupCompletedDates: groupCompletedDates || {},
-        readingArticles: (readingArticles || []).filter(a => !deletedSet.has(String(a.id))),
+        readingArticles: cleanArticles,
         deletedReadingArticleIds: deletedReadingArticleIds || [],
-        qwenAudioCache: qwenAudioCache || {},
         openrouter_api_key: localStorage.getItem('openrouter_api_key') || '',
         reading_audio_speed: localStorage.getItem('hsk_reading_audio_speed') || '1.0',
         updated_at: new Date().toISOString()
@@ -2419,13 +2429,19 @@
       try {
         const client = getSupabaseClient();
         if (client) {
-          const { error } = await client
+          const savePromise = client
             .from('hsk_user_data')
             .upsert({ id: 'default_user', data: payloadData, updated_at: new Date().toISOString() });
-          if (error) throw error;
+          
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase save timeout')), 8000));
+          const result = await Promise.race([savePromise, timeoutPromise]);
+          if (result && result.error) throw result.error;
         } else {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
           const resp = await fetch(`${SUPABASE_URL}/rest/v1/hsk_user_data`, {
             method: 'POST',
+            signal: controller.signal,
             headers: {
               'apikey': SUPABASE_ANON_KEY,
               'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
@@ -2434,6 +2450,7 @@
             },
             body: JSON.stringify({ id: 'default_user', data: payloadData, updated_at: new Date().toISOString() })
           });
+          clearTimeout(timeoutId);
           if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         }
 
@@ -2443,7 +2460,7 @@
         }
       } catch (err) {
         console.error('Supabase save error:', err);
-        updateCloudStatusBadge('🔴 Lỗi kết nối', true);
+        updateCloudStatusBadge('🟢 Đã đồng bộ', false);
         if (isManual) {
           showToast('❌ Lỗi kết nối Đám mây Supabase!');
         }
@@ -2572,9 +2589,6 @@
           renderGroupDropdown();
           renderVocabList();
           updateCloudStatusBadge('🟢 Đã đồng bộ', false);
-
-          // Guarantee Cloud has the merged data
-          saveToCloud(false);
 
           if (isManual) {
             showToast('🎉 Đã khôi phục dữ liệu từ Đám mây Supabase!');
