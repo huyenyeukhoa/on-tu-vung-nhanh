@@ -4383,6 +4383,14 @@ Lưu ý:
           // Enable long-press confirmation popup to delete word on custom/upgrade level
           addLongPressListener(row, () => {
             if (currentLevel === 'custom') {
+              if (currentCustomGroupId === 'all_custom_groups') {
+                const combined = getCurrentLevelWords();
+                const cIdx = combined.findIndex(w => w.hanzi === item.hanzi);
+                if (cIdx !== -1) {
+                  deleteCustomWord(cIdx);
+                  return;
+                }
+              }
               const group = customGroups.find(g => g.id === currentCustomGroupId);
               if (group) {
                 const wIdx = group.words.findIndex(w => w.hanzi === item.hanzi);
@@ -4744,9 +4752,12 @@ Lưu ý:
         const targetWord = words[index];
         if (!targetWord) return;
 
+        const owningGroups = customGroups.filter(g => (g.words || []).some(w => w.hanzi === targetWord.hanzi)).map(g => g.name);
+        const groupsLabel = owningGroups.length > 0 ? owningGroups.map(n => `<b>${n}</b>`).join(', ') : 'các nhóm tự tạo';
+
         showConfirmModal({
           title: 'Xác nhận xóa từ',
-          message: `Bạn có chắc chắn muốn xóa từ <b style="color:var(--primary-color); font-size:16px;">${targetWord.hanzi}</b> (${targetWord.pinyin || ''}) khỏi TẤT CẢ các nhóm tự tạo không?`,
+          message: `Bạn có chắc chắn muốn xóa từ <b style="color:var(--primary-color); font-size:16px;">${targetWord.hanzi}</b> (${targetWord.pinyin || ''}) khỏi nhóm ${groupsLabel} không?`,
           confirmText: 'Xóa từ',
           onConfirm: () => {
             customGroups.forEach(g => {
@@ -6752,6 +6763,10 @@ ${chunkText}
 
       if (selectCustomGroupManager) {
         addLongPressListener(selectCustomGroupManager, () => {
+          if (currentCustomGroupId === 'all_custom_groups') {
+            showToast('🌟 Đang xem tất cả nhóm. Hãy chọn 1 nhóm cụ thể để xoá nhóm, hoặc ấn giữ từng từ để xoá từ.');
+            return;
+          }
           deleteCustomGroup(currentCustomGroupId);
         });
       }
@@ -6760,6 +6775,10 @@ ${chunkText}
       if (customGroupSelectText) {
         addLongPressListener(customGroupSelectText, () => {
           if (currentLevel === 'custom') {
+            if (currentCustomGroupId === 'all_custom_groups') {
+              showToast('🌟 Đang ôn tất cả nhóm. Hãy chọn 1 nhóm cụ thể để xoá nhóm, hoặc ấn giữ từng từ để xoá từ.');
+              return;
+            }
             deleteCustomGroup(currentCustomGroupId);
           }
         });
