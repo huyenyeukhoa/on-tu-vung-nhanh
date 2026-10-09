@@ -1473,10 +1473,9 @@
           <!-- Select or Create Group -->
           <div style="margin-bottom: 16px; background: #f9fafb; padding: 12px; border-radius: 14px; border: 1px solid #f0f0f0;">
             <label style="font-weight: 700; font-size: 13px; color: #8772a8;">Chọn nhóm từ:</label>
-            <div style="display: flex; gap: 6px; margin-top: 6px; align-items: center;">
+            <div style="display: flex; gap: 8px; margin-top: 6px; align-items: center;">
               <select class="library-select" id="selectCustomGroupManager" style="flex: 1; min-width: 0; width: 100%;"></select>
-              <button class="primary-submit-btn" id="btnCreateNewCustomGroup" style="padding: 6px 9px; font-size: 11.5px; border-radius: 12px; flex-shrink: 0; white-space: nowrap;">+ Nhóm mới</button>
-              <button class="icon-action-btn" id="btnDeleteCurrentCustomGroup" style="padding: 6px 9px; font-size: 11.5px; border-radius: 12px; flex-shrink: 0; white-space: nowrap; background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; font-weight: 700;" title="Xóa nhóm từ này">🗑️ Xóa nhóm</button>
+              <button class="primary-submit-btn" id="btnCreateNewCustomGroup" style="padding: 6px 10px; font-size: 12px; border-radius: 12px; flex-shrink: 0; white-space: nowrap;">+ Nhóm mới</button>
             </div>
           </div>
 
@@ -6469,12 +6468,7 @@ ${chunkText}
         }
       });
 
-      const btnDeleteCurrentCustomGroup = document.getElementById('btnDeleteCurrentCustomGroup');
-      if (btnDeleteCurrentCustomGroup) {
-        btnDeleteCurrentCustomGroup.addEventListener('click', () => {
-          deleteCustomGroup(currentCustomGroupId);
-        });
-      }
+
 
       if (selectCustomGroupManager) {
         addLongPressListener(selectCustomGroupManager, () => {
