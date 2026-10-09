@@ -2349,6 +2349,17 @@
         if (!customGroups || customGroups.length === 0) {
           customGroups = [{ id: 'default_custom', name: 'Nhóm tự chọn 1', words: [] }];
         }
+        if (currentCustomGroupId === 'all_custom_groups') {
+          let combinedMap = new Map();
+          customGroups.forEach(g => {
+            (g.words || []).forEach(w => {
+              if (w && w.hanzi && !combinedMap.has(w.hanzi)) {
+                combinedMap.set(w.hanzi, w);
+              }
+            });
+          });
+          return Array.from(combinedMap.values());
+        }
         let grp = customGroups.find(g => g.id === currentCustomGroupId);
         if (!grp) {
           grp = customGroups[0];
@@ -2533,7 +2544,7 @@
             if (customGroups.length === 0) {
               customGroups = [{ id: 'custom_1', name: 'Nhóm tự chọn 1', words: [] }];
             }
-            if (!customGroups.some(g => g.id === currentCustomGroupId)) {
+            if (currentCustomGroupId !== 'all_custom_groups' && !customGroups.some(g => g.id === currentCustomGroupId)) {
               currentCustomGroupId = customGroups[0].id;
             }
             localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
@@ -2732,20 +2743,79 @@
           customGroups = [{ id: 'default_custom', name: 'Nhóm tự chọn 1', words: [] }];
         }
 
-        let activeGroup = customGroups.find(g => g.id === currentCustomGroupId);
-        if (!activeGroup) {
-          activeGroup = customGroups[0];
-          currentCustomGroupId = activeGroup.id;
-        }
+        let totalCombinedMap = new Map();
+        customGroups.forEach(g => {
+          (g.words || []).forEach(w => {
+            if (w && w.hanzi && !totalCombinedMap.has(w.hanzi)) {
+              totalCombinedMap.set(w.hanzi, w);
+            }
+          });
+        });
+        const totalCombinedCount = totalCombinedMap.size;
 
-        const words = activeGroup.words || [];
         const customTextEl = document.getElementById('customGroupSelectText');
         if (customTextEl) {
-          customTextEl.innerHTML = `📁 ${activeGroup.name} (${words.length} từ)`;
+          if (currentCustomGroupId === 'all_custom_groups') {
+            customTextEl.innerHTML = `🌟 Tất cả nhóm tự tạo (${totalCombinedCount} từ)`;
+          } else {
+            let activeGroup = customGroups.find(g => g.id === currentCustomGroupId);
+            if (!activeGroup) {
+              activeGroup = customGroups[0];
+              currentCustomGroupId = activeGroup.id;
+            }
+            const words = activeGroup.words || [];
+            customTextEl.innerHTML = `📁 ${activeGroup.name} (${words.length} từ)`;
+          }
         }
 
         // Populate modal picker list with ALL custom groups
         if (listContainer) {
+          // 1. Render Top Item: Tất cả nhóm tự tạo
+          const isAllActive = currentCustomGroupId === 'all_custom_groups';
+          const allDiv = document.createElement('div');
+          allDiv.className = `group-picker-item ${isAllActive ? 'active' : ''}`;
+          allDiv.style.cursor = 'pointer';
+          if (isAllActive) {
+            allDiv.style.background = '#f0ebf8';
+            allDiv.style.borderColor = '#8772a8';
+          }
+
+          allDiv.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
+              <span style="font-size: 15px; font-weight: 700; flex-shrink:0;">${isAllActive ? '▶' : '🌟'}</span>
+              <div style="min-width:0; flex:1;">
+                <div style="font-size: 14px; font-weight: 700; color: #6b21a8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                  Tất cả nhóm tự tạo
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="group-picker-badge" style="flex-shrink:0; background: #8772a8; color: #ffffff; font-weight: 700;">
+                Tổng ${totalCombinedCount} từ
+              </span>
+            </div>
+          `;
+
+          allDiv.addEventListener('click', () => {
+            currentCustomGroupId = 'all_custom_groups';
+            currentGroupIndex = 0;
+            resetShuffleState();
+            saveCurrentState();
+            updateGroupWordsState();
+            renderGroupDropdown();
+            renderVocabList();
+            const modal = document.getElementById('groupPickerModal');
+            if (modal) modal.classList.remove('active');
+          });
+
+          listContainer.appendChild(allDiv);
+
+          // Divider
+          const hr = document.createElement('div');
+          hr.style.cssText = 'margin: 6px 0; border-bottom: 1px dashed #e5e7eb;';
+          listContainer.appendChild(hr);
+
+          // 2. Render individual custom groups
           customGroups.forEach(grp => {
             const grpWords = grp.words || [];
             const isActive = grp.id === currentCustomGroupId;
@@ -2790,7 +2860,7 @@
             listContainer.appendChild(itemDiv);
           });
         }
-        if (appHeaderTitle) appHeaderTitle.textContent = `📁 Nhóm tự tạo`;
+        if (appHeaderTitle) appHeaderTitle.textContent = currentCustomGroupId === 'all_custom_groups' ? `🌟 Tất cả nhóm tự tạo` : `📁 Nhóm tự tạo`;
         return;
       }
 
@@ -4435,6 +4505,21 @@ Lưu ý:
         localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
       }
 
+      let totalCombinedMap = new Map();
+      customGroups.forEach(g => {
+        (g.words || []).forEach(w => {
+          if (w && w.hanzi && !totalCombinedMap.has(w.hanzi)) {
+            totalCombinedMap.set(w.hanzi, w);
+          }
+        });
+      });
+
+      const allOpt = document.createElement('option');
+      allOpt.value = 'all_custom_groups';
+      allOpt.textContent = `🌟 Tất cả nhóm tự tạo (${totalCombinedMap.size} từ)`;
+      if (currentCustomGroupId === 'all_custom_groups') allOpt.selected = true;
+      selectCustomGroupManager.appendChild(allOpt);
+
       customGroups.forEach(grp => {
         const opt = document.createElement('option');
         opt.value = grp.id;
@@ -4449,9 +4534,40 @@ Lưu ý:
     }
 
     function renderCustomGroupWords() {
-      const group = customGroups.find(g => g.id === currentCustomGroupId) || customGroups[0];
       customGroupWordsList.innerHTML = '';
 
+      if (currentCustomGroupId === 'all_custom_groups') {
+        let combinedMap = new Map();
+        customGroups.forEach(g => {
+          (g.words || []).forEach(w => {
+            if (w && w.hanzi && !combinedMap.has(w.hanzi)) {
+              combinedMap.set(w.hanzi, w);
+            }
+          });
+        });
+        const words = Array.from(combinedMap.values());
+        if (words.length === 0) {
+          customGroupWordsList.innerHTML = `<div style="padding: 15px; text-align: center; color: #9ca3af; font-size: 13px;">Chưa có từ nào trong các nhóm tự tạo.</div>`;
+          return;
+        }
+        words.forEach((w, index) => {
+          const div = document.createElement('div');
+          div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; font-size: 13.5px; user-select: none; border-radius: 8px; transition: background 0.2s; cursor: pointer;';
+          div.innerHTML = `
+            <div>
+              <b>${w.hanzi}</b> <span style="color: var(--primary-color);">(${w.pinyin || ''})</span>: ${w.vietnamese || ''}
+            </div>
+            <button style="border:none; background:none; color: var(--red-color); cursor:pointer; font-weight:700; font-size: 14px; padding: 4px 8px;" onclick="event.stopPropagation(); deleteCustomWord(${index})" title="Nhấn hoặc giữ để xóa từ">✕</button>
+          `;
+          addLongPressListener(div, () => {
+            deleteCustomWord(index);
+          });
+          customGroupWordsList.appendChild(div);
+        });
+        return;
+      }
+
+      const group = customGroups.find(g => g.id === currentCustomGroupId) || customGroups[0];
       if (!group || !group.words || group.words.length === 0) {
         customGroupWordsList.innerHTML = `<div style="padding: 15px; text-align: center; color: #9ca3af; font-size: 13px;">Nhóm này chưa có từ nào. Hãy nhập Hán tự ở trên!</div>`;
         return;
@@ -4499,6 +4615,52 @@ Lưu ý:
     }
 
     function deleteCustomWord(index) {
+      if (currentCustomGroupId === 'all_custom_groups') {
+        let combinedMap = new Map();
+        customGroups.forEach(g => {
+          (g.words || []).forEach(w => {
+            if (w && w.hanzi && !combinedMap.has(w.hanzi)) combinedMap.set(w.hanzi, w);
+          });
+        });
+        const words = Array.from(combinedMap.values());
+        const targetWord = words[index];
+        if (!targetWord) return;
+
+        showConfirmModal({
+          title: 'Xác nhận xóa từ',
+          message: `Bạn có chắc chắn muốn xóa từ <b style="color:var(--primary-color); font-size:16px;">${targetWord.hanzi}</b> (${targetWord.pinyin || ''}) khỏi TẤT CẢ các nhóm tự tạo không?`,
+          confirmText: 'Xóa từ',
+          onConfirm: () => {
+            customGroups.forEach(g => {
+              if (g.words) {
+                g.words = g.words.filter(w => w.hanzi !== targetWord.hanzi);
+              }
+              if (g.id) {
+                const artIdStr = String(g.id).replace('custom_', '');
+                const art = readingArticles.find(a => String(a.id) === artIdStr || 'custom_' + String(a.id) === String(g.id));
+                if (art && art.selectedWords) {
+                  art.selectedWords = art.selectedWords.filter(w => w.hanzi !== targetWord.hanzi);
+                }
+              }
+            });
+            saveReadingArticlesToStorage();
+            localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+            if (typeof saveToCloud === 'function') {
+              saveToCloud(false);
+            }
+            updateCustomLevelTabCount();
+            renderCustomGroupSelect();
+            if (currentLevel === 'custom') {
+              updateGroupWordsState();
+              renderGroupDropdown();
+              renderVocabList();
+            }
+            showToast(`🗑️ Đã xóa từ "${targetWord.hanzi}"!`);
+          }
+        });
+        return;
+      }
+
       const group = customGroups.find(g => g.id === currentCustomGroupId);
       if (group && group.words && group.words[index]) {
         const targetWord = group.words[index];

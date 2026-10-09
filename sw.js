@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hsk-vocab-cache-v72';
+const CACHE_NAME = 'hsk-vocab-cache-v73';
 const ASSETS = [
   './',
   './index.html',
