@@ -2322,8 +2322,8 @@
       try {
         localStorage.setItem('hsk_user_progress', JSON.stringify(userProgress));
       } catch (e) {}
-      if (typeof triggerDebouncedCloudSave === 'function') {
-        triggerDebouncedCloudSave();
+      if (typeof saveToCloud === 'function') {
+        saveToCloud(false);
       }
     }
 
@@ -2401,9 +2401,6 @@
       return supabaseClient;
     }
 
-    let cloudSyncTimer = null;
-    let isCloudSyncing = false;
-
     function updateCloudStatusBadge(text, isError = false) {
       const badge = document.getElementById('cloudStatusBadge');
       if (!badge) return;
@@ -2420,8 +2417,15 @@
       }
     }
 
+    let cloudSyncTimer = null;
+    let isCloudSyncing = false;
+    let hasPendingCloudSave = false;
+
     async function saveToCloud(isManual = false) {
-      if (isCloudSyncing) return;
+      if (isCloudSyncing) {
+        hasPendingCloudSave = true;
+        return;
+      }
       isCloudSyncing = true;
       updateCloudStatusBadge('🟡 Đang lưu...', false);
 
@@ -2490,6 +2494,10 @@
         }
       } finally {
         isCloudSyncing = false;
+        if (hasPendingCloudSave) {
+          hasPendingCloudSave = false;
+          saveToCloud(false);
+        }
       }
     }
     window.saveToCloud = saveToCloud;
@@ -2498,7 +2506,7 @@
       if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
       cloudSyncTimer = setTimeout(() => {
         saveToCloud(false);
-      }, 800);
+      }, 50);
     }
     window.triggerDebouncedCloudSave = triggerDebouncedCloudSave;
 
@@ -2532,9 +2540,9 @@
         }
 
         if (rowData && typeof rowData === 'object') {
-          // Smart merge user progress
+          // Sync user progress cleanly from cloud (overwrite with latest cloud state)
           if (rowData.userProgress && typeof rowData.userProgress === 'object') {
-            userProgress = Object.assign({}, rowData.userProgress, userProgress);
+            userProgress = rowData.userProgress;
             localStorage.setItem('hsk_user_progress', JSON.stringify(userProgress));
           }
 
