@@ -2497,25 +2497,15 @@
             localStorage.setItem('hsk_user_progress', JSON.stringify(userProgress));
           }
 
-          // Smart merge custom groups (non-destructive for local words & groups)
+          // Sync custom groups from cloud (clean sync to prevent resurrecting deleted groups/words on F5)
           if (Array.isArray(rowData.customGroups)) {
-            const mergedGroups = [...rowData.customGroups];
-            (customGroups || []).forEach(localG => {
-              const cloudIdx = mergedGroups.findIndex(cg => cg.id === localG.id);
-              if (cloudIdx === -1) {
-                mergedGroups.push(localG);
-              } else {
-                const cloudG = mergedGroups[cloudIdx];
-                const cloudWordSet = new Set((cloudG.words || []).map(w => w.hanzi));
-                (localG.words || []).forEach(lw => {
-                  if (!cloudWordSet.has(lw.hanzi)) {
-                    if (!cloudG.words) cloudG.words = [];
-                    cloudG.words.push(lw);
-                  }
-                });
-              }
-            });
-            customGroups = mergedGroups;
+            customGroups = rowData.customGroups;
+            if (customGroups.length === 0) {
+              customGroups = [{ id: 'custom_1', name: 'Nhóm tự chọn 1', words: [] }];
+            }
+            if (!customGroups.some(g => g.id === currentCustomGroupId)) {
+              currentCustomGroupId = customGroups[0].id;
+            }
             localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
           }
 
@@ -2552,15 +2542,9 @@
             saveReadingArticlesToStorage();
           }
 
-          // Smart merge upgrade words
+          // Sync upgrade words from cloud cleanly
           if (Array.isArray(rowData.upgradeWords)) {
-            const mergedUpgrade = [...rowData.upgradeWords];
-            (upgradeList || []).forEach(lu => {
-              if (!mergedUpgrade.some(cu => cu.id === lu.id || cu.hanzi === lu.hanzi)) {
-                mergedUpgrade.push(lu);
-              }
-            });
-            upgradeList = mergedUpgrade;
+            upgradeList = rowData.upgradeWords;
             localStorage.setItem('hsk_upgrade_words', JSON.stringify(upgradeList));
           }
 
@@ -4464,8 +4448,18 @@ Lưu ý:
           confirmText: 'Xóa từ',
           onConfirm: () => {
             group.words.splice(index, 1);
+            if (group.id && group.id.startsWith('custom_')) {
+              const artId = group.id.replace('custom_', '');
+              const art = readingArticles.find(a => String(a.id) === String(artId));
+              if (art && art.selectedWords) {
+                art.selectedWords = art.selectedWords.filter(w => w.hanzi !== targetWord.hanzi);
+                saveReadingArticlesToStorage();
+              }
+            }
             localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-            if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+            if (typeof saveToCloud === 'function') {
+              saveToCloud(false);
+            }
             updateCustomLevelTabCount();
             renderCustomGroupSelect();
             if (currentLevel === 'custom') {
@@ -4490,7 +4484,9 @@ Lưu ý:
           onConfirm: () => {
             upgradeList.splice(index, 1);
             localStorage.setItem('hsk_upgrade_words', JSON.stringify(upgradeList));
-            if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+            if (typeof saveToCloud === 'function') {
+              saveToCloud(false);
+            }
             updateCustomLevelTabCount();
             renderUpgradeGroupWords();
             if (currentLevel === 'upgrade') {
@@ -4524,7 +4520,9 @@ Lưu ý:
           }
           currentCustomGroupId = customGroups[0].id;
           localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-          if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+          if (typeof saveToCloud === 'function') {
+            saveToCloud(false);
+          }
           updateCustomLevelTabCount();
           renderCustomGroupSelect();
           if (currentLevel === 'custom') {
