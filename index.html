@@ -2800,9 +2800,13 @@
               </div>
             </div>
             <div style="display:flex; align-items:center; gap:6px;">
-              <span class="group-picker-badge" style="flex-shrink:0; background: #8772a8; color: #ffffff; font-weight: 700;">
-                Tổng ${totalCombinedCount} từ
-              </span>
+              ${(() => {
+                const allLearned = Array.from(totalCombinedMap.values()).filter(w => getWordStatus(w.hanzi) === 'correct').length;
+                const allDone = totalCombinedCount > 0 && allLearned === totalCombinedCount;
+                return allDone
+                  ? `<span class="group-picker-badge completed" style="flex-shrink:0;">🎉 ${allLearned}/${totalCombinedCount} từ</span>`
+                  : `<span class="group-picker-badge in-progress" style="flex-shrink:0;">${allLearned}/${totalCombinedCount} từ</span>`;
+              })()}
             </div>
           `;
 
@@ -2829,14 +2833,20 @@
           customGroups.forEach(grp => {
             const grpWords = grp.words || [];
             const isActive = grp.id === currentCustomGroupId;
+            const grpLearned = grpWords.filter(w => w && getWordStatus(w.hanzi) === 'correct').length;
+            const grpDone = grpWords.length > 0 && grpLearned === grpWords.length;
 
             const itemDiv = document.createElement('div');
-            itemDiv.className = `group-picker-item ${isActive ? 'active' : ''}`;
+            itemDiv.className = `group-picker-item ${isActive ? 'active' : ''} ${grpDone ? 'completed' : ''}`;
             itemDiv.style.cursor = 'pointer';
+
+            const grpBadgeHTML = grpDone
+              ? `<span class="group-picker-badge completed" style="flex-shrink:0;">🎉 ${grpLearned}/${grpWords.length} từ</span>`
+              : `<span class="group-picker-badge in-progress" style="flex-shrink:0;">${grpLearned}/${grpWords.length} từ</span>`;
 
             itemDiv.innerHTML = `
               <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
-                <span style="font-size: 14px; font-weight: 700; flex-shrink:0;">${isActive ? '▶' : '📁'}</span>
+                <span style="font-size: 14px; font-weight: 700; flex-shrink:0;">${grpDone ? '✅' : (isActive ? '▶' : '📁')}</span>
                 <div style="min-width:0; flex:1;">
                   <div style="font-size: 13.5px; font-weight: 700; color: #1f2937; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
                     ${grp.name}
@@ -2844,9 +2854,7 @@
                 </div>
               </div>
               <div style="display:flex; align-items:center; gap:6px;">
-                <span class="group-picker-badge" style="flex-shrink:0; background: ${grpWords.length > 0 ? '#8772a8' : '#f3f4f6'}; color: ${grpWords.length > 0 ? '#ffffff' : '#6b7280'}; font-weight: 700;">
-                  ${grpWords.length} từ
-                </span>
+                ${grpBadgeHTML}
               </div>
             `;
 
