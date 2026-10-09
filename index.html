@@ -1577,6 +1577,20 @@
           </div>
         </div>
 
+        <!-- Section 0.5: Device Audio Storage Quota Monitor -->
+        <div style="background: #f0fdf4; padding: 12px 14px; border-radius: 14px; border: 1px solid #bbf7d0; margin-bottom: 14px;">
+          <div style="font-size: 13.5px; font-weight: 700; color: #166534; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
+            <span>🔊 Bộ Nhớ Âm Thanh Cục Bộ (IndexedDB)</span>
+            <span id="audioStorageUsageBadge" style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #dcfce7; color: #15803d;">Đang kiểm tra...</span>
+          </div>
+          <p style="font-size: 12px; color: #15803d; margin-bottom: 6px; line-height: 1.45;" id="audioStorageInfoText">
+            File âm thanh bài đọc & từ vựng được lưu cục bộ trên máy để nghe offline mượt mà.
+          </p>
+          <div style="width: 100%; height: 6px; background: #dcfce7; border-radius: 3px; overflow: hidden;">
+            <div id="audioStorageBar" style="width: 1%; height: 100%; background: #22c55e; transition: width 0.3s;"></div>
+          </div>
+        </div>
+
         <!-- Section 1: Backup & Restore (Tải file dự phòng) -->
         <div style="background: #f3eef9; padding: 12px 14px; border-radius: 14px; border: 1px solid #e2d8ef; margin-bottom: 14px;">
           <div style="font-size: 13.5px; font-weight: 700; color: #766299; margin-bottom: 4px;">💾 Sao Lưu & Khôi Phục File Manual (.json)</div>
@@ -2609,7 +2623,40 @@
         }
       }
     }
-    window.loadFromCloud = loadFromCloud;
+    async function updateAudioStorageQuotaInfo() {
+      const badge = document.getElementById('audioStorageUsageBadge');
+      const infoText = document.getElementById('audioStorageInfoText');
+      const bar = document.getElementById('audioStorageBar');
+      if (!badge || !infoText || !bar) return;
+
+      if (navigator.storage && navigator.storage.estimate) {
+        try {
+          const estimate = await navigator.storage.estimate();
+          const usedMB = (estimate.usage / (1024 * 1024)).toFixed(1);
+          const quotaGB = (estimate.quota / (1024 * 1024 * 1024)).toFixed(1);
+          const pct = Math.min(100, Math.round((estimate.usage / estimate.quota) * 100));
+
+          badge.textContent = `${usedMB} MB / ${quotaGB} GB (${pct}%)`;
+          bar.style.width = Math.max(1, pct) + '%';
+          if (pct > 80) {
+            bar.style.background = '#ef4444';
+            badge.style.background = '#fee2e2';
+            badge.style.color = '#991b1b';
+            infoText.innerHTML = `⚠️ Bộ nhớ âm thanh thiết bị đã dùng <b>${pct}%</b>. Hãy dọn dẹp bớt bài đọc cũ nếu cần!`;
+          } else {
+            bar.style.background = '#22c55e';
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#15803d';
+            infoText.innerHTML = `File âm thanh bài đọc & từ vựng được lưu cục bộ trên máy. Trình duyệt còn hơn <b>${(quotaGB - (usedMB/1024)).toFixed(1)} GB</b> bộ nhớ trống!`;
+          }
+        } catch(e) {
+          badge.textContent = 'Bình thường (Đã lưu offline)';
+        }
+      } else {
+        badge.textContent = 'Bình thường (Đã lưu offline)';
+      }
+    }
+    window.updateAudioStorageQuotaInfo = updateAudioStorageQuotaInfo;
 
     function formatCompletionTag(timestamp) {
       if (!timestamp) return '';
@@ -6509,6 +6556,7 @@ ${chunkText}
       // API Key & Settings Modal Events
       btnApiKey.addEventListener('click', () => {
         inputApiKey.value = localStorage.getItem('openrouter_api_key') || '';
+        updateAudioStorageQuotaInfo();
         apiKeyModal.classList.add('active');
       });
 
