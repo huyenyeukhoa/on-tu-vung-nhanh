@@ -2472,7 +2472,6 @@
         customGroups: customGroups || [],
         upgradeWords: upgradeList || [],
         userProgress: userProgress || {},
-        aiCache: aiCache || {},
         groupCompletedDates: groupCompletedDates || {},
         readingArticles: cleanArticles,
         deletedReadingArticleIds: deletedReadingArticleIds || [],
@@ -2480,6 +2479,11 @@
         reading_audio_speed: localStorage.getItem('hsk_reading_audio_speed') || '1.0',
         updated_at: new Date().toISOString()
       };
+      // AI explanations live in their own table (hsk_ai_explanations). Only keep them in the blob
+      // as a legacy fallback until every entry has been confirmed uploaded to that table.
+      if (localStorage.getItem('hsk_ai_cloud_migrated') !== '1') {
+        payloadData.aiCache = aiCache || {};
+      }
 
       try {
         const client = getSupabaseClient();
@@ -2625,8 +2629,16 @@
           }
 
           if (rowData.aiCache && typeof rowData.aiCache === 'object') {
-            Object.assign(aiCache, rowData.aiCache);
-            localStorage.setItem('hsk_ai_cache', JSON.stringify(aiCache));
+            // Legacy blob copy (from older app versions): only fill entries this device doesn't have yet
+            await aiStoreReady;
+            const addedKeys = [];
+            Object.keys(rowData.aiCache).forEach(k => {
+              if (!aiCache[k] && rowData.aiCache[k]) {
+                aiCache[k] = rowData.aiCache[k];
+                addedKeys.push(k);
+              }
+            });
+            if (addedKeys.length && typeof persistAiEntries === 'function') persistAiEntries(addedKeys, { skipBlobSave: true });
           }
           if (rowData.groupCompletedDates && typeof rowData.groupCompletedDates === 'object') {
             Object.assign(groupCompletedDates, rowData.groupCompletedDates);
@@ -2668,7 +2680,225 @@
           showToast('❌ Không thể kết nối Đám mây Supabase!');
         }
       }
+
+      // Sync AI explanations from their dedicated table (runs independently of the main blob)
+      if (typeof syncAiCacheWithCloud === 'function') syncAiCacheWithCloud();
     }
+
+    // ==========================================
+    // AI EXPLANATION STORE (IndexedDB local + Supabase table "hsk_ai_explanations")
+    // - aiCache (in-memory object) stays the single source for all synchronous lookups
+    // - Each entry persisted to IndexedDB (no 5MB localStorage limit)
+    // - Each entry synced individually to Supabase (no more re-uploading the whole cache on every tick)
+    // ==========================================
+    const AI_DB_NAME = 'hsk_ai_cache_db';
+    const AI_DB_STORE = 'explanations';
+    const AI_CLOUD_TABLE = 'hsk_ai_explanations';
+    const AI_PENDING_KEY = 'hsk_ai_pending_push';
+    const AI_MIGRATED_KEY = 'hsk_ai_cloud_migrated';
+    const AI_LAST_PULL_KEY = 'hsk_ai_last_pull';
+
+    let aiCloudTableMissing = false;
+    let aiPushTimer = null;
+    let aiPushInFlight = false;
+    let aiPendingKeys = new Set(safeGetJSON(AI_PENDING_KEY, []));
+    let aiStoreReadyResolve;
+    const aiStoreReady = new Promise(res => { aiStoreReadyResolve = res; });
+
+    function isAiCloudMigrated() {
+      return localStorage.getItem(AI_MIGRATED_KEY) === '1';
+    }
+
+    function saveAiPendingKeys() {
+      try { localStorage.setItem(AI_PENDING_KEY, JSON.stringify(Array.from(aiPendingKeys))); } catch (e) {}
+    }
+
+    function openAiDb() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(AI_DB_NAME, 1);
+        req.onupgradeneeded = () => {
+          if (!req.result.objectStoreNames.contains(AI_DB_STORE)) req.result.createObjectStore(AI_DB_STORE);
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function aiDbPutMany(entries) {
+      if (!entries.length) return;
+      const db = await openAiDb();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(AI_DB_STORE, 'readwrite');
+        const store = tx.objectStore(AI_DB_STORE);
+        entries.forEach(([key, value]) => store.put(value, key));
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function aiDbGetAll() {
+      const db = await openAiDb();
+      return new Promise((resolve, reject) => {
+        const out = {};
+        const tx = db.transaction(AI_DB_STORE, 'readonly');
+        const req = tx.objectStore(AI_DB_STORE).openCursor();
+        req.onsuccess = () => {
+          const cursor = req.result;
+          if (cursor) {
+            out[cursor.key] = cursor.value;
+            cursor.continue();
+          } else {
+            resolve(out);
+          }
+        };
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    // Persist one or many aiCache entries (IndexedDB + queue for Supabase push)
+    function persistAiEntries(keys, options = {}) {
+      const validKeys = (keys || []).filter(k => k && aiCache[k]);
+      if (!validKeys.length) return;
+      aiDbPutMany(validKeys.map(k => [k, aiCache[k]])).catch(e => console.warn('AI IndexedDB save warning:', e));
+      validKeys.forEach(k => aiPendingKeys.add(k));
+      saveAiPendingKeys();
+      scheduleAiCloudPush();
+      // Legacy fallback: until the dedicated table is confirmed, keep syncing via the main blob too
+      if (!options.skipBlobSave && !isAiCloudMigrated() && typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+    }
+    function persistAiEntry(key) { persistAiEntries([key]); }
+    window.persistAiEntry = persistAiEntry;
+
+    function scheduleAiCloudPush() {
+      if (aiPushTimer) clearTimeout(aiPushTimer);
+      aiPushTimer = setTimeout(pushAiPendingToCloud, 800);
+    }
+
+    function aiRestHeaders(extra = {}) {
+      return Object.assign({
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      }, extra);
+    }
+
+    async function pushAiPendingToCloud() {
+      if (aiPushInFlight || aiCloudTableMissing || aiPendingKeys.size === 0) return;
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+      aiPushInFlight = true;
+      try {
+        while (aiPendingKeys.size > 0) {
+          const batchKeys = Array.from(aiPendingKeys).slice(0, 100);
+          const rows = batchKeys
+            .filter(k => aiCache[k])
+            .map(k => ({ user_id: 'default_user', hanzi: k, data: aiCache[k] }));
+
+          if (rows.length > 0) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+            const resp = await fetch(`${SUPABASE_URL}/rest/v1/${AI_CLOUD_TABLE}?on_conflict=user_id,hanzi`, {
+              method: 'POST',
+              signal: controller.signal,
+              headers: aiRestHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+              body: JSON.stringify(rows)
+            });
+            clearTimeout(timeoutId);
+            if (resp.status === 404) {
+              aiCloudTableMissing = true;
+              console.warn('Supabase table hsk_ai_explanations not found - using legacy blob sync for AI cache.');
+              return;
+            }
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          }
+          batchKeys.forEach(k => aiPendingKeys.delete(k));
+          saveAiPendingKeys();
+        }
+
+        // Every local entry is now safely in the dedicated table -> stop sending aiCache inside the main blob
+        // (takes effect on the next normal save; no forced upload here)
+        if (!isAiCloudMigrated()) {
+          localStorage.setItem(AI_MIGRATED_KEY, '1');
+        }
+      } catch (e) {
+        console.warn('AI cloud push warning (will retry later):', e);
+      } finally {
+        aiPushInFlight = false;
+      }
+    }
+
+    // Pull entries changed on other devices (incremental by server-side updated_at)
+    async function pullAiFromCloud() {
+      if (aiCloudTableMissing) return;
+      const since = localStorage.getItem(AI_LAST_PULL_KEY) || '1970-01-01T00:00:00Z';
+      let maxSeen = since;
+      let offset = 0;
+      const pageSize = 1000;
+      const changedKeys = [];
+      try {
+        while (true) {
+          const url = `${SUPABASE_URL}/rest/v1/${AI_CLOUD_TABLE}?user_id=eq.default_user&updated_at=gt.${encodeURIComponent(since)}&select=hanzi,data,updated_at&order=updated_at.asc&limit=${pageSize}&offset=${offset}`;
+          const resp = await fetch(url, { method: 'GET', headers: aiRestHeaders() });
+          if (resp.status === 404) {
+            aiCloudTableMissing = true;
+            return;
+          }
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const rows = await resp.json();
+          (rows || []).forEach(row => {
+            if (!row || !row.hanzi || !row.data) return;
+            if (row.updated_at && row.updated_at > maxSeen) maxSeen = row.updated_at;
+            // Local unsynced edits win over cloud copy
+            if (aiPendingKeys.has(row.hanzi)) return;
+            aiCache[row.hanzi] = deepToSimplified(row.data);
+            changedKeys.push(row.hanzi);
+          });
+          if (!rows || rows.length < pageSize) break;
+          offset += pageSize;
+        }
+        if (changedKeys.length) {
+          await aiDbPutMany(changedKeys.map(k => [k, aiCache[k]]));
+        }
+        localStorage.setItem(AI_LAST_PULL_KEY, maxSeen);
+      } catch (e) {
+        console.warn('AI cloud pull warning:', e);
+      }
+    }
+
+    async function syncAiCacheWithCloud() {
+      await aiStoreReady;
+      await pullAiFromCloud();
+      await pushAiPendingToCloud();
+    }
+    window.syncAiCacheWithCloud = syncAiCacheWithCloud;
+
+    // Startup: load IndexedDB into memory + one-time migration away from localStorage
+    async function initAiStore() {
+      try {
+        const legacyKeys = Object.keys(aiCache); // loaded synchronously from legacy localStorage key (if any)
+        const stored = await aiDbGetAll();
+        Object.keys(stored).forEach(k => {
+          if (!aiCache[k]) aiCache[k] = stored[k];
+        });
+
+        if (legacyKeys.length > 0) {
+          // Move legacy localStorage entries into IndexedDB, then free the 5MB localStorage slot
+          await aiDbPutMany(legacyKeys.map(k => [k, aiCache[k]]));
+          localStorage.removeItem('hsk_ai_cache');
+        }
+
+        // First run of the new storage on this device: queue every known entry for the dedicated cloud table
+        if (!isAiCloudMigrated()) {
+          Object.keys(aiCache).forEach(k => aiPendingKeys.add(k));
+          saveAiPendingKeys();
+        }
+      } catch (e) {
+        console.warn('AI store init warning:', e);
+      } finally {
+        aiStoreReadyResolve();
+      }
+    }
+
+    window.addEventListener('online', () => scheduleAiCloudPush());
     async function updateAudioStorageQuotaInfo() {
       const badge = document.getElementById('audioStorageUsageBadge');
       const infoText = document.getElementById('audioStorageInfoText');
@@ -3511,12 +3741,17 @@
     function migrateStoredDataToSimplified(syncCloud = true) {
       try {
         let changed = false;
-        const beforeCache = JSON.stringify(aiCache || {});
-        const newCache = deepToSimplified(aiCache || {});
-        if (JSON.stringify(newCache) !== beforeCache) {
-          Object.keys(aiCache).forEach(k => delete aiCache[k]);
-          Object.assign(aiCache, newCache);
-          localStorage.setItem('hsk_ai_cache', JSON.stringify(aiCache));
+        const changedAiKeys = [];
+        Object.keys(aiCache || {}).forEach(k => {
+          const before = JSON.stringify(aiCache[k]);
+          const converted = deepToSimplified(aiCache[k]);
+          if (JSON.stringify(converted) !== before) {
+            aiCache[k] = converted;
+            changedAiKeys.push(k);
+          }
+        });
+        if (changedAiKeys.length > 0) {
+          persistAiEntries(changedAiKeys, { skipBlobSave: !syncCloud });
           changed = true;
         }
         if (Array.isArray(readingArticles) && readingArticles.length > 0) {
@@ -3871,6 +4106,11 @@ Lưu ý:
       if (aiCache[hanzi] && aiCache[hanzi].context && aiCache[hanzi].context.includes('important-highlight')) {
         return aiCache[hanzi];
       }
+      // Make sure the on-device store has finished loading before deciding to call the AI API
+      await aiStoreReady;
+      if (aiCache[hanzi] && aiCache[hanzi].context && aiCache[hanzi].context.includes('important-highlight')) {
+        return aiCache[hanzi];
+      }
 
       const apiKey = localStorage.getItem('openrouter_api_key');
       if (!apiKey) throw new Error('Vui lòng nhập OpenRouter API Key!');
@@ -3920,8 +4160,7 @@ Lưu ý quan trọng:
       parsedJSON.pinyin = pinyin || '';
 
       aiCache[hanzi] = parsedJSON;
-      localStorage.setItem('hsk_ai_cache', JSON.stringify(aiCache));
-      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+      persistAiEntry(hanzi);
 
       return parsedJSON;
     }
@@ -4241,8 +4480,7 @@ Lưu ý:
         if (parsed.examples && parsed.examples.length > 0) {
           if (!aiCache[hanzi].examples) aiCache[hanzi].examples = [];
           aiCache[hanzi].examples.push(...parsed.examples);
-          localStorage.setItem('hsk_ai_cache', JSON.stringify(aiCache));
-          if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+          persistAiEntry(hanzi);
           renderAiExplanation(aiCache[hanzi]);
           showToast('Đã thêm 3 câu ví dụ mới!');
         }
@@ -7105,7 +7343,7 @@ ${chunkText}
               customGroups: safeGetJSON('hsk_custom_groups', []),
               upgradeWords: safeGetJSON('hsk_upgrade_words', []),
               userProgress: safeGetJSON('hsk_user_progress', {}),
-              aiCache: safeGetJSON('hsk_ai_cache', {}),
+              aiCache: aiCache || {},
               groupCompletedDates: safeGetJSON('hsk_group_completed_dates', {})
             };
 
@@ -7166,7 +7404,7 @@ ${chunkText}
 
               if (parsed.aiCache && typeof parsed.aiCache === 'object') {
                 Object.assign(aiCache, parsed.aiCache);
-                localStorage.setItem('hsk_ai_cache', JSON.stringify(aiCache));
+                persistAiEntries(Object.keys(parsed.aiCache), { skipBlobSave: true });
               }
 
               if (parsed.groupCompletedDates && typeof parsed.groupCompletedDates === 'object') {
@@ -7327,6 +7565,7 @@ ${chunkText}
         t.classList.toggle('active', t.getAttribute('data-tab') === activeTab);
       });
 
+      initAiStore();
       migrateStoredDataToSimplified(false);
       updateGroupWordsState();
       renderGroupDropdown();
