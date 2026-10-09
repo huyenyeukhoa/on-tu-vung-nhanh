@@ -4448,9 +4448,9 @@ Lưu ý:
           confirmText: 'Xóa từ',
           onConfirm: () => {
             group.words.splice(index, 1);
-            if (group.id && group.id.startsWith('custom_')) {
-              const artId = group.id.replace('custom_', '');
-              const art = readingArticles.find(a => String(a.id) === String(artId));
+            if (group.id) {
+              const artIdStr = String(group.id).replace('custom_', '');
+              const art = readingArticles.find(a => String(a.id) === artIdStr || 'custom_' + String(a.id) === String(group.id));
               if (art && art.selectedWords) {
                 art.selectedWords = art.selectedWords.filter(w => w.hanzi !== targetWord.hanzi);
                 saveReadingArticlesToStorage();
@@ -6038,8 +6038,8 @@ ${chunkText}
 
       saveReadingArticlesToStorage();
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-      if (typeof triggerDebouncedCloudSave === 'function') {
-        triggerDebouncedCloudSave();
+      if (typeof saveToCloud === 'function') {
+        saveToCloud(false);
       }
 
       // Update DOM token elements directly without re-rendering entire innerHTML (prevents screen flashing)
@@ -6078,8 +6078,8 @@ ${chunkText}
 
       saveReadingArticlesToStorage();
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-      if (typeof triggerDebouncedCloudSave === 'function') {
-        triggerDebouncedCloudSave();
+      if (typeof saveToCloud === 'function') {
+        saveToCloud(false);
       }
 
       renderReadingPassageContent(art);
@@ -6094,15 +6094,16 @@ ${chunkText}
       const customGroupId = 'custom_' + articleId;
       let group = customGroups.find(g => g.id === customGroupId);
       if (!group) {
-        group = { id: customGroupId, name: `📖 ${art.title}`, words: art.selectedWords || [] };
+        group = { id: customGroupId, name: `📖 ${art.title}`, words: [...(art.selectedWords || [])] };
         customGroups.push(group);
       } else {
-        group.words = art.selectedWords || [];
         group.name = `📖 ${art.title}`;
+        art.selectedWords = [...(group.words || [])];
       }
+      saveReadingArticlesToStorage();
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-      if (typeof triggerDebouncedCloudSave === 'function') {
-        triggerDebouncedCloudSave();
+      if (typeof saveToCloud === 'function') {
+        saveToCloud(false);
       }
 
       currentLevel = 'custom';
