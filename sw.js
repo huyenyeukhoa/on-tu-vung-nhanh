@@ -1,8 +1,9 @@
-const CACHE_NAME = 'hsk-vocab-cache-v74';
+const CACHE_NAME = 'hsk-vocab-cache-v75';
 const ASSETS = [
   './',
   './index.html',
   './hsk_dictionary.js',
+  './opencc_t2cn.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',

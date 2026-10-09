@@ -22,6 +22,7 @@
 
   <!-- Load HSK Dictionary Data File & Supabase SDK -->
   <script src="./hsk_dictionary.js"></script>
+  <script src="./opencc_t2cn.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -2616,6 +2617,7 @@
             localStorage.setItem('hsk_reading_audio_speed', rowData.reading_audio_speed);
           }
 
+          migrateStoredDataToSimplified();
           updateCustomLevelTabCount();
           updateGroupWordsState();
           renderGroupDropdown();
@@ -3393,8 +3395,116 @@
       }
     }
 
-    // Robust JSON Parser with Multi-level Auto-Repair (Handles unescaped newlines, control chars & truncation)
+    // ==========================================
+    // TRADITIONAL -> SIMPLIFIED CHINESE CONVERTER (OpenCC)
+    // ==========================================
+    const SIMPLIFIED_ONLY_SYSTEM_MSG = 'QUY TẮC BẮT BUỘC: Mọi chữ Hán trong câu trả lời (kể cả trong phần giải thích tiếng Việt, ví dụ, cụm từ) PHẢI viết bằng CHỮ GIẢN THỂ (简体中文, chuẩn Trung Quốc đại lục). TUYỆT ĐỐI KHÔNG dùng chữ phồn thể (繁體). Ví dụ đúng: 乐于, 学习, 这个. Ví dụ sai: 樂於, 學習, 這個.';
+    let _t2sConverter = null;
+    function toSimplified(str) {
+      if (!str || typeof str !== 'string') return str;
+      if (!/[\u3400-\u9fff\uf900-\ufaff]/.test(str)) return str;
+      try {
+        if (!_t2sConverter && window.OpenCC && typeof window.OpenCC.Converter === 'function') {
+          _t2sConverter = window.OpenCC.Converter({ from: 'hk', to: 'cn' });
+        }
+        return _t2sConverter ? _t2sConverter(str) : str;
+      } catch (e) {
+        return str;
+      }
+    }
+    function deepToSimplified(obj) {
+      if (typeof obj === 'string') return toSimplified(obj);
+      if (Array.isArray(obj)) return obj.map(deepToSimplified);
+      if (obj && typeof obj === 'object') {
+        const out = {};
+        Object.keys(obj).forEach(k => { out[k] = deepToSimplified(obj[k]); });
+        return out;
+      }
+      return obj;
+    }
+    window.toSimplified = toSimplified;
+
+    // One-time migration: convert any Traditional characters already stored in AI cache / reading articles
+    function migrateStoredDataToSimplified(syncCloud = true) {
+      try {
+        let changed = false;
+        const beforeCache = JSON.stringify(aiCache || {});
+        const newCache = deepToSimplified(aiCache || {});
+        if (JSON.stringify(newCache) !== beforeCache) {
+          Object.keys(aiCache).forEach(k => delete aiCache[k]);
+          Object.assign(aiCache, newCache);
+          localStorage.setItem('hsk_ai_cache', JSON.stringify(aiCache));
+          changed = true;
+        }
+        if (Array.isArray(readingArticles) && readingArticles.length > 0) {
+          const beforeArts = JSON.stringify(readingArticles);
+          const newArts = readingArticles.map(art => {
+            if (!art || typeof art !== 'object') return art;
+            const { audioUrl, ...rest } = art;
+            const conv = deepToSimplified(rest);
+            if (audioUrl !== undefined) conv.audioUrl = audioUrl;
+            return conv;
+          });
+          if (JSON.stringify(newArts) !== beforeArts) {
+            readingArticles = newArts;
+            if (typeof saveReadingArticlesToStorage === 'function') saveReadingArticlesToStorage();
+            changed = true;
+          }
+        }
+        const migrateWordList = (list) => {
+          let listChanged = false;
+          const newList = (list || []).map(w => {
+            if (!w || typeof w !== 'object') return w;
+            const conv = deepToSimplified(w);
+            if (JSON.stringify(conv) !== JSON.stringify(w)) {
+              listChanged = true;
+              if (w.hanzi && conv.hanzi && w.hanzi !== conv.hanzi && userProgress[w.hanzi] !== undefined) {
+                if (userProgress[conv.hanzi] === undefined) userProgress[conv.hanzi] = userProgress[w.hanzi];
+                delete userProgress[w.hanzi];
+                localStorage.setItem('hsk_user_progress', JSON.stringify(userProgress));
+              }
+            }
+            return conv;
+          });
+          return { listChanged, newList };
+        };
+        if (Array.isArray(customGroups)) {
+          let groupsChanged = false;
+          customGroups.forEach(g => {
+            if (!g) return;
+            const newName = toSimplified(g.name);
+            if (newName !== g.name) { g.name = newName; groupsChanged = true; }
+            const r = migrateWordList(g.words);
+            if (r.listChanged) { g.words = r.newList; groupsChanged = true; }
+          });
+          if (groupsChanged) {
+            localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+            changed = true;
+          }
+        }
+        if (Array.isArray(upgradeList)) {
+          const r = migrateWordList(upgradeList);
+          if (r.listChanged) {
+            upgradeList = r.newList;
+            localStorage.setItem('hsk_upgrade_words', JSON.stringify(upgradeList));
+            changed = true;
+          }
+        }
+        if (changed && syncCloud && typeof saveToCloud === 'function') saveToCloud(false);
+        return changed;
+      } catch (e) {
+        console.warn('Simplified migration warning:', e);
+        return false;
+      }
+    }
+
+    // All AI responses pass through here -> force Simplified Chinese output
     function safeParseJSON(str) {
+      return deepToSimplified(safeParseJSONRaw(str));
+    }
+
+    // Robust JSON Parser with Multi-level Auto-Repair (Handles unescaped newlines, control chars & truncation)
+    function safeParseJSONRaw(str) {
       if (!str || typeof str !== 'string') return {};
 
       // 1. Remove markdown code fences
@@ -3543,7 +3653,7 @@ Lưu ý:
         },
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash',
-          messages: [{ role: 'user', content: prompt }],
+          messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }],
           max_tokens: 2000
         })
       });
@@ -3709,7 +3819,7 @@ Lưu ý quan trọng:
         },
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash',
-          messages: [{ role: 'user', content: prompt }],
+          messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }],
           max_tokens: 2500
         })
       });
@@ -3886,6 +3996,7 @@ Lưu ý quan trọng:
 
     // Render AI Explanation inside Modal (Standard vocabulary levels & Custom groups)
     function renderAiExplanation(data) {
+      data = deepToSimplified(data || {});
       const modalCard = aiModal.querySelector('.modal-card');
       modalCard.classList.remove('transparent-loading');
       aiModal.classList.remove('loading-overlay-transparent');
@@ -4034,7 +4145,7 @@ Lưu ý:
           },
           body: JSON.stringify({
             model: 'google/gemini-2.5-flash',
-            messages: [{ role: 'user', content: prompt }]
+            messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
 
@@ -4767,7 +4878,7 @@ Lưu ý:
 
     // AI AutoFill Custom Word Function (Smart Bidirectional: Chinese <-> Vietnamese)
     async function aiAutofillCustomWord() {
-      const rawHanziInput = inputCustomHanzi.value.trim();
+      const rawHanziInput = toSimplified(inputCustomHanzi.value.trim());
       const rawViInput = inputCustomVi.value.trim();
 
       if (!rawHanziInput && !rawViInput) {
@@ -4824,7 +4935,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           },
           body: JSON.stringify({
             model: 'google/gemini-2.5-flash',
-            messages: [{ role: 'user', content: prompt }]
+            messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
 
@@ -4922,7 +5033,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           },
           body: JSON.stringify({
             model: 'google/gemini-2.5-flash',
-            messages: [{ role: 'user', content: prompt }]
+            messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
 
@@ -4966,7 +5077,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
     // Add Word to Standard Custom Group
     function addWordToCustomGroup() {
-      const hanzi = inputCustomHanzi.value.trim();
+      const hanzi = toSimplified(inputCustomHanzi.value.trim());
       const pinyin = inputCustomPinyin.value.trim();
       const pos = inputCustomPos.value.trim();
       const vietnamese = inputCustomVi.value.trim();
@@ -5277,8 +5388,8 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         return;
       }
 
-      const title = (readingTitleInput.value || '').trim();
-      const rawText = (readingTextInput.value || '').trim();
+      const title = toSimplified((readingTitleInput.value || '').trim());
+      const rawText = toSimplified((readingTextInput.value || '').trim());
 
       if (!rawText) {
         showToast('Vui lòng nhập hoặc dán đoạn văn tiếng Trung!');
@@ -5377,7 +5488,7 @@ ${chunkText}
               },
               body: JSON.stringify({
                 model: 'google/gemini-2.5-flash',
-                messages: [{ role: 'user', content: prompt }]
+                messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
               })
             });
 
@@ -6983,6 +7094,7 @@ ${chunkText}
         t.classList.toggle('active', t.getAttribute('data-tab') === activeTab);
       });
 
+      migrateStoredDataToSimplified(false);
       updateGroupWordsState();
       renderGroupDropdown();
       renderVocabList();
