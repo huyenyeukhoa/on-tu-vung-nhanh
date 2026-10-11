@@ -233,23 +233,212 @@
       transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
       max-height: 280px;
       opacity: 1;
-      overflow: hidden;
+      overflow: visible;
       will-change: max-height, opacity;
       -webkit-backface-visibility: hidden;
       backface-visibility: hidden;
       transform: translateZ(0);
+      position: relative;
+      z-index: 10;
     }
 
     .top-collapsible-panel.collapsed {
       max-height: 0;
       opacity: 0;
       border: none;
+      overflow: hidden;
       pointer-events: none;
     }
 
     .top-collapsible-panel.collapsed * {
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
+    }
+
+    /* Unified 1-Line Compact Study Bar (Level | Group | Filter) */
+    .compact-study-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-color);
+      width: 100%;
+      box-sizing: border-box;
+      position: relative;
+      z-index: 20;
+    }
+
+    .dropdown-container {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .compact-bar-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 6px 9px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--primary-color, #766299);
+      background: rgba(255, 255, 255, 0.88);
+      border: 1.5px solid rgba(226, 216, 239, 0.95);
+      border-radius: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.18s ease;
+      box-shadow: 0 1.5px 5px rgba(135, 114, 168, 0.10);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      height: 34px;
+      box-sizing: border-box;
+    }
+
+    .compact-bar-btn:active {
+      transform: scale(0.96);
+      background: #f3eef9;
+    }
+
+    .compact-bar-btn .dropdown-chevron {
+      font-size: 9px;
+      opacity: 0.7;
+      transition: transform 0.2s ease;
+    }
+
+    .dropdown-container.open .compact-bar-btn .dropdown-chevron {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-container.open .compact-bar-btn {
+      border-color: #8772a8;
+      background: #f3eef9;
+      color: #5c4b79;
+    }
+
+    .compact-dropdown-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      z-index: 100;
+      min-width: 175px;
+      background: rgba(255, 255, 255, 0.97);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(226, 216, 239, 0.95);
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(135, 114, 168, 0.22);
+      padding: 5px;
+      animation: dropdownFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .compact-dropdown-menu.dropdown-right {
+      left: auto;
+      right: 0;
+    }
+
+    .dropdown-container.open .compact-dropdown-menu {
+      display: block;
+    }
+
+    @keyframes dropdownFadeIn {
+      from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .dropdown-menu-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #374151;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .dropdown-menu-item:hover, .dropdown-menu-item:active {
+      background: #f3eef9;
+      color: #766299;
+    }
+
+    .dropdown-menu-item.active {
+      background: #8772a8 !important;
+      color: #ffffff !important;
+      font-weight: 700;
+    }
+
+    .dropdown-menu-item.active .dropdown-item-count {
+      color: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    .dropdown-item-count {
+      font-size: 11px;
+      font-weight: 500;
+      color: #8772a8;
+    }
+
+    /* Compact Group Bar */
+    .compact-group-bar {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex: 1 1 auto;
+      min-width: 0;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      height: 34px;
+    }
+
+    .compact-group-bar .group-nav-btn {
+      width: 26px !important;
+      height: 34px !important;
+      font-size: 16px !important;
+      line-height: 1 !important;
+      padding: 0 !important;
+      flex-shrink: 0;
+      border-radius: 10px !important;
+      background: rgba(255, 255, 255, 0.88) !important;
+      border: 1.5px solid rgba(226, 216, 239, 0.95) !important;
+      color: var(--primary-color, #766299) !important;
+      box-shadow: 0 1.5px 5px rgba(135, 114, 168, 0.10) !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .compact-group-bar .group-nav-btn:active {
+      background: #f3eef9 !important;
+      transform: scale(0.92);
+    }
+
+    .compact-group-bar .custom-group-select-btn {
+      flex: 1 1 auto;
+      min-width: 0;
+      height: 34px !important;
+      padding: 0 8px !important;
+      font-size: 11.5px !important;
+      border-radius: 10px !important;
+      background: rgba(255, 255, 255, 0.88) !important;
+      border: 1.5px solid rgba(226, 216, 239, 0.95) !important;
+      color: var(--primary-color, #766299) !important;
+      box-shadow: 0 1.5px 5px rgba(135, 114, 168, 0.10) !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
     }
 
     /* Level Selector Tabs */
@@ -1382,30 +1571,68 @@
   <!-- Collapsible Section containing Level Tabs, Group Bar, Category Tabs & Controls Toolbar -->
   <div class="top-collapsible-panel" id="topCollapsiblePanel">
     
-    <!-- Level Selector Tabs -->
-    <div class="level-tabs">
-      <div class="level-tab" id="tabLevelHsk6" data-level="hsk6">HSK 6 (1804 từ)</div>
-      <div class="level-tab active" id="tabLevelHsk79" data-level="hsk79">HSK 7-9 (5603 từ)</div>
-      <div class="level-tab" id="tabLevelCustom" data-level="custom">📁 Nhóm tự tạo</div>
-      <div class="level-tab" id="tabLevelUpgrade" data-level="upgrade">✨ Nâng cấp vốn từ</div>
-    </div>
-
-    <!-- Group Navigation Bar (100 words per group) -->
-    <div class="group-bar" id="groupBar">
-      <button class="group-nav-btn" id="btnPrevGroup" title="Nhóm trước">‹</button>
-      <div class="custom-group-select-btn" id="btnCustomGroupSelect" title="Chọn nhóm ôn tập">
-        <span id="customGroupSelectText" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1 1 auto;">Nhóm 1 (1 - 100 từ)</span>
-        <span class="select-arrow">▼</span>
+    <!-- Unified 1-Line Compact Study Bar (Level Dropdown | Group Nav | Filter Dropdown) -->
+    <div class="compact-study-row">
+      <!-- 1. Level Dropdown -->
+      <div class="dropdown-container" id="levelDropdownContainer">
+        <button class="compact-bar-btn" id="btnLevelDropdown" type="button" title="Chọn cấp độ HSK hoặc nhóm tự tạo">
+          <span id="levelDropdownLabel">HSK 7-9</span>
+          <span class="dropdown-chevron">▾</span>
+        </button>
+        <div class="compact-dropdown-menu" id="levelDropdownMenu">
+          <div class="dropdown-menu-item level-tab" data-level="hsk6" id="tabLevelHsk6">
+            <span>HSK 6</span>
+            <span class="dropdown-item-count" id="countLevelHsk6">1804 từ</span>
+          </div>
+          <div class="dropdown-menu-item level-tab active" data-level="hsk79" id="tabLevelHsk79">
+            <span>HSK 7-9</span>
+            <span class="dropdown-item-count" id="countLevelHsk79">5603 từ</span>
+          </div>
+          <div class="dropdown-menu-item level-tab" data-level="custom" id="tabLevelCustom">
+            <span>📁 Nhóm tự tạo</span>
+            <span class="dropdown-item-count" id="countLevelCustom">0 từ</span>
+          </div>
+          <div class="dropdown-menu-item level-tab" data-level="upgrade" id="tabLevelUpgrade">
+            <span>✨ Nâng cấp vốn từ</span>
+            <span class="dropdown-item-count" id="countLevelUpgrade">0 từ</span>
+          </div>
+        </div>
       </div>
-      <select class="group-select" id="selectGroup" style="display:none;"></select>
-      <button class="group-nav-btn" id="btnNextGroup" title="Nhóm sau">›</button>
-    </div>
 
-    <!-- Category Filter Tabs -->
-    <div class="filter-tabs">
-      <div class="tab-item active" data-tab="all" id="tabAll">全部 (<span id="countTabAll">0</span>)</div>
-      <div class="tab-item" data-tab="new" id="tabNew">学新 (<span id="countTabNew">0</span>)</div>
-      <div class="tab-item" data-tab="review" id="tabReview">复习遗忘 (<span id="countTabReview">0</span>)</div>
+      <!-- 2. Group Navigation Bar -->
+      <div class="group-bar compact-group-bar" id="groupBar">
+        <button class="group-nav-btn" id="btnPrevGroup" title="Nhóm trước">‹</button>
+        <div class="custom-group-select-btn" id="btnCustomGroupSelect" title="Chọn nhóm ôn tập">
+          <span id="customGroupSelectText" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1 1 auto;">Nhóm 1 (1 - 100 từ)</span>
+          <span class="select-arrow" style="font-size: 9px; margin-left: 3px;">▼</span>
+        </div>
+        <select class="group-select" id="selectGroup" style="display:none;"></select>
+        <button class="group-nav-btn" id="btnNextGroup" title="Nhóm sau">›</button>
+      </div>
+
+      <!-- 3. Category Filter Dropdown -->
+      <div class="dropdown-container" id="filterDropdownContainer">
+        <button class="compact-bar-btn" id="btnFilterDropdown" type="button" title="Lọc từ vựng theo trạng thái học">
+          <span id="filterDropdownLabel">全部 (<span id="countTabAll">0</span>)</span>
+          <span class="dropdown-chevron">▾</span>
+        </button>
+        <div class="compact-dropdown-menu dropdown-right" id="filterDropdownMenu">
+          <div class="dropdown-menu-item tab-item active" data-tab="all" id="tabAll">
+            <span>全部 (Tất cả)</span>
+            <span class="dropdown-item-count" id="menuCountAll">(0)</span>
+          </div>
+          <div class="dropdown-menu-item tab-item" data-tab="new" id="tabNew">
+            <span>学新 (Chưa nhớ)</span>
+            <span class="dropdown-item-count" id="menuCountNew">(0)</span>
+            <span id="countTabNew" style="display:none;">0</span>
+          </div>
+          <div class="dropdown-menu-item tab-item" data-tab="review" id="tabReview">
+            <span>复习遗忘 (Ôn tập)</span>
+            <span class="dropdown-item-count" id="menuCountReview">(0)</span>
+            <span id="countTabReview" style="display:none;">0</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Controls Toolbar -->
@@ -2397,11 +2624,11 @@
       }
 
       // Update UI tab counts dynamically to match loaded dictionary data
-      const tabHsk6 = document.getElementById('tabLevelHsk6');
-      if (tabHsk6) tabHsk6.textContent = `HSK 6 (${hsk6List.length} từ)`;
+      const countHsk6 = document.getElementById('countLevelHsk6');
+      if (countHsk6) countHsk6.textContent = `${hsk6List.length} từ`;
 
-      const tabHsk79 = document.getElementById('tabLevelHsk79');
-      if (tabHsk79) tabHsk79.textContent = `HSK 7-9 (${hsk79List.length} từ)`;
+      const countHsk79 = document.getElementById('countLevelHsk79');
+      if (countHsk79) countHsk79.textContent = `${hsk79List.length} từ`;
 
       console.log(`Loaded ${hsk6List.length} HSK 6 words, ${hsk79List.length} HSK 7-9 words, and ${upgradeList.length} upgrade words.`);
     }
@@ -2427,16 +2654,77 @@
 
     // Helper to update Custom & Upgrade Level Tab word count
     function updateCustomLevelTabCount() {
-      const tabLevelCustom = document.getElementById('tabLevelCustom');
-      if (tabLevelCustom) {
+      const countCustom = document.getElementById('countLevelCustom');
+      if (countCustom) {
         const totalCustomWords = customGroups.reduce((sum, g) => sum + (g && g.words ? g.words.length : 0), 0);
-        tabLevelCustom.textContent = `📁 Nhóm tự tạo (${totalCustomWords} từ)`;
+        countCustom.textContent = `${totalCustomWords} từ`;
       }
 
-      const tabLevelUpgrade = document.getElementById('tabLevelUpgrade');
-      if (tabLevelUpgrade) {
-        tabLevelUpgrade.textContent = `✨ Nâng cấp vốn từ (${upgradeList.length} từ)`;
+      const countUpgrade = document.getElementById('countLevelUpgrade');
+      if (countUpgrade) {
+        countUpgrade.textContent = `${upgradeList.length} từ`;
       }
+    }
+
+    // Dropdown helpers for compact study bar
+    function updateLevelDropdownLabel() {
+      const lbl = document.getElementById('levelDropdownLabel');
+      if (!lbl) return;
+      if (currentLevel === 'hsk6') lbl.textContent = 'HSK 6';
+      else if (currentLevel === 'hsk79') lbl.textContent = 'HSK 7-9';
+      else if (currentLevel === 'custom') lbl.textContent = '📁 Tự tạo';
+      else if (currentLevel === 'upgrade') lbl.textContent = '✨ Nâng cấp';
+    }
+
+    function updateFilterDropdownLabel() {
+      const lbl = document.getElementById('filterDropdownLabel');
+      if (!lbl) return;
+      const cAll = (document.getElementById('countTabAll') && document.getElementById('countTabAll').textContent) || '0';
+      const cNew = (document.getElementById('countTabNew') && document.getElementById('countTabNew').textContent) || '0';
+      const cRev = (document.getElementById('countTabReview') && document.getElementById('countTabReview').textContent) || '0';
+
+      const menuCountAll = document.getElementById('menuCountAll');
+      if (menuCountAll) menuCountAll.textContent = `(${cAll})`;
+      const menuCountNew = document.getElementById('menuCountNew');
+      if (menuCountNew) menuCountNew.textContent = `(${cNew})`;
+      const menuCountReview = document.getElementById('menuCountReview');
+      if (menuCountReview) menuCountReview.textContent = `(${cRev})`;
+
+      if (activeTab === 'all') lbl.textContent = `全部 (${cAll})`;
+      else if (activeTab === 'new') lbl.textContent = `学新 (${cNew})`;
+      else if (activeTab === 'review') lbl.textContent = `复习 (${cRev})`;
+    }
+
+    function initCompactStudyBarDropdowns() {
+      const levelContainer = document.getElementById('levelDropdownContainer');
+      const btnLevel = document.getElementById('btnLevelDropdown');
+      const filterContainer = document.getElementById('filterDropdownContainer');
+      const btnFilter = document.getElementById('btnFilterDropdown');
+
+      if (btnLevel && levelContainer) {
+        btnLevel.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isOpen = levelContainer.classList.contains('open');
+          if (filterContainer) filterContainer.classList.remove('open');
+          levelContainer.classList.toggle('open', !isOpen);
+        });
+      }
+
+      if (btnFilter && filterContainer) {
+        btnFilter.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isOpen = filterContainer.classList.contains('open');
+          if (levelContainer) levelContainer.classList.remove('open');
+          filterContainer.classList.toggle('open', !isOpen);
+        });
+      }
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.dropdown-container')) {
+          if (levelContainer) levelContainer.classList.remove('open');
+          if (filterContainer) filterContainer.classList.remove('open');
+        }
+      });
     }
 
     // Get Active Pool of Words for Current Level
@@ -5355,6 +5643,10 @@ Lưu ý:
       countTabAll.textContent = totalCount;
       countTabNew.textContent = newCount;
       countTabReview.textContent = wrongCount;
+
+      if (typeof updateFilterDropdownLabel === 'function') {
+        updateFilterDropdownLabel();
+      }
     }
 
     // ==========================================
@@ -6076,6 +6368,9 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
           tab.classList.add('active');
           currentLevel = tab.getAttribute('data-level');
+          const levelContainer = document.getElementById('levelDropdownContainer');
+          if (levelContainer) levelContainer.classList.remove('open');
+          updateLevelDropdownLabel();
           currentGroupIndex = 0;
           resetShuffleState();
           saveCurrentState();
@@ -8250,6 +8545,9 @@ ${chunkText}
           document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
           tab.classList.add('active');
           activeTab = tab.getAttribute('data-tab');
+          const filterContainer = document.getElementById('filterDropdownContainer');
+          if (filterContainer) filterContainer.classList.remove('open');
+          updateFilterDropdownLabel();
           saveCurrentState();
           renderVocabList();
         });
@@ -8353,6 +8651,10 @@ ${chunkText}
       document.querySelectorAll('.tab-item').forEach(t => {
         t.classList.toggle('active', t.getAttribute('data-tab') === activeTab);
       });
+
+      initCompactStudyBarDropdowns();
+      updateLevelDropdownLabel();
+      updateFilterDropdownLabel();
 
       initAiStore();
       migrateStoredDataToSimplified(false);
