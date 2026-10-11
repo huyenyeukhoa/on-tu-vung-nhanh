@@ -1385,6 +1385,217 @@
       text-decoration: none !important;
     }
 
+    /* ===== Reading Input Modal (redesigned) ===== */
+    .rd-paste-card {
+      background: #faf8fd;
+      border: 1px solid #e7dff2;
+      border-radius: 14px;
+      padding: 10px;
+      margin-bottom: 14px;
+    }
+    .rd-paste-head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #5e4b7e;
+      margin-bottom: 6px;
+      font-family: var(--font-mali);
+    }
+    .rd-paste-head > span:first-child { flex: 1; }
+    .rd-char-count {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #9ca3af;
+    }
+    .rd-mini-btn {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 8px;
+      border: 1px solid #dfd3ef;
+      background: #ffffff;
+      color: #766299;
+      cursor: pointer;
+      font-family: var(--font-mali);
+      transition: all 0.15s ease;
+    }
+    .rd-mini-btn:active { transform: scale(0.95); background: #f3eef9; }
+    .rd-paste-textarea {
+      width: 100%;
+      box-sizing: border-box;
+      height: 74px;
+      resize: none;
+      border: 1px solid #e2d8ef;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 16px;
+      line-height: 1.45;
+      background: #ffffff;
+      color: #111827;
+      outline: none;
+      margin-bottom: 8px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .rd-paste-textarea:focus {
+      border-color: #a996c9;
+      box-shadow: 0 0 0 3px rgba(135, 114, 168, 0.12);
+    }
+
+    .rd-list-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #766299;
+      margin-bottom: 8px;
+      font-family: var(--font-mali);
+    }
+    .rd-count-pill {
+      display: inline-block;
+      min-width: 18px;
+      text-align: center;
+      font-size: 11px;
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: #f3eef9;
+      border: 1px solid #e2d8ef;
+      color: #766299;
+      margin-left: 2px;
+    }
+    .rd-sort-select {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #766299;
+      background: #ffffff;
+      border: 1px solid #dfd3ef;
+      border-radius: 8px;
+      padding: 4px 6px;
+      font-family: var(--font-mali);
+      outline: none;
+      cursor: pointer;
+    }
+    .rd-search-wrap {
+      position: relative;
+      margin-bottom: 8px;
+    }
+    .rd-search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    .rd-search-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 7px 10px 7px 30px;
+      font-size: 16px;
+      border: 1px solid #e2d8ef;
+      border-radius: 10px;
+      background: #ffffff;
+      outline: none;
+      color: #111827;
+      font-family: var(--font-mali), var(--font-hanzi);
+    }
+    .rd-search-input:focus {
+      border-color: #a996c9;
+      box-shadow: 0 0 0 3px rgba(135, 114, 168, 0.12);
+    }
+    .rd-list {
+      display: flex;
+      flex-direction: column;
+      max-height: 46vh;
+      overflow-y: auto;
+      border: 1px solid #ece6f5;
+      border-radius: 12px;
+      background: #ffffff;
+      -webkit-overflow-scrolling: touch;
+    }
+    .rd-group-label {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #8772a8;
+      background: #f7f4fb;
+      padding: 4px 12px;
+      border-bottom: 1px solid #ece6f5;
+      letter-spacing: 0.2px;
+      font-family: var(--font-mali);
+    }
+    .rd-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px 8px 12px;
+      border-bottom: 1px solid #f3eff8;
+      cursor: pointer;
+      transition: background 0.12s ease;
+    }
+    .rd-row:last-child { border-bottom: none; }
+    .rd-row:hover, .rd-row:active { background: #faf7fd; }
+    .rd-row-main { flex: 1; min-width: 0; }
+    .rd-row-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #1f2937;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .rd-row-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+      font-size: 10.5px;
+      color: #9ca3af;
+      font-family: var(--font-mali);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .rd-meta-h6 { color: #3d6b46; font-weight: 700; }
+    .rd-meta-h79 { color: #7c5335; font-weight: 700; }
+    .rd-meta-sel { color: #766299; font-weight: 700; }
+    .rd-row-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .rd-act-btn {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 8px;
+      border: 1px solid #dfd3ef;
+      background: #f3eef9;
+      color: #766299;
+      cursor: pointer;
+      font-family: var(--font-mali);
+      white-space: nowrap;
+    }
+    .rd-act-del {
+      font-size: 12px;
+      padding: 3px 5px;
+      border: none;
+      background: transparent;
+      color: #d1a3a3;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    .rd-act-del:hover { color: #ef4444; background: #fef2f2; }
+    .rd-empty {
+      padding: 18px 12px;
+      text-align: center;
+      color: #9ca3af;
+      font-size: 12.5px;
+      font-family: var(--font-mali);
+    }
+    .rd-mark { background: #efe6fb; color: #4b3b66; border-radius: 3px; padding: 0 1px; }
+
     .tiny-para-toggle-btn {
       font-size: 13.5px !important;
       padding: 0 2px !important;
@@ -2048,21 +2259,35 @@
         <button class="modal-close-btn" id="btnCloseReadingInputModal">✕</button>
       </div>
       <div class="modal-body">
-        <label style="font-size: 12.5px; font-weight: 700; color: #374151;">Tên bài đọc / Tiêu đề (Tùy chọn):</label>
-        <input type="text" id="readingTitleInput" class="input-field" placeholder="Ví dụ: Báo Tân Hoa Xã - Kinh tế hoặc Truyện 塞翁失马" style="margin-top: 4px; margin-bottom: 12px;" />
+        <!-- Title is auto-generated by AI; hidden input kept for compatibility -->
+        <input type="hidden" id="readingTitleInput" value="" />
 
-        <label style="font-size: 12.5px; font-weight: 700; color: #374151;">Đoạn văn tiếng Trung (chữ Hán):</label>
-        <textarea id="readingTextInput" class="input-field" placeholder="Dán văn bản tiếng Trung vào đây..." style="height: 150px; margin-top: 4px; margin-bottom: 14px; font-family: var(--font-mali), var(--font-hanzi) !important; font-size: 16px; line-height: 1.6; resize: vertical;"></textarea>
-
-        <button class="primary-submit-btn" id="btnAnalyzeReadingText" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 700; border-radius: 14px; margin-bottom: 18px;">
-          ⚡ AI Phân Tách & Tách Từ Bài Đọc
-        </button>
-
-        <div style="font-size: 13.5px; font-weight: 700; color: #766299; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-          <span>📚 Danh sách bài đọc đã lưu:</span>
-          <span id="readingArticlesCount" style="font-size: 12px; color: #6b7280; font-weight: normal;">(0 bài)</span>
+        <!-- Compact paste box -->
+        <div class="rd-paste-card">
+          <div class="rd-paste-head">
+            <span>✍️ Dán bài tiếng Trung</span>
+            <span id="readingTextCharCount" class="rd-char-count"></span>
+            <button type="button" id="btnPasteReadingText" class="rd-mini-btn">📋 Dán</button>
+          </div>
+          <textarea id="readingTextInput" class="rd-paste-textarea" rows="3" placeholder="Dán văn bản tiếng Trung vào đây... (AI sẽ tự đặt tiêu đề)"></textarea>
+          <button class="primary-submit-btn" id="btnAnalyzeReadingText" style="width: 100%; padding: 10px; font-size: 13.5px; font-weight: 700; border-radius: 12px;">⚡ AI tách từ &amp; tạo bài</button>
         </div>
-        <div id="savedReadingArticlesList" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+
+        <!-- Saved articles -->
+        <div class="rd-list-head">
+          <span>📚 Bài đã lưu <span id="readingArticlesCount" class="rd-count-pill">0</span></span>
+          <select id="readingArticlesSortSelect" class="rd-sort-select" title="Sắp xếp">
+            <option value="newest">Mới nhất</option>
+            <option value="oldest">Cũ nhất</option>
+            <option value="h79">Nhiều H7-9</option>
+            <option value="az">Tên A → Z</option>
+          </select>
+        </div>
+        <div class="rd-search-wrap">
+          <span class="rd-search-icon">🔍</span>
+          <input type="search" id="readingArticlesSearchInput" class="rd-search-input" placeholder="Tìm tên bài hoặc chữ Hán trong bài..." autocomplete="off" />
+        </div>
+        <div id="savedReadingArticlesList" class="rd-list">
           <!-- Saved articles list rendered dynamically -->
         </div>
       </div>
@@ -6737,47 +6962,161 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       return { h6Count, h79Count };
     }
 
+    // ---- Saved articles list: search / sort / date grouping ----
+    const readingArticlesSearchInput = document.getElementById('readingArticlesSearchInput');
+    const readingArticlesSortSelect = document.getElementById('readingArticlesSortSelect');
+    const readingTextCharCount = document.getElementById('readingTextCharCount');
+    const btnPasteReadingText = document.getElementById('btnPasteReadingText');
+    const readingArticleStatsCache = new WeakMap();
+
+    if (readingArticlesSortSelect) {
+      readingArticlesSortSelect.value = localStorage.getItem('hsk_reading_sort') || 'newest';
+      readingArticlesSortSelect.addEventListener('change', () => {
+        localStorage.setItem('hsk_reading_sort', readingArticlesSortSelect.value);
+        renderSavedReadingArticles();
+      });
+    }
+    if (readingArticlesSearchInput) {
+      readingArticlesSearchInput.addEventListener('input', () => renderSavedReadingArticles());
+    }
+    function updateReadingCharCount() {
+      if (!readingTextCharCount || !readingTextInput) return;
+      const len = (readingTextInput.value || '').trim().length;
+      readingTextCharCount.textContent = len ? `${len} ký tự` : '';
+    }
+    if (readingTextInput) readingTextInput.addEventListener('input', updateReadingCharCount);
+    if (btnPasteReadingText) {
+      btnPasteReadingText.addEventListener('click', async () => {
+        try {
+          const txt = await navigator.clipboard.readText();
+          if (txt && txt.trim()) {
+            readingTextInput.value = txt.trim();
+            updateReadingCharCount();
+            showToast('📋 Đã dán văn bản');
+          } else {
+            showToast('Bộ nhớ tạm đang trống');
+          }
+        } catch (e) {
+          readingTextInput.focus();
+          showToast('Hãy nhấn giữ vào ô để dán');
+        }
+      });
+    }
+
+    function rdEscapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function rdFoldVi(s) {
+      return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+    }
+    function rdArticleTime(art, idx) {
+      const m = /^art_(\d{10,})/.exec(art.id || '');
+      if (m) return parseInt(m[1], 10);
+      const d = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(art.createdAt || art.dateTag || '');
+      if (d) return new Date(+d[3], +d[2] - 1, +d[1]).getTime();
+      return -idx; // keep original order as fallback
+    }
+    function rdGroupLabel(ts) {
+      if (!ts || ts <= 0) return 'Khác';
+      const now = new Date();
+      const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const dayMs = 86400000;
+      if (ts >= startToday) return 'Hôm nay';
+      if (ts >= startToday - dayMs) return 'Hôm qua';
+      if (ts >= startToday - 6 * dayMs) return '7 ngày qua';
+      const d = new Date(ts);
+      return `Tháng ${d.getMonth() + 1}/${d.getFullYear()}`;
+    }
+    function rdShortDate(ts, art) {
+      if (ts && ts > 0) {
+        const d = new Date(ts);
+        return `${d.getDate()}/${d.getMonth() + 1}`;
+      }
+      return art.dateTag || art.createdAt || '';
+    }
+    function rdHighlight(title, query) {
+      const safe = rdEscapeHtml(title);
+      if (!query) return safe;
+      const foldedTitle = rdFoldVi(title);
+      const foldedQ = rdFoldVi(query);
+      const pos = foldedTitle.indexOf(foldedQ);
+      if (pos < 0 || foldedTitle.length !== title.length) return safe;
+      return rdEscapeHtml(title.slice(0, pos)) +
+        `<span class="rd-mark">${rdEscapeHtml(title.slice(pos, pos + query.length))}</span>` +
+        rdEscapeHtml(title.slice(pos + query.length));
+    }
+
     // Render Saved Articles List inside Input Modal
     function renderSavedReadingArticles() {
       if (!savedReadingArticlesList) return;
       if (!readingArticlesCount) return;
-      readingArticlesCount.textContent = `(${readingArticles.length} bài)`;
+      readingArticlesCount.textContent = readingArticles.length;
 
       if (readingArticles.length === 0) {
-        savedReadingArticlesList.innerHTML = `
-          <div style="padding: 16px; text-align: center; color: #9ca3af; font-size: 13px; background: #f9fafb; border-radius: 12px; border: 1px dashed #e5e7eb;">
-            Chưa có bài đọc nào. Hãy dán URL bài báo hoặc đoạn văn ở trên để AI bóc tách từ nhé!
-          </div>
-        `;
+        savedReadingArticlesList.innerHTML = `<div class="rd-empty">Chưa có bài đọc nào.<br/>Dán đoạn văn ở trên để AI tách từ nhé!</div>`;
         return;
       }
 
-      savedReadingArticlesList.innerHTML = readingArticles.map((art) => {
-        const selectedCount = art.selectedWords ? art.selectedWords.length : 0;
-        const dateTag = art.dateTag || art.createdAt || new Date().toLocaleDateString('vi-VN');
-        const stats = getArticleHskVocabStats(art);
+      const rawQuery = (readingArticlesSearchInput && readingArticlesSearchInput.value || '').trim();
+      const qFold = rdFoldVi(rawQuery);
+      const qZh = rawQuery && typeof toSimplified === 'function' ? toSimplified(rawQuery) : rawQuery;
+      const sortMode = (readingArticlesSortSelect && readingArticlesSortSelect.value) || 'newest';
 
-        return `
-          <div style="padding: 10px 12px; background: #ffffff; border: 1px solid #e2d8ef; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-            <div style="flex: 1; min-width: 0;">
-              <div style="font-size: 13.5px; font-weight: 700; color: #111827; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-                📖 ${art.title}
-              </div>
-              <div style="font-size: 11px; color: #6b7280; margin-top: 3px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; font-family: var(--font-mali);">
-                <span style="background: #f3eef9; color: #766299; font-size: 10px; padding: 1px 6px; border-radius: 5px; font-weight: 700; border: 1px solid #e2d8ef;">📅 ${dateTag}</span>
-                <span style="font-size: 10px; font-weight: 700; color: #3d6b46; background: #edf6f0; border: 1px solid #cce5d4; padding: 1px 6px; border-radius: 5px;" title="Từ vựng HSK 6 (gạch chân 奶绿)">H6: <b>${stats.h6Count}</b></span>
-                <span style="font-size: 10px; font-weight: 700; color: #7c5335; background: #faf4ef; border: 1px solid #ebd9cb; padding: 1px 6px; border-radius: 5px;" title="Từ vựng HSK 7-9 (gạch chân 奶棕)">H7-9: <b>${stats.h79Count}</b></span>
-                <span>• Đã chọn <b>${selectedCount}</b> từ ôn</span>
+      let items = readingArticles.map((art, idx) => {
+        let stats = readingArticleStatsCache.get(art);
+        if (!stats) { stats = getArticleHskVocabStats(art); readingArticleStatsCache.set(art, stats); }
+        return { art, ts: rdArticleTime(art, idx), stats };
+      });
+
+      if (rawQuery) {
+        items = items.filter(({ art }) => {
+          if (rdFoldVi(art.title).includes(qFold)) return true;
+          const raw = art.rawText || '';
+          return raw.includes(rawQuery) || (qZh && raw.includes(qZh));
+        });
+      }
+
+      if (sortMode === 'oldest') items.sort((a, b) => a.ts - b.ts);
+      else if (sortMode === 'h79') items.sort((a, b) => (b.stats.h79Count - a.stats.h79Count) || (b.ts - a.ts));
+      else if (sortMode === 'az') items.sort((a, b) => String(a.art.title || '').localeCompare(String(b.art.title || ''), 'vi'));
+      else items.sort((a, b) => b.ts - a.ts);
+
+      if (items.length === 0) {
+        savedReadingArticlesList.innerHTML = `<div class="rd-empty">Không tìm thấy bài nào khớp “${rdEscapeHtml(rawQuery)}”</div>`;
+        return;
+      }
+
+      const useGroups = sortMode === 'newest' || sortMode === 'oldest';
+      let lastGroup = null;
+      let html = '';
+      items.forEach(({ art, ts, stats }) => {
+        if (useGroups) {
+          const g = rdGroupLabel(ts);
+          if (g !== lastGroup) {
+            html += `<div class="rd-group-label">${g}</div>`;
+            lastGroup = g;
+          }
+        }
+        const selectedCount = art.selectedWords ? art.selectedWords.length : 0;
+        const titleText = art.title || 'Bài đọc';
+        html += `
+          <div class="rd-row" onclick="openReadingViewModal('${art.id}')" title="${rdEscapeHtml(titleText)}">
+            <div class="rd-row-main">
+              <div class="rd-row-title">${rdHighlight(titleText, rawQuery)}</div>
+              <div class="rd-row-meta">
+                <span>${rdShortDate(ts, art)}</span>
+                <span>·</span><span class="rd-meta-h6">H6 ${stats.h6Count}</span>
+                <span>·</span><span class="rd-meta-h79">H7-9 ${stats.h79Count}</span>
+                ${selectedCount ? `<span>·</span><span class="rd-meta-sel">✓ ${selectedCount} từ ôn</span>` : ''}
               </div>
             </div>
-            <div style="display: flex; gap: 5px; flex-shrink: 0;">
-              <button class="primary-submit-btn" onclick="openReadingViewModal('${art.id}')" style="padding: 5px 8px; font-size: 11px; border-radius: 8px;">👁️ Đọc</button>
-              <button class="secondary-btn" onclick="openStudyGroupFromReading('${art.id}')" style="padding: 5px 8px; font-size: 11px; border-radius: 8px; border: 1px solid #8772a8; color: #8772a8;">📝 Học 2 cột</button>
-              <button class="icon-action-btn" onclick="deleteReadingArticle('${art.id}')" style="padding: 3px 5px; font-size: 12.5px; color: #ef4444;" title="Xóa bài đọc">🗑️</button>
+            <div class="rd-row-actions">
+              <button class="rd-act-btn" onclick="event.stopPropagation(); openStudyGroupFromReading('${art.id}')" title="Học 2 cột">📝 Học</button>
+              <button class="rd-act-del" onclick="event.stopPropagation(); deleteReadingArticle('${art.id}')" title="Xóa bài đọc">🗑️</button>
             </div>
-          </div>
-        `;
-      }).join('');
+          </div>`;
+      });
+      savedReadingArticlesList.innerHTML = html;
     }
 
     // Helper to split long Chinese text into manageable chunks (~400-600 characters max)
@@ -7001,6 +7340,7 @@ ${chunkText}
 
         readingTextInput.value = '';
         readingTitleInput.value = '';
+        if (typeof updateReadingCharCount === 'function') updateReadingCharCount();
 
         if (readingInputModal) readingInputModal.classList.remove('active');
         openReadingViewModal(newArticleId);
@@ -7010,7 +7350,7 @@ ${chunkText}
         showToast(`❌ Lỗi AI: ${err.message}`);
       } finally {
         btnAnalyzeReadingText.disabled = false;
-        btnAnalyzeReadingText.innerHTML = `⚡ AI Phân Tách & Tách Từ Bài Đọc`;
+        btnAnalyzeReadingText.innerHTML = `⚡ AI tách từ &amp; tạo bài`;
       }
     }
 
