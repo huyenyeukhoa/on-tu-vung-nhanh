@@ -1660,7 +1660,7 @@
               <!-- Add link Pinterest / web -->
               <div style="display: flex; gap: 6px;">
                 <input type="url" id="inputBackgroundUrl" placeholder="Dán link Pinterest (pin.it/...), ảnh hoặc video..." style="flex: 1; min-width: 0; padding: 7px 9px; font-size: 11.5px; border-radius: 8px; border: 1.5px solid #e9d5ff; outline: none; background: #fff; color: #374151; box-sizing: border-box;" />
-                <button class="primary-submit-btn" id="btnApplyBgUrl" style="padding: 7px 11px; font-size: 11.5px; font-weight: 700; background: #9333ea; white-space: nowrap; flex-shrink: 0;">🔗 Thêm link</button>
+                <button class="primary-submit-btn" id="btnApplyBgUrl" style="padding: 7px 12px; font-size: 11.5px; font-weight: 700; background: #9333ea; white-space: nowrap; flex-shrink: 0;" title="Dán link từ bộ nhớ tạm và áp dụng ngay">📋 Dán</button>
               </div>
               <div style="display: flex; gap: 6px;">
                 <button class="primary-submit-btn" id="btnChangeBackground" style="flex: 1; padding: 7px 8px; font-size: 11.5px; background: #a855f7;">📁 Tải từ máy</button>
@@ -8016,9 +8016,36 @@ ${chunkText}
       const btnFillSamplePin = document.getElementById('btnFillSamplePin');
 
       if (btnApplyBgUrl && inputBackgroundUrl) {
-        btnApplyBgUrl.addEventListener('click', () => {
-          handleApplyBackgroundUrl(inputBackgroundUrl.value);
+        btnApplyBgUrl.addEventListener('click', async () => {
+          let text = '';
+          if (navigator.clipboard && navigator.clipboard.readText) {
+            try {
+              text = await navigator.clipboard.readText();
+            } catch (err) {
+              console.warn('Clipboard read error:', err);
+            }
+          }
+          text = (text || '').trim();
+
+          if (text) {
+            inputBackgroundUrl.value = text;
+            handleApplyBackgroundUrl(text);
+          } else if (inputBackgroundUrl.value.trim()) {
+            handleApplyBackgroundUrl(inputBackgroundUrl.value.trim());
+          } else {
+            inputBackgroundUrl.focus();
+            showToast('📋 Hãy copy link Pinterest trước rồi bấm nút Dán nhé!');
+          }
         });
+
+        // Auto-apply if user manually pastes into the input
+        inputBackgroundUrl.addEventListener('paste', () => {
+          setTimeout(() => {
+            const pasted = inputBackgroundUrl.value.trim();
+            if (pasted) handleApplyBackgroundUrl(pasted);
+          }, 120);
+        });
+
         inputBackgroundUrl.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
