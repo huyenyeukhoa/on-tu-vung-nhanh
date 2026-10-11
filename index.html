@@ -1358,7 +1358,12 @@
       -webkit-text-decoration-color: #b08968 !important;
       text-decoration-thickness: 2.2px !important;
       text-underline-offset: 3.5px !important;
-      text-decoration-skip-ink: none !important;
+    }
+
+    /* Support toggling off vocabulary underlines */
+    #readingPassageContainer.hide-underlines .reading-token.token-hsk6,
+    #readingPassageContainer.hide-underlines .reading-token.token-hsk79 {
+      text-decoration: none !important;
     }
 
     .tiny-para-toggle-btn {
@@ -2079,7 +2084,10 @@
               H7-9: <b id="statCountH79">0</b> từ
             </span>
           </div>
-          <span style="font-size: 10.5px; color: #9ca3af; font-family: var(--font-mali);" id="statCountTotalWords"></span>
+          <button id="btnToggleReadingUnderlines" class="tiny-underline-toggle-btn" style="font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; gap: 3.5px; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0;" title="Chạm để ẩn hoặc hiện đường gạch chân từ vựng">
+            <span id="underlineToggleIcon" style="font-size: 11px;">👁️</span>
+            <span id="underlineToggleText">Gạch chân</span>
+          </button>
         </div>
 
         <!-- Passage Container -->
@@ -7678,13 +7686,54 @@ ${chunkText}
       const stats = getArticleHskVocabStats(art);
       const statCountH6El = document.getElementById('statCountH6');
       const statCountH79El = document.getElementById('statCountH79');
-      const statCountTotalWordsEl = document.getElementById('statCountTotalWords');
 
       if (statCountH6El) statCountH6El.textContent = stats.h6Count;
       if (statCountH79El) statCountH79El.textContent = stats.h79Count;
-      if (statCountTotalWordsEl) {
-        statCountTotalWordsEl.textContent = `Tổng: ${stats.h6Count + stats.h79Count} từ mục tiêu`;
+
+      updateReadingUnderlinesToggleUI();
+
+      const btnToggleUnderlines = document.getElementById('btnToggleReadingUnderlines');
+      if (btnToggleUnderlines && !btnToggleUnderlines.dataset.bound) {
+        btnToggleUnderlines.addEventListener('click', toggleReadingUnderlines);
+        btnToggleUnderlines.dataset.bound = 'true';
       }
+    }
+
+    let isReadingUnderlinesVisible = localStorage.getItem('hsk_show_reading_underlines') !== '0';
+
+    function updateReadingUnderlinesToggleUI() {
+      const btn = document.getElementById('btnToggleReadingUnderlines');
+      const container = document.getElementById('readingPassageContainer');
+      const icon = document.getElementById('underlineToggleIcon');
+      const text = document.getElementById('underlineToggleText');
+
+      if (isReadingUnderlinesVisible) {
+        if (container) container.classList.remove('hide-underlines');
+        if (btn) {
+          btn.style.background = '#f3eef9';
+          btn.style.color = '#766299';
+          btn.style.border = '1.2px solid #dfd3ef';
+          btn.title = 'Chạm để ẩn đường gạch chân từ vựng';
+        }
+        if (icon) icon.textContent = '👁️';
+        if (text) text.textContent = 'Gạch chân';
+      } else {
+        if (container) container.classList.add('hide-underlines');
+        if (btn) {
+          btn.style.background = '#f9fafb';
+          btn.style.color = '#9ca3af';
+          btn.style.border = '1.2px dashed #d1d5db';
+          btn.title = 'Chạm để hiện lại đường gạch chân từ vựng';
+        }
+        if (icon) icon.textContent = '🙈';
+        if (text) text.textContent = 'Ẩn gạch chân';
+      }
+    }
+
+    function toggleReadingUnderlines() {
+      isReadingUnderlinesVisible = !isReadingUnderlinesVisible;
+      localStorage.setItem('hsk_show_reading_underlines', isReadingUnderlinesVisible ? '1' : '0');
+      updateReadingUnderlinesToggleUI();
     }
 
     // Token clicked inside Interactive Reader
