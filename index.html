@@ -1387,6 +1387,160 @@
       text-decoration: none !important;
     }
 
+    /* ===== Settings Modal (purple card system) ===== */
+    .st-group-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: #a594c4;
+      margin: 4px 4px 6px;
+      font-family: var(--font-mali);
+    }
+    .st-group-label:not(:first-child) { margin-top: 12px; }
+    .st-card {
+      background: linear-gradient(180deg, #ffffff 0%, #fbf9fe 100%);
+      border: 1px solid #ece5f6;
+      border-radius: 16px;
+      padding: 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 10px rgba(135, 114, 168, 0.07);
+    }
+    .st-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .st-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, #f3eef9 0%, #e6dcf3 100%);
+      border: 1px solid #e2d8ef;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .st-title-wrap { flex: 1; min-width: 0; }
+    .st-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #4b3b66;
+      line-height: 1.3;
+      font-family: var(--font-mali);
+    }
+    .st-sub {
+      font-size: 11px;
+      color: #9a8cb3;
+      line-height: 1.4;
+      margin-top: 1px;
+      font-family: var(--font-mali);
+    }
+    .st-sub b { color: #766299; }
+    .st-pill {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: #f3eef9;
+      color: #766299;
+      border: 1px solid #e2d8ef;
+      white-space: nowrap;
+      flex-shrink: 0;
+      max-width: 42%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: var(--font-mali);
+    }
+    .st-btn-row { display: flex; gap: 8px; }
+    .st-btn {
+      flex: 1;
+      padding: 9px 10px;
+      font-size: 12.5px;
+      font-weight: 700;
+      border-radius: 11px;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: var(--font-mali);
+      color: #ffffff;
+      background: linear-gradient(135deg, #a08dc2 0%, #8772a8 100%);
+      box-shadow: 0 3px 10px rgba(135, 114, 168, 0.28);
+      transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+    .st-btn:active { transform: scale(0.97); }
+    .st-btn.ghost {
+      background: #f6f2fb;
+      color: #766299;
+      border: 1px solid #e2d8ef;
+      box-shadow: none;
+    }
+    .st-btn.ghost:active { background: #eee6f8; }
+    .st-btn-sm { padding: 7px 10px; font-size: 11.5px; border-radius: 9px; }
+    .st-input {
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 7px 10px;
+      font-size: 16px;
+      line-height: 1.2;
+      border-radius: 9px;
+      border: 1px solid #e2d8ef;
+      background: #ffffff;
+      color: #374151;
+      outline: none;
+      font-family: var(--font-mali);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .st-input::placeholder { font-size: 12px; color: #b5a9cb; }
+    .st-input:focus {
+      border-color: #a996c9;
+      box-shadow: 0 0 0 3px rgba(135, 114, 168, 0.12);
+    }
+    .st-bg-row { display: flex; gap: 10px; align-items: stretch; }
+    .st-bg-thumb {
+      position: relative;
+      overflow: hidden;
+      width: 60px;
+      min-height: 84px;
+      border-radius: 11px;
+      flex-shrink: 0;
+      background-size: cover;
+      background-position: center;
+      border: 1.5px solid #e2d8ef;
+      box-shadow: 0 2px 8px rgba(135, 114, 168, 0.16);
+    }
+    .st-bg-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+    .st-hint {
+      font-size: 10.5px;
+      color: #a594c4;
+      font-family: var(--font-mali);
+    }
+    .st-hint a { color: #766299; font-weight: 700; text-decoration: underline; }
+    .st-progress {
+      width: 100%;
+      height: 6px;
+      background: #f0eaf8;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .st-progress-bar {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #b9a8d6 0%, #8772a8 100%);
+      transition: width 0.3s ease;
+    }
+
     /* ===== Reading Input Modal (redesigned) ===== */
     .rd-paste-card {
       background: #faf8fd;
@@ -2104,93 +2258,112 @@
 
   <!-- Settings & Backup Modal -->
   <div class="modal-overlay" id="apiKeyModal">
-    <div class="modal-card" style="max-width: 420px; padding: 20px 16px;">
+    <div class="modal-card st-modal" style="max-width: 420px; padding: 18px 14px;">
       <div class="modal-header">
-        <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color);">⚙️ Cài Đặt & Sao Lưu Dữ Liệu</div>
+        <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color);">⚙️ Cài đặt &amp; Sao lưu</div>
         <button class="modal-close-btn" id="btnCloseApiKeyModal">✕</button>
       </div>
-      <div class="modal-body" style="padding: 10px 0 0 0;">
-        
-        <!-- Section 0: Supabase Cloud Sync (Tự động đồng bộ Đám mây) -->
-        <div style="background: #eef2ff; padding: 12px 14px; border-radius: 14px; border: 1px solid #c7d2fe; margin-bottom: 14px;">
-          <div style="font-size: 13.5px; font-weight: 700; color: #3730a3; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
-            <span>☁️ Đồng Bộ Đám Mây (Supabase)</span>
-            <span id="cloudStatusBadge" style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #dcfce7; color: #166534;">🟢 Đã kết nối</span>
-          </div>
-          <p style="font-size: 12px; color: #4338ca; margin-bottom: 10px; line-height: 1.45;">
-            Tự động đồng bộ tiến độ học, nhóm tự tạo & bài đọc giữa các thiết bị mà không cần xuất file thủ công.
-          </p>
-          <div style="display: flex; gap: 8px;">
-            <button class="primary-submit-btn" id="btnPushToCloud" style="flex: 1; padding: 8px 10px; font-size: 12px; background: #4f46e5;">☁️ Đẩy lên Cloud</button>
-            <button class="primary-submit-btn" id="btnPullFromCloud" style="flex: 1; padding: 8px 10px; font-size: 12px; background: #4338ca;">📥 Tải từ Cloud</button>
-          </div>
-        </div>
+      <div class="modal-body" style="padding: 8px 2px 2px 2px;">
 
-        <!-- Section 0.3: Custom Background (Pinterest link, GIF, video, local upload) -->
-        <div style="background: #fdf4ff; padding: 13px 14px; border-radius: 14px; border: 1px solid #f0d9fb; margin-bottom: 14px;">
-          <div style="font-size: 13.5px; font-weight: 700; color: #86198f; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
-            <span>🖼️ Ảnh & Video Nền Ứng Dụng</span>
-            <span id="bgStatusBadge" style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #f3e8ff; color: #7e22ce;">Mặc định</span>
-          </div>
-          <p style="font-size: 12px; color: #a21caf; margin-bottom: 10px; line-height: 1.45;">
-            Thêm link <b>Pinterest</b> (hỗ trợ ảnh, GIF động và <b>video ngắn vài giây looping</b> như pin.it), tải file từ máy hoặc link trực tiếp. Nền lưu trên máy này.
-          </p>
-          <div style="display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px;">
-            <div id="bgPreviewThumb" style="position: relative; overflow: hidden; width: 62px; height: 86px; border-radius: 10px; flex-shrink: 0; background-size: cover; background-position: center; border: 1.5px solid #e9d5ff; box-shadow: 0 2px 6px rgba(134,25,143,0.12); background-image: var(--app-bg-image, url('https://i.pinimg.com/736x/b9/e1/63/b9e16339f6bb68de17a3e2f256d9746b.jpg'), url('./bg.jpg'));">
-              <video id="bgThumbVideo" autoplay loop muted playsinline style="display: none; width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; pointer-events: none;"></video>
-              <span id="bgTypeBadge" style="display: none; position: absolute; bottom: 3px; right: 3px; font-size: 8.5px; font-weight: 800; background: rgba(0,0,0,0.7); color: #fff; padding: 1px 4px; border-radius: 4px; line-height: 1.2;">VIDEO</span>
+        <!-- ===== Nhóm: Dữ liệu ===== -->
+        <div class="st-group-label">Dữ liệu</div>
+
+        <!-- Supabase Cloud Sync -->
+        <div class="st-card">
+          <div class="st-head">
+            <div class="st-icon">☁️</div>
+            <div class="st-title-wrap">
+              <div class="st-title">Đồng bộ đám mây</div>
+              <div class="st-sub">Tự đồng bộ tiến độ, nhóm từ &amp; bài đọc giữa các máy</div>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 7px; flex: 1; min-width: 0;">
-              <!-- Add link Pinterest / web -->
-              <div style="display: flex; gap: 6px;">
-                <input type="url" id="inputBackgroundUrl" placeholder="Dán link Pinterest (pin.it/...), ảnh hoặc video..." style="flex: 1; min-width: 0; padding: 7px 9px; font-size: 11.5px; border-radius: 8px; border: 1.5px solid #e9d5ff; outline: none; background: #fff; color: #374151; box-sizing: border-box;" />
-                <button class="primary-submit-btn" id="btnApplyBgUrl" style="padding: 7px 12px; font-size: 11.5px; font-weight: 700; background: #9333ea; white-space: nowrap; flex-shrink: 0;" title="Dán link từ bộ nhớ tạm và áp dụng ngay">📋 Dán</button>
-              </div>
-              <div style="display: flex; gap: 6px;">
-                <button class="primary-submit-btn" id="btnChangeBackground" style="flex: 1; padding: 7px 8px; font-size: 11.5px; background: #a855f7;">📁 Tải từ máy</button>
-                <button class="primary-submit-btn" id="btnResetBackground" style="flex: 1; padding: 7px 8px; font-size: 11.5px; background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; box-shadow: none;">↩️ Mặc định</button>
-              </div>
+            <span id="cloudStatusBadge" class="st-pill">✓ Đã kết nối</span>
+          </div>
+          <div class="st-btn-row">
+            <button class="st-btn" id="btnPushToCloud">☁️ Đẩy lên</button>
+            <button class="st-btn ghost" id="btnPullFromCloud">📥 Tải về</button>
+          </div>
+        </div>
+
+        <!-- Backup & Restore -->
+        <div class="st-card">
+          <div class="st-head">
+            <div class="st-icon">💾</div>
+            <div class="st-title-wrap">
+              <div class="st-title">Sao lưu file (.json)</div>
+              <div class="st-sub">Lưu bản dự phòng lên máy / Google Drive</div>
             </div>
-            <input type="file" id="inputBackgroundFile" accept="image/*,video/mp4,video/webm" style="display: none;" />
           </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #9333ea; padding-top: 2px;">
-            <span>💡 Link mẫu: <a href="javascript:void(0)" id="btnFillSamplePin" style="color: #7e22ce; font-weight: 700; text-decoration: underline;">Video Pinterest (pin.it/57vaF7Tpk)</a></span>
-          </div>
-        </div>
-
-        <!-- Section 0.5: Device Audio Storage Quota Monitor -->
-        <div style="background: #f0fdf4; padding: 12px 14px; border-radius: 14px; border: 1px solid #bbf7d0; margin-bottom: 14px;">
-          <div style="font-size: 13.5px; font-weight: 700; color: #166534; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
-            <span>🔊 Bộ Nhớ Âm Thanh Cục Bộ (IndexedDB)</span>
-            <span id="audioStorageUsageBadge" style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #dcfce7; color: #15803d;">Đang kiểm tra...</span>
-          </div>
-          <p style="font-size: 12px; color: #15803d; margin-bottom: 6px; line-height: 1.45;" id="audioStorageInfoText">
-            File âm thanh bài đọc & từ vựng được lưu cục bộ trên máy để nghe offline mượt mà.
-          </p>
-          <div style="width: 100%; height: 6px; background: #dcfce7; border-radius: 3px; overflow: hidden;">
-            <div id="audioStorageBar" style="width: 1%; height: 100%; background: #22c55e; transition: width 0.3s;"></div>
-          </div>
-        </div>
-
-        <!-- Section 1: Backup & Restore (Tải file dự phòng) -->
-        <div style="background: #f3eef9; padding: 12px 14px; border-radius: 14px; border: 1px solid #e2d8ef; margin-bottom: 14px;">
-          <div style="font-size: 13.5px; font-weight: 700; color: #766299; margin-bottom: 4px;">💾 Sao Lưu & Khôi Phục File Manual (.json)</div>
-          <p style="font-size: 12px; color: #4b5563; margin-bottom: 10px; line-height: 1.45;">
-            Tải bản sao lưu file <code>.json</code> để lưu cất giữ an toàn trên máy/Google Drive hoặc chuyển sang thiết bị khác.
-          </p>
-          <div style="display: flex; gap: 8px;">
-            <button class="primary-submit-btn" id="btnExportBackup" style="flex: 1; padding: 8px 10px; font-size: 12px; background: #8772a8;">📥 Tải sao lưu (Backup)</button>
-            <button class="primary-submit-btn" id="btnImportBackup" style="flex: 1; padding: 8px 10px; font-size: 12px; background: #766299;">📤 Khôi phục (Restore)</button>
+          <div class="st-btn-row">
+            <button class="st-btn" id="btnExportBackup">📥 Sao lưu</button>
+            <button class="st-btn ghost" id="btnImportBackup">📤 Khôi phục</button>
             <input type="file" id="inputImportBackupFile" accept=".json" style="display: none;" />
           </div>
         </div>
 
-        <!-- Section 2: OpenRouter API Key -->
-        <div style="background: #f9fafb; padding: 12px 14px; border-radius: 14px; border: 1px solid #f0f0f0;">
-          <div style="font-size: 13.5px; font-weight: 700; color: #374151; margin-bottom: 4px;">🔑 OpenRouter API Key (Dùng AI)</div>
-          <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.45;">Nhập API Key để sử dụng AI gemini 2.5 flash giải thích từ & tự điền thông tin.</p>
-          <input type="password" id="inputApiKey" class="input-field" placeholder="sk-or-v1-..." style="margin-bottom: 8px;" />
-          <button class="primary-submit-btn" id="btnSaveApiKey" style="width: 100%; padding: 8px 10px; font-size: 12.5px;">Lưu API Key</button>
+        <!-- ===== Nhóm: Giao diện ===== -->
+        <div class="st-group-label">Giao diện</div>
+
+        <!-- Custom Background -->
+        <div class="st-card">
+          <div class="st-head">
+            <div class="st-icon">🖼️</div>
+            <div class="st-title-wrap">
+              <div class="st-title">Ảnh &amp; video nền</div>
+              <div class="st-sub">Link Pinterest, ảnh, GIF hoặc video ngắn</div>
+            </div>
+            <span id="bgStatusBadge" class="st-pill">Mặc định</span>
+          </div>
+          <div class="st-bg-row">
+            <div id="bgPreviewThumb" class="st-bg-thumb" style="background-image: var(--app-bg-image, url('https://i.pinimg.com/736x/b9/e1/63/b9e16339f6bb68de17a3e2f256d9746b.jpg'), url('./bg.jpg'));">
+              <video id="bgThumbVideo" autoplay loop muted playsinline style="display: none; width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; pointer-events: none;"></video>
+              <span id="bgTypeBadge" style="display: none; position: absolute; bottom: 3px; right: 3px; font-size: 8.5px; font-weight: 800; background: rgba(59, 40, 89, 0.75); color: #fff; padding: 1px 4px; border-radius: 4px; line-height: 1.2;">VIDEO</span>
+            </div>
+            <div class="st-bg-controls">
+              <div style="display: flex; gap: 6px;">
+                <input type="url" id="inputBackgroundUrl" class="st-input" placeholder="Dán link pin.it/..., ảnh, video" />
+                <button class="st-btn st-btn-sm" id="btnApplyBgUrl" style="flex: 0 0 auto;" title="Dán link từ bộ nhớ tạm và áp dụng ngay">📋 Dán</button>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <button class="st-btn st-btn-sm ghost" id="btnChangeBackground">📁 Tải từ máy</button>
+                <button class="st-btn st-btn-sm ghost" id="btnResetBackground">↩️ Mặc định</button>
+              </div>
+              <div class="st-hint">💡 Mẫu: <a href="javascript:void(0)" id="btnFillSamplePin">pin.it/57vaF7Tpk</a></div>
+            </div>
+            <input type="file" id="inputBackgroundFile" accept="image/*,video/mp4,video/webm" style="display: none;" />
+          </div>
+        </div>
+
+        <!-- ===== Nhóm: Hệ thống ===== -->
+        <div class="st-group-label">Hệ thống</div>
+
+        <!-- Device Audio Storage -->
+        <div class="st-card">
+          <div class="st-head" style="margin-bottom: 6px;">
+            <div class="st-icon">🔊</div>
+            <div class="st-title-wrap">
+              <div class="st-title">Bộ nhớ âm thanh</div>
+              <div class="st-sub" id="audioStorageInfoText">Âm thanh được lưu trên máy để nghe offline</div>
+            </div>
+            <span id="audioStorageUsageBadge" class="st-pill">Đang kiểm tra...</span>
+          </div>
+          <div class="st-progress">
+            <div id="audioStorageBar" class="st-progress-bar" style="width: 1%;"></div>
+          </div>
+        </div>
+
+        <!-- OpenRouter API Key -->
+        <div class="st-card" style="margin-bottom: 4px;">
+          <div class="st-head">
+            <div class="st-icon">🔑</div>
+            <div class="st-title-wrap">
+              <div class="st-title">OpenRouter API Key</div>
+              <div class="st-sub">Dùng cho AI giải thích từ &amp; tự điền thông tin</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <input type="password" id="inputApiKey" class="st-input" placeholder="sk-or-v1-..." />
+            <button class="st-btn st-btn-sm" id="btnSaveApiKey" style="flex: 0 0 auto;">Lưu</button>
+          </div>
         </div>
 
       </div>
@@ -3082,14 +3255,14 @@
       if (!badge) return;
       badge.textContent = text;
       if (isError) {
-        badge.style.background = '#fee2e2';
-        badge.style.color = '#991b1b';
+        badge.style.background = '#fdecef';
+        badge.style.color = '#b4435a';
       } else if (text.includes('Đang')) {
-        badge.style.background = '#fef3c7';
-        badge.style.color = '#92400e';
+        badge.style.background = '#fbf5e9';
+        badge.style.color = '#9a6b1f';
       } else {
-        badge.style.background = '#dcfce7';
-        badge.style.color = '#166534';
+        badge.style.background = '#f3eef9';
+        badge.style.color = '#766299';
       }
     }
 
@@ -3162,13 +3335,13 @@
           if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         }
 
-        updateCloudStatusBadge('🟢 Đã đồng bộ', false);
+        updateCloudStatusBadge('✓ Đã đồng bộ', false);
         if (isManual) {
           showToast('☁️ Đã sao lưu dữ liệu lên Đám mây Supabase!');
         }
       } catch (err) {
         console.error('Supabase save error:', err);
-        updateCloudStatusBadge('🟢 Đã đồng bộ', false);
+        updateCloudStatusBadge('✓ Đã đồng bộ', false);
         if (isManual) {
           showToast('❌ Lỗi kết nối Đám mây Supabase!');
         }
@@ -3309,7 +3482,7 @@
           updateGroupWordsState();
           renderGroupDropdown();
           renderVocabList();
-          updateCloudStatusBadge('🟢 Đã đồng bộ', false);
+          updateCloudStatusBadge('✓ Đã đồng bộ', false);
 
           if (isManual) {
             showToast('🎉 Đã khôi phục dữ liệu từ Đám mây Supabase!');
@@ -3317,7 +3490,7 @@
             showToast('☁️ Đã đồng bộ từ Đám mây Supabase!');
           }
         } else {
-          updateCloudStatusBadge('🟢 Đã kết nối', false);
+          updateCloudStatusBadge('✓ Đã kết nối', false);
           if (isManual) {
             showToast('ℹ️ Chưa có bản lưu nào trên Đám mây!');
           }
@@ -3561,18 +3734,18 @@
           const quotaGB = (estimate.quota / (1024 * 1024 * 1024)).toFixed(1);
           const pct = Math.min(100, Math.round((estimate.usage / estimate.quota) * 100));
 
-          badge.textContent = `${usedMB} MB / ${quotaGB} GB (${pct}%)`;
+          badge.textContent = `${usedMB} MB / ${quotaGB} GB`;
           bar.style.width = Math.max(1, pct) + '%';
           if (pct > 80) {
-            bar.style.background = '#ef4444';
-            badge.style.background = '#fee2e2';
-            badge.style.color = '#991b1b';
-            infoText.innerHTML = `⚠️ Bộ nhớ âm thanh thiết bị đã dùng <b>${pct}%</b>. Hãy dọn dẹp bớt bài đọc cũ nếu cần!`;
+            bar.style.background = 'linear-gradient(90deg, #f0a6b4 0%, #d9667e 100%)';
+            badge.style.background = '#fdecef';
+            badge.style.color = '#b4435a';
+            infoText.innerHTML = `⚠️ Đã dùng <b>${pct}%</b> – nên dọn bớt bài đọc cũ`;
           } else {
-            bar.style.background = '#22c55e';
-            badge.style.background = '#dcfce7';
-            badge.style.color = '#15803d';
-            infoText.innerHTML = `File âm thanh bài đọc & từ vựng được lưu cục bộ trên máy. Trình duyệt còn hơn <b>${(quotaGB - (usedMB/1024)).toFixed(1)} GB</b> bộ nhớ trống!`;
+            bar.style.background = '';
+            badge.style.background = '#f3eef9';
+            badge.style.color = '#766299';
+            infoText.innerHTML = `Nghe offline · còn trống <b>${(quotaGB - (usedMB/1024)).toFixed(1)} GB</b>`;
           }
         } catch(e) {
           badge.textContent = 'Bình thường (Đã lưu offline)';
@@ -8802,8 +8975,8 @@ ${chunkText}
           }
           if (badge) {
             badge.textContent = 'Mặc định';
-            badge.style.background = '#f3e8ff';
-            badge.style.color = '#7e22ce';
+            badge.style.background = '#f3eef9';
+            badge.style.color = '#766299';
           }
           return;
         }
@@ -8862,9 +9035,9 @@ ${chunkText}
             bgTypeBadge.style.display = 'inline-block';
           }
           if (badge) {
-            badge.textContent = 'Video Pinterest/MP4';
-            badge.style.background = '#fdf2f8';
-            badge.style.color = '#db2777';
+            badge.textContent = 'Video';
+            badge.style.background = '#efe6fb';
+            badge.style.color = '#5e4b7e';
           }
         } else {
           // Image or animated GIF
@@ -8897,9 +9070,9 @@ ${chunkText}
           }
 
           if (badge) {
-            badge.textContent = mediaType === 'gif' ? 'Ảnh GIF động' : 'Ảnh tuỳ chỉnh';
-            badge.style.background = '#f3e8ff';
-            badge.style.color = '#7e22ce';
+            badge.textContent = mediaType === 'gif' ? 'Ảnh GIF' : 'Ảnh tuỳ chỉnh';
+            badge.style.background = '#efe6fb';
+            badge.style.color = '#5e4b7e';
           }
         }
       }
