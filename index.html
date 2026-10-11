@@ -1613,7 +1613,7 @@
           </div>
           <div class="dropdown-menu-item level-tab active" data-level="hsk79" id="tabLevelHsk79">
             <span>HSK 7-9</span>
-            <span class="dropdown-item-count" id="countLevelHsk79">5603 từ</span>
+            <span class="dropdown-item-count" id="countLevelHsk79">5601 từ</span>
           </div>
           <div class="dropdown-menu-item level-tab" data-level="custom" id="tabLevelCustom">
             <span>📁 Nhóm tự tạo</span>
@@ -1752,9 +1752,9 @@
 
         <div class="library-filter-row">
           <select class="library-select" id="selectLibraryLevelFilter">
-            <option value="all">Tất cả Cấp độ (7407 từ)</option>
+            <option value="all">Tất cả Cấp độ (7405 từ)</option>
             <option value="hsk6">HSK 6 (1804 từ)</option>
-            <option value="hsk79">HSK 7-9 (5603 từ)</option>
+            <option value="hsk79">HSK 7-9 (5601 từ)</option>
             <option value="custom">Nhóm Tự tạo</option>
             <option value="upgrade">✨ Nâng cấp vốn từ</option>
           </select>
@@ -6617,43 +6617,36 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
     let activeTokenItem = null;
 
+    // Basic stop words / high-frequency grammar words (HSK 1-4) that must NEVER be flagged as HSK 6 or 7-9
+    const HSK_BASIC_STOP_WORDS = new Set([
+      '和', '打', '的', '了', '在', '是', '我', '你', '他', '她', '它', '们',
+      '这', '那', '有', '个', '也', '就', '都', '不', '没', '很', '太', '真',
+      '最', '更', '好', '去', '来', '说', '看', '听', '吃', '喝', '买', '卖',
+      '做', '写', '读', '想', '要', '会', '能', '大', '小', '多', '少', '人',
+      '家', '上', '下', '里', '外', '前', '后', '中', '到', '向', '对', '给',
+      '让', '用', '但', '与', '及', '或', '着', '过', '得', '地', '把', '被'
+    ]);
+
     // Helper to identify if a Chinese token belongs to HSK 6 or HSK 7-9 (Pure client-side matching, 0 AI cost)
     function getReadingTokenHskLevel(hanzi) {
       if (!hanzi || typeof hanzi !== 'string') return null;
       const clean = hanzi.trim();
-      if (!clean) return null;
+      if (!clean || HSK_BASIC_STOP_WORDS.has(clean)) return null;
 
-      // 1. Direct dictionary match
+      // 1. Direct dictionary match (exact vocabulary entry)
       if (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[clean]) return 'hsk6';
       if (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[clean]) return 'hsk79';
 
-      // 2. Strip trailing grammatical particles (地, 的, 得, 了, 着, 过, 们, 儿)
-      const stripped = clean.replace(/(?:的|地|得|了|着|过|们|儿)+$/g, '');
-      if (stripped && stripped !== clean) {
+      // 2. Strip trailing grammatical inflection particle ONLY if root stem is >= 2 characters
+      // (e.g. 结识了 -> 结识 in H7-9; but NOT arbitrary 1-char stems or clauses)
+      const stripped = clean.replace(/(?:的|地|得|了|着|过|儿)$/g, '');
+      if (stripped && stripped.length >= 2 && stripped !== clean && !HSK_BASIC_STOP_WORDS.has(stripped)) {
         if (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[stripped]) return 'hsk6';
         if (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[stripped]) return 'hsk79';
       }
 
-      // 3. Substring match for composite phrase tokens (2 to 4 chars)
-      if (clean.length >= 3 && clean.length <= 6) {
-        if (typeof hsk6Data !== 'undefined' && hsk6Data) {
-          for (let len = Math.min(4, clean.length); len >= 2; len--) {
-            for (let i = 0; i <= clean.length - len; i++) {
-              const sub = clean.substr(i, len);
-              if (hsk6Data[sub]) return 'hsk6';
-            }
-          }
-        }
-        if (typeof hsk79Data !== 'undefined' && hsk79Data) {
-          for (let len = Math.min(4, clean.length); len >= 2; len--) {
-            for (let i = 0; i <= clean.length - len; i++) {
-              const sub = clean.substr(i, len);
-              if (hsk79Data[sub]) return 'hsk79';
-            }
-          }
-        }
-      }
-
+      // DO NOT do arbitrary substring search on multi-word phrases (e.g. '像往常一样', '胡子拉碴', '飞碟射击')
+      // as that falsely labels entire grammar structures or slang idioms as HSK 6 / 7-9 vocabulary!
       return null;
     }
 
