@@ -6166,33 +6166,49 @@ Lưu ý:
     // ==========================================
     // CUSTOM GROUPS & AI UPGRADE MANAGER
     // ==========================================
+    const CUSTOM_GROUP_MAX_WORDS = 100;
+    let managerTargetGroupId = null; // target group for the "Quản lý nhóm từ" modal (independent of main view)
+
+    // Groups auto-created from reading articles (id: custom_art_..., name starts with 📖)
+    function isReadingArticleGroup(g) {
+      if (!g) return false;
+      return /(^|_)art_/.test(String(g.id || '')) || String(g.name || '').trim().startsWith('📖');
+    }
+    function getManualCustomGroups() {
+      return customGroups.filter(g => !isReadingArticleGroup(g));
+    }
+    function createNextManualGroup() {
+      const manual = getManualCustomGroups();
+      let n = manual.length + 1;
+      const names = new Set(customGroups.map(g => g.name));
+      while (names.has(`Nhóm tự chọn ${n}`)) n++;
+      const grp = { id: `custom_${Date.now()}`, name: `Nhóm tự chọn ${n}`, words: [] };
+      customGroups.push(grp);
+      localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+      return grp;
+    }
+    // Pick a sensible default target: first manual group that still has room, else create a new one
+    function resolveManagerTargetGroup() {
+      const manual = getManualCustomGroups();
+      let target = manual.find(g => g.id === managerTargetGroupId);
+      if (!target) {
+        target = manual.find(g => (g.words || []).length < CUSTOM_GROUP_MAX_WORDS) || manual[manual.length - 1] || null;
+      }
+      if (!target) target = createNextManualGroup();
+      managerTargetGroupId = target.id;
+      return target;
+    }
+
     function renderCustomGroupSelect() {
       selectCustomGroupManager.innerHTML = '';
-      if (customGroups.length === 0) {
-        customGroups.push({ id: 'custom_1', name: 'Nhóm tự chọn 1', words: [] });
-        localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-      }
+      resolveManagerTargetGroup();
 
-      let totalCombinedMap = new Map();
-      customGroups.forEach(g => {
-        (g.words || []).forEach(w => {
-          if (w && w.hanzi && !totalCombinedMap.has(w.hanzi)) {
-            totalCombinedMap.set(w.hanzi, w);
-          }
-        });
-      });
-
-      const allOpt = document.createElement('option');
-      allOpt.value = 'all_custom_groups';
-      allOpt.textContent = `🌟 Tất cả nhóm tự tạo (${totalCombinedMap.size} từ)`;
-      if (currentCustomGroupId === 'all_custom_groups') allOpt.selected = true;
-      selectCustomGroupManager.appendChild(allOpt);
-
-      customGroups.forEach(grp => {
+      getManualCustomGroups().forEach(grp => {
         const opt = document.createElement('option');
         opt.value = grp.id;
-        opt.textContent = `${grp.name} (${grp.words.length} từ)`;
-        if (grp.id === currentCustomGroupId) opt.selected = true;
+        const cnt = (grp.words || []).length;
+        opt.textContent = `${grp.name} (${cnt}/${CUSTOM_GROUP_MAX_WORDS} từ)${cnt >= CUSTOM_GROUP_MAX_WORDS ? ' · đầy' : ''}`;
+        if (grp.id === managerTargetGroupId) opt.selected = true;
         selectCustomGroupManager.appendChild(opt);
       });
 
@@ -6646,12 +6662,19 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         return;
       }
 
-      let group = customGroups.find(g => g.id === currentCustomGroupId);
-      if (!group) {
-        group = { id: `custom_${Date.now()}`, name: 'Nhóm tự tạo 1', words: [] };
-        customGroups.push(group);
-        currentCustomGroupId = group.id;
+      // Always save into a manual group (never into reading-article groups).
+      // If the chosen group already has 100 words -> overflow to the next manual group with room, or create a new one.
+      const manual = getManualCustomGroups();
+      let group = resolveManagerTargetGroup();
+      let overflowed = false;
+      if ((group.words || []).length >= CUSTOM_GROUP_MAX_WORDS) {
+        const startIdx = manual.findIndex(g => g.id === group.id);
+        const ordered = manual.slice(startIdx + 1).concat(manual.slice(0, Math.max(startIdx, 0)));
+        group = ordered.find(g => (g.words || []).length < CUSTOM_GROUP_MAX_WORDS) || createNextManualGroup();
+        managerTargetGroupId = group.id;
+        overflowed = true;
       }
+      if (!Array.isArray(group.words)) group.words = [];
 
       group.words.push({
         id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
@@ -6678,7 +6701,10 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       renderGroupDropdown();
       renderVocabList();
 
-      showToast(`Đã thêm "${hanzi}" vào nhóm!`);
+      const cnt = group.words.length;
+      showToast(overflowed
+        ? `Nhóm cũ đã đủ ${CUSTOM_GROUP_MAX_WORDS} từ → đã lưu "${hanzi}" vào ${group.name} (${cnt}/${CUSTOM_GROUP_MAX_WORDS})`
+        : `Đã thêm "${hanzi}" vào ${group.name} (${cnt}/${CUSTOM_GROUP_MAX_WORDS})`);
     }
 
     // Add Word to Upgrade Group
@@ -8570,12 +8596,11 @@ ${chunkText}
       });
 
       selectCustomGroupManager.addEventListener('change', (e) => {
-        currentCustomGroupId = e.target.value;
-        renderCustomGroupWords();
+        managerTargetGroupId = e.target.value;
       });
 
       btnCreateNewCustomGroup.addEventListener('click', () => {
-        const name = prompt('Nhập tên nhóm từ mới:', `Nhóm tự chọn ${customGroups.length + 1}`);
+        const name = prompt('Nhập tên nhóm từ mới:', `Nhóm tự chọn ${getManualCustomGroups().length + 1}`);
         if (name && name.trim()) {
           const newGrp = {
             id: `custom_${Date.now()}`,
@@ -8583,10 +8608,11 @@ ${chunkText}
             words: []
           };
           customGroups.push(newGrp);
-          currentCustomGroupId = newGrp.id;
+          managerTargetGroupId = newGrp.id;
           localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
           if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
           renderCustomGroupSelect();
+          if (typeof renderGroupDropdown === 'function') renderGroupDropdown();
           showToast(`Đã tạo nhóm "${name.trim()}"`);
         }
       });
@@ -8595,11 +8621,7 @@ ${chunkText}
 
       if (selectCustomGroupManager) {
         addLongPressListener(selectCustomGroupManager, () => {
-          if (currentCustomGroupId === 'all_custom_groups') {
-            showToast('🌟 Đang xem tất cả nhóm. Hãy chọn 1 nhóm cụ thể để xoá nhóm, hoặc ấn giữ từng từ để xoá từ.');
-            return;
-          }
-          deleteCustomGroup(currentCustomGroupId);
+          if (managerTargetGroupId) deleteCustomGroup(managerTargetGroupId);
         });
       }
 
