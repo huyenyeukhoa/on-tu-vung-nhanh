@@ -887,6 +887,32 @@
       border: 1px solid rgba(43, 160, 85, 0.3);
       display: inline-block;
       vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    #idiomGrammarRoleBox {
+      margin: 9px 0 11px 0;
+      background: #ffffff;
+      border: 1.5px solid #d4c5e8;
+      border-left: 4px solid #7e22ce;
+      padding: 10px 12px;
+      border-radius: 11px;
+      box-shadow: 0 2px 8px rgba(126, 34, 206, 0.08);
+    }
+    #idiomGrammarRoleBox code {
+      background: #f5f0fb;
+      color: #6b21a8;
+      padding: 1.5px 6px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-family: inherit;
+      font-size: 12px;
+      border: 1px solid #e9d5ff;
+      display: inline-block;
+      margin: 1px 0;
+    }
+    #idiomGrammarRoleBox b {
+      color: #581c87;
     }
 
     .important-highlight {
@@ -3564,16 +3590,18 @@
           <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px; border-top: 1px dashed rgba(135,114,168,0.25); padding-top: 8px;">
             <div style="display: flex; align-items: center; justify-content: space-between; background: #f3eef9; padding: 7px 10px; border-radius: 8px;">
               <div>
-                <span style="font-size: 15.5px; font-weight: 700; color: #5e4b7e;">🔹 ${up1.hanzi}</span>
+                <span style="font-size: 15.5px; font-weight: 700; color: #5e4b7e; cursor: pointer;" onclick="openAiExplainModal('${up1.hanzi}', '${up1.pinyin}')" title="Chạm để xem giải thích chi tiết">🔹 ${up1.hanzi}</span>
                 <span style="font-size: 11.5px; color: #6b7280; margin-left: 2px;">(${up1.pinyin})</span>
+                ${up1.pos ? `<span class="word-pos-tag" style="margin-left: 4px; font-size: 10.5px;">${up1.pos}</span>` : ''}
               </div>
               <div style="font-size: 12.5px; font-weight: 600; color: #4b3b66;">${up1.vietnamese}</div>
             </div>
 
             <div style="display: flex; align-items: center; justify-content: space-between; background: #f9f4fb; padding: 7px 10px; border-radius: 8px;">
               <div>
-                <span style="font-size: 15.5px; font-weight: 700; color: #723e7d;">🌟 ${up2.hanzi}</span>
+                <span style="font-size: 15.5px; font-weight: 700; color: #723e7d; cursor: pointer;" onclick="openAiExplainModal('${up2.hanzi}', '${up2.pinyin}')" title="Chạm để xem giải thích chi tiết và vai trò ngữ pháp">🌟 ${up2.hanzi}</span>
                 <span style="font-size: 11.5px; color: #6b7280; margin-left: 2px;">(${up2.pinyin})</span>
+                ${up2.pos ? `<span class="word-pos-tag" style="margin-left: 4px; font-size: 10.5px;">${up2.pos}</span>` : ''}
               </div>
               <div style="font-size: 12.5px; font-weight: 600; color: #5a2e63;">${up2.vietnamese}</div>
             </div>
@@ -4101,6 +4129,356 @@ Lưu ý:
       }
     }
 
+    // ==========================================
+    // CHINESE IDIOM GRAMMAR ROLE DICTIONARY & HELPERS
+    // ==========================================
+    const COMMON_IDIOM_GRAMMAR_ROLES = {
+      "人山人海": `• <b>Làm Vị ngữ (phổ biến nhất):</b> Đứng sau địa điểm hoặc chủ ngữ để miêu tả cảnh tượng đông đúc náo nhiệt.<br>
+- Cấu trúc: <code>[Địa điểm / Chủ ngữ] + (真是 / 到处都是) + 人山人海</code><br>
+- Ví dụ: 广场上人山人海 (Trên quảng trường người đông như nêm) / 今天现场真是人山人海 (Hôm nay hiện trường thật sự đông nghịt người).<br>
+• <b>Làm Định ngữ (như tính từ đứng trước danh từ):</b> Bắt buộc có trợ từ <b>的</b>.<br>
+- Cấu trúc: <code>人山人海 + 的 + [Danh từ]</code><br>
+- Ví dụ: 人山人海的火车站 (Nhà ga đông nghẹt người) / 人山人海的街道 (Con phố đông đúc người qua lại).<br>
+• <b>Làm Bổ ngữ (sau động từ + 得):</b> <code>[Động từ] + 得 + 人山人海</code> (ví dụ: 挤得人山人海 - chen chúc đông nghẹt).<br>
+• <b>⚠️ Tránh dùng sai:</b> <b>Không</b> dùng làm trạng ngữ đứng trước động từ (không nói <s>人山人海地走</s>).`,
+
+      "津津有味": `• <b>Làm Trạng ngữ (như trạng từ đứng trước động từ):</b> Bổ nghĩa cho động từ ăn uống, xem, đọc, nghe; có thể có hoặc không có <b>地</b>.<br>
+- Cấu trúc: <code>津津有味 + (地) + [Động từ (吃 / 读 / 听 / 看着...)]</code><br>
+- Ví dụ: 他正津津有味地吃着苹果 (Cậu ấy đang ăn táo một cách ngon lành) / 大家津津有味地听着故事 (Mọi người đang say sưa nghe kể chuyện).<br>
+• <b>Làm Bổ ngữ (sau động từ + 得):</b><br>
+- Cấu trúc: <code>[Động từ] + 得 + 津津有味</code><br>
+- Ví dụ: 孩子们吃得津津有味 (Lũ trẻ ăn uống ngon lành say mê) / 听得津津有味.<br>
+• <b>⚠️ Lưu ý:</b> Rất hiếm khi dùng làm định ngữ trước danh từ.`,
+
+      "刻骨铭心": `• <b>Làm Định ngữ (như tính từ đứng trước danh từ):</b> Bắt buộc có trợ từ <b>的</b> để bổ nghĩa cho danh từ.<br>
+- Cấu trúc: <code>刻骨铭心 + 的 + [Danh từ (经历 / 教训 / 爱情 / 记忆...)]</code><br>
+- Ví dụ: 这是一次刻骨铭心的经历 (Đây là một trải nghiệm khắc cốt ghi tâm / nhớ mãi suốt đời).<br>
+• <b>Làm Vị ngữ:</b> Đứng trong câu biểu thị mức độ sâu sắc tận đáy lòng.<br>
+- Cấu trúc: <code>... 让/使 + [Ai đó] + 刻骨铭心</code><br>
+- Ví dụ: 那段深刻的教训使他刻骨铭心 (Bài học sâu sắc ấy khiến anh ta khắc cốt ghi tâm).<br>
+• <b>Làm Bổ ngữ:</b> <code>记得刻骨铭心 / 恨得刻骨铭心</code>.`,
+
+      "蒸蒸日上": `• <b>Làm Vị ngữ (phổ biến nhất):</b> Đứng sau chủ ngữ (sự nghiệp, kinh doanh, cuộc sống) miêu tả sự phát triển từng ngày.<br>
+- Cấu trúc: <code>[Sự nghiệp / Kinh doanh / Cuộc sống] + 蒸蒸日上</code><br>
+- Ví dụ: 祝您的公司生意蒸蒸日上！ (Chúc công ty của bạn kinh doanh ngày càng phát đạt / khởi sắc từng ngày!).<br>
+• <b>Làm Định ngữ (như tính từ đứng trước danh từ):</b> Đi kèm trợ từ <b>的</b>.<br>
+- Cấu trúc: <code>蒸蒸日上 + 的 + [Danh từ (事业 / 景象 / 势头...)]</code><br>
+- Ví dụ: 蒸蒸日上的事业 (Sự nghiệp đang trên đà thăng tiến vượt bậc).<br>
+• <b>Làm Tân ngữ (như danh từ):</b> <code>呈现出一派蒸蒸日上的景象</code> (Hiện ra một khung cảnh ngày càng phát triển phồn vinh).`,
+
+      "迫不及待": `• <b>Làm Trạng ngữ (như trạng từ đứng trước động từ):</b> Biểu thị tâm trạng nôn nóng, vội vã muốn làm ngay; thường đi kèm <b>地</b>.<br>
+- Cấu trúc: <code>迫不及待 + (地) + [Động từ / Cụm vị ngữ]</code><br>
+- Ví dụ: 他迫不及待地打开了生日礼物 (Anh ấy nôn nóng mở ngay món quà sinh nhật) / 我迫不及待想见到你 (Tôi nóng lòng muốn gặp bạn ngay).<br>
+• <b>Làm Vị ngữ:</b> Miêu tả tâm trạng khẩn cấp.<br>
+- Cấu trúc: <code>[Chủ ngữ] + 十分 / 显得 + 迫不及待</code><br>
+- Ví dụ: 他的神情显得迫不及待 (Nét mặt của anh ấy lộ rõ vẻ nóng lòng không đợi nổi).`,
+
+      "全力以赴": `• <b>Làm Trạng ngữ hoặc Cụm động từ trước hành động:</b> Thể hiện dốc hết sức mình; có thể thêm <b>地</b> hoặc <b>去</b>.<br>
+- Cấu trúc: <code>全力以赴 + (地 / 去) + [Động từ]</code><br>
+- Ví dụ: 我们会全力以赴地备战这次考试 (Chúng tôi sẽ dốc toàn lực để ôn thi lần này) / 全力以赴去完成任务.<br>
+• <b>Làm Vị ngữ:</b> Đứng độc lập làm vị ngữ trong câu.<br>
+- Cấu trúc: <code>[Chủ ngữ] + 必须 / 一定要 + 全力以赴</code><br>
+- Ví dụ: 面对这个重大项目，团队每个人都在全力以赴 (Đối mặt với dự án lớn này, mọi người trong đội đều dốc hết sức lực).`,
+
+      "理所当然": `• <b>Làm Vị ngữ:</b> Khẳng định một kết quả hay sự việc là lẽ đương nhiên, hiển nhiên.<br>
+- Cấu trúc: <code>[Sự việc / Điều đó] + 是 + 理所当然的</code><br>
+- Ví dụ: 努力的人取得成功是理所当然的 (Người nỗ lực gặt hái thành công là lẽ đương nhiên).<br>
+• <b>Làm Định ngữ (như tính từ trước danh từ):</b> Đi kèm <b>的</b>.<br>
+- Cấu trúc: <code>理所当然 + 的 + [Danh từ (事情 / 道理 / 结果)]</code><br>
+- Ví dụ: 这不是什么理所当然的事情 (Đây không phải là điều đương nhiên hiển nhiên đâu).<br>
+• <b>Làm Trạng ngữ (trước động từ):</b> <code>理所当然地 + [Động từ]</code> (ví dụ: 理所当然地接受 - xem là điều hiển nhiên mà tiếp nhận).`,
+
+      "引人入胜": `• <b>Làm Định ngữ (như tính từ đứng trước danh từ):</b> Bổ nghĩa miêu tả phong cảnh, câu chuyện, tình tiết lôi cuốn hấp dẫn.<br>
+- Cấu trúc: <code>引人入胜 + 的 + [Danh từ (情节 / 故事 / 景色 / 画面)]</code><br>
+- Ví dụ: 这本小说有着引人入胜的情节 (Cuốn tiểu thuyết này có tình tiết vô cùng lôi cuốn, hấp dẫn).<br>
+• <b>Làm Vị ngữ:</b><br>
+- Cấu trúc: <code>[Tác phẩm / Phong cảnh] + 十分 / 非常 + 引人入胜</code><br>
+- Ví dụ: 桂林山水十分引人入胜 (Non nước Quế Lâm vô cùng quyến rũ cuốn hút lòng người).`,
+
+      "目瞪口呆": `• <b>Làm Bổ ngữ (sau động từ + 得):</b> Miêu tả trạng thái ngạc nhiên đến sững sờ, há hốc mồm.<br>
+- Cấu trúc: <code>看 / 惊 / 吓 + 得 + 目瞪口呆</code><br>
+- Ví dụ: 精彩的魔术表演让大家看得目瞪口呆 (Màn ảo thuật tuyệt vời khiến mọi người xem đến mức sững sờ há hốc mồm).<br>
+• <b>Làm Trạng ngữ (trước động từ):</b> <code>目瞪口呆 + 地 + 看着 / 站着</code>.<br>
+• <b>Làm Vị ngữ:</b> <code>听了这个消息，他顿时目瞪口呆</code> (Nghe xong tin này, anh ấy bỗng chốc ngây người sững sờ).`,
+
+      "胸有成竹": `• <b>Làm Vị ngữ:</b> Biểu thị trong lòng đã có sẵn dự tính, nắm chắc phần thắng, tự tin.<br>
+- Cấu trúc: <code>[Chủ ngữ] + (对...) + 胸有成竹</code><br>
+- Ví dụ: 对明天的面试，他早已胸有成竹 (Đối với buổi phỏng vấn ngày mai, anh ấy đã tính toán nắm chắc trong lòng).<br>
+• <b>Làm Trạng ngữ (trước động từ):</b> Đi kèm <b>地</b>.<br>
+- Cấu trúc: <code>胸有成竹 + 地 + [Động từ (回答 / 走上讲台 / 说)]</code><br>
+- Ví dụ: 她胸有成竹地走上讲台开始演讲 (Cô ấy đầy tự tin tự tại bước lên bục giảng diễn thuyết).`,
+
+      "不可思议": `• <b>Làm Định ngữ (như tính từ đứng trước danh từ):</b> Đi kèm <b>的</b> để miêu tả điều kỳ lạ, khó tin.<br>
+- Cấu trúc: <code>不可思议 + 的 + [Danh từ (奇迹 / 事情 / 变化)]</code><br>
+- Ví dụ: 他创造了一个不可思议的奇迹 (Anh ấy đã tạo nên một kỳ tích không thể tin nổi / khó mà tưởng tượng được).<br>
+• <b>Làm Vị ngữ:</b> Đứng cuối câu miêu tả cảm giác ngạc nhiên.<br>
+- Cấu trúc: <code>这太不可思议了！ / 令人感到不可思议</code><br>
+- Ví dụ: 短短一年发生这么大变化，真是令人不可思议 (Chỉ trong một năm ngắn ngủi mà đổi thay lớn thế, thật là không thể tưởng tượng nổi).`,
+
+      "一丝不苟": `• <b>Làm Định ngữ (như tính từ đứng trước danh từ):</b> Đi kèm <b>的</b> miêu tả thái độ cẩn thận, tỉ mỉ, chu đáo.<br>
+- Cấu trúc: <code>一丝不苟 + 的 + [Danh từ (工作作风 / 态度 / 精神)]</code><br>
+- Ví dụ: 他这种一丝不苟的工作精神值得我们学习 (Tinh thần làm việc tỉ mỉ cẩn trọng từng li từng tí của anh ấy rất đáng để chúng ta học tập).<br>
+• <b>Làm Trạng ngữ (trước động từ):</b> Đi kèm <b>地</b>.<br>
+- Cấu trúc: <code>一丝不苟 + 地 + [Động từ (检查 / 完成 / 制作)]</code><br>
+- Ví dụ: 工程师一丝不苟地检查每一道工序 (Kỹ sư tỉ mỉ cẩn thận kiểm tra từng công đoạn một).`,
+
+      "滔滔不绝": `• <b>Làm Trạng ngữ (trước động từ nói năng, kể chuyện):</b> Đi kèm <b>地</b> miêu tả việc nói liên tục không ngừng.<br>
+- Cấu trúc: <code>滔滔不绝 + 地 + 说 / 讲 / 介绍 / 谈起</code><br>
+- Ví dụ: 一提到足球，他就滔滔不绝地讲个不停 (Cứ hễ nhắc đến bóng đá là anh ấy lại thao thao bất tuyệt nói không dứt).<br>
+• <b>Làm Bổ ngữ (sau động từ + 得):</b> <code>说得滔滔不绝</code>.<br>
+• <b>⚠️ Tránh dùng sai:</b> Chỉ dùng cho hành động nói năng, diễn thuyết; không dùng bổ nghĩa cho động từ chạy, viết, đi lại.`,
+
+      "废寝忘食": `• <b>Làm Trạng ngữ (như trạng từ trước động từ):</b> Thường đi kèm <b>地</b> miêu tả làm việc/học tập say mê quên ăn quên ngủ.<br>
+- Cấu trúc: <code>废寝忘食 + 地 + [Động từ (工作 / 学习 / 钻研)]</code><br>
+- Ví dụ: 为了按时交付项目，大家都在废寝忘食地加班 (Để bàn giao dự án đúng hạn, mọi người đều quên ăn quên ngủ tăng ca).<br>
+• <b>Làm Vị ngữ:</b> <code>[Chủ ngữ] + 几乎 / 简直 + 废寝忘食</code> (ví dụ: 他为了考研简直废寝忘食).`,
+
+      "欣欣向荣": `• <b>Làm Vị ngữ:</b> Miêu tả sức sống dồi dào, phát triển phồn thịnh.<br>
+- Cấu trúc: <code>[Kinh tế / Vườn hoa / Đất nước] + 欣欣向荣</code><br>
+- Ví dụ: 春天来了，大地上呈现一片欣欣向荣 (Mùa xuân đến, vạn vật trên mặt đất phô diễn sức sống bừng bừng).<br>
+• <b>Làm Định ngữ (như tính từ trước danh từ):</b> Đi kèm <b>的</b>.<br>
+- Cấu trúc: <code>欣欣向荣 + 的 + [Danh từ (景象 / 气象 / 发展)]</code><br>
+- Ví dụ: 欣欣向荣的繁荣景象 (Khung cảnh phồn vinh hưng thịnh).`,
+
+      "络绎不绝": `• <b>Làm Vị ngữ:</b> Miêu tả xe cộ, người qua lại nườm nượp, nối tiếp nhau không ngớt.<br>
+- Cấu trúc: <code>[Khách tham quan / Xe cộ / Người qua lại] + 络绎不绝</code><br>
+- Ví dụ: 景区里的游客络绎不绝 (Du khách trong khu danh thắng nườm nượp không ngớt).<br>
+• <b>Làm Định ngữ (như tính từ trước danh từ):</b> Đi kèm <b>的</b>.<br>
+- Cấu trúc: <code>络绎不绝 + 的 + 人流 / 车流 / 宾客</code><br>
+- Ví dụ: 门前是络绎不绝的人流 (Trước cửa là dòng người qua lại tấp nập không ngớt).`,
+
+      "数不胜数": `• <b>Làm Vị ngữ:</b> Miêu tả số lượng quá nhiều, đếm không xuể.<br>
+- Cấu trúc: <code>[Danh từ số nhiều] + 多得数不胜数 / 数不胜数</code><br>
+- Ví dụ: 类似这样的成功案例数不胜数 (Những trường hợp thành công tương tự như thế này nhiều đếm không xuể).<br>
+• <b>Làm Định ngữ (như tính từ trước danh từ):</b> Đi kèm <b>的</b>.<br>
+- Cấu trúc: <code>数不胜数 + 的 + [Danh từ]</code> (ví dụ: 数不胜数的奇迹).`,
+
+      "家喻户晓": `• <b>Làm Định ngữ (như tính từ trước danh từ):</b> Đi kèm <b>的</b> bổ nghĩa cho câu chuyện, nhân vật, bài hát.<br>
+- Cấu trúc: <code>家喻户晓 + 的 + [Danh từ (人物 / 故事 / 品牌 / 歌曲)]</code><br>
+- Ví dụ: 这是一个家喻户晓的民间传说 (Đây là một truyền thuyết dân gian mà nhà nhà đều biết, người người đều hay).<br>
+• <b>Làm Vị ngữ:</b><br>
+- Cấu trúc: <code>[Tên tuổi / Thương hiệu] + 在当地 / 已经 + 家喻户晓</code><br>
+- Ví dụ: 他的名字在全国已经家喻户晓 (Tên tuổi của ông ấy trên cả nước nhà nhà đều biết).`,
+
+      "自相矛盾": `• <b>Làm Vị ngữ:</b> Chỉ lời nói hoặc hành động trước sau không ăn khớp, tự mâu thuẫn lẫn nhau.<br>
+- Cấu trúc: <code>[Lời nói / Lập luận / Hành vi] + 前后 + 自相矛盾</code><br>
+- Ví dụ: 他刚才说的话前后自相矛盾 (Lời anh ấy vừa nói trước sau tự mâu thuẫn lẫn nhau).<br>
+• <b>Làm Định ngữ (như tính từ trước danh từ):</b> Đi kèm <b>的</b>.<br>
+- Cấu trúc: <code>自相矛盾 + 的 + [Danh từ (说法 / 举动 / 观点)]</code><br>
+- Ví dụ: 这种自相矛盾的说法站不住脚 (Cách nói mâu thuẫn này không thể đứng vững được).`,
+
+      "半途而废": `• <b>Làm Vị ngữ:</b> Khuyên răn hoặc chỉ trích việc bỏ dở giữa chừng, không kiên trì đến cùng.<br>
+- Cấu trúc: <code>做事 / 学习 + 不能 / 切忌 + 半途而废</code><br>
+- Ví dụ: 无论做什么事情，都不能半途而废 (Dù làm bất cứ việc gì cũng không được bỏ dở giữa chừng).<br>
+• <b>Làm Trạng ngữ:</b> <code>半途而废地放弃</code>.`,
+
+      "画蛇添足": `• <b>Làm Vị ngữ:</b> Chỉ việc làm thừa thãi, không những không có ích mà còn làm hỏng việc.<br>
+- Cấu trúc: <code>你这样做纯属 / 简直是 + 画蛇添足</code><br>
+- Ví dụ: 这幅画本来已经很完美了，再加几笔纯属画蛇添足 (Bức tranh vốn đã hoàn hảo rồi, thêm vài nét nữa hoàn toàn là vẽ rắn thêm chân / thừa thãi).<br>
+• <b>Làm Định ngữ:</b> <code>画蛇添足 + 的 + 举动 / 解释</code> (hành động thừa thãi).`,
+
+      "乱七八糟": `• <b>Làm Vị ngữ:</b> Miêu tả đồ đạc bừa bộn hoặc tình huống hỗn loạn, rối rắm.<br>
+- Cấu trúc: <code>[Căn phòng / Bàn làm việc] + 乱七八糟</code><br>
+- Ví dụ: 弟弟把房间搞得乱七八糟 (Em trai bày bừa căn phòng lộn xộn hết cả lên).<br>
+• <b>Làm Định ngữ (như tính từ trước danh từ):</b> Đi kèm <b>的</b>.<br>
+- Cấu trúc: <code>乱七八糟 + 的 + [Danh từ (东西 / 事情 / 想法)]</code><br>
+- Ví dụ: 别想那些乱七八糟的事情 (Đừng nghĩ ngợi những chuyện linh tinh rối rắm đó nữa).<br>
+• <b>Làm Bổ ngữ:</b> <code>搞得 / 弄得 + 乱七八糟</code>.`,
+
+      "丰富多彩": `• <b>Làm Định ngữ (như tính từ trước danh từ):</b> Đi kèm <b>的</b> miêu tả hoạt động, cuộc sống đa dạng phong phú.<br>
+- Cấu trúc: <code>丰富多彩 + 的 + [Danh từ (课外活动 / 大学生活 / 节目)]</code><br>
+- Ví dụ: 学校为我们组织了丰富多彩的课外活动 (Nhà trường tổ chức cho chúng tôi các hoạt động ngoại khóa phong phú đa dạng).<br>
+• <b>Làm Vị ngữ:</b> <code>[Nội dung / Cuộc sống] + 丰富多彩</code> (ví dụ: 晚会节目丰富多彩).`,
+
+      "无可奈何": `• <b>Làm Trạng ngữ (trước động từ thể hiện thái độ đành chịu):</b> Đi kèm <b>地</b>.<br>
+- Cấu trúc: <code>无可奈何 + 地 + [Động từ (摇摇头 / 叹了口气 / 笑了笑)]</code><br>
+- Ví dụ: 面对这种情况，他无可奈何地叹了口气 (Đối mặt với tình thế này, anh ấy đành bất lực thở dài).<br>
+• <b>Làm Vị ngữ:</b> <code>感到无可奈何 / 心中十分无可奈何</code> (Cảm thấy bất lực, không biết làm sao).`,
+
+      "各抒己见": `• <b>Làm Vị ngữ:</b> Thể hiện mọi người cùng tự do bày tỏ quan điểm riêng của mình.<br>
+- Cấu trúc: <code>大家 / 参会人员 + 各抒己见</code><br>
+- Ví dụ: 在讨论会上，大家各抒己见，气氛十分热烈 (Tại buổi tọa đàm, mọi người đua nhau bày tỏ ý kiến, không khí vô cùng sôi nổi).<br>
+• <b>Làm Trạng ngữ:</b> <code>各抒己见地进行交流</code>.`,
+
+      "日积月累": `• <b>Làm Trạng ngữ (trước động từ):</b> Biểu thị sự tích lũy ngày qua ngày, tháng qua tháng.<br>
+- Cấu trúc: <code>日积月累 + 地 + 学习 / 积累 / 练习</code><br>
+- Ví dụ: 只有日积月累地坚持，汉语水平才能提高 (Chỉ có kiên trì tích lũy qua ngày tháng thì trình độ tiếng Hán mới nâng cao được).<br>
+• <b>Làm Vị ngữ / Chủ ngữ:</b> <code>学语言需要日积月累</code> (Học ngôn ngữ cần có sự tích lũy lâu dài).`,
+
+      "持之以恒": `• <b>Làm Trạng ngữ (trước động từ):</b> Đi kèm <b>地</b> miêu tả sự kiên trì, bền bỉ không bỏ cuộc.<br>
+- Cấu trúc: <code>持之以恒 + 地 + [Động từ (努力 / 锻炼 / 坚持 / 学习)]</code><br>
+- Ví dụ: 坚持锻炼身体需要持之以恒地做下去 (Kiên trì tập thể dục cần phải bền bỉ thực hiện lâu dài).<br>
+• <b>Làm Vị ngữ:</b> <code>贵在持之以恒</code> (Đáng quý ở chỗ kiên trì bền bỉ).`,
+
+      "恍然大悟": `• <b>Làm Vị ngữ:</b> Miêu tả trạng thái bỗng nhiên bừng tỉnh, hiểu ra mọi chuyện.<br>
+- Cấu trúc: <code>听了解释 / 经他提醒 + 才 + 恍然大悟</code><br>
+- Ví dụ: 经过老师的一番指点，我才恍然大悟 (Sau khi nghe thầy giáo chỉ điểm một hồi, tôi mới bừng tỉnh hiểu ra).<br>
+• <b>Làm Trạng ngữ:</b> <code>恍然大悟地拍了拍脑门</code> (Bừng tỉnh vỗ trán một cái).`,
+
+      "潜移默化": `• <b>Làm Trạng ngữ (trước động từ):</b> Đi kèm <b>地</b> miêu tả sự ảnh hưởng âm thầm, ngấm dần theo thời gian.<br>
+- Cấu trúc: <code>潜移默化 + 地 + [Động từ (影响 / 改变 / 塑造)]</code><br>
+- Ví dụ: 父母的言行潜移默化地影响着孩子的成长 (Lời nói và hành động của cha mẹ âm thầm tác động ngấm dần vào sự trưởng thành của con trẻ).<br>
+• <b>Làm Định ngữ:</b> <code>潜移默化 + 的 + 影响 / 作用</code>.`,
+
+      "情不自禁": `• <b>Làm Trạng ngữ (trước động từ):</b> Đi kèm <b>地</b> miêu tả việc không kìm chế được cảm xúc của bản thân.<br>
+- Cấu trúc: <code>情不自禁 + 地 + [Động từ (流泪 / 鼓起掌来 / 笑出声)]</code><br>
+- Ví dụ: 听到这个感人的好消息，她情不自禁地流下了眼泪 (Nghe tin vui xúc động này, cô ấy không kìm được mà rơi nước mắt).`,
+
+      "脱颖而出": `• <b>Làm Vị ngữ:</b> Chỉ người có tài năng nổi bật vượt lên khỏi đám đông trong kỳ thi, cuộc thi.<br>
+- Cấu trúc: <code>在...中 + 脱颖而出</code><br>
+- Ví dụ: 他凭借出色的口才在众多选手中脱颖而出 (Anh ấy nhờ tài ăn nói xuất sắc mà nổi bật vượt lên trong số đông thí sinh).`,
+
+      "微不足道": `• <b>Làm Định ngữ (như tính từ trước danh từ):</b> Đi kèm <b>的</b> miêu tả sự vật, sự việc nhỏ bé không đáng kể.<br>
+- Cấu trúc: <code>微不足道 + 的 + [Danh từ (小事 / 力量 / 贡献 / 细节)]</code><br>
+- Ví dụ: 这只是我微不足道的一点心意 (Đây chỉ là chút tấm lòng nhỏ bé chẳng đáng là bao của tôi thôi).<br>
+• <b>Làm Vị ngữ:</b> <code>这点困难微不足道</code> (Khó khăn này không đáng kể).`,
+
+      "循序渐进": `• <b>Làm Trạng ngữ (trước động từ):</b> Đi kèm <b>地</b> miêu tả việc tiến hành theo từng bước, tuần tự dần dần.<br>
+- Cấu trúc: <code>循序渐进 + 地 + [Động từ (学习 / 训练 / 推进)]</code><br>
+- Ví dụ: 学习任何知识都应该循序渐进地进行 (Học bất kỳ kiến thức nào cũng nên tiến hành tuần tự từng bước một).<br>
+• <b>Làm Vị ngữ:</b> <code>按部就班，循序渐进</code>.`,
+
+      "风和日丽": `• <b>Làm Định ngữ (như tính từ trước danh từ):</b> Đi kèm <b>的</b> miêu tả thời tiết nắng ấm, gió nhẹ ôn hòa.<br>
+- Cấu trúc: <code>风和日丽 + 的 + [Danh từ (早晨 / 下午 / 一天 / 春日)]</code><br>
+- Ví dụ: 在一个风和日丽的周末，我们去公园野餐 (Vào một cuối tuần trời đẹp gió mát nắng ấm, chúng tôi đi công viên dã ngoại).<br>
+• <b>Làm Vị ngữ:</b> <code>今天风和日丽，非常适合出行</code>.`,
+
+      "千方百计": `• <b>Làm Trạng ngữ (như trạng từ trước động từ):</b> Biểu thị dùng đủ mọi cách, trăm phương nghìn kế.<br>
+- Cấu trúc: <code>千方百计 + (地) + [Động từ / Cụm vị ngữ]</code><br>
+- Ví dụ: 他们千方百计想解决这道技术难题 (Họ trăm phương nghìn kế muốn giải quyết bài toán kỹ thuật hóc búa này).`,
+
+      "七上八下": `• <b>Làm Vị ngữ:</b> Miêu tả tâm trạng bất an, thấp thỏm lo âu, bồn chồn trong lòng.<br>
+- Cấu trúc: <code>心里 / 心情 + 七上八下的</code><br>
+- Ví dụ: 等待考试成绩公布时，我心里一直七上八下的 (Lúc chờ công bố điểm thi, trong lòng tôi cứ thấp thỏm bồn chồn không yên).<br>
+• <b>Làm Trạng ngữ:</b> <code>七上八下地等待着结果</code>.`,
+
+      "四面八方": `• <b>Làm Danh từ (Chủ ngữ / Tân ngữ / Thành phần phương vị):</b> Chỉ bốn phương tám hướng, khắp mọi nơi.<br>
+- Cấu trúc: <code>来自 + 四面八方 / 走向 + 四面八方</code><br>
+- Ví dụ: 游客们从四面八方赶来参加这次节日盛会 (Du khách từ khắp bốn phương tám hướng kéo về tham dự lễ hội lớn lần này).<br>
+• <b>Làm Định ngữ (trước danh từ):</b> <code>四面八方的朋友 / 客人</code>.`,
+
+      "五颜六色": `• <b>Làm Định ngữ (như tính từ trước danh từ):</b> Đi kèm <b>的</b> miêu tả màu sắc rực rỡ, muôn màu muôn vẻ.<br>
+- Cấu trúc: <code>五颜六色 + 的 + [Danh từ (花朵 / 气球 / 衣服 / 灯光)]</code><br>
+- Ví dụ: 天空中飘着五颜六色的气球 (Trên bầu trời trôi lơ lửng những chùm bóng bay sặc sỡ đủ mọi màu sắc).<br>
+• <b>Làm Vị ngữ:</b> <code>灯光五颜六色的，非常好看</code>.`,
+
+      "九牛一毛": `• <b>Làm Vị ngữ / Tân ngữ (như danh từ):</b> Chỉ một phần quá nhỏ bé trong tổng thể to lớn (như một sợi lông trong chín con trâu).<br>
+- Cấu trúc: <code>只是 / 不过是 + 九牛一毛</code><br>
+- Ví dụ: 这点花销对他来说只是九牛一毛 (Khoản chi tiêu ít ỏi này đối với anh ta chỉ như hạt cát trong sa mạc / chín trâu mất một sợi lông).`,
+
+      "十全十美": `• <b>Làm Định ngữ (như tính từ trước danh từ):</b> Đi kèm <b>的</b> miêu tả sự hoàn hảo trọn vẹn không tì vết.<br>
+- Cấu trúc: <code>十全十美 + 的 + [Danh từ (人 / 方案 / 事物)]</code><br>
+- Ví dụ: 世界上没有十全十美的人 (Trên đời không có ai là người thập toàn thập mỹ / hoàn hảo không khuyết điểm cả).<br>
+• <b>Làm Vị ngữ:</b> <code>这件事情很难做到十全十美</code>.`,
+
+      "名副其实": `• <b>Làm Vị ngữ:</b> Chỉ danh tiếng hoàn toàn xứng đáng với thực chất.<br>
+- Cấu trúc: <code>[Người / Sự vật] + 是 + 名副其实的 + [Danh từ]</code> hoặc <code>名副其实</code><br>
+- Ví dụ: 他真是名副其实的学霸 (Cậu ấy đúng là học bá danh xứng với thực).<br>
+• <b>Làm Định ngữ:</b> <code>名副其实 + 的 + 专家 / 冠军</code>.`,
+
+      "实事求是": `• <b>Làm Trạng ngữ:</b> Đi kèm <b>地</b> miêu tả thái độ nhìn nhận đúng bản chất sự thật, không phóng đại không bóp méo.<br>
+- Cấu trúc: <code>实事求是 + 地 + [Động từ (评价 / 分析 / 面对 / 解决)]</code><br>
+- Ví dụ: 我们必须实事求是地看待目前存在的问题 (Chúng ta cần phải nhìn nhận những vấn đề hiện nay một cách thực sự cầu thị / khách quan đúng đắn).<br>
+• <b>Làm Định ngữ:</b> <code>实事求是 + 的 + 态度 / 精神</code>.`,
+
+      "一举两得": `• <b>Làm Vị ngữ:</b> Chỉ một hành động đạt được cả hai kết quả tốt (nhất cử lưỡng tiện).<br>
+- Cấu trúc: <code>这样不仅...而且...，真是一举两得！</code><br>
+- Ví dụ: 骑自行车上班既能锻炼身体又能保护环境，真是一举两得 (Đi xe đạp đi làm vừa rèn luyện sức khỏe vừa bảo vệ môi trường, quả là nhất cử lưỡng tiện).<br>
+• <b>Làm Định ngữ:</b> <code>一举两得 + 的 + 好办法 / 好事</code>.`,
+
+      "不可开交": `• <b>Làm Bổ ngữ (sau động từ + 得):</b> Biểu thị mức độ cực kỳ bận rộn hoặc gay cấn không thể dứt ra được.<br>
+- Cấu trúc: <code>[Động từ / Tính từ] + 得 + 不可开交</code><br>
+- Ví dụ: 快到年底了，公司里每个人都忙得不可开交 (Sắp đến cuối năm rồi, ai trong công ty cũng bận tối mắt tối mũi).<br>
+• <b>⚠️ Tránh dùng sai:</b> Bắt buộc làm bổ ngữ sau <b>得</b>, không đứng độc lập làm chủ ngữ hay định ngữ.`,
+
+      "兴高采烈": `• <b>Làm Trạng ngữ (trước động từ):</b> Đi kèm <b>地</b> miêu tả tâm trạng vui tươi hớn hở, tràn đầy hào hứng.<br>
+- Cấu trúc: <code>兴高采烈 + 地 + [Động từ (庆祝 / 讨论 / 玩耍 / 跑来)]</code><br>
+- Ví dụ: 孩子们兴高采烈地跑出了教室 (Lũ trẻ hớn hở vui sướng chạy ùa ra khỏi lớp học).<br>
+• <b>Làm Vị ngữ:</b> <code>大家兴高采烈</code> (Mọi người vui mừng hớn hở).`,
+
+      "手忙脚乱": `• <b>Làm Vị ngữ:</b> Miêu tả sự cuống cuồng, luống cuống tay chân khi quá vội hoặc thiếu chuẩn bị.<br>
+- Cấu trúc: <code>急得 / 忙得 + 手忙脚乱</code> hoặc <code>显得手忙脚乱</code><br>
+- Ví dụ: 第一次下厨的他被弄得手忙脚乱 (Lần đầu xuống bếp khiến anh ấy luống cuống chân tay).<br>
+• <b>Làm Trạng ngữ:</b> <code>手忙脚乱地收拾书包</code>.`,
+
+      "一模一样": `• <b>Làm Vị ngữ:</b> Khẳng định hai hoặc nhiều sự vật giống hệt nhau không khác chút nào.<br>
+- Cấu trúc: <code>A 和 B + 一模一样</code><br>
+- Ví dụ: 这两对双胞胎长得一模一样 (Cặp song sinh này trông giống hệt như đúc).<br>
+• <b>Làm Định ngữ (như tính từ trước danh từ):</b> Đi kèm <b>的</b>.<br>
+- Cấu trúc: <code>一模一样 + 的 + [Danh từ]</code> (ví dụ: 一模一样的衣服 / 书包).`,
+
+      "不知不觉": `• <b>Làm Trạng ngữ (như trạng từ trước động từ):</b> Biểu thị thời gian trôi qua hoặc sự việc xảy ra một cách tự nhiên mà không hay biết.<br>
+- Cấu trúc: <code>不知不觉 + (地) + [Động từ / Mệnh đề]</code><br>
+- Ví dụ: 我们聊着天，不知不觉天就黑了 (Chúng tôi mải trò chuyện, trời tối lúc nào không hay).`,
+
+      "心满意足": `• <b>Làm Vị ngữ:</b> Biểu thị cảm giác vô cùng mãn nguyện, hài lòng tuyệt đối.<br>
+- Cấu trúc: <code>感到 / 显得 + 心满意足</code><br>
+- Ví dụ: 吃到心仪的美食，他感到心满意足 (Ăn được món ngon ưng ý, anh ấy cảm thấy vô cùng thỏa mãn).<br>
+• <b>Làm Trạng ngữ:</b> <code>心满意足地笑了</code>.<br>
+• <b>Làm Định ngữ:</b> <code>心满意足 + 的 + 神情 / 样子</code>.`
+    };
+
+    function isIdiomWord(data) {
+      if (!data) return false;
+      if (data.isIdiom) return true;
+      if (data.grammarRole && String(data.grammarRole).trim()) return true;
+      const hanzi = (data.hanzi || '').trim();
+      if (COMMON_IDIOM_GRAMMAR_ROLES && COMMON_IDIOM_GRAMMAR_ROLES[hanzi]) return true;
+      const pos = (data.pos || '').toLowerCase();
+      if (pos.includes('thành ngữ') || pos.includes('thanh ngu') || pos.includes('成语') || pos.includes('idiom')) return true;
+      if (hanzi.length === 4) {
+        const ctx = (data.context || '').toLowerCase();
+        if (ctx.includes('thành ngữ') || ctx.includes('thanh ngu') || ctx.includes('成语')) return true;
+      }
+      return false;
+    }
+
+    function formatIdiomGrammarRole(rawText) {
+      if (!rawText) return '';
+      let s = String(rawText).trim();
+      s = s.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+      s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+      if (!/<(br|p|div|ul|li)\b/i.test(s) && s.includes('\n')) {
+        s = s.split('\n').map(line => line.trim()).filter(Boolean).join('<br>');
+      }
+      return s;
+    }
+
+    async function fetchIdiomGrammarRole(hanzi, pinyin) {
+      const apiKey = localStorage.getItem('openrouter_api_key');
+      if (!apiKey) return null;
+      const prompt = `Bạn là chuyên gia ngữ pháp tiếng Trung HSK. Hãy giải thích ngắn gọn, rõ ràng VAI TRÒ NGỮ PHÁP TRONG CÂU của thành ngữ: "${hanzi}" (pinyin: ${pinyin || ''}).
+Yêu cầu định dạng văn bản (khoảng 3-4 dòng, dùng dấu • và -):
+• <b>Làm Vị ngữ / Làm Định ngữ (như tính từ trước danh từ + 的) / Làm Trạng ngữ (như trạng từ trước động từ + 地) / Làm Bổ ngữ (sau 得) / Làm Chủ ngữ-Tân ngữ (như danh từ)</b>: giải thích cách dùng.
+- Cấu trúc: <code>[Công thức ghép câu]</code>
+- Ví dụ: [Câu chữ Hán ngắn] ([Nghĩa tiếng Việt])
+• ⚠️ Tránh dùng sai: [Lưu ý nếu có (ví dụ: không dùng làm trạng ngữ trước động từ hay không đi với 地)].
+Viết bằng tiếng Việt, đúng chính tả, không dùng chữ phồn thể, không thêm icon loa.`;
+
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.href,
+            'X-Title': 'HSK Vocab App'
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }],
+            max_tokens: 600
+          })
+        });
+        if (!response.ok) return null;
+        const resData = await response.json();
+        return resData.choices?.[0]?.message?.content || null;
+      } catch (err) {
+        console.warn('Failed to fetch idiom grammar role:', err);
+        return null;
+      }
+    }
+
     // Fetch Single AI Explanation from OpenRouter (gemini-2.5-flash) - Returns cached or newly fetched data
     async function fetchSingleAiExplanation(hanzi, pinyin) {
       if (aiCache[hanzi] && aiCache[hanzi].context && aiCache[hanzi].context.includes('important-highlight')) {
@@ -4120,6 +4498,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json) với đ�
 {
   "pos": "Từ loại của từ này bằng tiếng Việt (ví dụ: Tính từ, Động từ, Danh từ, Phó từ, Thành ngữ,...)",
   "meaning": "Nghĩa tiếng Việt ngắn gọn, chuẩn xác",
+  "grammarRole": "NẾU TỪ NÀY LÀ THÀNH NGỮ (成语), bắt buộc phải có mục này để phân tích rõ vai trò ngữ pháp trong câu: 1) Có làm Định ngữ (như tính từ đứng trước danh từ + 的 không? Cấu trúc: Thành ngữ + 的 + Danh từ, ví dụ cụ thể); 2) Có làm Trạng ngữ (như trạng từ đứng trước động từ + 地 không? Cấu trúc: Thành ngữ + (地) + Động từ, ví dụ cụ thể); 3) Có làm Vị ngữ (cấu trúc thế nào?), Bổ ngữ (sau 得), hay Danh từ (chủ/tân ngữ) không? Ghi công thức ghép câu ngắn gọn thực tế. NẾU KHÔNG PHẢI THÀNH NGỮ thì để chuỗi rỗng \\\"\\\".",
   "context": "Hãy giải thích cách dùng tự nhiên VÀ BẮT BUỘC KÈM THEO 2-3 VÍ DỤ TÌNH HUỐNG ĐỜI SỐNG CỤ THỂ THỰC TẾ. Viết sao cho người học dễ hình dung nhất. Trong đoạn giải thích này: 1) BẮT BUỘC bao quanh DUY NHẤT MỘT cụm từ dài hoặc một vế câu quan trọng nhất thể hiện rõ rệt sắc thái cốt lõi của từ này bằng thẻ <span class=\\'important-highlight\\'>cụm từ/vế câu cần bôi đỏ</span>. (Lưu ý: BẮT BUỘC dùng dấu nháy đơn ' cho class). 2) BẮT BUỘC bao quanh TẤT CẢ các câu/dòng lấy ví dụ ngữ cảnh (bắt đầu bằng Ví dụ, Hoặc khi, Chẳng hạn...) bằng thẻ <span class=\\'context-example-purple\\'>câu ví dụ</span> để in đậm màu tím. Yêu cầu cực kỳ nghiêm ngặt: Mỗi từ CHỈ ĐƯỢC BÔI ĐỎ ĐÚNG 1 VỊ TRÍ DUY NHẤT cho cụm từ mấu chốt.",
   "examples": [
     {"hanzi": "câu chữ hán 1", "pinyin": "pinyin 1", "vietnamese": "nghĩa tiếng việt 1"},
@@ -4129,6 +4508,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json) với đ�
 }
 Lưu ý quan trọng:
 - BẮT BUỘC trả về JSON hợp lệ (Valid JSON). Không xuống dòng trực tiếp trong chuỗi.
+- Nếu là Thành ngữ, trường grammarRole phải giải thích cực kỳ xúc tích, rõ ràng cấu trúc ngữ pháp để người học biết cách đặt câu chính xác.
 - Viết hoa chữ cái đầu tiên của câu và đầu tiêu đề theo đúng chuẩn chính tả tiếng Việt.
 - Tuyệt đối KHÔNG thêm icon loa 🔊 hay emoji âm thanh vào cuối câu chữ Hán, pinyin hoặc tiếng Việt.`;
 
@@ -4158,6 +4538,9 @@ Lưu ý quan trọng:
 
       parsedJSON.hanzi = hanzi;
       parsedJSON.pinyin = pinyin || '';
+      if (COMMON_IDIOM_GRAMMAR_ROLES && COMMON_IDIOM_GRAMMAR_ROLES[hanzi]) {
+        parsedJSON.grammarRole = parsedJSON.grammarRole || COMMON_IDIOM_GRAMMAR_ROLES[hanzi];
+      }
 
       aiCache[hanzi] = parsedJSON;
       persistAiEntry(hanzi);
@@ -4323,6 +4706,39 @@ Lưu ý quan trọng:
       modalCard.classList.remove('transparent-loading');
       aiModal.classList.remove('loading-overlay-transparent');
 
+      const isIdiom = isIdiomWord(data);
+      let idiomGrammarBoxHTML = '';
+      let shouldFetchGrammarRole = false;
+
+      if (isIdiom) {
+        let grammarText = (COMMON_IDIOM_GRAMMAR_ROLES && COMMON_IDIOM_GRAMMAR_ROLES[data.hanzi]) || (data.grammarRole || '').trim();
+        if (grammarText) {
+          idiomGrammarBoxHTML = `
+            <div id="idiomGrammarRoleBox">
+              <div style="font-size: 12.5px; font-weight: 800; color: #6b21a8; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
+                <span>📌 Vai trò ngữ pháp trong câu:</span>
+              </div>
+              <div id="idiomGrammarRoleContent" style="font-size: 12.5px; color: #3c2e54; line-height: 1.55;">
+                ${formatIdiomGrammarRole(grammarText)}
+              </div>
+            </div>
+          `;
+        } else {
+          shouldFetchGrammarRole = true;
+          idiomGrammarBoxHTML = `
+            <div id="idiomGrammarRoleBox">
+              <div style="font-size: 12.5px; font-weight: 800; color: #6b21a8; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
+                <span>📌 Vai trò ngữ pháp trong câu:</span>
+              </div>
+              <div id="idiomGrammarRoleContent" style="font-size: 12.5px; color: #8772a8; line-height: 1.55; display: flex; align-items: center; gap: 6px; font-style: italic;">
+                <img src="./loading.gif" style="width: 15px; height: 15px; object-fit: contain;" />
+                <span>Đang phân tích vai trò ngữ pháp...</span>
+              </div>
+            </div>
+          `;
+        }
+      }
+
       const highlightTagStyle = "color: #ffffff; font-weight: 700; background: #766299; padding: 2px 7px; border-radius: 6px; display: inline-block; box-shadow: 0 1px 4px rgba(118,98,153,0.25); font-family: var(--font-hanzi) !important;";
 
       let examplesHTML = (data.examples || []).map(ex => {
@@ -4380,6 +4796,7 @@ Lưu ý quan trọng:
             <span>💡 Ý nghĩa & Ngữ cảnh dùng:</span>
           </div>
           <div style="margin-bottom: 4px; font-size: 13px; color: #3c2e54;"><b>Nghĩa:</b> ${data.meaning || ''}</div>
+          ${idiomGrammarBoxHTML}
           <div style="line-height: 1.55; font-size: 13px; color: #3c2e54;">${formatContextTextWithPurpleExamples(data.context || '')}</div>
         </div>
 
@@ -4395,6 +4812,24 @@ Lưu ý quan trọng:
       `;
 
       resetModalScroll(aiModal);
+
+      if (shouldFetchGrammarRole) {
+        fetchIdiomGrammarRole(data.hanzi, data.pinyin).then(roleText => {
+          if (roleText) {
+            data.grammarRole = roleText;
+            if (aiCache[data.hanzi]) {
+              aiCache[data.hanzi].grammarRole = roleText;
+              persistAiEntry(data.hanzi);
+            }
+            const el = document.getElementById('idiomGrammarRoleContent');
+            if (el) {
+              el.style.fontStyle = 'normal';
+              el.style.color = '#3c2e54';
+              el.innerHTML = formatIdiomGrammarRole(roleText);
+            }
+          }
+        }).catch(e => console.warn('Could not enrich idiom grammar role:', e));
+      }
 
       const btnToggleCompare = document.getElementById('btnToggleCompareInput');
       const compareContainer = document.getElementById('compareInputContainer');
