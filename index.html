@@ -2351,6 +2351,12 @@
         <input type="checkbox" id="switchAutoSpeak" class="switch-input" checked>
         <span class="switch-slider"></span>
       </label>
+
+      <label class="switch-container" title="rung nhẹ khi tick: êm 1 nhịp khi đúng, 2 nhịp nhỏ khi sai">
+        <span>rung khi tick</span>
+        <input type="checkbox" id="switchHapticFeedback" class="switch-input" checked>
+        <span class="switch-slider"></span>
+      </label>
     </div>
   </div>
 
@@ -2625,6 +2631,21 @@
           </div>
           <div class="st-progress">
             <div id="audioStorageBar" class="st-progress-bar" style="width: 1%;"></div>
+          </div>
+        </div>
+
+        <!-- Haptic Vibration Feedback -->
+        <div class="st-card">
+          <div class="st-head" style="margin-bottom: 0;">
+            <div class="st-icon">📳</div>
+            <div class="st-title-wrap">
+              <div class="st-title">Rung phản hồi (Haptic)</div>
+              <div class="st-sub">Tick xanh êm 1 nhịp · tick đỏ 2 nhịp nhỏ</div>
+            </div>
+            <label class="switch-container" style="margin: 0; flex-shrink: 0;" title="Bật/tắt rung khi tick">
+              <input type="checkbox" id="switchHapticSettings" class="switch-input" checked>
+              <span class="switch-slider"></span>
+            </label>
           </div>
         </div>
 
@@ -2934,6 +2955,22 @@
     let showPinyin = false;
     let hanziInCol1 = true;
     let autoSpeakOnTick = true;
+    let hapticFeedbackOnTick = safeGetStorage('hsk_haptic_feedback', '1') !== '0';
+
+    function triggerHaptic(type) {
+      if (!hapticFeedbackOnTick) return;
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          if (type === 'correct') {
+            // Rung nhẹ 1 nhịp êm (28ms)
+            navigator.vibrate(28);
+          } else if (type === 'wrong') {
+            // Rung 2 nhịp nhỏ (22ms rung, 50ms ngắt, 22ms rung)
+            navigator.vibrate([22, 50, 22]);
+          }
+        } catch (err) {}
+      }
+    }
     let alwaysShowCol2 = false;  // Default: Hide column 2 completely until ticked or tapped
     let tapHanziMode = 'speak';  // 'speak' or 'ai'
     let isPanelCollapsed = false;
@@ -6936,6 +6973,8 @@ Lưu ý:
         updatedStatus = newStatus;
         setWordStatus(hanzi, newStatus);
         
+        triggerHaptic(newStatus);
+        
         if (autoSpeakOnTick) {
           const item = groupWordsState.find(v => v.hanzi === hanzi);
           if (item && item.upgradedHanzi && currentLevel === 'upgrade') {
@@ -7115,6 +7154,7 @@ Lưu ý:
       } else {
         updatedStatus = newStatus;
         setProgressStatus(hanzi, newStatus);
+        triggerHaptic(newStatus);
         if (autoSpeakOnTick) speakChinese(hanzi);
       }
       if (srsGetLookup().has(hanzi)) {
@@ -10290,6 +10330,34 @@ ${chunkText}
         autoSpeakOnTick = e.target.checked;
       });
 
+      // Haptic Feedback Switches (Toolbar & Settings Modal synchronized)
+      function updateHapticUI(enabled) {
+        hapticFeedbackOnTick = enabled;
+        try { localStorage.setItem('hsk_haptic_feedback', enabled ? '1' : '0'); } catch(e){}
+        const sw1 = document.getElementById('switchHapticFeedback');
+        const sw2 = document.getElementById('switchHapticSettings');
+        if (sw1) sw1.checked = enabled;
+        if (sw2) sw2.checked = enabled;
+      }
+
+      const switchHapticFeedback = document.getElementById('switchHapticFeedback');
+      if (switchHapticFeedback) {
+        switchHapticFeedback.checked = hapticFeedbackOnTick;
+        switchHapticFeedback.addEventListener('change', (e) => {
+          updateHapticUI(e.target.checked);
+          if (e.target.checked) triggerHaptic('correct');
+        });
+      }
+
+      const switchHapticSettings = document.getElementById('switchHapticSettings');
+      if (switchHapticSettings) {
+        switchHapticSettings.checked = hapticFeedbackOnTick;
+        switchHapticSettings.addEventListener('change', (e) => {
+          updateHapticUI(e.target.checked);
+          if (e.target.checked) triggerHaptic('correct');
+        });
+      }
+
       // Reset Current Group Progress
       btnReset.addEventListener('click', () => {
         const groupWords = getGroupWordsRaw();
@@ -10350,6 +10418,11 @@ ${chunkText}
       updateCustomLevelTabCount();
       srsEnsureEnrolled();
       updateSrsBell();
+
+      const sw1 = document.getElementById('switchHapticFeedback');
+      const sw2 = document.getElementById('switchHapticSettings');
+      if (sw1) sw1.checked = hapticFeedbackOnTick;
+      if (sw2) sw2.checked = hapticFeedbackOnTick;
 
       // Restore active level tab UI
       document.querySelectorAll('.level-tab').forEach(t => {
