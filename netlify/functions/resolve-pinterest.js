@@ -27,6 +27,13 @@ function followRedirects(targetUrl, maxRedirects = 6) {
         if (redirectUrl.startsWith('/')) {
           redirectUrl = parsed.origin + redirectUrl;
         }
+
+        // Canonicalize pin URL to clean /pin/<id>/ to avoid simplified /sent/ pages
+        const pinMatch = redirectUrl.match(/\/pin\/(\d+)/);
+        if (pinMatch && !redirectUrl.endsWith(`/pin/${pinMatch[1]}/`)) {
+          redirectUrl = `https://www.pinterest.com/pin/${pinMatch[1]}/`;
+        }
+
         return followRedirects(redirectUrl, maxRedirects - 1).then(resolve).catch(reject);
       }
 
@@ -50,7 +57,7 @@ function followRedirects(targetUrl, maxRedirects = 6) {
   });
 }
 
-function extractPinterestMedia(html) {
+function extractPinterestMedia(rawHtml) {
   let media = {
     type: 'unknown',
     url: null,
@@ -58,77 +65,41 @@ function extractPinterestMedia(html) {
     title: null
   };
 
-  // 1. Try __PWS_DATA__
-  try {
-    const pwsMatch = html.match(/<script id="__PWS_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-    if (pwsMatch) {
-      const data = JSON.parse(pwsMatch[1]);
-      function searchObj(obj) {
-        if (!obj || typeof obj !== 'object') return;
+  // Normalize escaped slashes and unicode characters
+  const html = (rawHtml || '').replace(/\\\//g, '/').replace(/\\u0026/g, '&');
 
-        // Video check
-        if (obj.videos && obj.videos.video_list) {
-          const vList = obj.videos.video_list;
-          const candidates = Object.values(vList).filter(v => v && v.url && (v.url.endsWith('.mp4') || v.url.includes('.mp4')));
-          candidates.sort((a, b) => (b.width || 0) - (a.width || 0));
-          if (candidates.length > 0 && !media.url) {
-            media.type = 'video';
-            media.url = candidates[0].url;
-            if (candidates[0].thumbnail) media.poster = candidates[0].thumbnail;
-          }
-        }
+  // 1. Check for MP4 video streams
+  const mp4Regex = /https?:\/\/[^"'\s<>]+\.mp4(?:\?[^"'\s<>]*)?/gi;
+  const rawMp4s = html.match(mp4Regex) || [];
+  const cleanMp4s = [...new Set(rawMp4s)];
 
-        // Animated GIF or Image check
-        if (obj.images && !media.poster) {
-          const orig = obj.images.orig || obj.images['736x'] || obj.images['1200x'] || Object.values(obj.images)[0];
-          if (orig && orig.url) media.poster = orig.url;
-        }
-
-        if (obj.title && !media.title) media.title = obj.title;
-        if (obj.grid_title && !media.title) media.title = obj.grid_title;
-
-        for (const k of Object.keys(obj)) {
-          if (typeof obj[k] === 'object') searchObj(obj[k]);
-        }
-      }
-      searchObj(data);
-    }
-  } catch (e) {
-    // Ignore JSON parse errors
+  if (cleanMp4s.length > 0) {
+    // Prioritize 720p or expMp4
+    const bestMp4 = cleanMp4s.find(u => u.includes('720w') || u.includes('720p') || u.includes('expMp4')) || cleanMp4s[0];
+    media.type = 'video';
+    media.url = bestMp4;
   }
 
-  // 2. Video fallback regex
-  if (!media.url) {
-    const mp4Regex = /https?:\\\/\\\/[^"'\s\\]+?\.mp4(?:\?[^"'\s\\]*)?|https?:\/\/[^"'\s]+?\.mp4(?:\?[^"'\s]*)?/g;
-    const mp4Raw = html.match(mp4Regex) || [];
-    const cleanMp4s = [...new Set(mp4Raw.map(u => u.replace(/\\\//g, '/').replace(/\\u0026/g, '&')))];
-    const bestMp4 = cleanMp4s.find(u => u.includes('720w') || u.includes('720p')) || cleanMp4s[0];
-    if (bestMp4) {
-      media.type = 'video';
-      media.url = bestMp4;
-    }
-  }
+  // 2. Poster image for video or primary image/gif
+  const imgRegex = /https?:\/\/i\.pinimg\.com\/(?:originals|736x|1200x)\/[^"'\s<>]+\.(?:jpg|jpeg|png|webp|gif)/gi;
+  const rawImgs = html.match(imgRegex) || [];
+  const cleanImgs = [...new Set(rawImgs)];
 
-  // 3. Image / GIF fallback regex
-  if (!media.url) {
-    const imgRegex = /https?:\\\/\\\/i\.pinimg\.com\\\/(?:originals|736x|1200x)\\\/[^"'\s\\]+?\.(?:jpg|jpeg|png|webp|gif)|https?:\/\/i\.pinimg\.com\/(?:originals|736x|1200x)\/[^"'\s]+?\.(?:jpg|jpeg|png|webp|gif)/g;
-    const imgRaw = html.match(imgRegex) || [];
-    const cleanImgs = [...new Set(imgRaw.map(u => u.replace(/\\\//g, '/')))];
-    const bestImg = cleanImgs.find(u => u.includes('originals')) || cleanImgs.find(u => u.includes('1200x')) || cleanImgs[0];
-    if (bestImg) {
-      media.type = bestImg.toLowerCase().endsWith('.gif') ? 'gif' : 'image';
+  if (cleanImgs.length > 0) {
+    const bestPoster = cleanImgs.find(u => u.includes('736x')) || cleanImgs[0];
+    media.poster = bestPoster;
+
+    if (!media.url) {
+      const bestImg = cleanImgs.find(u => u.includes('originals')) || cleanImgs.find(u => u.includes('1200x')) || cleanImgs[0];
+      media.type = bestImg.toLowerCase().includes('.gif') ? 'gif' : 'image';
       media.url = bestImg;
-      media.poster = bestImg;
     }
   }
 
-  // Poster image fallback
-  if (!media.poster) {
-    const posterRegex = /https?:\\\/\\\/i\.pinimg\.com\\\/736x\\\/[^"'\s\\]+?\.(?:jpg|jpeg|png|webp)|https?:\/\/i\.pinimg\.com\/736x\/[^"'\s]+?\.(?:jpg|jpeg|png|webp)/g;
-    const posters = html.match(posterRegex) || [];
-    if (posters.length > 0) {
-      media.poster = posters[0].replace(/\\\//g, '/');
-    }
+  // Fallback for title
+  const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+  if (titleMatch) {
+    media.title = titleMatch[1].replace(/\|.*$/g, '').trim();
   }
 
   return media;
@@ -195,8 +166,15 @@ exports.handler = async (event) => {
       };
     }
 
+    // Canonicalize if inputUrl is a direct pin link with tracking query params
+    let fetchTargetUrl = inputUrl;
+    const directPinMatch = inputUrl.match(/\/pin\/(\d+)/);
+    if (directPinMatch && (inputUrl.includes('/sent/') || inputUrl.includes('?'))) {
+      fetchTargetUrl = `https://www.pinterest.com/pin/${directPinMatch[1]}/`;
+    }
+
     // Follow redirects & fetch page
-    const { body, finalUrl } = await followRedirects(inputUrl);
+    const { body, finalUrl } = await followRedirects(fetchTargetUrl);
     const media = extractPinterestMedia(body);
 
     if (!media.url) {
