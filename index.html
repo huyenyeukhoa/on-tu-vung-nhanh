@@ -1097,14 +1097,16 @@
 
     .word-pos-tag {
       font-family: 'Mali', system-ui, -apple-system, sans-serif !important;
-      background: var(--primary-light);
-      color: var(--primary-color);
+      background: #f3eef9;
+      color: #766299;
       font-size: 11.5px;
-      font-weight: 600;
-      padding: 1.5px 8px;
-      border-radius: 10px;
-      border: 1px solid rgba(43, 160, 85, 0.3);
-      display: inline-block;
+      font-weight: 700;
+      padding: 2px 9px;
+      border-radius: 8px;
+      border: 1.2px solid #dfd3ef;
+      box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08);
+      display: inline-flex;
+      align-items: center;
       vertical-align: middle;
       white-space: nowrap;
     }
@@ -4753,16 +4755,156 @@ Lưu ý:
 • <b>Làm Định ngữ:</b> <code>心满意足 + 的 + 神情 / 样子</code>.`
     };
 
+    const IDIOM_SPECIFIC_ROLES = {
+      // Động từ (Verb idioms)
+      "以身作则": "động từ",
+      "全力以赴": "động từ",
+      "自相矛盾": "động từ",
+      "拔苗助长": "động từ",
+      "守株待兔": "động từ",
+      "见异思迁": "động từ",
+      "亡羊补牢": "động từ",
+      "画蛇添足": "động từ",
+      "弄巧成拙": "động từ",
+      "半途而废": "động từ",
+      "废寝忘食": "động từ",
+      "熟能生巧": "động từ",
+      "饮水思源": "động từ",
+      "随机应变": "động từ",
+      "投桃报李": "động từ",
+      "念念不忘": "động từ",
+      "滔滔不绝": "động từ",
+      "恍然大悟": "động từ",
+      "潜移默化": "động từ",
+      "推己及人": "động từ",
+      "量力而行": "động từ",
+      "实事求是": "động từ",
+      "因材施教": "động từ",
+      "通宵达旦": "động từ",
+      "齐心协力": "động từ",
+      "通力合作": "động từ",
+      "全力支持": "động từ",
+      "爱不释手": "động từ",
+      "得不偿失": "động từ",
+      "众所周知": "động từ",
+      "各抒己见": "động từ",
+      "争先恐后": "động từ",
+      "深思熟虑": "động từ",
+      "集思广益": "động từ",
+      "按部就班": "động từ",
+      "走马观花": "động từ",
+      "顾名思义": "động từ",
+      "相提并论": "động từ",
+      "脱颖而出": "động từ",
+      "统筹兼顾": "động từ",
+      "举一反三": "động từ",
+      "见仁见智": "động từ",
+      "持之以恒": "động từ",
+      "精益求精": "động từ",
+      "迎刃而解": "động từ",
+      "叹为观止": "động từ",
+      "东张西望": "động từ",
+      "坐立不安": "động từ",
+      "南辕北辙": "động từ",
+      "掩耳盗铃": "động từ",
+      "杞人忧天": "động từ",
+      "朝三暮四": "động từ",
+      "滥竽充数": "động từ",
+      "叶公好龙": "động từ",
+      "塞翁失马": "động từ",
+      "唇亡齿寒": "động từ",
+      "狐假虎威": "động từ",
+      "开卷有益": "động từ",
+      "前赴后继": "động từ",
+      "一鼓作气": "động từ",
+      // Tính từ (Adjective idioms)
+      "兢兢业业": "tính từ",
+      "小心翼翼": "tính từ",
+      "津津有味": "tính từ",
+      "刻骨铭心": "tính từ",
+      "蒸蒸日上": "tính từ",
+      "理所当然": "tính từ",
+      "心满意足": "tính từ",
+      "迫不及待": "tính từ",
+      "人山人海": "tính từ",
+      "丰富多彩": "tính từ",
+      "循序渐进": "tính từ",
+      "络绎不绝": "tính từ",
+      "栩栩如生": "tính từ",
+      "井井有条": "tính từ",
+      "莫名其妙": "tính từ",
+      "喜笑颜开": "tính từ",
+      "欣欣向荣": "tính từ",
+      "目瞪口呆": "tính từ",
+      "微不足道": "tính từ",
+      "轻而易举": "tính từ",
+      "朝气蓬勃": "tính từ",
+      "家喻户晓": "tính từ",
+      "一帆风顺": "tính từ",
+      "无可奈何": "tính từ",
+      "独一无二": "tính từ",
+      "不可思议": "tính từ",
+      "斩钉截铁": "tính từ",
+      "美轮美奂": "tính từ",
+      "巧夺天工": "tính từ",
+      "琳琅满目": "tính từ",
+      // Danh từ (Noun idioms)
+      "风吹草动": "danh từ",
+      "世外桃源": "danh từ",
+      "凤毛麟角": "danh từ",
+      // Phó từ / Trạng từ (Adverb idioms)
+      "千方百计": "phó từ",
+      "不由自主": "phó từ"
+    };
+
+    function getIdiomRole(data) {
+      if (!data) return 'động từ';
+      const hanzi = (data.hanzi || '').trim();
+
+      // 1. If pos already has parentheses e.g. "Thành ngữ (động từ)" or "Thành ngữ (tính từ)"
+      const posStr = (data.pos || '').trim();
+      const posMatch = posStr.match(/\(([^)]+)\)/);
+      if (posMatch) {
+        return posMatch[1].trim().toLowerCase();
+      }
+
+      // 2. Direct lookup from IDIOM_SPECIFIC_ROLES
+      if (IDIOM_SPECIFIC_ROLES[hanzi]) {
+        return IDIOM_SPECIFIC_ROLES[hanzi];
+      }
+
+      // 3. Inspect existing data.grammarRole if available
+      const gRole = (data.grammarRole || '').toLowerCase();
+      if (gRole) {
+        if (gRole.includes('như tính từ') || (gRole.includes('tính từ') && !gRole.includes('động từ'))) return 'tính từ';
+        if (gRole.includes('như danh từ') || (gRole.includes('danh từ') && !gRole.includes('động từ'))) return 'danh từ';
+        if (gRole.includes('như trạng từ') || gRole.includes('phó từ')) return 'phó từ';
+        if (gRole.includes('động từ') || gRole.includes('vị ngữ')) return 'động từ';
+      }
+
+      // 4. Inspect data.meaning / vietnamese
+      const vi = ((data.meaning || '') + ' ' + (data.vietnamese || '')).trim().toLowerCase();
+      if (/^(làm|lấy|dốc|bỏ|quên|học|nhìn|nghĩ|nói|đi|đến|tìm|đạt|chữa|giúp|theo|đặt|nêu|phát|tự|thực hiện|hành động|chạy|ăn|uống|nghe|thấy|giữ|đáp|chờ|đợi|trốn|tránh|che|vẽ|nhổ|mất|chăm chỉ|nỗ lực|cố gắng)\b/i.test(vi)) {
+        return 'động từ';
+      }
+      if (/^(rất|quá|vô cùng|đông|ngon|sâu sắc|nồng nhiệt|vội vã|nôn nóng|phồn vinh|hiển nhiên|rực rỡ|khéo léo|đầy đủ|hoàn hảo|ngạc nhiên|đẹp|buồn|vui|hợp lý|tuyệt vời|nhỏ bé|dễ dàng|quen thuộc|thuận lợi|ngơ ngác|tỉ mỉ|cẩn thận)\b/i.test(vi)) {
+        return 'tính từ';
+      }
+
+      return 'động từ';
+    }
+
     function isIdiomWord(data) {
       if (!data) return false;
       if (data.isIdiom) return true;
       if (data.grammarRole && String(data.grammarRole).trim()) return true;
       const hanzi = (data.hanzi || '').trim();
       if (COMMON_IDIOM_GRAMMAR_ROLES && COMMON_IDIOM_GRAMMAR_ROLES[hanzi]) return true;
+      if (typeof IDIOM_SPECIFIC_ROLES !== 'undefined' && IDIOM_SPECIFIC_ROLES[hanzi]) return true;
       const pos = (data.pos || '').toLowerCase();
       if (pos.includes('thành ngữ') || pos.includes('thanh ngu') || pos.includes('成语') || pos.includes('idiom')) return true;
       if (hanzi.length === 4) {
-        const ctx = (data.context || '').toLowerCase();
+        const ctx = ((data.context || '') + ' ' + (data.meaning || '') + ' ' + (data.vietnamese || '')).toLowerCase();
         if (ctx.includes('thành ngữ') || ctx.includes('thanh ngu') || ctx.includes('成语')) return true;
       }
       return false;
@@ -4846,10 +4988,9 @@ Viết bằng tiếng Việt, đúng chính tả, không dùng chữ phồn th�
       const prompt = `Bạn là giáo viên tiếng Trung cao cấp. Hãy giải thích chi tiết từ HSK: "${hanzi}" (pinyin: ${pinyin || ''}).
 Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json) với định dạng:
 {
-  "pos": "Từ loại của từ này bằng tiếng Việt (ví dụ: Tính từ, Động từ, Danh từ, Phó từ, Thành ngữ,...)",
+  "pos": "Từ loại của từ này bằng tiếng Việt. ĐẶC BIỆT: NẾU TỪ NÀY LÀ THÀNH NGỮ (成语), bắt buộc phải ghi rõ từ loại mà thành ngữ đó đóng vai trò trong ngoặc đơn, ví dụ: 'Thành ngữ (động từ)', 'Thành ngữ (tính từ)', 'Thành ngữ (danh từ)', 'Thành ngữ (phó từ)'. Nếu là từ thông thường thì ghi từ loại bình thường (ví dụ: Tính từ, Động từ, Danh từ, Phó từ,...)",
   "hanViet": "Âm Hán Việt IN HOA chuẩn xác của từ này (ví dụ: NHÂN SƠN NHÂN HẢI, NHẬT ÍCH, CHƯNG CHƯNG NHẬT THƯỢNG, BẤT KHẢ TƯ NGHỊ,...)",
   "meaning": "Nghĩa tiếng Việt ngắn gọn, chuẩn xác",
-  "grammarRole": "NẾU TỪ NÀY LÀ THÀNH NGỮ (成语), bắt buộc phải có mục này để phân tích rõ vai trò ngữ pháp trong câu: 1) Có làm Định ngữ (như tính từ đứng trước danh từ + 的 không? Cấu trúc: Thành ngữ + 的 + Danh từ, ví dụ cụ thể); 2) Có làm Trạng ngữ (như trạng từ đứng trước động từ + 地 không? Cấu trúc: Thành ngữ + (地) + Động từ, ví dụ cụ thể); 3) Có làm Vị ngữ (cấu trúc thế nào?), Bổ ngữ (sau 得), hay Danh từ (chủ/tân ngữ) không? Ghi công thức ghép câu ngắn gọn thực tế. NẾU KHÔNG PHẢI THÀNH NGỮ thì để chuỗi rỗng \\\"\\\".",
   "context": "Hãy giải thích cách dùng tự nhiên VÀ BẮT BUỘC KÈM THEO 2-3 VÍ DỤ TÌNH HUỐNG ĐỜI SỐNG CỤ THỂ THỰC TẾ. Viết sao cho người học dễ hình dung nhất. Trong đoạn giải thích này: 1) BẮT BUỘC bao quanh DUY NHẤT MỘT cụm từ dài hoặc một vế câu quan trọng nhất thể hiện rõ rệt sắc thái cốt lõi của từ này bằng thẻ <span class=\\'important-highlight\\'>cụm từ/vế câu cần bôi đỏ</span>. (Lưu ý: BẮT BUỘC dùng dấu nháy đơn ' cho class). 2) BẮT BUỘC bao quanh TẤT CẢ các câu/dòng lấy ví dụ ngữ cảnh (bắt đầu bằng Ví dụ, Hoặc khi, Chẳng hạn...) bằng thẻ <span class=\\'context-example-purple\\'>câu ví dụ</span> để in đậm màu tím. Yêu cầu cực kỳ nghiêm ngặt: Mỗi từ CHỈ ĐƯỢC BÔI ĐỎ ĐÚNG 1 VỊ TRÍ DUY NHẤT cho cụm từ mấu chốt.",
   "examples": [
     {"hanzi": "câu chữ hán 1", "pinyin": "pinyin 1", "vietnamese": "nghĩa tiếng việt 1"},
@@ -4860,7 +5001,6 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json) với đ�
 Lưu ý quan trọng:
 - BẮT BUỘC trả về JSON hợp lệ (Valid JSON). Không xuống dòng trực tiếp trong chuỗi.
 - Trường hanViet BẮT BUỘC viết hoa toàn bộ (IN HOA) cho từng chữ Hán.
-- Nếu là Thành ngữ, trường grammarRole phải giải thích cực kỳ xúc tích, rõ ràng cấu trúc ngữ pháp để người học biết cách đặt câu chính xác.
 - Viết hoa chữ cái đầu tiên của câu và đầu tiêu đề theo đúng chuẩn chính tả tiếng Việt.
 - Tuyệt đối KHÔNG thêm icon loa 🔊 hay emoji âm thanh vào cuối câu chữ Hán, pinyin hoặc tiếng Việt.`;
 
@@ -4891,8 +5031,9 @@ Lưu ý quan trọng:
       parsedJSON.hanzi = hanzi;
       parsedJSON.pinyin = pinyin || '';
       parsedJSON.hanViet = (parsedJSON.hanViet || getHanViet(hanzi) || '').trim().toUpperCase();
-      if (COMMON_IDIOM_GRAMMAR_ROLES && COMMON_IDIOM_GRAMMAR_ROLES[hanzi]) {
-        parsedJSON.grammarRole = parsedJSON.grammarRole || COMMON_IDIOM_GRAMMAR_ROLES[hanzi];
+      if (isIdiomWord(parsedJSON)) {
+        const role = getIdiomRole(parsedJSON);
+        parsedJSON.pos = `Thành ngữ (${role})`;
       }
 
       aiCache[hanzi] = parsedJSON;
@@ -5060,36 +5201,28 @@ Lưu ý quan trọng:
       aiModal.classList.remove('loading-overlay-transparent');
 
       const isIdiom = isIdiomWord(data);
-      let idiomGrammarBoxHTML = '';
-      let shouldFetchGrammarRole = false;
-
+      let displayPos = '';
       if (isIdiom) {
-        let grammarText = (COMMON_IDIOM_GRAMMAR_ROLES && COMMON_IDIOM_GRAMMAR_ROLES[data.hanzi]) || (data.grammarRole || '').trim();
-        if (grammarText) {
-          idiomGrammarBoxHTML = `
-            <div id="idiomGrammarRoleBox">
-              <div style="font-size: 12.5px; font-weight: 800; color: #6b21a8; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
-                <span>📌 Vai trò ngữ pháp trong câu:</span>
-              </div>
-              <div id="idiomGrammarRoleContent" style="font-size: 12.5px; color: #3c2e54; line-height: 1.55;">
-                ${formatIdiomGrammarRole(grammarText)}
-              </div>
-            </div>
-          `;
-        } else {
-          shouldFetchGrammarRole = true;
-          idiomGrammarBoxHTML = `
-            <div id="idiomGrammarRoleBox">
-              <div style="font-size: 12.5px; font-weight: 800; color: #6b21a8; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
-                <span>📌 Vai trò ngữ pháp trong câu:</span>
-              </div>
-              <div id="idiomGrammarRoleContent" style="font-size: 12.5px; color: #8772a8; line-height: 1.55; display: flex; align-items: center; gap: 6px; font-style: italic;">
-                <img src="./loading.gif" style="width: 15px; height: 15px; object-fit: contain;" />
-                <span>Đang phân tích vai trò ngữ pháp...</span>
-              </div>
-            </div>
-          `;
-        }
+        const role = getIdiomRole(data);
+        displayPos = `Thành ngữ (${role})`;
+      } else if (data.pos) {
+        displayPos = data.pos;
+      }
+      if (isIdiom && displayPos && aiCache[data.hanzi] && aiCache[data.hanzi].pos !== displayPos) {
+        aiCache[data.hanzi].pos = displayPos;
+        persistAiEntry(data.hanzi);
+      }
+
+      const hanziLen = (data.hanzi || '').length;
+      let hanziFontSize = '29px';
+      if (hanziLen >= 5) {
+        hanziFontSize = 'clamp(18px, 4.8vw, 21px)';
+      } else if (hanziLen === 4) {
+        hanziFontSize = 'clamp(21px, 5.8vw, 25px)';
+      } else if (hanziLen === 3) {
+        hanziFontSize = 'clamp(25px, 6.8vw, 28px)';
+      } else {
+        hanziFontSize = 'clamp(28px, 7.5vw, 31px)';
       }
 
       const highlightTagStyle = "color: #ffffff; font-weight: 700; background: #766299; padding: 2px 7px; border-radius: 6px; display: inline-block; box-shadow: 0 1px 4px rgba(118,98,153,0.25); font-family: var(--font-hanzi) !important;";
@@ -5121,29 +5254,30 @@ Lưu ý quan trọng:
         }
       }
 
+      // Pill 2: Hán-Việt reading directly (no label prefix) in soft lavender theme
       const hanVietBadgeHTML = hanVietUpper ? `
-        <div style="display: inline-flex; align-items: center; gap: 4px; background: #faf5ff; border: 1.2px solid #d8b4fe; padding: 2px 8px; border-radius: 8px; box-shadow: 0 1px 3px rgba(147, 51, 234, 0.06); vertical-align: middle;">
-          <span style="font-size: 10px; font-weight: 700; color: #9333ea; font-family: var(--font-mali); text-transform: uppercase;">Hán Việt:</span>
-          <span style="font-size: 12px; font-weight: 800; color: #581c87; letter-spacing: 0.6px; font-family: var(--font-mali);">${hanVietUpper}</span>
+        <div style="display: inline-flex; align-items: center; background: #f3eef9; border: 1.2px solid #dfd3ef; padding: 2px 9px; border-radius: 8px; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); vertical-align: middle;">
+          <span style="font-size: 11.5px; font-weight: 800; color: #766299; letter-spacing: 0.6px; font-family: var(--font-mali);">${hanVietUpper}</span>
         </div>
       ` : '';
 
-      const isIdiomTag = data.pos && /thành\s*ngữ|成语/i.test(data.pos);
-      const posBadgeStyle = isIdiomTag
-        ? "background: #fdf4ff; color: #9333ea; border-color: #f0abfc; font-weight: 700;"
-        : "background: #f3eef9; color: #766299; border-color: #d4c5e8; font-weight: 700;";
-      const posBadgeHTML = data.pos ? `<span class="word-pos-tag" style="${posBadgeStyle}">${data.pos}</span>` : '';
+      // Pill 4: POS badge / Thành ngữ (từ loại) in matching soft lavender theme
+      const posBadgeHTML = displayPos ? `
+        <div style="display: inline-flex; align-items: center; background: #f3eef9; border: 1.2px solid #dfd3ef; padding: 2px 9px; border-radius: 8px; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); vertical-align: middle;">
+          <span style="font-size: 11.5px; font-weight: 700; color: #766299; font-family: var(--font-mali);">${displayPos}</span>
+        </div>
+      ` : '';
 
       aiModalBody.innerHTML = `
         <!-- Harmonious Word Identity Header Card -->
         <div class="ai-word-header-card" style="background: linear-gradient(135deg, #f7f3fb 0%, #ffffff 100%); border: 1.5px solid #dfd3ef; border-radius: 16px; padding: 13px 15px; margin-bottom: 12px; box-shadow: 0 3px 12px rgba(118, 98, 153, 0.07);">
-          <!-- Top row: Hanzi + Audio + Compare button -->
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-            <div style="display: flex; align-items: center; gap: 9px; min-width: 0;">
-              <span style="font-family: var(--font-hanzi); font-size: 30px; font-weight: 800; color: #2a1b40; line-height: 1.15; letter-spacing: 0.5px; word-break: break-all;">${data.hanzi}</span>
+          <!-- Top row: Hanzi + Audio + Compare button (Nowrap guaranteed) -->
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; min-width: 0;">
+              <span style="font-family: var(--font-hanzi); font-size: ${hanziFontSize}; font-weight: 800; color: #2a1b40; line-height: 1.15; letter-spacing: 0.5px; white-space: nowrap !important; word-break: keep-all !important; flex-shrink: 0;">${data.hanzi}</span>
               <button class="icon-action-btn" onclick="speakChinese('${data.hanzi}')" title="Phát âm từ này giọng Xiaoxiao" style="width: 32px; height: 32px; font-size: 15px; border-radius: 50%; background: #ede4f7; border: 1px solid #d8c7ee; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(118,98,153,0.15); flex-shrink: 0;">🔊</button>
             </div>
-            <button id="btnToggleCompareInput" style="background: #ffffff; border: 1.5px solid #c4b5fd; color: #766299; font-weight: 700; font-size: 12px; padding: 5px 12px; border-radius: 18px; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 6px rgba(118,98,153,0.1); flex-shrink: 0; font-family: var(--font-mali); transition: all 0.2s;" title="Chạm để nhập chữ Hán cần phân biệt">
+            <button id="btnToggleCompareInput" style="background: #ffffff; border: 1.5px solid #dfd3ef; color: #766299; font-weight: 700; font-size: 11.5px; padding: 4px 10px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 4px rgba(118,98,153,0.08); flex-shrink: 0; font-family: var(--font-mali); transition: all 0.2s;" title="Chạm để nhập chữ Hán cần phân biệt">
               <span>⚖️ Phân biệt từ</span>
             </button>
           </div>
@@ -5174,7 +5308,6 @@ Lưu ý quan trọng:
             <span>💡 Ý nghĩa & Ngữ cảnh dùng:</span>
           </div>
           <div style="margin-bottom: 4px; font-size: 13px; color: #3c2e54;"><b>Nghĩa:</b> ${data.meaning || ''}</div>
-          ${idiomGrammarBoxHTML}
           <div style="line-height: 1.55; font-size: 13px; color: #3c2e54;">${formatContextTextWithPurpleExamples(data.context || '')}</div>
         </div>
 
@@ -5190,24 +5323,6 @@ Lưu ý quan trọng:
       `;
 
       resetModalScroll(aiModal);
-
-      if (shouldFetchGrammarRole) {
-        fetchIdiomGrammarRole(data.hanzi, data.pinyin).then(roleText => {
-          if (roleText) {
-            data.grammarRole = roleText;
-            if (aiCache[data.hanzi]) {
-              aiCache[data.hanzi].grammarRole = roleText;
-              persistAiEntry(data.hanzi);
-            }
-            const el = document.getElementById('idiomGrammarRoleContent');
-            if (el) {
-              el.style.fontStyle = 'normal';
-              el.style.color = '#3c2e54';
-              el.innerHTML = formatIdiomGrammarRole(roleText);
-            }
-          }
-        }).catch(e => console.warn('Could not enrich idiom grammar role:', e));
-      }
 
       const btnToggleCompare = document.getElementById('btnToggleCompareInput');
       const compareContainer = document.getElementById('compareInputContainer');
