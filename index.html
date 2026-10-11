@@ -2084,8 +2084,7 @@
               H7-9: <b id="statCountH79">0</b> từ
             </span>
           </div>
-          <button id="btnToggleReadingUnderlines" class="tiny-underline-toggle-btn" style="font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; gap: 3.5px; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0;" title="Chạm để ẩn hoặc hiện đường gạch chân từ vựng">
-            <span id="underlineToggleIcon" style="font-size: 11px;">👁️</span>
+          <button id="btnToggleReadingUnderlines" class="tiny-underline-toggle-btn" style="font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0;" title="Chạm để ẩn hoặc hiện đường gạch chân từ vựng">
             <span id="underlineToggleText">Gạch chân</span>
           </button>
         </div>
@@ -7704,7 +7703,6 @@ ${chunkText}
     function updateReadingUnderlinesToggleUI() {
       const btn = document.getElementById('btnToggleReadingUnderlines');
       const container = document.getElementById('readingPassageContainer');
-      const icon = document.getElementById('underlineToggleIcon');
       const text = document.getElementById('underlineToggleText');
 
       if (isReadingUnderlinesVisible) {
@@ -7715,7 +7713,6 @@ ${chunkText}
           btn.style.border = '1.2px solid #dfd3ef';
           btn.title = 'Chạm để ẩn đường gạch chân từ vựng';
         }
-        if (icon) icon.textContent = '👁️';
         if (text) text.textContent = 'Gạch chân';
       } else {
         if (container) container.classList.add('hide-underlines');
@@ -7725,7 +7722,6 @@ ${chunkText}
           btn.style.border = '1.2px dashed #d1d5db';
           btn.title = 'Chạm để hiện lại đường gạch chân từ vựng';
         }
-        if (icon) icon.textContent = '🙈';
         if (text) text.textContent = 'Ẩn gạch chân';
       }
     }
