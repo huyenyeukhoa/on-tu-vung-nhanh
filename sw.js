@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hsk-vocab-cache-v88';
+const CACHE_NAME = 'hsk-vocab-cache-v89';
 const ASSETS = [
   './',
   './index.html',
@@ -34,6 +34,7 @@ self.addEventListener('activate', (event) => {
 // Network-First strategy for HTML and JS to ensure F5 gets latest updates immediately
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  if (event.request.url.includes('/.netlify/')) return;
 
   event.respondWith(
     fetch(event.request, { cache: 'no-cache' })

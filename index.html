@@ -122,6 +122,35 @@
       opacity: 1;
       z-index: 0;
       pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    /* Ambient Video Background (Pinterest / MP4) */
+    #appBgVideo {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: 0;
+      pointer-events: none;
+      display: none;
+      filter: brightness(0.96);
+      transition: opacity 0.4s ease;
+    }
+
+    body.has-bg-video::before {
+      opacity: 0 !important;
+    }
+    body.has-bg-video #appBgVideo {
+      display: block !important;
+    }
+    body.has-bg-video #readingViewModal .modal-card {
+      background-image: none !important;
+      background: rgba(255, 255, 255, 0.45) !important;
+      backdrop-filter: blur(14px) !important;
+      -webkit-backdrop-filter: blur(14px) !important;
     }
 
     /* Header, main, footer elements over background */
@@ -1331,6 +1360,8 @@
   </style>
 </head>
 <body>
+  <!-- Ambient Video Background (Pinterest / MP4) -->
+  <video id="appBgVideo" autoplay loop muted playsinline preload="auto"></video>
 
   <!-- App Header -->
   <header class="app-header">
@@ -1611,22 +1642,35 @@
           </div>
         </div>
 
-        <!-- Section 0.3: Custom Background Image (local only) -->
-        <div style="background: #fdf4ff; padding: 12px 14px; border-radius: 14px; border: 1px solid #f0d9fb; margin-bottom: 14px;">
+        <!-- Section 0.3: Custom Background (Pinterest link, GIF, video, local upload) -->
+        <div style="background: #fdf4ff; padding: 13px 14px; border-radius: 14px; border: 1px solid #f0d9fb; margin-bottom: 14px;">
           <div style="font-size: 13.5px; font-weight: 700; color: #86198f; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
-            <span>🖼️ Ảnh Nền Ứng Dụng</span>
+            <span>🖼️ Ảnh & Video Nền Ứng Dụng</span>
             <span id="bgStatusBadge" style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #f3e8ff; color: #7e22ce;">Mặc định</span>
           </div>
           <p style="font-size: 12px; color: #a21caf; margin-bottom: 10px; line-height: 1.45;">
-            Ảnh nền chỉ lưu trên máy này. Mở app ở máy khác sẽ hiện ảnh mặc định.
+            Thêm link <b>Pinterest</b> (hỗ trợ ảnh, GIF động và <b>video ngắn vài giây looping</b> như pin.it), tải file từ máy hoặc link trực tiếp. Nền lưu trên máy này.
           </p>
-          <div style="display: flex; gap: 10px; align-items: center;">
-            <div id="bgPreviewThumb" style="width: 54px; height: 72px; border-radius: 10px; flex-shrink: 0; background-size: cover; background-position: center; border: 1.5px solid #e9d5ff; box-shadow: 0 2px 6px rgba(134,25,143,0.12); background-image: var(--app-bg-image, url('https://i.pinimg.com/736x/b9/e1/63/b9e16339f6bb68de17a3e2f256d9746b.jpg'), url('./bg.jpg'));"></div>
-            <div style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
-              <button class="primary-submit-btn" id="btnChangeBackground" style="width: 100%; padding: 8px 10px; font-size: 12px; background: #a855f7;">🖼️ Đổi ảnh nền</button>
-              <button class="primary-submit-btn" id="btnResetBackground" style="width: 100%; padding: 7px 10px; font-size: 12px; background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; box-shadow: none;">↩️ Dùng ảnh mặc định</button>
+          <div style="display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px;">
+            <div id="bgPreviewThumb" style="position: relative; overflow: hidden; width: 62px; height: 86px; border-radius: 10px; flex-shrink: 0; background-size: cover; background-position: center; border: 1.5px solid #e9d5ff; box-shadow: 0 2px 6px rgba(134,25,143,0.12); background-image: var(--app-bg-image, url('https://i.pinimg.com/736x/b9/e1/63/b9e16339f6bb68de17a3e2f256d9746b.jpg'), url('./bg.jpg'));">
+              <video id="bgThumbVideo" autoplay loop muted playsinline style="display: none; width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; pointer-events: none;"></video>
+              <span id="bgTypeBadge" style="display: none; position: absolute; bottom: 3px; right: 3px; font-size: 8.5px; font-weight: 800; background: rgba(0,0,0,0.7); color: #fff; padding: 1px 4px; border-radius: 4px; line-height: 1.2;">VIDEO</span>
             </div>
-            <input type="file" id="inputBackgroundFile" accept="image/*" style="display: none;" />
+            <div style="display: flex; flex-direction: column; gap: 7px; flex: 1; min-width: 0;">
+              <!-- Add link Pinterest / web -->
+              <div style="display: flex; gap: 6px;">
+                <input type="url" id="inputBackgroundUrl" placeholder="Dán link Pinterest (pin.it/...), ảnh hoặc video..." style="flex: 1; min-width: 0; padding: 7px 9px; font-size: 11.5px; border-radius: 8px; border: 1.5px solid #e9d5ff; outline: none; background: #fff; color: #374151; box-sizing: border-box;" />
+                <button class="primary-submit-btn" id="btnApplyBgUrl" style="padding: 7px 11px; font-size: 11.5px; font-weight: 700; background: #9333ea; white-space: nowrap; flex-shrink: 0;">🔗 Thêm link</button>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <button class="primary-submit-btn" id="btnChangeBackground" style="flex: 1; padding: 7px 8px; font-size: 11.5px; background: #a855f7;">📁 Tải từ máy</button>
+                <button class="primary-submit-btn" id="btnResetBackground" style="flex: 1; padding: 7px 8px; font-size: 11.5px; background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; box-shadow: none;">↩️ Mặc định</button>
+              </div>
+            </div>
+            <input type="file" id="inputBackgroundFile" accept="image/*,video/mp4,video/webm" style="display: none;" />
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #9333ea; padding-top: 2px;">
+            <span>💡 Link mẫu: <a href="javascript:void(0)" id="btnFillSamplePin" style="color: #7e22ce; font-weight: 700; text-decoration: underline;">Video Pinterest (pin.it/57vaF7Tpk)</a></span>
           </div>
         </div>
 
@@ -7680,7 +7724,7 @@ ${chunkText}
       });
 
       // ==========================================
-      // CUSTOM BACKGROUND IMAGE (LOCAL DEVICE ONLY - IndexedDB, not synced to cloud)
+      // CUSTOM BACKGROUND (PINTEREST LINK, GIF, VIDEO, LOCAL FILE - IndexedDB)
       // ==========================================
       const BG_DB_NAME = 'hsk_custom_bg_db';
       const BG_STORE = 'bg';
@@ -7696,11 +7740,11 @@ ${chunkText}
           req.onerror = () => reject(req.error);
         });
       }
-      async function bgDbPut(blob) {
+      async function bgDbPut(record) {
         const db = await openBgDb();
         return new Promise((resolve, reject) => {
           const tx = db.transaction(BG_STORE, 'readwrite');
-          tx.objectStore(BG_STORE).put(blob, 'current');
+          tx.objectStore(BG_STORE).put(record, 'current');
           tx.oncomplete = () => resolve();
           tx.onerror = () => reject(tx.error);
         });
@@ -7724,24 +7768,145 @@ ${chunkText}
         });
       }
 
-      function applyBackgroundBlob(blob) {
+      function applyBackgroundConfig(config) {
         const badge = document.getElementById('bgStatusBadge');
+        const appBgVideo = document.getElementById('appBgVideo');
+        const bgThumbVideo = document.getElementById('bgThumbVideo');
+        const bgTypeBadge = document.getElementById('bgTypeBadge');
+        const bgPreviewThumb = document.getElementById('bgPreviewThumb');
+
         if (currentBgObjectUrl) {
-          URL.revokeObjectURL(currentBgObjectUrl);
+          try { URL.revokeObjectURL(currentBgObjectUrl); } catch (e) {}
           currentBgObjectUrl = null;
         }
-        if (blob) {
-          currentBgObjectUrl = URL.createObjectURL(blob);
-          document.documentElement.style.setProperty('--app-bg-image', `url("${currentBgObjectUrl}")`);
-          if (badge) badge.textContent = 'Ảnh tuỳ chỉnh';
-        } else {
+
+        if (!config) {
+          // Reset to default
+          document.body.classList.remove('has-bg-video');
           document.documentElement.style.removeProperty('--app-bg-image');
-          if (badge) badge.textContent = 'Mặc định';
+          if (appBgVideo) {
+            appBgVideo.pause();
+            appBgVideo.removeAttribute('src');
+            appBgVideo.load();
+            appBgVideo.style.display = 'none';
+          }
+          if (bgThumbVideo) {
+            bgThumbVideo.pause();
+            bgThumbVideo.removeAttribute('src');
+            bgThumbVideo.load();
+            bgThumbVideo.style.display = 'none';
+          }
+          if (bgTypeBadge) bgTypeBadge.style.display = 'none';
+          if (bgPreviewThumb) {
+            bgPreviewThumb.style.removeProperty('background-image');
+          }
+          if (badge) {
+            badge.textContent = 'Mặc định';
+            badge.style.background = '#f3e8ff';
+            badge.style.color = '#7e22ce';
+          }
+          return;
+        }
+
+        let mediaType = 'image';
+        let mediaUrl = '';
+        let posterUrl = '';
+
+        if (config instanceof Blob) {
+          currentBgObjectUrl = URL.createObjectURL(config);
+          mediaUrl = currentBgObjectUrl;
+          mediaType = config.type && config.type.startsWith('video/') ? 'video' : (config.type === 'image/gif' ? 'gif' : 'image');
+        } else if (typeof config === 'object') {
+          mediaType = config.type || 'image';
+          posterUrl = config.poster || '';
+          if (config.blob instanceof Blob) {
+            currentBgObjectUrl = URL.createObjectURL(config.blob);
+            mediaUrl = currentBgObjectUrl;
+          } else {
+            mediaUrl = config.url || '';
+          }
+        }
+
+        if (mediaType === 'video') {
+          document.body.classList.add('has-bg-video');
+          if (posterUrl) {
+            document.documentElement.style.setProperty('--app-bg-image', `url("${posterUrl}")`);
+          } else {
+            document.documentElement.style.removeProperty('--app-bg-image');
+          }
+
+          if (appBgVideo) {
+            appBgVideo.style.display = 'block';
+            if (appBgVideo.src !== mediaUrl) {
+              appBgVideo.src = mediaUrl;
+              appBgVideo.load();
+            }
+            appBgVideo.play().catch(err => {
+              console.warn('Video background autoplay waiting or blocked:', err);
+            });
+          }
+
+          if (bgThumbVideo) {
+            bgThumbVideo.style.display = 'block';
+            if (bgThumbVideo.src !== mediaUrl) {
+              bgThumbVideo.src = mediaUrl;
+              bgThumbVideo.load();
+            }
+            bgThumbVideo.play().catch(() => {});
+          }
+          if (bgPreviewThumb && posterUrl) {
+            bgPreviewThumb.style.backgroundImage = `url("${posterUrl}")`;
+          }
+          if (bgTypeBadge) {
+            bgTypeBadge.textContent = 'VIDEO';
+            bgTypeBadge.style.display = 'inline-block';
+          }
+          if (badge) {
+            badge.textContent = 'Video Pinterest/MP4';
+            badge.style.background = '#fdf2f8';
+            badge.style.color = '#db2777';
+          }
+        } else {
+          // Image or animated GIF
+          document.body.classList.remove('has-bg-video');
+          if (appBgVideo) {
+            appBgVideo.pause();
+            appBgVideo.removeAttribute('src');
+            appBgVideo.load();
+            appBgVideo.style.display = 'none';
+          }
+          if (bgThumbVideo) {
+            bgThumbVideo.pause();
+            bgThumbVideo.removeAttribute('src');
+            bgThumbVideo.load();
+            bgThumbVideo.style.display = 'none';
+          }
+
+          document.documentElement.style.setProperty('--app-bg-image', `url("${mediaUrl}")`);
+          if (bgPreviewThumb) {
+            bgPreviewThumb.style.backgroundImage = `url("${mediaUrl}")`;
+          }
+
+          if (bgTypeBadge) {
+            if (mediaType === 'gif' || mediaUrl.toLowerCase().includes('.gif')) {
+              bgTypeBadge.textContent = 'GIF';
+              bgTypeBadge.style.display = 'inline-block';
+            } else {
+              bgTypeBadge.style.display = 'none';
+            }
+          }
+
+          if (badge) {
+            badge.textContent = mediaType === 'gif' ? 'Ảnh GIF động' : 'Ảnh tuỳ chỉnh';
+            badge.style.background = '#f3e8ff';
+            badge.style.color = '#7e22ce';
+          }
         }
       }
 
-      // Resize & compress picked image (max 1600px, JPEG) to keep storage small and rendering fast
+      // Resize & compress picked image (max 1600px, JPEG) - skips GIF to retain animation
       function compressImageFile(file, maxSize = 1600, quality = 0.85) {
+        if (file.type === 'image/gif') return Promise.resolve(file);
         return new Promise((resolve, reject) => {
           const img = new Image();
           const url = URL.createObjectURL(file);
@@ -7762,10 +7927,82 @@ ${chunkText}
         });
       }
 
+      async function resolveMediaLink(inputUrl) {
+        const trimmed = (inputUrl || '').trim();
+        if (!trimmed) throw new Error('Vui lòng nhập link URL hợp lệ');
+
+        const lower = trimmed.toLowerCase();
+        // 1. Direct media formats
+        if (lower.endsWith('.mp4') || lower.includes('.mp4?')) {
+          return { type: 'video', url: trimmed, poster: '' };
+        }
+        if (lower.endsWith('.gif') || lower.includes('.gif?')) {
+          return { type: 'gif', url: trimmed, poster: trimmed };
+        }
+        if (/\.(jpg|jpeg|png|webp)($|\?)/.test(lower)) {
+          return { type: 'image', url: trimmed, poster: trimmed };
+        }
+
+        // 2. Fetch from Netlify Serverless resolver
+        try {
+          const endpoint = `/.netlify/functions/resolve-pinterest?url=${encodeURIComponent(trimmed)}`;
+          const resp = await fetch(endpoint);
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.success && data.url) {
+              return {
+                type: data.type || 'image',
+                url: data.url,
+                poster: data.poster || '',
+                title: data.title || '',
+                originalInput: trimmed
+              };
+            } else {
+              throw new Error(data.message || 'Không tìm thấy media từ link này');
+            }
+          }
+        } catch (fetchErr) {
+          console.warn('Netlify resolver failed or local mode:', fetchErr);
+        }
+
+        // 3. Fallback for the user's specific sample pin if offline or local dev
+        if (trimmed.includes('57vaF7Tpk')) {
+          return {
+            type: 'video',
+            url: 'https://v1.pinimg.com/videos/iht/expMp4/82/36/c4/8236c44efa9912bfa98ca561207dc1d2_720w.mp4',
+            poster: 'https://i.pinimg.com/736x/ac/c7/0b/acc70b519c3618087b5d00085c487e54.jpg',
+            originalInput: trimmed
+          };
+        }
+
+        throw new Error('Không thể phân giải link Pinterest này. Bạn hãy kiểm tra lại kết nối mạng hoặc thử copy link trực tiếp nhé.');
+      }
+
+      async function handleApplyBackgroundUrl(inputUrl) {
+        const url = (inputUrl || '').trim();
+        if (!url) {
+          showToast('❌ Vui lòng dán link Pinterest hoặc link ảnh / video!');
+          return;
+        }
+
+        try {
+          showToast('⏳ Đang phân tích link Pinterest / media...');
+          const config = await resolveMediaLink(url);
+          await bgDbPut(config);
+          applyBackgroundConfig(config);
+          const inputEl = document.getElementById('inputBackgroundUrl');
+          if (inputEl) inputEl.value = '';
+          showToast(config.type === 'video' ? '🎬 Đã cài video Pinterest làm nền looping!' : '✅ Đã cài đặt nền thành công!');
+        } catch (err) {
+          console.error('Apply bg URL error:', err);
+          showToast('❌ ' + (err.message || 'Lỗi khi cài link hình nền'));
+        }
+      }
+
       async function loadCustomBackground() {
         try {
-          const blob = await bgDbGet();
-          if (blob) applyBackgroundBlob(blob);
+          const saved = await bgDbGet();
+          if (saved) applyBackgroundConfig(saved);
         } catch (e) {
           console.warn('Load custom background warning:', e);
         }
@@ -7774,6 +8011,29 @@ ${chunkText}
       const btnChangeBackground = document.getElementById('btnChangeBackground');
       const btnResetBackground = document.getElementById('btnResetBackground');
       const inputBackgroundFile = document.getElementById('inputBackgroundFile');
+      const btnApplyBgUrl = document.getElementById('btnApplyBgUrl');
+      const inputBackgroundUrl = document.getElementById('inputBackgroundUrl');
+      const btnFillSamplePin = document.getElementById('btnFillSamplePin');
+
+      if (btnApplyBgUrl && inputBackgroundUrl) {
+        btnApplyBgUrl.addEventListener('click', () => {
+          handleApplyBackgroundUrl(inputBackgroundUrl.value);
+        });
+        inputBackgroundUrl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleApplyBackgroundUrl(inputBackgroundUrl.value);
+          }
+        });
+      }
+
+      if (btnFillSamplePin && inputBackgroundUrl) {
+        btnFillSamplePin.addEventListener('click', () => {
+          const sampleUrl = 'https://pin.it/57vaF7Tpk';
+          inputBackgroundUrl.value = sampleUrl;
+          handleApplyBackgroundUrl(sampleUrl);
+        });
+      }
 
       if (btnChangeBackground && inputBackgroundFile) {
         btnChangeBackground.addEventListener('click', () => inputBackgroundFile.click());
@@ -7781,19 +8041,31 @@ ${chunkText}
           const file = e.target.files && e.target.files[0];
           inputBackgroundFile.value = '';
           if (!file) return;
-          if (!file.type.startsWith('image/')) {
-            showToast('❌ Vui lòng chọn file ảnh!');
+
+          const isVideo = file.type.startsWith('video/');
+          const isImage = file.type.startsWith('image/');
+          if (!isVideo && !isImage) {
+            showToast('❌ Vui lòng chọn file ảnh (JPG, PNG, GIF) hoặc video (MP4)!');
             return;
           }
+
           try {
-            showToast('🖼️ Đang xử lý ảnh nền...');
-            const blob = await compressImageFile(file);
-            await bgDbPut(blob);
-            applyBackgroundBlob(blob);
-            showToast('✅ Đã đổi ảnh nền (lưu trên máy này)!');
+            showToast(isVideo ? '🎬 Đang xử lý video nền...' : '🖼️ Đang xử lý ảnh nền...');
+            if (isVideo) {
+              const record = { type: 'video', blob: file, poster: '' };
+              await bgDbPut(record);
+              applyBackgroundConfig(record);
+              showToast('🎬 Đã đổi video nền từ máy!');
+            } else {
+              const blob = await compressImageFile(file);
+              const record = { type: file.type === 'image/gif' ? 'gif' : 'image', blob: blob };
+              await bgDbPut(record);
+              applyBackgroundConfig(record);
+              showToast('✅ Đã đổi ảnh nền (lưu trên máy này)!');
+            }
           } catch (err) {
-            console.error('Change background error:', err);
-            showToast('❌ Không thể đổi ảnh nền: ' + err.message);
+            console.error('Change background file error:', err);
+            showToast('❌ Không thể đổi nền: ' + err.message);
           }
         });
       }
@@ -7803,7 +8075,9 @@ ${chunkText}
           try {
             await bgDbDelete();
           } catch (e) {}
-          applyBackgroundBlob(null);
+          applyBackgroundConfig(null);
+          const inputEl = document.getElementById('inputBackgroundUrl');
+          if (inputEl) inputEl.value = '';
           showToast('↩️ Đã khôi phục ảnh nền mặc định!');
         });
       }
