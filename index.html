@@ -1541,6 +1541,267 @@
       transition: width 0.3s ease;
     }
 
+    /* ===== Smart Spaced Repetition (SRS) Styles ===== */
+    .srs-bell-btn {
+      position: relative;
+    }
+    .srs-bell-count {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: #d9667e;
+      color: #ffffff;
+      font-size: 9.5px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      box-shadow: 0 1px 4px rgba(217, 102, 126, 0.4);
+      border: 1.5px solid #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      pointer-events: none;
+    }
+    .srs-dot {
+      display: inline-block;
+      width: 8.5px;
+      height: 8.5px;
+      border-radius: 50%;
+      background: var(--srs-c, #bfddbb);
+      vertical-align: middle;
+      margin-left: 5px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+      flex-shrink: 0;
+    }
+    .srs-dot:active {
+      transform: scale(1.3);
+    }
+    .srs-banner {
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #f8f4fd 0%, #ffffff 100%);
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid #e5daf3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(135, 114, 168, 0.08);
+    }
+    .srs-banner-main {
+      min-width: 0;
+      flex: 1;
+    }
+    .srs-banner-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--primary-color, #766299);
+      font-family: var(--font-mali);
+      line-height: 1.3;
+    }
+    .srs-banner-sub {
+      font-size: 11.5px;
+      color: #6b7280;
+      margin-top: 2px;
+      line-height: 1.35;
+      font-family: var(--font-mali);
+    }
+    .srs-banner-sub b {
+      color: #766299;
+    }
+    .srs-mini-btn {
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #a08dc2 0%, #8772a8 100%);
+      color: #ffffff;
+      cursor: pointer;
+      font-family: var(--font-mali);
+      box-shadow: 0 2px 6px rgba(135, 114, 168, 0.25);
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: transform 0.12s ease;
+    }
+    .srs-mini-btn:active {
+      transform: scale(0.96);
+    }
+    .srs-picker-summary {
+      background: #fcfaff;
+      border: 1px dashed #d8c8ed;
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .srs-picker-summary-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #6b21a8;
+      font-family: var(--font-mali);
+    }
+    .srs-picker-summary-sub {
+      font-size: 11.5px;
+      color: #766299;
+      margin-top: 1px;
+      font-family: var(--font-mali);
+    }
+    .srs-level-tab {
+      border-bottom: 1px dashed #ece5f6;
+      background: #fbf9fe;
+    }
+    .srs-stat-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .srs-stat-summary > div {
+      background: #fbf9fe;
+      border: 1px solid #ece5f6;
+      border-radius: 12px;
+      padding: 9px 8px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .srs-stat-summary b {
+      font-size: 16px;
+      color: #4b3b66;
+      font-family: var(--font-mali);
+    }
+    .srs-stat-summary span {
+      font-size: 10.5px;
+      color: #9a8cb3;
+      font-family: var(--font-mali);
+    }
+    .srs-stat-click {
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .srs-stat-click:active {
+      background: #f1e9f9;
+    }
+    .srs-section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8772a8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 10px 4px 6px;
+      font-family: var(--font-mali);
+    }
+    .srs-lv-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .srs-lv-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-family: var(--font-mali);
+    }
+    .srs-lv-chip {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .srs-lv-name {
+      width: 105px;
+      flex-shrink: 0;
+      color: #4b3b66;
+      font-weight: 600;
+    }
+    .srs-lv-track {
+      flex: 1;
+      height: 7px;
+      background: #f0eaf8;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .srs-lv-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+    .srs-lv-count {
+      width: 32px;
+      text-align: right;
+      font-weight: 700;
+      color: #766299;
+      font-size: 11.5px;
+      flex-shrink: 0;
+    }
+    .srs-fc {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      background: #fbf9fe;
+      border: 1px solid #ece5f6;
+      border-radius: 12px;
+      padding: 10px 6px 8px;
+      margin-bottom: 10px;
+    }
+    .srs-fc-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .srs-fc-num {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #766299;
+    }
+    .srs-fc-bar-wrap {
+      width: 14px;
+      height: 48px;
+      background: #f0eaf8;
+      border-radius: 6px;
+      display: flex;
+      align-items: flex-end;
+      overflow: hidden;
+    }
+    .srs-fc-bar {
+      width: 100%;
+      background: linear-gradient(180deg, #b9a8d6 0%, #8772a8 100%);
+      border-radius: 6px 6px 0 0;
+      min-height: 4px;
+      transition: height 0.3s ease;
+    }
+    .srs-fc-label {
+      font-size: 10px;
+      color: #9a8cb3;
+      font-weight: 600;
+      font-family: var(--font-mali);
+    }
+    .srs-note {
+      font-size: 11px;
+      color: #8c7ba8;
+      line-height: 1.45;
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: #f8f4fd;
+      border-radius: 10px;
+      font-family: var(--font-mali);
+    }
+
     /* ===== Reading Input Modal (redesigned) ===== */
     .rd-paste-card {
       background: #faf8fd;
@@ -1972,6 +2233,7 @@
     </div>
     <div class="header-right">
       <button class="icon-action-btn" id="btnPwaInstallHeader" title="Cài đặt ứng dụng vào điện thoại" style="display:none;">📲</button>
+      <button class="icon-action-btn srs-bell-btn" id="btnSrsBell" title="Ôn hôm nay (lịch ôn thông minh)">🔔<span class="srs-bell-count" id="srsBellCount" style="display:none;">0</span></button>
       <button class="icon-action-btn" id="btnOpenLibrary" title="Thư viện tra cứu & Đánh dấu tiến độ">📚</button>
       <button class="icon-action-btn" id="btnOpenReadingMode" title="Học từ vựng qua bài đọc">📖</button>
       <button class="icon-action-btn" id="btnOpenCustomGroups" title="Tạo nhóm từ riêng & AI điền">📁</button>
@@ -1993,6 +2255,10 @@
           <span class="dropdown-chevron">▾</span>
         </button>
         <div class="compact-dropdown-menu" id="levelDropdownMenu">
+          <div class="dropdown-menu-item level-tab srs-level-tab" data-level="due" id="tabLevelDue">
+            <span>🔔 Ôn hôm nay</span>
+            <span class="dropdown-item-count" id="countLevelDue">0 từ</span>
+          </div>
           <div class="dropdown-menu-item level-tab" data-level="hsk6" id="tabLevelHsk6">
             <span>HSK 6</span>
             <span class="dropdown-item-count" id="countLevelHsk6">1804 từ</span>
@@ -2253,6 +2519,17 @@
         </div>
 
       </div>
+    </div>
+  </div>
+
+  <!-- Smart Review Schedule (SRS) Stats Modal -->
+  <div class="modal-overlay" id="srsStatsModal">
+    <div class="modal-card" style="max-width: 400px; padding: 18px 14px;">
+      <div class="modal-header">
+        <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color);">📊 Lịch ôn thông minh</div>
+        <button class="modal-close-btn" id="btnCloseSrsStatsModal" onclick="closeSrsStatsModal()">✕</button>
+      </div>
+      <div class="modal-body" id="srsStatsBody" style="padding: 8px 2px 2px 2px;"></div>
     </div>
   </div>
 
@@ -2641,8 +2918,8 @@
     // State Variables loaded safely from localStorage
     let hsk6List = [];
     let hsk79List = [];
-    let currentLevel = safeGetStorage('hsk_current_level', 'hsk79'); // 'hsk6', 'hsk79', 'custom', 'upgrade'
-    if (!['hsk6', 'hsk79', 'custom', 'upgrade'].includes(currentLevel)) {
+    let currentLevel = safeGetStorage('hsk_current_level', 'hsk79'); // 'hsk6', 'hsk79', 'custom', 'upgrade', 'due'
+    if (!['hsk6', 'hsk79', 'custom', 'upgrade', 'due'].includes(currentLevel)) {
       currentLevel = 'hsk79';
     }
 
@@ -3097,11 +3374,12 @@
     }
 
     // Progress Helper Functions
-    function getWordStatus(hanzi) {
+    // Global (original group) tick state – used by HSK / custom / upgrade levels & library
+    function getProgressStatus(hanzi) {
       return userProgress[hanzi] !== undefined ? userProgress[hanzi] : null;
     }
 
-    function setWordStatus(hanzi, status) {
+    function setProgressStatus(hanzi, status) {
       if (status === null) {
         delete userProgress[hanzi];
       } else {
@@ -3115,6 +3393,373 @@
       }
     }
 
+    // Level-aware: the "🔔 Ôn hôm nay" view keeps its OWN daily ticks so original groups stay untouched
+    function getWordStatus(hanzi) {
+      if (currentLevel === 'due') {
+        srsEnsureDay();
+        return srsSession.ticks[hanzi] || null;
+      }
+      return getProgressStatus(hanzi);
+    }
+
+    function setWordStatus(hanzi, status) {
+      if (currentLevel === 'due') {
+        srsEnsureDay();
+        if (status === null) delete srsSession.ticks[hanzi];
+        else srsSession.ticks[hanzi] = status;
+        saveSrsSession();
+        return;
+      }
+      setProgressStatus(hanzi, status);
+    }
+
+    // ==========================================
+    // SMART REVIEW – SPACED REPETITION (SRS)
+    // ==========================================
+    // Record per hanzi: { l: level 0-5, d: dueDay, t: lastChangeTs(ms), x: lapses, w: lastWrongDay }
+    // Tombstone (undone enrollment): { del: 1, t }
+    const SRS_INTERVALS = [1, 2, 4, 8, 16, 35];
+    const SRS_MAX_LEVEL = SRS_INTERVALS.length - 1;
+    const SRS_COLORS = ['#F4B9C1', '#F6CBA3', '#F3DE9C', '#BFDDBB', '#B8D4EA', '#C8B4E3'];
+    const SRS_COLOR_NAMES = ['草莓奶', '奶橘', '奶黄', '奶绿', '奶蓝', '香芋紫'];
+    const SRS_LEECH_LAPSES = 3;
+    const SRS_CORRECTION_WINDOW_MS = 20000;
+
+    let srsData = safeGetJSON('hsk_srs_data', {});
+    let srsSession = safeGetJSON('hsk_srs_session', { day: 0, ticks: {}, queue: [], undo: {} });
+    let dueSubMode = 'due'; // 'due' | 'leech'
+
+    function srsDayOf(date) {
+      const d = date || new Date();
+      return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+    }
+    function srsToday() { return srsDayOf(new Date()); }
+    function srsDayToLabel(day) {
+      const d = new Date(day * 86400000);
+      return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+    }
+    function srsGet(hanzi) {
+      const r = srsData[hanzi];
+      return r && !r.del ? r : null;
+    }
+    function srsEnsureDay() {
+      const t = srsToday();
+      if (!srsSession || srsSession.day !== t) {
+        srsSession = { day: t, ticks: {}, queue: [], undo: {} };
+        saveSrsSession();
+      }
+      if (!srsSession.undo) srsSession.undo = {};
+      if (!srsSession.ticks) srsSession.ticks = {};
+      if (!Array.isArray(srsSession.queue)) srsSession.queue = [];
+    }
+    function saveSrsSession() {
+      try { localStorage.setItem('hsk_srs_session', JSON.stringify(srsSession)); } catch (e) {}
+    }
+    function saveSrsData() {
+      try { localStorage.setItem('hsk_srs_data', JSON.stringify(srsData)); } catch (e) {}
+      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+    }
+
+    // Word lookup for SRS (HSK6 + HSK7-9 + custom groups; upgrade group excluded)
+    let srsLookupCache = null;
+    let srsLookupStamp = 0;
+    function srsInvalidateLookup() { srsLookupCache = null; }
+    function srsGetLookup() {
+      const now = Date.now();
+      if (srsLookupCache && now - srsLookupStamp < 1500) return srsLookupCache;
+      const map = new Map();
+      (customGroups || []).forEach(g => (g.words || []).forEach(w => {
+        const h = w && (w.hanzi || w.word || w.text || w.chinese);
+        if (h && !map.has(h)) {
+          map.set(h, { ...w, hanzi: h, pinyin: w.pinyin || '', vietnamese: w.vietnamese || w.vi || w.meaning || '' });
+        }
+      }));
+      (hsk6List || []).forEach(w => { if (w && w.hanzi && !map.has(w.hanzi)) map.set(w.hanzi, w); });
+      (hsk79List || []).forEach(w => { if (w && w.hanzi && !map.has(w.hanzi)) map.set(w.hanzi, w); });
+      srsLookupCache = map;
+      srsLookupStamp = now;
+      return map;
+    }
+
+    // Apply one grading. source: 'due' (🔔 view) | 'group' (original groups / library)
+    function srsApply(hanzi, result, source) {
+      const t = srsToday();
+      const prev = srsGet(hanzi);
+      let rec = prev ? { ...prev } : null;
+      let changed = false;
+
+      if (result === 'correct') {
+        if (!rec) {
+          rec = { l: 1, d: t + SRS_INTERVALS[1], x: 0 };
+          changed = true;
+        } else if (source === 'due' && rec.d <= t) {
+          rec.l = Math.min(SRS_MAX_LEVEL, (rec.l || 0) + 1);
+          rec.d = t + SRS_INTERVALS[rec.l];
+          changed = true;
+        }
+      } else if (result === 'wrong') {
+        if (!rec) {
+          rec = { l: 0, d: t + SRS_INTERVALS[0], x: 0, w: t };
+          changed = true;
+        } else if (rec.w !== t) {
+          rec.l = Math.max(0, (rec.l || 0) - 2);
+          rec.d = t + SRS_INTERVALS[0];
+          rec.x = (rec.x || 0) + 1;
+          rec.w = t;
+          changed = true;
+        }
+      }
+
+      if (!changed) return false;
+      rec.t = Date.now();
+      srsEnsureDay();
+      srsSession.undo[hanzi] = { prev: srsData[hanzi] ? { ...srsData[hanzi] } : null, to: result, ts: rec.t };
+      saveSrsSession();
+      srsData[hanzi] = rec;
+      return true;
+    }
+
+    function srsUndoLast(hanzi, onlyIfTo) {
+      srsEnsureDay();
+      const u = srsSession.undo[hanzi];
+      if (!u) return false;
+      if (onlyIfTo && u.to !== onlyIfTo) return false;
+      srsData[hanzi] = u.prev ? { ...u.prev, t: Date.now() } : { del: 1, t: Date.now() };
+      delete srsSession.undo[hanzi];
+      saveSrsSession();
+      return true;
+    }
+
+    // Called from tick handlers. from/to: null | 'correct' | 'wrong'
+    function srsOnTick(hanzi, from, to, source) {
+      if (!hanzi) return;
+      let changed = false;
+      if (to === null) {
+        changed = srsUndoLast(hanzi, from);
+      } else {
+        srsEnsureDay();
+        const u = srsSession.undo[hanzi];
+        if (from && from !== to && u && u.to === from && (Date.now() - u.ts) < SRS_CORRECTION_WINDOW_MS) {
+          srsUndoLast(hanzi, from); // quick correction of a mis-tap
+          changed = true;
+        }
+        changed = srsApply(hanzi, to, source) || changed;
+      }
+      if (changed) {
+        saveSrsData();
+        srsInvalidateLookup();
+      }
+      updateSrsBell();
+    }
+
+    // Enroll words that were ticked before SRS existed (option B: green → L1 due in 2 days, red → L0 due today)
+    function srsEnsureEnrolled() {
+      const t = srsToday();
+      const lookup = srsGetLookup();
+      let added = 0;
+      Object.keys(userProgress || {}).forEach(h => {
+        if (srsData[h] || !lookup.has(h)) return;
+        const st = userProgress[h];
+        if (st === 'correct') { srsData[h] = { l: 1, d: t + SRS_INTERVALS[1], x: 0, t: Date.now() }; added++; }
+        else if (st === 'wrong') { srsData[h] = { l: 0, d: t, x: 0, t: Date.now() }; added++; }
+      });
+      if (added) saveSrsData();
+      return added;
+    }
+
+    // Merge records from cloud/backup: newest change (t) wins per word
+    function srsMergeData(incoming) {
+      if (!incoming || typeof incoming !== 'object') return false;
+      let changed = false;
+      Object.keys(incoming).forEach(h => {
+        const inc = incoming[h];
+        if (!inc || typeof inc !== 'object') return;
+        const cur = srsData[h];
+        if (!cur || (inc.t || 0) > (cur.t || 0)) { srsData[h] = inc; changed = true; }
+      });
+      if (changed) {
+        try { localStorage.setItem('hsk_srs_data', JSON.stringify(srsData)); } catch (e) {}
+      }
+      return changed;
+    }
+
+    // Today's locked queue: due words sorted (most overdue first, then lowest level)
+    function srsGetTodayQueue() {
+      srsEnsureDay();
+      const t = srsToday();
+      const lookup = srsGetLookup();
+      const existing = srsSession.queue.filter(h => lookup.has(h));
+      const inQueue = new Set(existing);
+      const fresh = [];
+      Object.keys(srsData).forEach(h => {
+        const r = srsGet(h);
+        if (r && r.d <= t && lookup.has(h) && !inQueue.has(h)) fresh.push(h);
+      });
+      fresh.sort((a, b) => (srsData[a].d - srsData[b].d) || ((srsData[a].l || 0) - (srsData[b].l || 0)));
+      if (fresh.length || existing.length !== srsSession.queue.length) {
+        srsSession.queue = existing.concat(fresh);
+        saveSrsSession();
+      }
+      return srsSession.queue;
+    }
+
+    function srsGetLeeches() {
+      const lookup = srsGetLookup();
+      return Object.keys(srsData)
+        .filter(h => { const r = srsGet(h); return r && (r.x || 0) >= SRS_LEECH_LAPSES && lookup.has(h); })
+        .sort((a, b) => (srsData[b].x - srsData[a].x) || (srsData[a].l - srsData[b].l));
+    }
+
+    function srsGetDueWords() {
+      const lookup = srsGetLookup();
+      const list = dueSubMode === 'leech' ? srsGetLeeches() : srsGetTodayQueue();
+      return list.map(h => lookup.get(h)).filter(Boolean);
+    }
+
+    function srsRemainingToday() {
+      const q = srsGetTodayQueue();
+      return q.filter(h => srsSession.ticks[h] !== 'correct').length;
+    }
+
+    function srsLevelDotHTML(hanzi) {
+      const r = srsGet(hanzi);
+      if (!r) return '';
+      const lv = Math.max(0, Math.min(SRS_MAX_LEVEL, r.l || 0));
+      const safe = String(hanzi).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      return `<span class="srs-dot" style="--srs-c:${SRS_COLORS[lv]};" onclick="showSrsWordInfo('${safe}', event)" title="Cấp ${lv}"></span>`;
+    }
+
+    function showSrsWordInfo(hanzi, event) {
+      if (event) event.stopPropagation();
+      const r = srsGet(hanzi);
+      if (!r) return;
+      const t = srsToday();
+      const lv = r.l || 0;
+      const dueTxt = r.d <= t ? 'đến hạn hôm nay' : `ôn lại ${srsDayToLabel(r.d)} (còn ${r.d - t} ngày)`;
+      showToast(`${hanzi} · Cấp ${lv} ${SRS_COLOR_NAMES[lv]} · ${dueTxt}${r.x ? ` · quên ${r.x} lần` : ''}`);
+    }
+    window.showSrsWordInfo = showSrsWordInfo;
+
+    function updateSrsBell() {
+      const remaining = srsRemainingToday();
+      const countEl = document.getElementById('srsBellCount');
+      const bell = document.getElementById('btnSrsBell');
+      if (countEl) {
+        countEl.textContent = remaining > 999 ? '999+' : String(remaining);
+        countEl.style.display = remaining > 0 ? 'inline-flex' : 'none';
+      }
+      if (bell) bell.classList.toggle('has-due', remaining > 0);
+      const menuCount = document.getElementById('countLevelDue');
+      if (menuCount) menuCount.textContent = `${remaining} từ`;
+      const bannerRemain = document.getElementById('srsBannerRemaining');
+      if (bannerRemain) bannerRemain.textContent = remaining;
+      const bannerTotal = document.getElementById('srsBannerTotal');
+      if (bannerTotal) bannerTotal.textContent = srsSession.queue.length;
+    }
+
+    function buildSrsBannerHTML() {
+      if (dueSubMode === 'leech') {
+        const n = srsGetLeeches().length;
+        return `
+          <div class="srs-banner">
+            <div class="srs-banner-main">
+              <div class="srs-banner-title">😵 Từ hay quên</div>
+              <div class="srs-banner-sub">${n} từ bị quên ≥ ${SRS_LEECH_LAPSES} lần · xem kỹ ví dụ, đặt câu để nhớ sâu</div>
+            </div>
+            <button type="button" class="srs-mini-btn" onclick="srsGoToDue('due')">◀ Ôn hôm nay</button>
+          </div>`;
+      }
+      const remaining = srsRemainingToday();
+      const total = srsSession.queue.length;
+      return `
+        <div class="srs-banner">
+          <div class="srs-banner-main">
+            <div class="srs-banner-title">🔔 Ôn hôm nay</div>
+            <div class="srs-banner-sub">Còn <b id="srsBannerRemaining">${remaining}</b> / <span id="srsBannerTotal">${total}</span> từ · ✓ lên cấp · ✕ tụt 2 cấp</div>
+          </div>
+          <button type="button" class="srs-mini-btn" onclick="openSrsStatsModal()">📊 Lịch ôn</button>
+        </div>`;
+    }
+
+    function srsGoToDue(mode) {
+      dueSubMode = mode === 'leech' ? 'leech' : 'due';
+      currentLevel = 'due';
+      currentGroupIndex = 0;
+      document.querySelectorAll('.level-tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-level') === 'due'));
+      if (typeof resetShuffleState === 'function') resetShuffleState();
+      saveCurrentState();
+      updateLevelDropdownLabel();
+      updateGroupWordsState();
+      renderGroupDropdown();
+      renderVocabList();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+    window.srsGoToDue = srsGoToDue;
+
+    function openSrsStatsModal() {
+      const modal = document.getElementById('srsStatsModal');
+      const body = document.getElementById('srsStatsBody');
+      if (!modal || !body) return;
+      const t = srsToday();
+      const lookup = srsGetLookup();
+      const levelCounts = new Array(SRS_MAX_LEVEL + 1).fill(0);
+      const forecast = new Array(7).fill(0);
+      let total = 0;
+      Object.keys(srsData).forEach(h => {
+        const r = srsGet(h);
+        if (!r || !lookup.has(h)) return;
+        total++;
+        levelCounts[Math.max(0, Math.min(SRS_MAX_LEVEL, r.l || 0))]++;
+        const diff = r.d - t;
+        if (diff >= 1 && diff <= 6) forecast[diff]++;
+      });
+      forecast[0] = srsRemainingToday();
+      const leechCount = srsGetLeeches().length;
+      const maxLevel = Math.max(1, ...levelCounts);
+      const maxFc = Math.max(1, ...forecast);
+      const weekdays = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+
+      const levelRows = levelCounts.map((c, lv) => `
+        <div class="srs-lv-row">
+          <span class="srs-lv-chip" style="background:${SRS_COLORS[lv]};"></span>
+          <span class="srs-lv-name">Cấp ${lv} · ${SRS_COLOR_NAMES[lv]}</span>
+          <div class="srs-lv-track"><div class="srs-lv-fill" style="width:${Math.round(c / maxLevel * 100)}%; background:${SRS_COLORS[lv]};"></div></div>
+          <span class="srs-lv-count">${c}</span>
+        </div>`).join('');
+
+      const fcCols = forecast.map((c, i) => {
+        const d = new Date((t + i) * 86400000);
+        const label = i === 0 ? 'Nay' : (i === 1 ? 'Mai' : weekdays[d.getUTCDay()]);
+        return `
+          <div class="srs-fc-col">
+            <div class="srs-fc-num">${c}</div>
+            <div class="srs-fc-bar-wrap"><div class="srs-fc-bar" style="height:${Math.max(4, Math.round(c / maxFc * 100))}%;"></div></div>
+            <div class="srs-fc-label">${label}</div>
+          </div>`;
+      }).join('');
+
+      body.innerHTML = `
+        <div class="srs-stat-summary">
+          <div><b>${total}</b><span>từ trong lịch</span></div>
+          <div><b>${forecast[0]}</b><span>cần ôn hôm nay</span></div>
+          <div class="srs-stat-click" onclick="closeSrsStatsModal(); srsGoToDue('leech');"><b>${leechCount}</b><span>😵 hay quên</span></div>
+        </div>
+        <div class="srs-section-label">Phân bố cấp độ</div>
+        <div class="srs-lv-list">${levelRows}</div>
+        <div class="srs-section-label">7 ngày tới</div>
+        <div class="srs-fc">${fcCols}</div>
+        <div class="srs-note">✓ đúng khi đến hạn → lên 1 cấp · ✕ quên → tụt 2 cấp, ôn lại ngày mai.<br>Khoảng ôn: 1 · 2 · 4 · 8 · 16 · 35 ngày.</div>
+      `;
+      modal.classList.add('active');
+    }
+    window.openSrsStatsModal = openSrsStatsModal;
+
+    function closeSrsStatsModal() {
+      const modal = document.getElementById('srsStatsModal');
+      if (modal) modal.classList.remove('active');
+    }
+    window.closeSrsStatsModal = closeSrsStatsModal;
+
     // Helper to update Custom & Upgrade Level Tab word count
     function updateCustomLevelTabCount() {
       const countCustom = document.getElementById('countLevelCustom');
@@ -3127,6 +3772,8 @@
       if (countUpgrade) {
         countUpgrade.textContent = `${upgradeList.length} từ`;
       }
+      srsInvalidateLookup();
+      if (typeof updateSrsBell === 'function') updateSrsBell();
     }
 
     // Dropdown helpers for compact study bar
@@ -3137,6 +3784,7 @@
       else if (currentLevel === 'hsk79') lbl.textContent = 'HSK 7-9';
       else if (currentLevel === 'custom') lbl.textContent = '📁 Tự tạo';
       else if (currentLevel === 'upgrade') lbl.textContent = '✨ Nâng cấp';
+      else if (currentLevel === 'due') lbl.textContent = dueSubMode === 'leech' ? '😵 Hay quên' : '🔔 Ôn hôm nay';
     }
 
     function updateFilterDropdownLabel() {
@@ -3219,6 +3867,9 @@
       if (currentLevel === 'upgrade') {
         return upgradeList;
       }
+      if (currentLevel === 'due') {
+        return srsGetDueWords();
+      }
       return hsk79List;
     }
 
@@ -3299,6 +3950,7 @@
         deletedReadingArticleIds: deletedReadingArticleIds || [],
         openrouter_api_key: localStorage.getItem('openrouter_api_key') || '',
         reading_audio_speed: localStorage.getItem('hsk_reading_audio_speed') || '1.0',
+        srsData: srsData || {},
         updated_at: new Date().toISOString()
       };
       // AI explanations live in their own table (hsk_ai_explanations). Only keep them in the blob
@@ -3476,6 +4128,11 @@
           if (rowData.reading_audio_speed) {
             localStorage.setItem('hsk_reading_audio_speed', rowData.reading_audio_speed);
           }
+          if (rowData.srsData && typeof rowData.srsData === 'object') {
+            srsMergeData(rowData.srsData);
+          }
+          srsEnsureEnrolled();
+          updateSrsBell();
 
           migrateStoredDataToSimplified();
           updateCustomLevelTabCount();
@@ -3993,6 +4650,112 @@
           });
         }
         if (appHeaderTitle) appHeaderTitle.textContent = currentCustomGroupId === 'all_custom_groups' ? `🌟 Ôn tổng` : `📁 Tự tạo`;
+        return;
+      }
+
+      // 🔔 Smart review level (daily due queue / leeches)
+      if (currentLevel === 'due') {
+        const dueWords = getCurrentLevelWords();
+        const totalGroupsDue = Math.max(1, Math.ceil(dueWords.length / 100));
+        if (isNaN(currentGroupIndex) || currentGroupIndex < 0 || currentGroupIndex >= totalGroupsDue) currentGroupIndex = 0;
+        const s = currentGroupIndex * 100;
+        const e = Math.min(s + 100, dueWords.length);
+
+        const customTextEl = document.getElementById('customGroupSelectText');
+        if (customTextEl) {
+          customTextEl.innerHTML = dueSubMode === 'leech'
+            ? `😵 Hay quên (${dueWords.length} từ)`
+            : (dueWords.length === 0 ? `🔔 Không có từ đến hạn` : `🔔 Nhóm ${currentGroupIndex + 1} (${s + 1}-${e})`);
+        }
+
+        if (listContainer) {
+          const queueAll = srsGetTodayQueue();
+          const remaining = srsRemainingToday();
+          const leeches = srsGetLeeches();
+
+          const summary = document.createElement('div');
+          summary.className = 'srs-picker-summary';
+          summary.innerHTML = `
+            <div>
+              <div class="srs-picker-summary-title">🔔 Ôn hôm nay</div>
+              <div class="srs-picker-summary-sub">Còn <b>${remaining}</b> / ${queueAll.length} từ cần ôn</div>
+            </div>
+            <button type="button" class="srs-mini-btn" id="btnPickerOpenSrsStats">📊 Lịch ôn</button>
+          `;
+          listContainer.appendChild(summary);
+          const statsBtn = summary.querySelector('#btnPickerOpenSrsStats');
+          if (statsBtn) statsBtn.addEventListener('click', (ev) => { ev.stopPropagation(); openSrsStatsModal(); });
+
+          const queueGroups = Math.ceil(queueAll.length / 100);
+          if (queueGroups === 0) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.style.cssText = 'padding: 18px 12px; text-align: center; color: #9ca3af; font-size: 13px; line-height: 1.5;';
+            emptyDiv.innerHTML = '🎉 Hôm nay không có từ nào đến hạn ôn!';
+            listContainer.appendChild(emptyDiv);
+          }
+          for (let i = 0; i < queueGroups; i++) {
+            const gs = i * 100;
+            const ge = Math.min(gs + 100, queueAll.length);
+            const slice = queueAll.slice(gs, ge);
+            const doneCount = slice.filter(h => srsSession.ticks[h] === 'correct').length;
+            const isActive = dueSubMode === 'due' && i === currentGroupIndex;
+            const done = doneCount === slice.length;
+            const itemDiv = document.createElement('div');
+            itemDiv.className = `group-picker-item ${isActive ? 'active' : ''} ${done ? 'completed' : ''}`;
+            itemDiv.style.cursor = 'pointer';
+            itemDiv.innerHTML = `
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size: 14px; font-weight: 700;">${done ? '💜' : (isActive ? '▶' : '🔔')}</span>
+                <div style="font-size: 13.5px; font-weight: 700;">Nhóm ${i + 1} (${gs + 1} - ${ge} từ)</div>
+              </div>
+              <span class="group-picker-badge ${done ? 'completed' : 'in-progress'}">${done ? '🎉 ' : ''}${doneCount}/${slice.length} từ</span>
+            `;
+            itemDiv.addEventListener('click', () => {
+              dueSubMode = 'due';
+              currentGroupIndex = i;
+              resetShuffleState();
+              saveCurrentState();
+              updateLevelDropdownLabel();
+              updateGroupWordsState();
+              renderGroupDropdown();
+              renderVocabList();
+              const modal = document.getElementById('groupPickerModal');
+              if (modal) modal.classList.remove('active');
+            });
+            listContainer.appendChild(itemDiv);
+          }
+
+          const hr = document.createElement('div');
+          hr.style.cssText = 'margin: 6px 0; border-bottom: 1px dashed #e5e7eb;';
+          listContainer.appendChild(hr);
+
+          const leechDiv = document.createElement('div');
+          const leechActive = dueSubMode === 'leech';
+          leechDiv.className = `group-picker-item ${leechActive ? 'active' : ''}`;
+          leechDiv.style.cursor = 'pointer';
+          leechDiv.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size: 14px; font-weight: 700;">${leechActive ? '▶' : '😵'}</span>
+              <div style="font-size: 13.5px; font-weight: 700;">Từ hay quên <span style="font-weight:600; color:#9a8cb3; font-size:11.5px;">(quên ≥ ${SRS_LEECH_LAPSES} lần)</span></div>
+            </div>
+            <span class="group-picker-badge in-progress">${leeches.length} từ</span>
+          `;
+          leechDiv.addEventListener('click', () => {
+            dueSubMode = 'leech';
+            currentGroupIndex = 0;
+            resetShuffleState();
+            saveCurrentState();
+            updateLevelDropdownLabel();
+            updateGroupWordsState();
+            renderGroupDropdown();
+            renderVocabList();
+            const modal = document.getElementById('groupPickerModal');
+            if (modal) modal.classList.remove('active');
+          });
+          listContainer.appendChild(leechDiv);
+        }
+
+        if (appHeaderTitle) appHeaderTitle.textContent = dueSubMode === 'leech' ? '😵 Hay quên' : '🔔 Ôn hôm nay';
         return;
       }
 
@@ -5938,10 +6701,11 @@ Lưu ý:
         col1HTML = `<div class="col-main">${basicBlock}</div>`;
         col2HTML = `<div class="col-main">${isCol2Visible ? upgradedBlock : blankBlockUpgrade}</div>`;
       } else {
+        const srsDot = currentLevel !== 'upgrade' ? srsLevelDotHTML(item.hanzi) : '';
         const hanziBlock = `
           ${showPinyin ? `<div class="pinyin-text">${item.pinyin || ''}</div>` : ''}
           <div class="hanzi-text" onclick="handleHanziClick('${safeHanzi}', '${safePinyin}')" title="${tapHanziMode === 'speak' ? 'chạm để nghe phát âm' : 'chạm để tra giải thích AI'}">
-            ${item.hanzi}
+            ${item.hanzi} ${srsDot}
           </div>
         `;
 
@@ -6044,9 +6808,15 @@ Lưu ý:
         let emptyMsg = 'Không có từ nào trong mục này.';
         if (activeTab === 'new') emptyMsg = '🎉 Bạn đã thuộc tất cả từ trong nhóm này!';
         if (activeTab === 'review') emptyMsg = '✨ Tuyệt vời! Không có từ nào bị đánh dấu sai trong nhóm này.';
+        if (currentLevel === 'due' && groupWordsState.length === 0) {
+          emptyMsg = dueSubMode === 'leech'
+            ? '👏 Chưa có từ nào bị quên từ 3 lần trở lên.'
+            : '🎉 Hôm nay không có từ nào đến hạn ôn!<br><span style="font-size:12.5px;">Tick từ ở các nhóm HSK / Tự tạo để đưa từ vào lịch ôn.</span>';
+        }
 
         vocabListEl.innerHTML = `
-          <div style="padding: 40px 20px; text-align: center; color: #9ca3af; font-size: 14.5px;">
+          ${currentLevel === 'due' ? buildSrsBannerHTML() : ''}
+          <div style="padding: 40px 20px; text-align: center; color: #9ca3af; font-size: 14.5px; line-height: 1.6;">
             ${emptyMsg}
           </div>
         `;
@@ -6059,6 +6829,13 @@ Lưu ý:
       }
 
       const fragment = document.createDocumentFragment();
+
+      // 🔔 Smart review summary banner
+      if (currentLevel === 'due') {
+        const bannerWrap = document.createElement('div');
+        bannerWrap.innerHTML = buildSrsBannerHTML();
+        if (bannerWrap.firstElementChild) fragment.appendChild(bannerWrap.firstElementChild);
+      }
 
       // Prepend Back to Reading Passage Banner if studying a Reading Article group
       if (currentLevel === 'custom' && currentCustomGroupId) {
@@ -6169,6 +6946,11 @@ Lưu ý:
         }
       }
 
+      // Smart review scheduling (upgrade group is self-managed → skipped)
+      if (currentLevel !== 'upgrade') {
+        srsOnTick(hanzi, currentStatus, updatedStatus, currentLevel === 'due' ? 'due' : 'group');
+      }
+
       // Update state item revealed flag
       const item = groupWordsState.find(v => v.hanzi === hanzi);
       if (item) item.revealed = true;
@@ -6245,7 +7027,7 @@ Lưu ý:
 
       // Filter results
       let results = pool.filter(item => {
-        const status = getWordStatus(item.hanzi);
+        const status = getProgressStatus(item.hanzi);
         if (statusFilter === 'correct' && status !== 'correct') return false;
         if (statusFilter === 'wrong' && status !== 'wrong') return false;
         if (statusFilter === 'new' && status !== null) return false;
@@ -6264,8 +7046,8 @@ Lưu ý:
 
       // Update Stats
       const totalAll = pool.length;
-      const totalLearned = pool.filter(i => getWordStatus(i.hanzi) === 'correct').length;
-      const totalWrong = pool.filter(i => getWordStatus(i.hanzi) === 'wrong').length;
+      const totalLearned = pool.filter(i => getProgressStatus(i.hanzi) === 'correct').length;
+      const totalWrong = pool.filter(i => getProgressStatus(i.hanzi) === 'wrong').length;
       const pct = totalAll > 0 ? ((totalLearned / totalAll) * 100).toFixed(1) : 0;
 
       libraryStatsEl.innerHTML = `
@@ -6282,7 +7064,7 @@ Lưu ý:
       // Render top 80 items lazy
       const displayList = results.slice(0, 80);
       displayList.forEach(item => {
-        const status = getWordStatus(item.hanzi);
+        const status = getProgressStatus(item.hanzi);
         const row = document.createElement('div');
         row.className = 'library-item';
 
@@ -6325,12 +7107,18 @@ Lưu ý:
 
     function handleLibraryMark(hanzi, newStatus, event) {
       if (event) event.stopPropagation();
-      const currentStatus = getWordStatus(hanzi);
+      const currentStatus = getProgressStatus(hanzi);
+      let updatedStatus;
       if (currentStatus === newStatus) {
-        setWordStatus(hanzi, null);
+        updatedStatus = null;
+        setProgressStatus(hanzi, null);
       } else {
-        setWordStatus(hanzi, newStatus);
+        updatedStatus = newStatus;
+        setProgressStatus(hanzi, newStatus);
         if (autoSpeakOnTick) speakChinese(hanzi);
+      }
+      if (srsGetLookup().has(hanzi)) {
+        srsOnTick(hanzi, currentStatus, updatedStatus, 'group');
       }
       renderLibraryResults();
       renderVocabList();
@@ -6964,12 +7752,13 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
     // Event Listeners Initialization
     function setupEventListeners() {
-      // Level Tabs Switch (HSK 6 vs HSK 7-9 vs Custom vs Upgrade)
+      // Level Tabs Switch (HSK 6 vs HSK 7-9 vs Custom vs Upgrade vs Due)
       document.querySelectorAll('.level-tab').forEach(tab => {
         tab.addEventListener('click', () => {
           document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
           tab.classList.add('active');
           currentLevel = tab.getAttribute('data-level');
+          if (currentLevel === 'due') dueSubMode = 'due';
           const levelContainer = document.getElementById('levelDropdownContainer');
           if (levelContainer) levelContainer.classList.remove('open');
           updateLevelDropdownLabel();
@@ -6980,6 +7769,39 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           renderGroupDropdown();
           renderVocabList();
         });
+      });
+
+      // SRS Bell Header Button
+      const btnSrsBell = document.getElementById('btnSrsBell');
+      if (btnSrsBell) {
+        btnSrsBell.addEventListener('click', () => {
+          srsGoToDue('due');
+        });
+      }
+
+      // SRS Stats Modal backdrop close
+      const srsStatsModal = document.getElementById('srsStatsModal');
+      if (srsStatsModal) {
+        srsStatsModal.addEventListener('click', (e) => {
+          if (e.target === srsStatsModal) closeSrsStatsModal();
+        });
+      }
+
+      // Midnight / visibility wake up to ensure due date refresh
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          srsEnsureDay();
+          updateSrsBell();
+          if (currentLevel === 'due') {
+            updateGroupWordsState();
+            renderGroupDropdown();
+            renderVocabList();
+          }
+        }
+      });
+      window.addEventListener('focus', () => {
+        srsEnsureDay();
+        updateSrsBell();
       });
 
       // Custom Group Select Modal Trigger (Font Mali)
@@ -9306,7 +10128,8 @@ ${chunkText}
               upgradeWords: safeGetJSON('hsk_upgrade_words', []),
               userProgress: safeGetJSON('hsk_user_progress', {}),
               aiCache: aiCache || {},
-              groupCompletedDates: safeGetJSON('hsk_group_completed_dates', {})
+              groupCompletedDates: safeGetJSON('hsk_group_completed_dates', {}),
+              srsData: safeGetJSON('hsk_srs_data', {})
             };
 
             const jsonStr = JSON.stringify(backupPayload, null, 2);
@@ -9373,6 +10196,12 @@ ${chunkText}
                 groupCompletedDates = parsed.groupCompletedDates;
                 localStorage.setItem('hsk_group_completed_dates', JSON.stringify(groupCompletedDates));
               }
+
+              if (parsed.srsData && typeof parsed.srsData === 'object') {
+                srsMergeData(parsed.srsData);
+              }
+              srsEnsureEnrolled();
+              updateSrsBell();
 
               if (typeof saveToCloud === 'function') saveToCloud(false);
 
@@ -9519,6 +10348,8 @@ ${chunkText}
       initTTS();
       setupEventListeners();
       updateCustomLevelTabCount();
+      srsEnsureEnrolled();
+      updateSrsBell();
 
       // Restore active level tab UI
       document.querySelectorAll('.level-tab').forEach(t => {
