@@ -1341,6 +1341,26 @@
       font-weight: 700 !important;
     }
 
+    /* Underline for HSK 6 vocabulary: 奶绿 (Milky Matcha Green) */
+    .reading-token.token-hsk6 {
+      text-decoration: underline !important;
+      text-decoration-color: #689f76 !important;
+      -webkit-text-decoration-color: #689f76 !important;
+      text-decoration-thickness: 2.2px !important;
+      text-underline-offset: 3.5px !important;
+      text-decoration-skip-ink: none !important;
+    }
+
+    /* Underline for HSK 7-9 vocabulary: 奶棕 (Milky Brown / Milk Tea) */
+    .reading-token.token-hsk79 {
+      text-decoration: underline !important;
+      text-decoration-color: #b08968 !important;
+      -webkit-text-decoration-color: #b08968 !important;
+      text-decoration-thickness: 2.2px !important;
+      text-underline-offset: 3.5px !important;
+      text-decoration-skip-ink: none !important;
+    }
+
     .tiny-para-toggle-btn {
       font-size: 13.5px !important;
       padding: 0 2px !important;
@@ -2047,6 +2067,21 @@
           <button class="primary-submit-btn" id="btnOpenStudyGroupFromReading" style="padding: 5px 9px; font-size: 11.5px; font-weight: 700; border-radius: 8px; white-space: nowrap; flex-shrink: 0;" title="Mở giao diện ôn tập 2 cột">📝 Học 2 cột</button>
         </div>
 
+        <!-- Tiny Vocabulary Stats Bar (H6 奶绿 & H7-9 奶棕 counts & legend) -->
+        <div id="readingVocabStatsBar" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 9px; padding: 0 4px;">
+          <div style="display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <span style="font-size: 11px; font-weight: 700; color: #3d6b46; background: #edf6f0; border: 1px solid #cce5d4; padding: 1.5px 7px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mali);" title="Từ vựng thuộc list HSK 6 (gạch chân màu 奶绿)">
+              <span style="width: 10px; height: 2.5px; background: #689f76; border-radius: 2px; display: inline-block;"></span>
+              H6: <b id="statCountH6">0</b> từ
+            </span>
+            <span style="font-size: 11px; font-weight: 700; color: #7c5335; background: #faf4ef; border: 1px solid #ebd9cb; padding: 1.5px 7px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mali);" title="Từ vựng thuộc list HSK 7-9 (gạch chân màu 奶棕)">
+              <span style="width: 10px; height: 2.5px; background: #b08968; border-radius: 2px; display: inline-block;"></span>
+              H7-9: <b id="statCountH79">0</b> từ
+            </span>
+          </div>
+          <span style="font-size: 10.5px; color: #9ca3af; font-family: var(--font-mali);" id="statCountTotalWords"></span>
+        </div>
+
         <!-- Passage Container -->
         <div id="readingPassageContainer" class="reading-passage-box">
           <!-- Rendered dynamically -->
@@ -2059,6 +2094,7 @@
           <div style="display: flex; align-items: center; gap: 8px;">
             <span id="drawerHanzi" style="font-family: var(--font-hanzi); font-size: 24px; font-weight: 700; color: #111827;"></span>
             <span id="drawerPinyin" style="font-size: 14px; font-weight: 700; color: var(--primary-color);"></span>
+            <span id="drawerHskBadge" style="display: none;"></span>
             <button class="icon-action-btn" id="btnSpeakDrawerWord" style="padding: 2px 6px; font-size: 14px;" title="Nghe phát âm">🔊</button>
           </div>
           <button id="btnCloseTokenDrawer" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #9ca3af;">✕</button>
@@ -6574,6 +6610,70 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
     let activeTokenItem = null;
 
+    // Helper to identify if a Chinese token belongs to HSK 6 or HSK 7-9 (Pure client-side matching, 0 AI cost)
+    function getReadingTokenHskLevel(hanzi) {
+      if (!hanzi || typeof hanzi !== 'string') return null;
+      const clean = hanzi.trim();
+      if (!clean) return null;
+
+      // 1. Direct dictionary match
+      if (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[clean]) return 'hsk6';
+      if (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[clean]) return 'hsk79';
+
+      // 2. Strip trailing grammatical particles (地, 的, 得, 了, 着, 过, 们, 儿)
+      const stripped = clean.replace(/(?:的|地|得|了|着|过|们|儿)+$/g, '');
+      if (stripped && stripped !== clean) {
+        if (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[stripped]) return 'hsk6';
+        if (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[stripped]) return 'hsk79';
+      }
+
+      // 3. Substring match for composite phrase tokens (2 to 4 chars)
+      if (clean.length >= 3 && clean.length <= 6) {
+        if (typeof hsk6Data !== 'undefined' && hsk6Data) {
+          for (let len = Math.min(4, clean.length); len >= 2; len--) {
+            for (let i = 0; i <= clean.length - len; i++) {
+              const sub = clean.substr(i, len);
+              if (hsk6Data[sub]) return 'hsk6';
+            }
+          }
+        }
+        if (typeof hsk79Data !== 'undefined' && hsk79Data) {
+          for (let len = Math.min(4, clean.length); len >= 2; len--) {
+            for (let i = 0; i <= clean.length - len; i++) {
+              const sub = clean.substr(i, len);
+              if (hsk79Data[sub]) return 'hsk79';
+            }
+          }
+        }
+      }
+
+      return null;
+    }
+
+    // Helper to calculate HSK 6 and HSK 7-9 vocabulary counts in a reading article
+    function getArticleHskVocabStats(art) {
+      if (!art) return { h6Count: 0, h79Count: 0 };
+      let h6Count = 0;
+      let h79Count = 0;
+
+      const processToken = (tok) => {
+        if (!tok || !tok.isVocab || !tok.hanzi) return;
+        const level = getReadingTokenHskLevel(tok.hanzi);
+        if (level === 'hsk6') h6Count++;
+        else if (level === 'hsk79') h79Count++;
+      };
+
+      if (Array.isArray(art.paragraphs) && art.paragraphs.length > 0) {
+        art.paragraphs.forEach(para => {
+          (para.tokens || []).forEach(processToken);
+        });
+      } else if (Array.isArray(art.tokens)) {
+        art.tokens.forEach(processToken);
+      }
+
+      return { h6Count, h79Count };
+    }
+
     // Render Saved Articles List inside Input Modal
     function renderSavedReadingArticles() {
       if (!savedReadingArticlesList) return;
@@ -6592,6 +6692,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       savedReadingArticlesList.innerHTML = readingArticles.map((art) => {
         const selectedCount = art.selectedWords ? art.selectedWords.length : 0;
         const dateTag = art.dateTag || art.createdAt || new Date().toLocaleDateString('vi-VN');
+        const stats = getArticleHskVocabStats(art);
 
         return `
           <div style="padding: 10px 12px; background: #ffffff; border: 1px solid #e2d8ef; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
@@ -6599,9 +6700,11 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
               <div style="font-size: 13.5px; font-weight: 700; color: #111827; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
                 📖 ${art.title}
               </div>
-              <div style="font-size: 11.5px; color: #6b7280; margin-top: 3px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                <span style="background: #f3eef9; color: #766299; font-size: 10.5px; padding: 1.5px 6px; border-radius: 6px; font-weight: 700; border: 1px solid #e2d8ef;">📅 ${dateTag}</span>
-                <span>Đã chọn <b>${selectedCount}</b> từ ôn</span>
+              <div style="font-size: 11px; color: #6b7280; margin-top: 3px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; font-family: var(--font-mali);">
+                <span style="background: #f3eef9; color: #766299; font-size: 10px; padding: 1px 6px; border-radius: 5px; font-weight: 700; border: 1px solid #e2d8ef;">📅 ${dateTag}</span>
+                <span style="font-size: 10px; font-weight: 700; color: #3d6b46; background: #edf6f0; border: 1px solid #cce5d4; padding: 1px 6px; border-radius: 5px;" title="Từ vựng HSK 6 (gạch chân 奶绿)">H6: <b>${stats.h6Count}</b></span>
+                <span style="font-size: 10px; font-weight: 700; color: #7c5335; background: #faf4ef; border: 1px solid #ebd9cb; padding: 1px 6px; border-radius: 5px;" title="Từ vựng HSK 7-9 (gạch chân 奶棕)">H7-9: <b>${stats.h79Count}</b></span>
+                <span>• Đã chọn <b>${selectedCount}</b> từ ôn</span>
               </div>
             </div>
             <div style="display: flex; gap: 5px; flex-shrink: 0;">
@@ -6881,6 +6984,7 @@ ${chunkText}
         readingArticles.forEach((art, idx) => {
           const isActive = art.id === activeReadingArticleId;
           const selectedCount = (art.selectedWords || []).length;
+          const stats = getArticleHskVocabStats(art);
           
           const itemDiv = document.createElement('div');
           itemDiv.className = `group-picker-item ${isActive ? 'active' : ''}`;
@@ -6893,8 +6997,10 @@ ${chunkText}
                 <div style="font-size: 13.5px; font-weight: 700; color: #1f2937; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
                   ${idx + 1}. ${art.title}
                 </div>
-                <div style="font-size: 11.5px; color: #6b7280; margin-top: 2px;">
-                  ${art.paragraphs ? art.paragraphs.length : 0} đoạn văn
+                <div style="font-size: 11px; color: #6b7280; margin-top: 2px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; font-family: var(--font-mali);">
+                  <span>${art.paragraphs ? art.paragraphs.length : 0} đoạn</span>
+                  <span style="font-size: 10px; font-weight: 700; color: #3d6b46; background: #edf6f0; border: 1px solid #cce5d4; padding: 0.5px 5px; border-radius: 5px;" title="Từ HSK 6 (gạch chân 奶绿)">H6: <b>${stats.h6Count}</b></span>
+                  <span style="font-size: 10px; font-weight: 700; color: #7c5335; background: #faf4ef; border: 1px solid #ebd9cb; padding: 0.5px 5px; border-radius: 5px;" title="Từ HSK 7-9 (gạch chân 奶棕)">H7-9: <b>${stats.h79Count}</b></span>
                 </div>
               </div>
             </div>
@@ -7550,7 +7656,11 @@ ${chunkText}
 
             const isSelected = selectedMap.has(tok.hanzi);
             const selectedClass = isSelected ? 'selected' : '';
-            return `<span class="reading-token ${selectedClass}" data-index="${globalIdx}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)">${tok.hanzi}</span>`;
+            const hskLevel = getReadingTokenHskLevel(tok.hanzi);
+            const hskClass = hskLevel === 'hsk6' ? 'token-hsk6' : (hskLevel === 'hsk79' ? 'token-hsk79' : '');
+            const hskTitle = hskLevel === 'hsk6' ? ' (Từ vựng HSK 6 - gạch chân 奶绿)' : (hskLevel === 'hsk79' ? ' (Từ vựng HSK 7-9 - gạch chân 奶棕)' : '');
+
+            return `<span class="reading-token ${selectedClass} ${hskClass}" data-index="${globalIdx}" title="${tok.hanzi}${hskTitle}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)">${tok.hanzi}</span>`;
           }).join('');
 
           return `
@@ -7563,6 +7673,18 @@ ${chunkText}
       }).join('');
 
       readingPassageContainer.innerHTML = paragraphsHTML || '<div style="margin-bottom: 14px; line-height: 2.0;"></div>';
+
+      // Update Vocabulary Statistics Tag Bar (H6 奶绿 & H7-9 奶棕 counts)
+      const stats = getArticleHskVocabStats(art);
+      const statCountH6El = document.getElementById('statCountH6');
+      const statCountH79El = document.getElementById('statCountH79');
+      const statCountTotalWordsEl = document.getElementById('statCountTotalWords');
+
+      if (statCountH6El) statCountH6El.textContent = stats.h6Count;
+      if (statCountH79El) statCountH79El.textContent = stats.h79Count;
+      if (statCountTotalWordsEl) {
+        statCountTotalWordsEl.textContent = `Tổng: ${stats.h6Count + stats.h79Count} từ mục tiêu`;
+      }
     }
 
     // Token clicked inside Interactive Reader
@@ -7588,6 +7710,22 @@ ${chunkText}
       drawerPinyin.textContent = tok.pinyin || '';
       drawerMeaning.textContent = `Nghĩa: ${tok.vietnamese || ''}`;
       btnSpeakDrawerWord.onclick = () => speakChinese(tok.hanzi);
+
+      const drawerHskBadge = document.getElementById('drawerHskBadge');
+      if (drawerHskBadge) {
+        const hskLvl = getReadingTokenHskLevel(tok.hanzi);
+        if (hskLvl === 'hsk6') {
+          drawerHskBadge.style.display = 'inline-block';
+          drawerHskBadge.style.cssText = 'display: inline-block; font-size: 11px; font-weight: 700; color: #3d6b46; background: #edf6f0; border: 1px solid #cce5d4; padding: 1.5px 7px; border-radius: 6px; font-family: var(--font-mali); vertical-align: middle;';
+          drawerHskBadge.textContent = 'HSK 6 (奶绿)';
+        } else if (hskLvl === 'hsk79') {
+          drawerHskBadge.style.display = 'inline-block';
+          drawerHskBadge.style.cssText = 'display: inline-block; font-size: 11px; font-weight: 700; color: #7c5335; background: #faf4ef; border: 1px solid #ebd9cb; padding: 1.5px 7px; border-radius: 6px; font-family: var(--font-mali); vertical-align: middle;';
+          drawerHskBadge.textContent = 'HSK 7-9 (奶棕)';
+        } else {
+          drawerHskBadge.style.display = 'none';
+        }
+      }
 
       const isSelected = (art.selectedWords || []).some(w => w.hanzi === tok.hanzi);
       updateDrawerButtonState(isSelected);
