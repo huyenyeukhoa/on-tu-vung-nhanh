@@ -2117,9 +2117,11 @@
       <!-- Bottom Inspector Drawer for Tapped Token -->
       <div id="readingTokenDrawer" class="token-popover-drawer" style="display: none;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-          <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
-            <span id="drawerHanzi" style="font-family: var(--font-hanzi); font-size: 24px; font-weight: 700; color: #111827; white-space: nowrap; flex-shrink: 0;"></span>
-            <span id="drawerPinyin" style="font-size: 14px; font-weight: 700; color: var(--primary-color); min-width: 0;"></span>
+          <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+            <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0; line-height: 1.2;">
+              <span id="drawerHanzi" style="font-family: var(--font-hanzi); font-size: 24px; font-weight: 700; color: #111827; white-space: nowrap;"></span>
+              <span id="drawerPinyin" style="font-size: 13.5px; font-weight: 700; color: var(--primary-color); margin-top: 2px;"></span>
+            </div>
             <button class="icon-action-btn" id="btnSpeakDrawerWord" style="padding: 2px 6px; font-size: 14px; flex-shrink: 0;" title="Nghe phát âm">🔊</button>
           </div>
           <button id="btnCloseTokenDrawer" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #9ca3af; flex-shrink: 0;">✕</button>
