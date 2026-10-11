@@ -1360,9 +1360,28 @@
       text-underline-offset: 3.5px !important;
     }
 
+    /* Partial underline: only the HSK sub-word inside a phrase token (e.g. 往常 in 像往常一样) */
+    .hsk-seg.hsk-seg-6 {
+      text-decoration: underline !important;
+      text-decoration-color: #689f76 !important;
+      -webkit-text-decoration-color: #689f76 !important;
+      text-decoration-thickness: 2.2px !important;
+      text-underline-offset: 3.5px !important;
+      text-decoration-skip-ink: none !important;
+    }
+    .hsk-seg.hsk-seg-79 {
+      text-decoration: underline !important;
+      text-decoration-color: #b08968 !important;
+      -webkit-text-decoration-color: #b08968 !important;
+      text-decoration-thickness: 2.2px !important;
+      text-underline-offset: 3.5px !important;
+      text-decoration-skip-ink: none !important;
+    }
+
     /* Support toggling off vocabulary underlines */
     #readingPassageContainer.hide-underlines .reading-token.token-hsk6,
-    #readingPassageContainer.hide-underlines .reading-token.token-hsk79 {
+    #readingPassageContainer.hide-underlines .reading-token.token-hsk79,
+    #readingPassageContainer.hide-underlines .hsk-seg {
       text-decoration: none !important;
     }
 
@@ -6645,9 +6664,51 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         if (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[stripped]) return 'hsk79';
       }
 
-      // DO NOT do arbitrary substring search on multi-word phrases (e.g. '像往常一样', '胡子拉碴', '飞碟射击')
-      // as that falsely labels entire grammar structures or slang idioms as HSK 6 / 7-9 vocabulary!
+      // Whole-token level only. Sub-words inside phrases are handled by segmentTokenForHsk().
       return null;
+    }
+
+    // Split a phrase token into segments so ONLY the real HSK 6 / 7-9 word inside gets underlined.
+    // e.g. '像往常一样' -> [像][往常 (hsk79)][一样]; '胡子拉碴' -> [胡子 (hsk6)][拉碴]
+    // Uses forward maximum matching (4 -> 2 chars). Single chars are skipped to avoid false positives.
+    function segmentTokenForHsk(hanzi) {
+      if (!hanzi || typeof hanzi !== 'string') return [{ text: hanzi || '', level: null }];
+      const text = hanzi;
+      const clean = text.trim();
+      if (!clean || HSK_BASIC_STOP_WORDS.has(clean)) return [{ text, level: null }];
+
+      const has6 = (w) => typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[w];
+      const has79 = (w) => typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[w];
+
+      // Whole token is an exact HSK entry -> underline entire token
+      if (has6(clean)) return [{ text, level: 'hsk6' }];
+      if (has79(clean)) return [{ text, level: 'hsk79' }];
+
+      const n = text.length;
+      const segments = [];
+      let i = 0;
+      while (i < n) {
+        let matched = false;
+        const maxLen = Math.min(4, n - i);
+        for (let len = maxLen; len >= 2; len--) {
+          const sub = text.substr(i, len);
+          if (HSK_BASIC_STOP_WORDS.has(sub)) continue;
+          const lvl = has6(sub) ? 'hsk6' : (has79(sub) ? 'hsk79' : null);
+          if (lvl) {
+            segments.push({ text: sub, level: lvl });
+            i += len;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) {
+          const last = segments[segments.length - 1];
+          if (last && last.level === null) last.text += text[i];
+          else segments.push({ text: text[i], level: null });
+          i++;
+        }
+      }
+      return segments;
     }
 
     // Helper to calculate HSK 6 and HSK 7-9 vocabulary counts in a reading article
@@ -6658,9 +6719,10 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
       const processToken = (tok) => {
         if (!tok || !tok.isVocab || !tok.hanzi) return;
-        const level = getReadingTokenHskLevel(tok.hanzi);
-        if (level === 'hsk6') h6Count++;
-        else if (level === 'hsk79') h79Count++;
+        segmentTokenForHsk(tok.hanzi).forEach(seg => {
+          if (seg.level === 'hsk6') h6Count++;
+          else if (seg.level === 'hsk79') h79Count++;
+        });
       };
 
       if (Array.isArray(art.paragraphs) && art.paragraphs.length > 0) {
@@ -7656,11 +7718,15 @@ ${chunkText}
 
             const isSelected = selectedMap.has(tok.hanzi);
             const selectedClass = isSelected ? 'selected' : '';
-            const hskLevel = getReadingTokenHskLevel(tok.hanzi);
-            const hskClass = hskLevel === 'hsk6' ? 'token-hsk6' : (hskLevel === 'hsk79' ? 'token-hsk79' : '');
-            const hskTitle = hskLevel === 'hsk6' ? ' (Từ vựng HSK 6 - gạch chân 奶绿)' : (hskLevel === 'hsk79' ? ' (Từ vựng HSK 7-9 - gạch chân 奶棕)' : '');
+            const segs = segmentTokenForHsk(tok.hanzi);
+            const hskWords = segs.filter(s => s.level).map(s => `${s.text}: ${s.level === 'hsk6' ? 'HSK 6' : 'HSK 7-9'}`);
+            const hskTitle = hskWords.length ? ` (${hskWords.join(', ')})` : '';
+            const innerHTML = segs.map(s => s.level
+              ? `<span class="hsk-seg ${s.level === 'hsk6' ? 'hsk-seg-6' : 'hsk-seg-79'}">${s.text}</span>`
+              : s.text
+            ).join('');
 
-            return `<span class="reading-token ${selectedClass} ${hskClass}" data-index="${globalIdx}" title="${tok.hanzi}${hskTitle}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)">${tok.hanzi}</span>`;
+            return `<span class="reading-token ${selectedClass}" data-index="${globalIdx}" title="${tok.hanzi}${hskTitle}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)">${innerHTML}</span>`;
           }).join('');
 
           return `
@@ -7751,17 +7817,19 @@ ${chunkText}
 
       const drawerHskBadge = document.getElementById('drawerHskBadge');
       if (drawerHskBadge) {
-        const hskLvl = getReadingTokenHskLevel(tok.hanzi);
-        if (hskLvl === 'hsk6') {
-          drawerHskBadge.style.display = 'inline-block';
-          drawerHskBadge.style.cssText = 'display: inline-block; font-size: 11px; font-weight: 700; color: #3d6b46; background: #edf6f0; border: 1px solid #cce5d4; padding: 1.5px 7px; border-radius: 6px; font-family: var(--font-mali); vertical-align: middle;';
-          drawerHskBadge.textContent = 'HSK 6 (奶绿)';
-        } else if (hskLvl === 'hsk79') {
-          drawerHskBadge.style.display = 'inline-block';
-          drawerHskBadge.style.cssText = 'display: inline-block; font-size: 11px; font-weight: 700; color: #7c5335; background: #faf4ef; border: 1px solid #ebd9cb; padding: 1.5px 7px; border-radius: 6px; font-family: var(--font-mali); vertical-align: middle;';
-          drawerHskBadge.textContent = 'HSK 7-9 (奶棕)';
-        } else {
+        const hskSegs = segmentTokenForHsk(tok.hanzi).filter(s => s.level);
+        if (hskSegs.length === 0) {
           drawerHskBadge.style.display = 'none';
+        } else {
+          const isWhole = hskSegs.length === 1 && hskSegs[0].text.trim() === (tok.hanzi || '').trim();
+          const firstLvl = hskSegs[0].level;
+          const isH6 = firstLvl === 'hsk6';
+          drawerHskBadge.style.cssText = isH6
+            ? 'display: inline-block; font-size: 11px; font-weight: 700; color: #3d6b46; background: #edf6f0; border: 1px solid #cce5d4; padding: 1.5px 7px; border-radius: 6px; font-family: var(--font-mali); vertical-align: middle;'
+            : 'display: inline-block; font-size: 11px; font-weight: 700; color: #7c5335; background: #faf4ef; border: 1px solid #ebd9cb; padding: 1.5px 7px; border-radius: 6px; font-family: var(--font-mali); vertical-align: middle;';
+          drawerHskBadge.textContent = isWhole
+            ? (isH6 ? 'HSK 6 (奶绿)' : 'HSK 7-9 (奶棕)')
+            : hskSegs.map(s => `${s.text} · ${s.level === 'hsk6' ? 'H6' : 'H7-9'}`).join('  ');
         }
       }
 
