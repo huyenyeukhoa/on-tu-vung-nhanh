@@ -23,6 +23,7 @@
   <!-- Load HSK Dictionary Data File & Supabase SDK -->
   <script src="./hsk_dictionary.js"></script>
   <script src="./opencc_t2cn.js"></script>
+  <script src="./hanviet_dict.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -3592,6 +3593,7 @@
               <div>
                 <span style="font-size: 15.5px; font-weight: 700; color: #5e4b7e; cursor: pointer;" onclick="openAiExplainModal('${up1.hanzi}', '${up1.pinyin}')" title="Chạm để xem giải thích chi tiết">🔹 ${up1.hanzi}</span>
                 <span style="font-size: 11.5px; color: #6b7280; margin-left: 2px;">(${up1.pinyin})</span>
+                ${getHanViet(up1.hanzi) ? `<span style="font-size: 10px; font-weight: 800; color: #6b21a8; background: #faf5ff; border: 1px solid #d8b4fe; padding: 1px 5px; border-radius: 6px; margin-left: 3px;">HV: ${getHanViet(up1.hanzi)}</span>` : ''}
                 ${up1.pos ? `<span class="word-pos-tag" style="margin-left: 4px; font-size: 10.5px;">${up1.pos}</span>` : ''}
               </div>
               <div style="font-size: 12.5px; font-weight: 600; color: #4b3b66;">${up1.vietnamese}</div>
@@ -3601,6 +3603,7 @@
               <div>
                 <span style="font-size: 15.5px; font-weight: 700; color: #723e7d; cursor: pointer;" onclick="openAiExplainModal('${up2.hanzi}', '${up2.pinyin}')" title="Chạm để xem giải thích chi tiết và vai trò ngữ pháp">🌟 ${up2.hanzi}</span>
                 <span style="font-size: 11.5px; color: #6b7280; margin-left: 2px;">(${up2.pinyin})</span>
+                ${getHanViet(up2.hanzi) ? `<span style="font-size: 10px; font-weight: 800; color: #7e22ce; background: #faf5ff; border: 1px solid #d8b4fe; padding: 1px 5px; border-radius: 6px; margin-left: 3px;">HV: ${getHanViet(up2.hanzi)}</span>` : ''}
                 ${up2.pos ? `<span class="word-pos-tag" style="margin-left: 4px; font-size: 10.5px;">${up2.pos}</span>` : ''}
               </div>
               <div style="font-size: 12.5px; font-weight: 600; color: #5a2e63;">${up2.vietnamese}</div>
@@ -4479,6 +4482,21 @@ Viết bằng tiếng Việt, đúng chính tả, không dùng chữ phồn th�
       }
     }
 
+    function getHanViet(hanzi) {
+      if (!hanzi || typeof hanzi !== 'string') return '';
+      const dict = (typeof window !== 'undefined' && window.HANVIET_DICT) || {};
+      const result = [];
+      for (const ch of hanzi) {
+        if (dict[ch]) {
+          result.push(dict[ch]);
+        } else if (/[\u4e00-\u9fa5]/.test(ch)) {
+          result.push(ch);
+        }
+      }
+      return result.join(' ').toUpperCase();
+    }
+    window.getHanViet = getHanViet;
+
     // Fetch Single AI Explanation from OpenRouter (gemini-2.5-flash) - Returns cached or newly fetched data
     async function fetchSingleAiExplanation(hanzi, pinyin) {
       if (aiCache[hanzi] && aiCache[hanzi].context && aiCache[hanzi].context.includes('important-highlight')) {
@@ -4497,6 +4515,7 @@ Viết bằng tiếng Việt, đúng chính tả, không dùng chữ phồn th�
 Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json) với định dạng:
 {
   "pos": "Từ loại của từ này bằng tiếng Việt (ví dụ: Tính từ, Động từ, Danh từ, Phó từ, Thành ngữ,...)",
+  "hanViet": "Âm Hán Việt IN HOA chuẩn xác của từ này (ví dụ: NHÂN SƠN NHÂN HẢI, NHẬT ÍCH, CHƯNG CHƯNG NHẬT THƯỢNG, BẤT KHẢ TƯ NGHỊ,...)",
   "meaning": "Nghĩa tiếng Việt ngắn gọn, chuẩn xác",
   "grammarRole": "NẾU TỪ NÀY LÀ THÀNH NGỮ (成语), bắt buộc phải có mục này để phân tích rõ vai trò ngữ pháp trong câu: 1) Có làm Định ngữ (như tính từ đứng trước danh từ + 的 không? Cấu trúc: Thành ngữ + 的 + Danh từ, ví dụ cụ thể); 2) Có làm Trạng ngữ (như trạng từ đứng trước động từ + 地 không? Cấu trúc: Thành ngữ + (地) + Động từ, ví dụ cụ thể); 3) Có làm Vị ngữ (cấu trúc thế nào?), Bổ ngữ (sau 得), hay Danh từ (chủ/tân ngữ) không? Ghi công thức ghép câu ngắn gọn thực tế. NẾU KHÔNG PHẢI THÀNH NGỮ thì để chuỗi rỗng \\\"\\\".",
   "context": "Hãy giải thích cách dùng tự nhiên VÀ BẮT BUỘC KÈM THEO 2-3 VÍ DỤ TÌNH HUỐNG ĐỜI SỐNG CỤ THỂ THỰC TẾ. Viết sao cho người học dễ hình dung nhất. Trong đoạn giải thích này: 1) BẮT BUỘC bao quanh DUY NHẤT MỘT cụm từ dài hoặc một vế câu quan trọng nhất thể hiện rõ rệt sắc thái cốt lõi của từ này bằng thẻ <span class=\\'important-highlight\\'>cụm từ/vế câu cần bôi đỏ</span>. (Lưu ý: BẮT BUỘC dùng dấu nháy đơn ' cho class). 2) BẮT BUỘC bao quanh TẤT CẢ các câu/dòng lấy ví dụ ngữ cảnh (bắt đầu bằng Ví dụ, Hoặc khi, Chẳng hạn...) bằng thẻ <span class=\\'context-example-purple\\'>câu ví dụ</span> để in đậm màu tím. Yêu cầu cực kỳ nghiêm ngặt: Mỗi từ CHỈ ĐƯỢC BÔI ĐỎ ĐÚNG 1 VỊ TRÍ DUY NHẤT cho cụm từ mấu chốt.",
@@ -4508,6 +4527,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json) với đ�
 }
 Lưu ý quan trọng:
 - BẮT BUỘC trả về JSON hợp lệ (Valid JSON). Không xuống dòng trực tiếp trong chuỗi.
+- Trường hanViet BẮT BUỘC viết hoa toàn bộ (IN HOA) cho từng chữ Hán.
 - Nếu là Thành ngữ, trường grammarRole phải giải thích cực kỳ xúc tích, rõ ràng cấu trúc ngữ pháp để người học biết cách đặt câu chính xác.
 - Viết hoa chữ cái đầu tiên của câu và đầu tiêu đề theo đúng chuẩn chính tả tiếng Việt.
 - Tuyệt đối KHÔNG thêm icon loa 🔊 hay emoji âm thanh vào cuối câu chữ Hán, pinyin hoặc tiếng Việt.`;
@@ -4538,6 +4558,7 @@ Lưu ý quan trọng:
 
       parsedJSON.hanzi = hanzi;
       parsedJSON.pinyin = pinyin || '';
+      parsedJSON.hanViet = (parsedJSON.hanViet || getHanViet(hanzi) || '').trim().toUpperCase();
       if (COMMON_IDIOM_GRAMMAR_ROLES && COMMON_IDIOM_GRAMMAR_ROLES[hanzi]) {
         parsedJSON.grammarRole = parsedJSON.grammarRole || COMMON_IDIOM_GRAMMAR_ROLES[hanzi];
       }
@@ -4759,23 +4780,48 @@ Lưu ý quan trọng:
         `;
       }).join('');
 
-      const posBadgeHTML = data.pos ? `<span class="word-pos-tag">${data.pos}</span>` : '';
+      const hanVietUpper = (data.hanViet || getHanViet(data.hanzi) || '').trim().toUpperCase();
+      if (hanVietUpper && (!data.hanViet || data.hanViet !== hanVietUpper)) {
+        data.hanViet = hanVietUpper;
+        if (aiCache[data.hanzi]) {
+          aiCache[data.hanzi].hanViet = hanVietUpper;
+          persistAiEntry(data.hanzi);
+        }
+      }
+
+      const hanVietBadgeHTML = hanVietUpper ? `
+        <div style="display: inline-flex; align-items: center; gap: 4px; background: #faf5ff; border: 1.2px solid #d8b4fe; padding: 2px 8px; border-radius: 8px; box-shadow: 0 1px 3px rgba(147, 51, 234, 0.06); vertical-align: middle;">
+          <span style="font-size: 10px; font-weight: 700; color: #9333ea; font-family: var(--font-mali); text-transform: uppercase;">Hán Việt:</span>
+          <span style="font-size: 12px; font-weight: 800; color: #581c87; letter-spacing: 0.6px; font-family: var(--font-mali);">${hanVietUpper}</span>
+        </div>
+      ` : '';
+
+      const isIdiomTag = data.pos && /thành\s*ngữ|成语/i.test(data.pos);
+      const posBadgeStyle = isIdiomTag
+        ? "background: #fdf4ff; color: #9333ea; border-color: #f0abfc; font-weight: 700;"
+        : "background: #f3eef9; color: #766299; border-color: #d4c5e8; font-weight: 700;";
+      const posBadgeHTML = data.pos ? `<span class="word-pos-tag" style="${posBadgeStyle}">${data.pos}</span>` : '';
 
       aiModalBody.innerHTML = `
-        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
-          <div>
-            <div class="ai-word-title">
-              <span>${data.hanzi}</span>
-              <button class="icon-action-btn" onclick="speakChinese('${data.hanzi}')" title="phát âm từ này giọng Xiaoxiao">🔊</button>
+        <!-- Harmonious Word Identity Header Card -->
+        <div class="ai-word-header-card" style="background: linear-gradient(135deg, #f7f3fb 0%, #ffffff 100%); border: 1.5px solid #dfd3ef; border-radius: 16px; padding: 13px 15px; margin-bottom: 12px; box-shadow: 0 3px 12px rgba(118, 98, 153, 0.07);">
+          <!-- Top row: Hanzi + Audio + Compare button -->
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 9px; min-width: 0;">
+              <span style="font-family: var(--font-hanzi); font-size: 30px; font-weight: 800; color: #2a1b40; line-height: 1.15; letter-spacing: 0.5px; word-break: break-all;">${data.hanzi}</span>
+              <button class="icon-action-btn" onclick="speakChinese('${data.hanzi}')" title="Phát âm từ này giọng Xiaoxiao" style="width: 32px; height: 32px; font-size: 15px; border-radius: 50%; background: #ede4f7; border: 1px solid #d8c7ee; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(118,98,153,0.15); flex-shrink: 0;">🔊</button>
             </div>
-            <div class="ai-word-pinyin">
-              <span>${data.pinyin}</span>
-              ${posBadgeHTML}
-            </div>
+            <button id="btnToggleCompareInput" style="background: #ffffff; border: 1.5px solid #c4b5fd; color: #766299; font-weight: 700; font-size: 12px; padding: 5px 12px; border-radius: 18px; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 6px rgba(118,98,153,0.1); flex-shrink: 0; font-family: var(--font-mali); transition: all 0.2s;" title="Chạm để nhập chữ Hán cần phân biệt">
+              <span>⚖️ Phân biệt từ</span>
+            </button>
           </div>
-          <button id="btnToggleCompareInput" style="margin-top: 2px; background: #f3eef9; border: 1.5px solid #d4c5e8; color: #766299; font-weight: 700; font-size: 12.5px; padding: 5px 11px; border-radius: 18px; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 6px rgba(118,98,153,0.12); flex-shrink: 0; font-family: var(--font-mali);" title="Chạm để nhập chữ Hán cần phân biệt">
-            <span>⚖️ Phân biệt từ</span>
-          </button>
+
+          <!-- Bottom row: Linguistic Metadata (Pinyin, Hán Việt, POS) -->
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 7px 10px; margin-top: 9px; padding-top: 9px; border-top: 1px dashed rgba(118, 98, 153, 0.2);">
+            <span style="font-size: 15px; font-weight: 700; color: #6b21a8; font-family: var(--font-mali);">${data.pinyin}</span>
+            ${hanVietBadgeHTML ? `<span style="color: #cbd5e1; font-size: 11px;">•</span>` + hanVietBadgeHTML : ''}
+            ${posBadgeHTML}
+          </div>
         </div>
 
         <div id="compareInputContainer" style="display: none; margin-bottom: 14px; background: #f8f5fc; border: 1.5px dashed #c4b5fd; padding: 10px 12px; border-radius: 14px;">
