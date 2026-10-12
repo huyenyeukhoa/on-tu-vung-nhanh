@@ -1308,7 +1308,9 @@
     }
 
     .reading-token {
-      display: inline;
+      display: inline-block;
+      position: relative;
+      vertical-align: baseline;
       padding: 1px 0;
       margin: 0;
       border-radius: 4px;
@@ -1319,6 +1321,13 @@
       transition: background-color 0.15s ease, color 0.15s ease;
       font-weight: 500;
       -webkit-tap-highlight-color: transparent;
+      letter-spacing: 0 !important;
+      word-spacing: 0 !important;
+      line-height: inherit;
+    }
+
+    .reading-token .token-text {
+      display: inline;
       letter-spacing: 0 !important;
       word-spacing: 0 !important;
     }
@@ -1338,7 +1347,9 @@
       border-radius: 4px !important;
       padding: 1px 2px !important;
       margin: 0 -2px !important;
-      display: inline !important;
+      display: inline-block !important;
+      vertical-align: baseline !important;
+      position: relative !important;
       box-shadow: none !important;
       transition: background-color 0.15s ease, color 0.15s ease !important;
     }
@@ -1350,7 +1361,9 @@
       border-radius: 4px !important;
       padding: 1px 2px !important;
       margin: 0 -2px !important;
-      display: inline !important;
+      display: inline-block !important;
+      vertical-align: baseline !important;
+      position: relative !important;
     }
 
     .reading-token.selected.active-token {
@@ -1401,6 +1414,45 @@
     #readingPassageContainer.hide-underlines .reading-token.token-hsk79,
     #readingPassageContainer.hide-underlines .hsk-seg {
       text-decoration: none !important;
+    }
+
+    /* Paragraph box with uniform line-height transition */
+    .reading-para-box {
+      line-height: 2.1;
+      transition: line-height 0.2s ease;
+    }
+    #readingPassageContainer.show-vi-gloss .reading-para-box {
+      line-height: 2.45;
+    }
+
+    /* Vietnamese gloss layer under highlighted words (invisible overlay layer) */
+    .reading-token .token-vi-gloss {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-top: 1px;
+      font-family: var(--font-mali), cursive, sans-serif !important;
+      font-size: 10px !important;
+      font-weight: 700 !important;
+      line-height: 1.1 !important;
+      color: #6a538c !important;
+      white-space: nowrap !important;
+      pointer-events: none !important;
+      z-index: 3;
+      text-align: center;
+      text-decoration: none !important;
+      -webkit-text-decoration: none !important;
+      text-shadow: 0 0 2px #ffffff, 0 0 4px #ffffff, 0 0 6px #ffffff;
+      max-width: 140px;
+      overflow: visible;
+      letter-spacing: -0.2px;
+    }
+
+    /* Only show gloss when toggle is ON AND token is selected (saved/highlighted) */
+    #readingPassageContainer.show-vi-gloss .reading-token.selected .token-vi-gloss {
+      display: block !important;
     }
 
     /* ===== Settings Modal (purple card system) ===== */
@@ -3138,9 +3190,14 @@
               H7-9: <b id="statCountH79">0</b> từ
             </span>
           </div>
-          <button id="btnToggleReadingUnderlines" class="tiny-underline-toggle-btn" style="font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0;" title="Chạm để ẩn hoặc hiện đường gạch chân từ vựng">
-            <span id="underlineToggleText">Gạch chân</span>
-          </button>
+          <div style="display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;">
+            <button id="btnToggleReadingGloss" class="tiny-underline-toggle-btn" style="font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0;" title="Chạm để ẩn hoặc hiện nghĩa Tiếng Việt dưới các từ đã lưu (highlight)">
+              <span id="glossToggleText">Nghĩa TV</span>
+            </button>
+            <button id="btnToggleReadingUnderlines" class="tiny-underline-toggle-btn" style="font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0;" title="Chạm để ẩn hoặc hiện đường gạch chân từ vựng">
+              <span id="underlineToggleText">Gạch chân</span>
+            </button>
+          </div>
         </div>
 
         <!-- Passage Container -->
@@ -9399,6 +9456,43 @@ ${chunkText}
       if (!readingPassageContainer) return;
 
       const selectedMap = new Set((art.selectedWords || []).map(w => w.hanzi));
+      const selectedMeaningMap = new Map((art.selectedWords || []).map(w => [w.hanzi, w.vietnamese || '']));
+      const customGroup = customGroups.find(g => g.id === 'custom_' + art.id);
+      const customGroupWordMap = new Map((customGroup && customGroup.words ? customGroup.words : []).map(w => [w.hanzi, w.vietnamese || '']));
+
+      function resolveTokenMeaning(tok) {
+        if (selectedMeaningMap.has(tok.hanzi) && selectedMeaningMap.get(tok.hanzi)) {
+          return selectedMeaningMap.get(tok.hanzi);
+        }
+        if (tok.vietnamese) return tok.vietnamese;
+        if (customGroupWordMap.has(tok.hanzi) && customGroupWordMap.get(tok.hanzi)) {
+          return customGroupWordMap.get(tok.hanzi);
+        }
+        const lookup = srsGetLookup();
+        const lw = lookup.get(tok.hanzi);
+        if (lw && (lw.vietnamese || lw.vi || lw.meaning)) return lw.vietnamese || lw.vi || lw.meaning;
+        if (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].vietnamese) return aiCache[tok.hanzi].vietnamese;
+        return '';
+      }
+
+      function getShortGloss(meaning) {
+        if (!meaning) return '';
+        let s = String(meaning).replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, '').trim();
+        let first = s.split(/[;/。]/)[0].trim();
+        if (!first) first = s;
+        if (first.length > 18 && first.includes(',')) {
+          first = first.split(',')[0].trim();
+        }
+        if (first.length > 22) {
+          first = first.slice(0, 20) + '…';
+        }
+        return first
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
 
       // Standardize paragraphs array
       let paragraphs = art.paragraphs;
@@ -9457,11 +9551,15 @@ ${chunkText}
               : s.text
             ).join('');
 
-            return `<span class="reading-token ${selectedClass}" data-index="${globalIdx}" title="${tok.hanzi}${hskTitle}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)">${innerHTML}</span>`;
+            const rawMeaning = resolveTokenMeaning(tok);
+            const shortMeaning = getShortGloss(rawMeaning);
+            const glossHTML = shortMeaning ? `<span class="token-vi-gloss">${shortMeaning}</span>` : '';
+
+            return `<span class="reading-token ${selectedClass}" data-index="${globalIdx}" data-hanzi="${tok.hanzi}" title="${tok.hanzi}${hskTitle}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)"><span class="token-text">${innerHTML}</span>${glossHTML}</span>`;
           }).join('');
 
           return `
-            <div style="margin-bottom: 14px; line-height: 2.0; position: relative;">
+            <div class="reading-para-box" style="margin-bottom: 14px; position: relative;">
               <span style="display: inline-block; vertical-align: middle; margin-right: 6px;">${tinyBtnHTML}</span>
               ${paraTokensHTML}
             </div>
@@ -9469,7 +9567,7 @@ ${chunkText}
         }
       }).join('');
 
-      readingPassageContainer.innerHTML = paragraphsHTML || '<div style="margin-bottom: 14px; line-height: 2.0;"></div>';
+      readingPassageContainer.innerHTML = paragraphsHTML || '<div class="reading-para-box" style="margin-bottom: 14px;"></div>';
 
       // Update Vocabulary Statistics Tag Bar (H6 奶绿 & H7-9 奶棕 counts)
       const stats = getArticleHskVocabStats(art);
@@ -9479,13 +9577,54 @@ ${chunkText}
       if (statCountH6El) statCountH6El.textContent = stats.h6Count;
       if (statCountH79El) statCountH79El.textContent = stats.h79Count;
 
+      updateReadingGlossToggleUI();
       updateReadingUnderlinesToggleUI();
+
+      const btnToggleGloss = document.getElementById('btnToggleReadingGloss');
+      if (btnToggleGloss && !btnToggleGloss.dataset.bound) {
+        btnToggleGloss.addEventListener('click', toggleReadingGloss);
+        btnToggleGloss.dataset.bound = 'true';
+      }
 
       const btnToggleUnderlines = document.getElementById('btnToggleReadingUnderlines');
       if (btnToggleUnderlines && !btnToggleUnderlines.dataset.bound) {
         btnToggleUnderlines.addEventListener('click', toggleReadingUnderlines);
         btnToggleUnderlines.dataset.bound = 'true';
       }
+    }
+
+    let isReadingGlossVisible = localStorage.getItem('hsk_show_reading_gloss') !== '0';
+
+    function updateReadingGlossToggleUI() {
+      const btn = document.getElementById('btnToggleReadingGloss');
+      const container = document.getElementById('readingPassageContainer');
+      const text = document.getElementById('glossToggleText');
+
+      if (isReadingGlossVisible) {
+        if (container) container.classList.add('show-vi-gloss');
+        if (btn) {
+          btn.style.background = '#f3eef9';
+          btn.style.color = '#766299';
+          btn.style.border = '1.2px solid #dfd3ef';
+          btn.title = 'Chạm để ẩn nghĩa Tiếng Việt dưới các từ đã lưu';
+        }
+        if (text) text.textContent = 'Nghĩa TV';
+      } else {
+        if (container) container.classList.remove('show-vi-gloss');
+        if (btn) {
+          btn.style.background = '#f9fafb';
+          btn.style.color = '#9ca3af';
+          btn.style.border = '1.2px dashed #d1d5db';
+          btn.title = 'Chạm để hiện nghĩa Tiếng Việt dưới các từ đã lưu';
+        }
+        if (text) text.textContent = 'Ẩn nghĩa TV';
+      }
+    }
+
+    function toggleReadingGloss() {
+      isReadingGlossVisible = !isReadingGlossVisible;
+      localStorage.setItem('hsk_show_reading_gloss', isReadingGlossVisible ? '1' : '0');
+      updateReadingGlossToggleUI();
     }
 
     let isReadingUnderlinesVisible = localStorage.getItem('hsk_show_reading_underlines') !== '0';
@@ -9617,7 +9756,7 @@ ${chunkText}
 
       // Update DOM token elements directly without re-rendering entire innerHTML (prevents screen flashing)
       document.querySelectorAll('#readingPassageContainer .reading-token').forEach(el => {
-        if (el.textContent === tok.hanzi) {
+        if (el.getAttribute('data-hanzi') === tok.hanzi || el.dataset.hanzi === tok.hanzi) {
           el.classList.toggle('selected', idx < 0);
         }
       });
