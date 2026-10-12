@@ -10705,12 +10705,15 @@ ${chunkText}
       reading: { key: 'r', icon: '📖', name: 'Đọc bài', short: 'đọc bài', color: '#8fbde3' }
     };
     const STUDY_RING_C = 2 * Math.PI * 21; // ring radius 21 in a 52 viewBox
+    // Test mode keeps its own data so trial runs never touch the real streak or the cloud
+    const STUDY_KEY = STUDY_TEST_MODE ? 'hsk_study_streak_test' : 'hsk_study_streak';
+    const STUDY_SESSION_KEY = STUDY_TEST_MODE ? 'hsk_study_session_test' : 'hsk_study_session';
 
-    let studyData = safeGetJSON('hsk_study_streak', null);
+    let studyData = safeGetJSON(STUDY_KEY, null);
     if (!studyData || typeof studyData !== 'object') studyData = {};
     if (!studyData.days || typeof studyData.days !== 'object') studyData.days = {};
     if (typeof studyData.best !== 'number') studyData.best = 0;
-    let studySession = safeGetJSON('hsk_study_session', null);
+    let studySession = safeGetJSON(STUDY_SESSION_KEY, null);
     if (studySession && (!studySession.type || !STUDY_TYPES[studySession.type] || !studySession.end)) studySession = null;
     let studyTimerInterval = null;
     let studyWakeLock = null;
@@ -10746,13 +10749,13 @@ ${chunkText}
     }
     function saveStudyData() {
       studyData.t = Date.now();
-      try { localStorage.setItem('hsk_study_streak', JSON.stringify(studyData)); } catch (e) {}
-      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+      try { localStorage.setItem(STUDY_KEY, JSON.stringify(studyData)); } catch (e) {}
+      if (!STUDY_TEST_MODE && typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
     }
     function saveStudySession() {
       try {
-        if (studySession) localStorage.setItem('hsk_study_session', JSON.stringify(studySession));
-        else localStorage.removeItem('hsk_study_session');
+        if (studySession) localStorage.setItem(STUDY_SESSION_KEY, JSON.stringify(studySession));
+        else localStorage.removeItem(STUDY_SESSION_KEY);
       } catch (e) {}
     }
     // Merge from cloud / backup: per day keep the max minutes of each goal
@@ -10770,11 +10773,16 @@ ${chunkText}
       const streak = computeStudyStreak();
       if (streak > studyData.best) { studyData.best = streak; changed = true; }
       if (changed) {
-        try { localStorage.setItem('hsk_study_streak', JSON.stringify(studyData)); } catch (e) {}
+        try { localStorage.setItem(STUDY_KEY, JSON.stringify(studyData)); } catch (e) {}
       }
       return changed;
     }
     function studyCloudPayload() {
+      if (STUDY_TEST_MODE) {
+        // Upload only the real (non-test) streak data even while testing
+        const real = safeGetJSON('hsk_study_streak', null) || {};
+        return { days: real.days || {}, best: real.best || 0 };
+      }
       return { days: studyData.days, best: studyData.best };
     }
 
@@ -11247,6 +11255,7 @@ ${chunkText}
         startStudyTicker(); // checks away gap from the last heartbeat (reload / reopen)
         if (studySession) requestStudyWakeLock();
       }
+      if (STUDY_TEST_MODE) showToast('🧪 Chế độ thử: phiên 20 giây, rời app 8 giây là rớt · không ảnh hưởng streak thật');
       setTimeout(maybeShowStudyReminder, 700);
     }
 
