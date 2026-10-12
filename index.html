@@ -10701,8 +10701,8 @@ ${chunkText}
     const STUDY_CANCEL_WINDOW_MS = 30000;
     const STUDY_REMIND_AFTER_HIDDEN_MS = STUDY_TEST_MODE ? 5000 : 10 * 60000;
     const STUDY_TYPES = {
-      vocab: { key: 'v', icon: '📚', name: 'Từ vựng', short: 'từ vựng', color: '#93cc8e' },
-      reading: { key: 'r', icon: '📖', name: 'Đọc bài', short: 'đọc bài', color: '#8fbde3' }
+      vocab: { key: 'v', icon: '📚', name: 'Từ vựng', short: 'từ vựng', color: '#BFDDBB' },  // 奶绿
+      reading: { key: 'r', icon: '📖', name: 'Đọc bài', short: 'đọc bài', color: '#B8D4EA' } // 奶蓝
     };
     const STUDY_RING_C = 2 * Math.PI * 21; // ring radius 21 in a 52 viewBox
     // Test mode keeps its own data so trial runs never touch the real streak or the cloud
@@ -10941,7 +10941,7 @@ ${chunkText}
       document.getElementById('studyPillLabel').textContent = `${t.short} · tập trung nhé`;
       const bar = document.getElementById('studyPillBar');
       if (bar) {
-        bar.style.stroke = studySession.type === 'vocab' ? '#7fbf79' : '#79aedb';
+        bar.style.stroke = t.color;
         bar.setAttribute('stroke-dashoffset', (97.39 * (remain / total)).toFixed(2));
       }
       const cancelBtn = document.getElementById('studyPillCancel');
