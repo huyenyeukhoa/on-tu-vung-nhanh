@@ -1903,6 +1903,20 @@
       font-variant-numeric: tabular-nums; letter-spacing: 0.3px;
     }
     .study-pill-label { font-size: 10px; color: #9a8cb3; font-weight: 600; }
+    .study-pill-img {
+      height: 30px; width: auto; max-width: 56px;
+      object-fit: contain; flex-shrink: 0;
+      margin-left: 4px;
+      filter: drop-shadow(0 1px 2px rgba(90, 60, 140, 0.15));
+    }
+    .study-pill-progress {
+      display: block; width: 100%; height: 4px; margin-top: 3px;
+      border-radius: 999px; background: #f0eaf8; overflow: hidden;
+    }
+    .study-pill-progress i {
+      display: block; height: 100%; width: 100%;
+      border-radius: 999px; transition: width 0.9s linear;
+    }
     .study-pill-cancel {
       border: none;
       background: #f6eef3;
@@ -1992,6 +2006,7 @@
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center; font-size: 19px;
     }
+    .study-ring .study-ring-icon img { width: 36px; height: 36px; object-fit: contain; }
     .study-goal-info { flex: 1; min-width: 0; }
     .study-goal-name { font-size: 14px; font-weight: 800; color: #4b3b66; }
     .study-goal-status { font-size: 11.5px; color: #9a8cb3; font-weight: 600; margin-top: 2px; }
@@ -2849,13 +2864,10 @@
 
   <!-- Daily Study: floating focus timer pill -->
   <div class="study-pill" id="studyPill" style="display:none;">
-    <div class="study-pill-ring">
-      <svg viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15.5"></circle><circle class="bar" id="studyPillBar" cx="18" cy="18" r="15.5" stroke-dasharray="97.39" stroke-dashoffset="0"></circle></svg>
-      <span class="study-pill-icon" id="studyPillIcon">📚</span>
-    </div>
+    <img class="study-pill-img" id="studyPillImg" src="./study_vocab.png" alt="">
     <div class="study-pill-text">
       <span class="study-pill-time" id="studyPillTime">60:00</span>
-      <span class="study-pill-label" id="studyPillLabel">từ vựng · tập trung nhé</span>
+      <span class="study-pill-progress"><i id="studyPillProg"></i></span>
     </div>
     <button type="button" class="study-pill-cancel" id="studyPillCancel" style="display:none;">✕ huỷ 30s</button>
   </div>
@@ -10717,8 +10729,8 @@ ${chunkText}
     const STUDY_CANCEL_WINDOW_MS = 30000;
     const STUDY_REMIND_AFTER_HIDDEN_MS = STUDY_TEST_MODE ? 5000 : 10 * 60000;
     const STUDY_TYPES = {
-      vocab: { key: 'v', icon: '📚', name: 'Từ vựng', short: 'từ vựng', color: '#BFDDBB' },  // 奶绿
-      reading: { key: 'r', icon: '📖', name: 'Đọc bài', short: 'đọc bài', color: '#B8D4EA' } // 奶蓝
+      vocab: { key: 'v', icon: '📚', img: './study_vocab.png', name: 'Từ vựng', short: 'từ vựng', color: '#BFDDBB' },  // 奶绿
+      reading: { key: 'r', icon: '📖', img: './study_reading.png', name: 'Đọc bài', short: 'đọc bài', color: '#B8D4EA' } // 奶蓝
     };
     const STUDY_RING_C = 2 * Math.PI * 21; // ring radius 21 in a 52 viewBox
     // Test mode keeps its own data so trial runs never touch the real streak or the cloud
@@ -10952,13 +10964,13 @@ ${chunkText}
       const total = studySession.end - studySession.start;
       const remain = Math.max(0, studySession.end - now);
       pill.style.display = 'flex';
-      document.getElementById('studyPillIcon').textContent = t.icon;
+      const img = document.getElementById('studyPillImg');
+      if (img && img.getAttribute('src') !== t.img) img.setAttribute('src', t.img);
       document.getElementById('studyPillTime').textContent = fmtStudyClock(remain);
-      document.getElementById('studyPillLabel').textContent = `${t.short} · tập trung nhé`;
-      const bar = document.getElementById('studyPillBar');
-      if (bar) {
-        bar.style.stroke = t.color;
-        bar.setAttribute('stroke-dashoffset', (97.39 * (remain / total)).toFixed(2));
+      const prog = document.getElementById('studyPillProg');
+      if (prog) {
+        prog.style.background = t.color;
+        prog.style.width = (100 * remain / total).toFixed(2) + '%';
       }
       const cancelBtn = document.getElementById('studyPillCancel');
       const cancelLeft = STUDY_CANCEL_WINDOW_MS - (now - studySession.start);
@@ -10989,7 +11001,7 @@ ${chunkText}
         <div class="study-ring">
           <svg viewBox="0 0 52 52"><circle class="track" cx="26" cy="26" r="21"></circle>
             <circle class="bar" cx="26" cy="26" r="21" stroke="${t.color}" stroke-dasharray="${STUDY_RING_C.toFixed(2)}" stroke-dashoffset="${(STUDY_RING_C * (1 - pct)).toFixed(2)}"></circle></svg>
-          <span class="study-ring-icon">${done ? '✅' : t.icon}</span>
+          <span class="study-ring-icon"><img src="${t.img}" alt=""></span>
         </div>`;
     }
 
