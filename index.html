@@ -2452,6 +2452,17 @@
       to { transform: translateY(0); }
     }
 
+    .reading-scroll-top-btn {
+      transition: background 0.2s ease, transform 0.15s ease, opacity 0.2s ease !important;
+    }
+    .reading-scroll-top-btn:hover {
+      background: rgba(100, 80, 138, 0.98) !important;
+      transform: translateY(-2px);
+    }
+    .reading-scroll-top-btn:active {
+      transform: scale(0.94);
+    }
+
     .example-hanzi {
       font-family: var(--font-hanzi);
       font-size: 17.5px;
@@ -3171,7 +3182,7 @@
         </div>
         <button class="modal-close-btn" id="btnCloseReadingViewModal">✕</button>
       </div>
-      <div class="modal-body" style="padding-bottom: 80px; position: relative;">
+      <div class="modal-body" id="readingViewModalBody" style="padding-bottom: 80px; position: relative;">
         <!-- Article Switcher Bar top inside reader -->
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 10px; background: #f3eef9; padding: 6px 10px; border-radius: 12px; border: 1px solid #e2d8ef;">
           <button id="btnPrevReadingArticle" class="icon-action-btn" style="padding: 4px 6px; font-size: 12px; font-weight: 700; color: #766299;" title="Bài trước">◀</button>
@@ -3210,6 +3221,11 @@
           <!-- Rendered dynamically -->
         </div>
       </div>
+
+      <!-- Floating Scroll To Top Button -->
+      <button id="btnReadingScrollToTop" class="reading-scroll-top-btn" style="display: none; position: absolute; bottom: 24px; right: 18px; z-index: 60; background: rgba(118, 98, 153, 0.92); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 20px; padding: 5px 12px; font-size: 11px; font-weight: 700; font-family: var(--font-mali); box-shadow: 0 4px 14px rgba(118, 98, 153, 0.35); cursor: pointer; align-items: center; gap: 4px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: all 0.2s ease;" title="Cuộn lên đầu bài đọc">
+        <span>↑ Lên đầu bài</span>
+      </button>
 
       <!-- Bottom Inspector Drawer for Tapped Token -->
       <div id="readingTokenDrawer" class="token-popover-drawer" style="display: none;">
@@ -8303,6 +8319,8 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
     const readingPassageContainer = document.getElementById('readingPassageContainer');
     const btnSelectAllReadingTokens = document.getElementById('btnSelectAllReadingTokens');
     const btnOpenStudyGroupFromReading = document.getElementById('btnOpenStudyGroupFromReading');
+    const readingViewModalBody = document.getElementById('readingViewModalBody');
+    const btnReadingScrollToTop = document.getElementById('btnReadingScrollToTop');
 
     const readingTokenDrawer = document.getElementById('readingTokenDrawer');
     const drawerHanzi = document.getElementById('drawerHanzi');
@@ -9419,12 +9437,47 @@ ${chunkText}
     }
     window.toggleReadingPassageAudio = toggleReadingPassageAudio;
 
+    // Save current reading scroll position in active article
+    function saveCurrentReadingScroll() {
+      if (!activeReadingArticleId) return;
+      const body = document.getElementById('readingViewModalBody');
+      if (!body) return;
+      try {
+        const top = body.scrollTop;
+        const scrollMap = JSON.parse(localStorage.getItem('hsk_reading_scroll_map') || '{}');
+        scrollMap[activeReadingArticleId] = top > 40 ? Math.round(top) : 0;
+        localStorage.setItem('hsk_reading_scroll_map', JSON.stringify(scrollMap));
+      } catch(e) {}
+    }
+
+    let readingScrollSaveTimeout = null;
+    function handleReadingBodyScroll() {
+      const body = document.getElementById('readingViewModalBody');
+      if (!body || !activeReadingArticleId) return;
+      const top = body.scrollTop;
+
+      const btnTop = document.getElementById('btnReadingScrollToTop');
+      if (btnTop) {
+        btnTop.style.display = top > 180 ? 'inline-flex' : 'none';
+      }
+
+      if (readingScrollSaveTimeout) clearTimeout(readingScrollSaveTimeout);
+      readingScrollSaveTimeout = setTimeout(() => {
+        saveCurrentReadingScroll();
+      }, 150);
+    }
+
     // Open Interactive Reading Passage Viewer
     function openReadingViewModal(articleId) {
       const art = readingArticles.find(a => a.id === articleId);
       if (!art) {
         showToast('Không tìm thấy bài đọc!');
         return;
+      }
+
+      // Save scroll of previous article if switching
+      if (activeReadingArticleId && activeReadingArticleId !== articleId) {
+        saveCurrentReadingScroll();
       }
 
       if (activeReadingArticleId !== articleId) {
@@ -9435,7 +9488,6 @@ ${chunkText}
       activeParagraphToggles = {};
 
       if (readingInputModal) readingInputModal.classList.remove('active');
-      resetModalScroll(readingViewModal);
       if (readingTokenDrawer) readingTokenDrawer.style.display = 'none';
 
       const titleText = document.getElementById('readingViewModalTitleText');
@@ -9454,6 +9506,34 @@ ${chunkText}
       renderReadingPassageContent(art);
 
       readingViewModal.classList.add('active');
+
+      // Auto-resume reading position
+      let savedScroll = 0;
+      try {
+        const scrollMap = JSON.parse(localStorage.getItem('hsk_reading_scroll_map') || '{}');
+        savedScroll = scrollMap[articleId] || 0;
+      } catch(e) {}
+
+      const body = document.getElementById('readingViewModalBody');
+      const btnTop = document.getElementById('btnReadingScrollToTop');
+
+      if (savedScroll > 40) {
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            if (body && readingViewModal.classList.contains('active')) {
+              body.scrollTop = savedScroll;
+              if (btnTop) {
+                btnTop.style.display = body.scrollTop > 180 ? 'inline-flex' : 'none';
+              }
+              showToast('📖 Đang tiếp tục tại vị trí bạn đọc dở');
+            }
+          }, 50);
+        });
+      } else {
+        if (body) body.scrollTop = 0;
+        resetModalScroll(readingViewModal);
+        if (btnTop) btnTop.style.display = 'none';
+      }
     }
 
     // Render interactive HTML passage content with 2-character Chinese paragraph indentation & paragraph translation toggles
@@ -9853,6 +9933,12 @@ ${chunkText}
       deleteQwenAudioPersistent(artIdStr);
       saveReadingArticlesToStorage();
 
+      try {
+        const scrollMap = JSON.parse(localStorage.getItem('hsk_reading_scroll_map') || '{}');
+        delete scrollMap[artIdStr];
+        localStorage.setItem('hsk_reading_scroll_map', JSON.stringify(scrollMap));
+      } catch(e) {}
+
       // Trigger cloud save immediately so Supabase updates right away
       if (typeof saveToCloud === 'function') {
         saveToCloud(false);
@@ -9959,6 +10045,7 @@ ${chunkText}
 
       if (btnCloseReadingViewModal) {
         btnCloseReadingViewModal.addEventListener('click', () => {
+          saveCurrentReadingScroll();
           readingViewModal.classList.remove('active');
           stopReadingPassageAudio(true);
         });
@@ -9975,8 +10062,24 @@ ${chunkText}
       if (readingViewModal) {
         readingViewModal.addEventListener('click', (e) => {
           if (e.target === readingViewModal) {
+            saveCurrentReadingScroll();
             readingViewModal.classList.remove('active');
             stopReadingPassageAudio(true);
+          }
+        });
+      }
+
+      const modalBodyEl = document.getElementById('readingViewModalBody');
+      if (modalBodyEl) {
+        modalBodyEl.addEventListener('scroll', handleReadingBodyScroll, { passive: true });
+      }
+
+      const btnScrollTopEl = document.getElementById('btnReadingScrollToTop');
+      if (btnScrollTopEl) {
+        btnScrollTopEl.addEventListener('click', () => {
+          const body = document.getElementById('readingViewModalBody');
+          if (body) {
+            body.scrollTo({ top: 0, behavior: 'smooth' });
           }
         });
       }
