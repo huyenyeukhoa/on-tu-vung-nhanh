@@ -1812,6 +1812,304 @@
       font-family: var(--font-mali);
     }
 
+    /* ===== Daily Study Streak & Focus Timer ===== */
+    .streak-chip {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      height: 26px;
+      padding: 0 9px 0 7px;
+      border-radius: 999px;
+      border: 1px solid #ece5f6;
+      background: rgba(243, 240, 248, 0.9);
+      color: #9a8cb3;
+      font-size: 12.5px;
+      font-weight: 800;
+      font-family: var(--font-mali);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .streak-chip:active { transform: scale(0.94); }
+    .streak-chip .streak-chip-flame { font-size: 13px; filter: grayscale(1) opacity(0.55); transition: filter 0.3s ease; }
+    .streak-chip.lit {
+      background: linear-gradient(135deg, #fff1e3 0%, #ffe3ec 100%);
+      border-color: #ffd0b5;
+      color: #e0704f;
+      box-shadow: 0 2px 8px rgba(255, 140, 100, 0.22);
+    }
+    .streak-chip.lit .streak-chip-flame { filter: none; animation: flameFlicker 1.6s ease-in-out infinite; }
+
+    @keyframes flameFlicker {
+      0%, 100% { transform: scale(1) rotate(-2deg); }
+      25% { transform: scale(1.08) rotate(2deg); }
+      50% { transform: scale(0.96) rotate(-1deg); }
+      75% { transform: scale(1.05) rotate(1.5deg); }
+    }
+
+    .study-pill {
+      position: fixed;
+      left: 50%;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+      transform: translateX(-50%);
+      z-index: 2100;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px 5px 5px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid #e5daf3;
+      box-shadow: 0 6px 22px rgba(90, 60, 140, 0.22);
+      font-family: var(--font-mali);
+      cursor: pointer;
+      animation: pillIn 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+    }
+    @keyframes pillIn {
+      from { opacity: 0; transform: translate(-50%, 20px) scale(0.9); }
+      to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    }
+    .study-pill-ring { position: relative; width: 34px; height: 34px; flex-shrink: 0; }
+    .study-pill-ring svg { width: 34px; height: 34px; transform: rotate(-90deg); }
+    .study-pill-ring circle { fill: none; stroke-width: 3.4; }
+    .study-pill-ring .track { stroke: #f0eaf8; }
+    .study-pill-ring .bar { stroke: #8772a8; stroke-linecap: round; transition: stroke-dashoffset 0.9s linear; }
+    .study-pill-ring .study-pill-icon {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .study-pill-text { display: flex; flex-direction: column; line-height: 1.1; }
+    .study-pill-time {
+      font-size: 16px; font-weight: 800; color: #4b3b66;
+      font-variant-numeric: tabular-nums; letter-spacing: 0.3px;
+    }
+    .study-pill-label { font-size: 10px; color: #9a8cb3; font-weight: 600; }
+    .study-pill-cancel {
+      border: none;
+      background: #f6eef3;
+      color: #b0607a;
+      font-size: 10.5px;
+      font-weight: 700;
+      font-family: var(--font-mali);
+      padding: 5px 9px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .study-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(40, 26, 64, 0.42);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    .study-overlay.active { display: flex; animation: fadeInOverlay 0.2s ease; }
+    @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+    .study-card {
+      position: relative;
+      width: 100%;
+      max-width: 380px;
+      max-height: calc(100vh - 36px);
+      overflow-y: auto;
+      background: linear-gradient(180deg, #fdfbff 0%, #f7f2fd 100%);
+      border-radius: 24px;
+      border: 1px solid #ece3f7;
+      box-shadow: 0 18px 50px rgba(60, 35, 100, 0.3);
+      padding: 20px 16px 16px;
+      font-family: var(--font-mali);
+      animation: cardPop 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.25);
+    }
+    @keyframes cardPop {
+      from { opacity: 0; transform: translateY(16px) scale(0.94); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .study-card-close {
+      position: absolute; top: 10px; right: 10px;
+      width: 28px; height: 28px; border-radius: 50%;
+      border: none; background: #f1ebf8; color: #8772a8;
+      font-size: 13px; cursor: pointer;
+    }
+    .study-hero { text-align: center; margin-bottom: 14px; }
+    .study-hero-flame {
+      font-size: 46px; line-height: 1; display: inline-block;
+      animation: flameFlicker 1.6s ease-in-out infinite;
+      filter: drop-shadow(0 4px 10px rgba(255, 120, 80, 0.35));
+    }
+    .study-hero-flame.dim { filter: grayscale(1) opacity(0.45); animation: none; }
+    .study-hero-num {
+      font-size: 34px; font-weight: 800; line-height: 1.1;
+      background: linear-gradient(135deg, #ff9a62 0%, #f06a8f 55%, #9b7bd1 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .study-hero-sub { font-size: 12.5px; color: #8c7ba8; font-weight: 600; }
+    .study-hero-best {
+      display: inline-block; margin-top: 6px;
+      font-size: 11px; color: #766299; font-weight: 700;
+      background: #f1ebf8; padding: 3px 10px; border-radius: 999px;
+    }
+    .study-title { font-size: 17px; font-weight: 800; color: #4b3b66; text-align: center; }
+    .study-sub { font-size: 12.5px; color: #8c7ba8; text-align: center; margin-top: 4px; line-height: 1.45; }
+
+    .study-goal-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 12px; }
+    .study-goal {
+      display: flex; align-items: center; gap: 12px;
+      background: #ffffff; border: 1px solid #eee6f8; border-radius: 16px;
+      padding: 10px 12px;
+      box-shadow: 0 2px 8px rgba(135, 114, 168, 0.06);
+    }
+    .study-goal.done { background: linear-gradient(135deg, #f6fbf5 0%, #ffffff 100%); }
+    .study-ring { position: relative; width: 52px; height: 52px; flex-shrink: 0; }
+    .study-ring svg { width: 52px; height: 52px; transform: rotate(-90deg); }
+    .study-ring circle { fill: none; stroke-width: 5; }
+    .study-ring .track { stroke: #f0eaf8; }
+    .study-ring .bar { stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; }
+    .study-ring .study-ring-icon {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 19px;
+    }
+    .study-goal-info { flex: 1; min-width: 0; }
+    .study-goal-name { font-size: 14px; font-weight: 800; color: #4b3b66; }
+    .study-goal-status { font-size: 11.5px; color: #9a8cb3; font-weight: 600; margin-top: 2px; }
+    .study-goal.done .study-goal-status { color: #5f9a5a; }
+    .study-start-btn {
+      border: none;
+      padding: 8px 13px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #a08dc2 0%, #8772a8 100%);
+      color: #fff;
+      font-size: 12.5px;
+      font-weight: 800;
+      font-family: var(--font-mali);
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 3px 10px rgba(135, 114, 168, 0.3);
+      transition: transform 0.12s ease;
+    }
+    .study-start-btn:active { transform: scale(0.95); }
+    .study-start-btn:disabled { background: #e6f2e4; color: #5f9a5a; box-shadow: none; cursor: default; }
+    .study-start-btn.busy { background: #efe9f7; color: #9a8cb3; box-shadow: none; cursor: default; }
+    .study-later-btn {
+      width: 100%; border: none; background: transparent;
+      color: #9a8cb3; font-size: 13px; font-weight: 700;
+      font-family: var(--font-mali); padding: 8px; cursor: pointer;
+    }
+    .study-primary-btn {
+      width: 100%; border: none; padding: 12px; border-radius: 14px;
+      background: linear-gradient(135deg, #a08dc2 0%, #8772a8 100%);
+      color: #fff; font-size: 14.5px; font-weight: 800; font-family: var(--font-mali);
+      cursor: pointer; box-shadow: 0 4px 14px rgba(135, 114, 168, 0.35);
+      margin-top: 8px;
+    }
+    .study-note {
+      font-size: 11.5px; color: #8c7ba8; text-align: center;
+      background: #f3eef9; border-radius: 12px; padding: 8px 10px; line-height: 1.45;
+    }
+    .study-note b { color: #e0704f; }
+
+    .study-section-label {
+      font-size: 11px; font-weight: 800; color: #8772a8;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin: 14px 2px 7px;
+    }
+    .study-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .study-week-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .study-week-dow { font-size: 10.5px; color: #9a8cb3; font-weight: 700; }
+    .study-week-dot {
+      position: relative;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: #f1ecf7; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      border: 2px solid transparent;
+    }
+    .study-week-dot .half { position: absolute; top: 0; bottom: 0; width: 50%; }
+    .study-week-dot .half.l { left: 0; }
+    .study-week-dot .half.r { right: 0; }
+    .study-week-dot .mark { position: relative; z-index: 1; }
+    .study-week-dot.today { border-color: #8772a8; }
+    .study-week-dot.future { opacity: 0.45; }
+    .study-week-dot.perfect { background: linear-gradient(135deg, #ffd3b0 0%, #f7b2c6 50%, #c8b4e3 100%); }
+
+    .study-month-head { display: flex; align-items: center; justify-content: space-between; margin: 14px 2px 7px; }
+    .study-month-head .study-section-label { margin: 0; }
+    .study-month-nav { display: flex; gap: 6px; }
+    .study-month-nav button {
+      width: 26px; height: 26px; border-radius: 50%; border: none;
+      background: #f1ebf8; color: #8772a8; font-weight: 800; cursor: pointer;
+    }
+    .study-month-nav button:disabled { opacity: 0.35; cursor: default; }
+    .study-month {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;
+      background: #ffffff; border: 1px solid #eee6f8; border-radius: 16px; padding: 10px;
+    }
+    .study-month-dow { font-size: 9.5px; color: #b3a6c9; text-align: center; font-weight: 700; }
+    .study-month-cell {
+      position: relative; aspect-ratio: 1; border-radius: 8px;
+      background: #f5f1fa; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10.5px; color: #9a8cb3; font-weight: 700;
+    }
+    .study-month-cell .half { position: absolute; top: 0; bottom: 0; width: 50%; }
+    .study-month-cell .half.l { left: 0; }
+    .study-month-cell .half.r { right: 0; }
+    .study-month-cell span { position: relative; z-index: 1; }
+    .study-month-cell.perfect { background: linear-gradient(135deg, #ffd3b0 0%, #f7b2c6 50%, #c8b4e3 100%); color: #fff; }
+    .study-month-cell.today { box-shadow: inset 0 0 0 2px #8772a8; }
+    .study-month-cell.future { opacity: 0.4; }
+    .study-month-cell.empty { background: transparent; }
+    .study-legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 8px; font-size: 10.5px; color: #8c7ba8; }
+    .study-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+
+    .study-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+    .study-stats > div {
+      background: #ffffff; border: 1px solid #eee6f8; border-radius: 14px;
+      padding: 9px 6px; text-align: center;
+    }
+    .study-stats b { display: block; font-size: 17px; color: #4b3b66; }
+    .study-stats span { font-size: 10.5px; color: #9a8cb3; font-weight: 600; }
+    .study-live {
+      margin-top: 10px; text-align: center; font-size: 12.5px; font-weight: 700; color: #766299;
+      background: #f1ebf8; border-radius: 12px; padding: 8px;
+    }
+
+    .reward-card { text-align: center; overflow: visible; }
+    .reward-img {
+      width: 210px; max-width: 70%; height: auto; display: block;
+      margin: -6px auto 4px;
+      filter: drop-shadow(0 6px 12px rgba(120, 80, 160, 0.18));
+    }
+    .reward-streak {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin: 10px auto 2px; padding: 6px 14px; border-radius: 999px;
+      background: linear-gradient(135deg, #fff1e3 0%, #ffe3ec 100%);
+      color: #e0704f; font-weight: 800; font-size: 15px;
+      border: 1px solid #ffd0b5;
+    }
+    .reward-streak .num { display: inline-block; animation: numPop 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.6) 0.3s both; }
+    @keyframes numPop {
+      0% { transform: scale(0.3); opacity: 0; }
+      60% { transform: scale(1.5); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+    .study-confetti { position: fixed; inset: 0; pointer-events: none; z-index: 2250; overflow: hidden; }
+    .study-confetti i {
+      position: absolute; top: -14px; width: 8px; height: 12px; border-radius: 2px;
+      animation: confettiFall linear forwards;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(105vh) rotate(720deg); opacity: 0.9; }
+    }
+
     /* ===== Reading Input Modal (redesigned) ===== */
     .rd-paste-card {
       background: #faf8fd;
@@ -2240,6 +2538,7 @@
   <header class="app-header">
     <div class="header-left">
       <div class="header-title" id="appHeaderTitle">HSK 7-9</div>
+      <button type="button" class="streak-chip" id="btnStreakChip" title="Chuỗi ngày học (60' từ vựng + 60' đọc bài)"><span class="streak-chip-flame">🔥</span><span id="streakChipCount">0</span></button>
     </div>
     <div class="header-right">
       <button class="icon-action-btn" id="btnPwaInstallHeader" title="Cài đặt ứng dụng vào điện thoại" style="display:none;">📲</button>
@@ -2530,6 +2829,29 @@
 
       </div>
     </div>
+  </div>
+
+  <!-- Daily Study: floating focus timer pill -->
+  <div class="study-pill" id="studyPill" style="display:none;">
+    <div class="study-pill-ring">
+      <svg viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15.5"></circle><circle class="bar" id="studyPillBar" cx="18" cy="18" r="15.5" stroke-dasharray="97.39" stroke-dashoffset="0"></circle></svg>
+      <span class="study-pill-icon" id="studyPillIcon">📚</span>
+    </div>
+    <div class="study-pill-text">
+      <span class="study-pill-time" id="studyPillTime">60:00</span>
+      <span class="study-pill-label" id="studyPillLabel">từ vựng · tập trung nhé</span>
+    </div>
+    <button type="button" class="study-pill-cancel" id="studyPillCancel" style="display:none;">✕ huỷ 30s</button>
+  </div>
+
+  <!-- Daily Study: reminder / streak overview -->
+  <div class="study-overlay" id="studyMainOverlay">
+    <div class="study-card" id="studyMainCard"></div>
+  </div>
+
+  <!-- Daily Study: reward / failed session card -->
+  <div class="study-overlay" id="studyResultOverlay" style="z-index: 2300;">
+    <div class="study-card reward-card" id="studyResultCard"></div>
   </div>
 
   <!-- Smart Review Schedule (SRS) Stats Modal -->
@@ -3961,6 +4283,7 @@
         openrouter_api_key: localStorage.getItem('openrouter_api_key') || '',
         reading_audio_speed: localStorage.getItem('hsk_reading_audio_speed') || '1.0',
         srsData: srsData || {},
+        studyStreak: (() => { try { return studyCloudPayload(); } catch (e) { return undefined; } })(),
         updated_at: new Date().toISOString()
       };
       // AI explanations live in their own table (hsk_ai_explanations). Only keep them in the blob
@@ -4143,6 +4466,14 @@
           }
           srsEnsureEnrolled();
           updateSrsBell();
+          if (rowData.studyStreak && typeof rowData.studyStreak === 'object') {
+            studyMergeData(rowData.studyStreak);
+          }
+          updateStreakChip();
+          if (studyMainMode) {
+            if (studyMainMode === 'reminder' && studyDayDone(studyDayKey())) closeStudyMain();
+            else refreshStudyMain();
+          }
 
           migrateStoredDataToSimplified();
           updateCustomLevelTabCount();
@@ -10139,7 +10470,8 @@ ${chunkText}
               userProgress: safeGetJSON('hsk_user_progress', {}),
               aiCache: aiCache || {},
               groupCompletedDates: safeGetJSON('hsk_group_completed_dates', {}),
-              srsData: safeGetJSON('hsk_srs_data', {})
+              srsData: safeGetJSON('hsk_srs_data', {}),
+              studyStreak: studyCloudPayload()
             };
 
             const jsonStr = JSON.stringify(backupPayload, null, 2);
@@ -10212,6 +10544,10 @@ ${chunkText}
               }
               srsEnsureEnrolled();
               updateSrsBell();
+              if (parsed.studyStreak && typeof parsed.studyStreak === 'object') {
+                studyMergeData(parsed.studyStreak);
+              }
+              updateStreakChip();
 
               if (typeof saveToCloud === 'function') saveToCloud(false);
 
@@ -10352,6 +10688,568 @@ ${chunkText}
       });
     }
 
+    // ==========================================
+    // DAILY STUDY STREAK & FOCUS TIMER
+    // Goal: 60' vocab + 60' reading per day (any order). Streak counts only full days.
+    // Sessions run on wall-clock time, cannot be paused; cancel allowed only in the first 30s;
+    // leaving the app for more than 5 minutes in a row fails the session.
+    // ==========================================
+    const STUDY_TEST_MODE = /[?&]studyTest=1/.test(window.location.search);
+    const STUDY_GOAL_MIN = 60;
+    const STUDY_SESSION_MS = STUDY_TEST_MODE ? 20000 : STUDY_GOAL_MIN * 60000;
+    const STUDY_AWAY_LIMIT_MS = STUDY_TEST_MODE ? 8000 : 5 * 60000;
+    const STUDY_CANCEL_WINDOW_MS = 30000;
+    const STUDY_REMIND_AFTER_HIDDEN_MS = STUDY_TEST_MODE ? 5000 : 10 * 60000;
+    const STUDY_TYPES = {
+      vocab: { key: 'v', icon: '📚', name: 'Từ vựng', short: 'từ vựng', color: '#93cc8e' },
+      reading: { key: 'r', icon: '📖', name: 'Đọc bài', short: 'đọc bài', color: '#8fbde3' }
+    };
+    const STUDY_RING_C = 2 * Math.PI * 21; // ring radius 21 in a 52 viewBox
+
+    let studyData = safeGetJSON('hsk_study_streak', null);
+    if (!studyData || typeof studyData !== 'object') studyData = {};
+    if (!studyData.days || typeof studyData.days !== 'object') studyData.days = {};
+    if (typeof studyData.best !== 'number') studyData.best = 0;
+    let studySession = safeGetJSON('hsk_study_session', null);
+    if (studySession && (!studySession.type || !STUDY_TYPES[studySession.type] || !studySession.end)) studySession = null;
+    let studyTimerInterval = null;
+    let studyWakeLock = null;
+    let studyHiddenAt = 0;
+    let studyMainMode = null; // 'reminder' | 'streak'
+    let studyMonthOffset = 0;
+
+    function studyDayKey(ts) {
+      const d = ts ? new Date(ts) : new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+    function studyKeyShift(key, delta) {
+      const [y, m, d] = key.split('-').map(Number);
+      return studyDayKey(new Date(y, m - 1, d + delta).getTime());
+    }
+    function studyDay(key) {
+      const d = studyData.days[key] || {};
+      return { v: d.v || 0, r: d.r || 0 };
+    }
+    function studyTypeDone(key, type) {
+      return studyDay(key)[STUDY_TYPES[type].key] >= STUDY_GOAL_MIN;
+    }
+    function studyDayDone(key) {
+      const d = studyDay(key);
+      return d.v >= STUDY_GOAL_MIN && d.r >= STUDY_GOAL_MIN;
+    }
+    function computeStudyStreak() {
+      const today = studyDayKey();
+      let key = studyDayDone(today) ? today : studyKeyShift(today, -1);
+      let n = 0;
+      while (studyDayDone(key) && n < 5000) { n++; key = studyKeyShift(key, -1); }
+      return n;
+    }
+    function saveStudyData() {
+      studyData.t = Date.now();
+      try { localStorage.setItem('hsk_study_streak', JSON.stringify(studyData)); } catch (e) {}
+      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+    }
+    function saveStudySession() {
+      try {
+        if (studySession) localStorage.setItem('hsk_study_session', JSON.stringify(studySession));
+        else localStorage.removeItem('hsk_study_session');
+      } catch (e) {}
+    }
+    // Merge from cloud / backup: per day keep the max minutes of each goal
+    function studyMergeData(incoming) {
+      if (!incoming || typeof incoming !== 'object') return false;
+      let changed = false;
+      const days = incoming.days && typeof incoming.days === 'object' ? incoming.days : {};
+      Object.keys(days).forEach(k => {
+        const inc = days[k] || {};
+        const cur = studyDay(k);
+        const v = Math.max(cur.v, inc.v || 0), r = Math.max(cur.r, inc.r || 0);
+        if (v !== cur.v || r !== cur.r) { studyData.days[k] = { v, r }; changed = true; }
+      });
+      if (typeof incoming.best === 'number' && incoming.best > studyData.best) { studyData.best = incoming.best; changed = true; }
+      const streak = computeStudyStreak();
+      if (streak > studyData.best) { studyData.best = streak; changed = true; }
+      if (changed) {
+        try { localStorage.setItem('hsk_study_streak', JSON.stringify(studyData)); } catch (e) {}
+      }
+      return changed;
+    }
+    function studyCloudPayload() {
+      return { days: studyData.days, best: studyData.best };
+    }
+
+    function fmtStudyClock(ms) {
+      const s = Math.max(0, Math.ceil(ms / 1000));
+      return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    }
+
+    // ---------- Header chip ----------
+    function updateStreakChip() {
+      const chip = document.getElementById('btnStreakChip');
+      const cnt = document.getElementById('streakChipCount');
+      if (!chip || !cnt) return;
+      cnt.textContent = computeStudyStreak();
+      chip.classList.toggle('lit', studyDayDone(studyDayKey()));
+    }
+
+    // ---------- Wake lock (keep screen on while studying) ----------
+    async function requestStudyWakeLock() {
+      try {
+        if ('wakeLock' in navigator && !studyWakeLock) {
+          studyWakeLock = await navigator.wakeLock.request('screen');
+          studyWakeLock.addEventListener('release', () => { studyWakeLock = null; });
+        }
+      } catch (e) { studyWakeLock = null; }
+    }
+    function releaseStudyWakeLock() {
+      try { if (studyWakeLock) studyWakeLock.release(); } catch (e) {}
+      studyWakeLock = null;
+    }
+
+    // ---------- Session lifecycle ----------
+    function startStudySession(type) {
+      if (!STUDY_TYPES[type]) return;
+      if (studySession) { showToast('Đang có một phiên học chạy rồi nha 💜'); return; }
+      const key = studyDayKey();
+      if (studyTypeDone(key, type)) { showToast(`Hôm nay đã xong 60' ${STUDY_TYPES[type].short} rồi ✅`); return; }
+      const now = Date.now();
+      studySession = { type, day: key, start: now, end: now + STUDY_SESSION_MS, beat: now };
+      saveStudySession();
+      closeStudyMain();
+      requestStudyWakeLock();
+      startStudyTicker();
+
+      if (type === 'vocab') {
+        ['readingInputModal', 'readingViewModal'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.classList.remove('active');
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        const btn = document.getElementById('btnOpenReadingMode');
+        if (btn) btn.click();
+      }
+      showToast(`▶ Bắt đầu 60' ${STUDY_TYPES[type].short} · rời app quá 5' sẽ mất phiên nhé!`);
+    }
+    window.startStudySession = startStudySession;
+
+    function cancelStudySession(event) {
+      if (event) event.stopPropagation();
+      if (!studySession) return;
+      if (Date.now() - studySession.start > STUDY_CANCEL_WINDOW_MS) {
+        showToast('Đã quá 30 giây, không huỷ được nữa · cố lên 💪');
+        renderStudyPill();
+        return;
+      }
+      studySession = null;
+      saveStudySession();
+      stopStudyTicker();
+      releaseStudyWakeLock();
+      renderStudyPill();
+      showToast('Đã huỷ phiên học');
+    }
+
+    function startStudyTicker() {
+      if (studyTimerInterval) clearInterval(studyTimerInterval);
+      studyTimerInterval = setInterval(studyTick, 1000);
+      studyTick();
+    }
+    function stopStudyTicker() {
+      if (studyTimerInterval) clearInterval(studyTimerInterval);
+      studyTimerInterval = null;
+    }
+
+    // Returns true if the session was failed because the user stayed away too long
+    function studyCheckAway(now) {
+      const s = studySession;
+      if (!s) return false;
+      const gap = Math.min(now, s.end) - (s.beat || s.start);
+      if (gap > STUDY_AWAY_LIMIT_MS) {
+        failStudySession(gap);
+        return true;
+      }
+      return false;
+    }
+
+    function studyTick() {
+      if (!studySession) { stopStudyTicker(); renderStudyPill(); return; }
+      const now = Date.now();
+      if (studyCheckAway(now)) return;
+      if (!document.hidden) {
+        studySession.beat = Math.min(now, studySession.end);
+        if (!studySession.savedAt || now - studySession.savedAt > 4000) {
+          studySession.savedAt = now;
+          saveStudySession();
+        }
+      }
+      if (now >= studySession.end) { completeStudySession(); return; }
+      renderStudyPill();
+      const live = document.getElementById('studyLiveInfo');
+      if (live) live.textContent = studyLiveText();
+    }
+
+    function completeStudySession() {
+      const s = studySession;
+      if (!s) return;
+      const key = s.day || studyDayKey(s.start);
+      const d = studyDay(key);
+      d[STUDY_TYPES[s.type].key] = Math.max(d[STUDY_TYPES[s.type].key], STUDY_GOAL_MIN);
+      studyData.days[key] = d;
+      const streak = computeStudyStreak();
+      if (streak > studyData.best) studyData.best = streak;
+      studySession = null;
+      saveStudySession();
+      saveStudyData();
+      stopStudyTicker();
+      releaseStudyWakeLock();
+      renderStudyPill();
+      updateStreakChip();
+      try { if (navigator.vibrate) navigator.vibrate([40, 70, 40, 70, 90]); } catch (e) {}
+      showStudyReward(s.type, key);
+    }
+
+    function failStudySession(awayMs) {
+      const s = studySession;
+      studySession = null;
+      saveStudySession();
+      stopStudyTicker();
+      releaseStudyWakeLock();
+      renderStudyPill();
+      if (s) showStudyFail(s.type, awayMs);
+    }
+
+    // ---------- Floating pill ----------
+    function renderStudyPill() {
+      const pill = document.getElementById('studyPill');
+      if (!pill) return;
+      if (!studySession) { pill.style.display = 'none'; return; }
+      const t = STUDY_TYPES[studySession.type];
+      const now = Date.now();
+      const total = studySession.end - studySession.start;
+      const remain = Math.max(0, studySession.end - now);
+      pill.style.display = 'flex';
+      document.getElementById('studyPillIcon').textContent = t.icon;
+      document.getElementById('studyPillTime').textContent = fmtStudyClock(remain);
+      document.getElementById('studyPillLabel').textContent = `${t.short} · tập trung nhé`;
+      const bar = document.getElementById('studyPillBar');
+      if (bar) {
+        bar.style.stroke = studySession.type === 'vocab' ? '#7fbf79' : '#79aedb';
+        bar.setAttribute('stroke-dashoffset', (97.39 * (remain / total)).toFixed(2));
+      }
+      const cancelBtn = document.getElementById('studyPillCancel');
+      const cancelLeft = STUDY_CANCEL_WINDOW_MS - (now - studySession.start);
+      if (cancelBtn) {
+        if (cancelLeft > 0) {
+          cancelBtn.style.display = '';
+          cancelBtn.textContent = `✕ huỷ ${Math.ceil(cancelLeft / 1000)}s`;
+        } else {
+          cancelBtn.style.display = 'none';
+        }
+      }
+    }
+
+    function studyLiveText() {
+      if (!studySession) return '';
+      const t = STUDY_TYPES[studySession.type];
+      return `${t.icon} Đang học ${t.short} · còn ${fmtStudyClock(studySession.end - Date.now())}`;
+    }
+
+    // ---------- Shared bits ----------
+    function studyRingSVG(type, done, running) {
+      const t = STUDY_TYPES[type];
+      let pct = done ? 1 : 0;
+      if (running && studySession) {
+        pct = Math.min(1, (Date.now() - studySession.start) / (studySession.end - studySession.start));
+      }
+      return `
+        <div class="study-ring">
+          <svg viewBox="0 0 52 52"><circle class="track" cx="26" cy="26" r="21"></circle>
+            <circle class="bar" cx="26" cy="26" r="21" stroke="${t.color}" stroke-dasharray="${STUDY_RING_C.toFixed(2)}" stroke-dashoffset="${(STUDY_RING_C * (1 - pct)).toFixed(2)}"></circle></svg>
+          <span class="study-ring-icon">${done ? '✅' : t.icon}</span>
+        </div>`;
+    }
+
+    function studyGoalRowHTML(type) {
+      const key = studyDayKey();
+      const t = STUDY_TYPES[type];
+      const done = studyTypeDone(key, type);
+      const running = !!studySession && studySession.type === type;
+      let status = `Chưa học · mục tiêu 60 phút`;
+      let btn = `<button type="button" class="study-start-btn" onclick="startStudySession('${type}')">▶ Bắt đầu</button>`;
+      if (done) {
+        status = 'Đã xong 60 phút 🎉';
+        btn = `<button type="button" class="study-start-btn" disabled>✓ Xong</button>`;
+      } else if (running) {
+        status = `Đang học · còn ${fmtStudyClock(studySession.end - Date.now())}`;
+        btn = `<button type="button" class="study-start-btn busy" disabled>Đang chạy</button>`;
+      } else if (studySession) {
+        btn = `<button type="button" class="study-start-btn busy" disabled>Chờ phiên kia</button>`;
+      }
+      return `
+        <div class="study-goal ${done ? 'done' : ''}">
+          ${studyRingSVG(type, done, running)}
+          <div class="study-goal-info">
+            <div class="study-goal-name">${t.name} 60'</div>
+            <div class="study-goal-status">${status}</div>
+          </div>
+          ${btn}
+        </div>`;
+    }
+
+    function studyHeroHTML() {
+      const streak = computeStudyStreak();
+      const todayDone = studyDayDone(studyDayKey());
+      return `
+        <div class="study-hero">
+          <div class="study-hero-flame ${streak > 0 || todayDone ? '' : 'dim'}">🔥</div>
+          <div class="study-hero-num">${streak}</div>
+          <div class="study-hero-sub">ngày học liên tiếp</div>
+          <div class="study-hero-best">🏆 Kỷ lục: ${Math.max(studyData.best, streak)} ngày</div>
+        </div>`;
+    }
+
+    // Cell background: left half = vocab, right half = reading
+    function studyHalvesHTML(key) {
+      const d = studyDay(key);
+      const l = d.v >= STUDY_GOAL_MIN ? `<span class="half l" style="background:${STUDY_TYPES.vocab.color};"></span>` : '';
+      const r = d.r >= STUDY_GOAL_MIN ? `<span class="half r" style="background:${STUDY_TYPES.reading.color};"></span>` : '';
+      return l + r;
+    }
+
+    // ---------- Reminder popup (every app entry while a goal is pending) ----------
+    function maybeShowStudyReminder() {
+      if (studySession) return;
+      if (studyDayDone(studyDayKey())) return;
+      const result = document.getElementById('studyResultOverlay');
+      if (result && result.classList.contains('active')) return;
+      openStudyMain('reminder');
+    }
+
+    function renderStudyReminder() {
+      const key = studyDayKey();
+      const streak = computeStudyStreak();
+      const vDone = studyTypeDone(key, 'vocab'), rDone = studyTypeDone(key, 'reading');
+      const left = (vDone ? 0 : 1) + (rDone ? 0 : 1);
+      const title = left === 2 ? 'Hôm nay mình học gì trước nào? 💜' : 'Còn 1 mục nữa là trọn ngày! ✨';
+      const note = streak > 0
+        ? `Xong cả 2 mục hôm nay để giữ chuỗi <b>🔥 ${streak} ngày</b> nhé!`
+        : `Xong cả 2 mục hôm nay để bắt đầu chuỗi <b>🔥</b> đầu tiên!`;
+      return `
+        <button type="button" class="study-card-close" onclick="closeStudyMain()">✕</button>
+        ${studyHeroHTML()}
+        <div class="study-title">${title}</div>
+        <div class="study-goal-list">
+          ${studyGoalRowHTML('vocab')}
+          ${studyGoalRowHTML('reading')}
+        </div>
+        <div class="study-note">${note}<br>Làm mục nào trước cũng được, không cần liên tục.</div>
+        <button type="button" class="study-later-btn" onclick="closeStudyMain()">Để sau</button>`;
+    }
+
+    // ---------- Streak overview ----------
+    function renderStudyStreak() {
+      const todayKey = studyDayKey();
+      const now = new Date();
+      // Week strip (Mon → Sun)
+      const dow = (now.getDay() + 6) % 7;
+      const monKey = studyKeyShift(todayKey, -dow);
+      const dowNames = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+      let week = '';
+      for (let i = 0; i < 7; i++) {
+        const k = studyKeyShift(monKey, i);
+        const perfect = studyDayDone(k);
+        const cls = [perfect ? 'perfect' : '', k === todayKey ? 'today' : '', k > todayKey ? 'future' : ''].join(' ');
+        week += `
+          <div class="study-week-cell">
+            <div class="study-week-dow">${dowNames[i]}</div>
+            <div class="study-week-dot ${cls}">${perfect ? '' : studyHalvesHTML(k)}<span class="mark">${perfect ? '🔥' : ''}</span></div>
+          </div>`;
+      }
+
+      // Month heatmap
+      const base = new Date(now.getFullYear(), now.getMonth() + studyMonthOffset, 1);
+      const y = base.getFullYear(), m = base.getMonth();
+      const daysInMonth = new Date(y, m + 1, 0).getDate();
+      const lead = (base.getDay() + 6) % 7;
+      let month = dowNames.map(n => `<div class="study-month-dow">${n}</div>`).join('');
+      for (let i = 0; i < lead; i++) month += `<div class="study-month-cell empty"></div>`;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const k = studyDayKey(new Date(y, m, d).getTime());
+        const perfect = studyDayDone(k);
+        const cls = [perfect ? 'perfect' : '', k === todayKey ? 'today' : '', k > todayKey ? 'future' : ''].join(' ');
+        month += `<div class="study-month-cell ${cls}">${perfect ? '' : studyHalvesHTML(k)}<span>${perfect ? '🔥' : d}</span></div>`;
+      }
+
+      // Stats
+      let perfectDays = 0, minutes = 0;
+      Object.keys(studyData.days).forEach(k => {
+        const dd = studyDay(k);
+        minutes += Math.min(dd.v, STUDY_GOAL_MIN) + Math.min(dd.r, STUDY_GOAL_MIN);
+        if (studyDayDone(k)) perfectDays++;
+      });
+      const monthPerfect = Array.from({ length: daysInMonth }, (_, i) => studyDayKey(new Date(y, m, i + 1).getTime())).filter(studyDayDone).length;
+
+      return `
+        <button type="button" class="study-card-close" onclick="closeStudyMain()">✕</button>
+        ${studyHeroHTML()}
+        <div class="study-section-label">Hôm nay</div>
+        <div class="study-goal-list" style="margin:0;">
+          ${studyGoalRowHTML('vocab')}
+          ${studyGoalRowHTML('reading')}
+        </div>
+        ${studySession ? `<div class="study-live" id="studyLiveInfo">${studyLiveText()}</div>` : ''}
+        <div class="study-section-label">Tuần này</div>
+        <div class="study-week">${week}</div>
+        <div class="study-month-head">
+          <div class="study-section-label">Tháng ${m + 1}/${y}</div>
+          <div class="study-month-nav">
+            <button type="button" onclick="studyShiftMonth(-1)">‹</button>
+            <button type="button" onclick="studyShiftMonth(1)" ${studyMonthOffset >= 0 ? 'disabled' : ''}>›</button>
+          </div>
+        </div>
+        <div class="study-month">${month}</div>
+        <div class="study-legend">
+          <span><i style="background:${STUDY_TYPES.vocab.color};"></i>Từ vựng</span>
+          <span><i style="background:${STUDY_TYPES.reading.color};"></i>Đọc bài</span>
+          <span><i style="background:linear-gradient(135deg,#ffd3b0,#f7b2c6,#c8b4e3);"></i>Trọn ngày 🔥</span>
+        </div>
+        <div class="study-stats">
+          <div><b>${perfectDays}</b><span>ngày trọn vẹn</span></div>
+          <div><b>${monthPerfect}</b><span>trọn trong tháng</span></div>
+          <div><b>${(minutes / 60).toFixed(minutes % 60 ? 1 : 0)}h</b><span>tổng giờ học</span></div>
+        </div>`;
+    }
+
+    function studyShiftMonth(delta) {
+      studyMonthOffset = Math.min(0, studyMonthOffset + delta);
+      refreshStudyMain();
+    }
+    window.studyShiftMonth = studyShiftMonth;
+
+    function openStudyMain(mode) {
+      studyMainMode = mode;
+      if (mode === 'streak') studyMonthOffset = 0;
+      refreshStudyMain();
+      const ov = document.getElementById('studyMainOverlay');
+      if (ov) ov.classList.add('active');
+    }
+    function refreshStudyMain() {
+      const card = document.getElementById('studyMainCard');
+      if (!card || !studyMainMode) return;
+      card.innerHTML = studyMainMode === 'streak' ? renderStudyStreak() : renderStudyReminder();
+    }
+    function closeStudyMain() {
+      const ov = document.getElementById('studyMainOverlay');
+      if (ov) ov.classList.remove('active');
+      studyMainMode = null;
+    }
+    window.openStudyMain = openStudyMain;
+    window.closeStudyMain = closeStudyMain;
+
+    // ---------- Reward & fail cards ----------
+    function launchStudyConfetti() {
+      const wrap = document.createElement('div');
+      wrap.className = 'study-confetti';
+      const colors = ['#C8B4E3', '#F4B9C1', '#F6CBA3', '#F3DE9C', '#BFDDBB', '#B8D4EA', '#a08dc2'];
+      for (let i = 0; i < 60; i++) {
+        const p = document.createElement('i');
+        p.style.left = Math.random() * 100 + 'vw';
+        p.style.background = colors[i % colors.length];
+        p.style.animationDuration = (2.2 + Math.random() * 1.8) + 's';
+        p.style.animationDelay = (Math.random() * 0.6) + 's';
+        p.style.width = (6 + Math.random() * 5) + 'px';
+        p.style.height = (9 + Math.random() * 7) + 'px';
+        if (Math.random() > 0.6) p.style.borderRadius = '50%';
+        wrap.appendChild(p);
+      }
+      document.body.appendChild(wrap);
+      setTimeout(() => wrap.remove(), 4800);
+    }
+
+    function showStudyReward(type, key) {
+      const t = STUDY_TYPES[type];
+      const other = type === 'vocab' ? 'reading' : 'vocab';
+      const dayDone = studyDayDone(key);
+      const streak = computeStudyStreak();
+      const card = document.getElementById('studyResultCard');
+      if (!card) return;
+      const nextBlock = dayDone
+        ? `<div class="study-sub">Trọn vẹn cả 2 mục hôm nay rồi! Giỏi quá đi 💜</div>
+           <div class="reward-streak">🔥 <span class="num">${streak}</span> ngày liên tiếp</div>
+           <button type="button" class="study-primary-btn" onclick="closeStudyResult()">Tuyệt vời 💜</button>`
+        : `<div class="study-sub">Còn <b>60' ${STUDY_TYPES[other].short}</b> nữa là trọn ngày và giữ được chuỗi 🔥</div>
+           <button type="button" class="study-primary-btn" onclick="closeStudyResult(); startStudySession('${other}')">▶ ${STUDY_TYPES[other].name} luôn</button>
+           <button type="button" class="study-later-btn" onclick="closeStudyResult()">Nghỉ chút đã</button>`;
+      card.innerHTML = `
+        <img class="reward-img" src="./reward_cheer.webp" alt="Cổ vũ">
+        <div class="study-title">🎉 Xong 60' ${t.short} rồi!</div>
+        ${nextBlock}`;
+      document.getElementById('studyResultOverlay').classList.add('active');
+      closeStudyMain();
+      launchStudyConfetti();
+    }
+
+    function showStudyFail(type, awayMs) {
+      const t = STUDY_TYPES[type];
+      const card = document.getElementById('studyResultCard');
+      if (!card) return;
+      const mins = Math.max(1, Math.round(awayMs / 60000));
+      card.innerHTML = `
+        <div style="font-size:46px; line-height:1; margin: 4px 0 8px;">🥺</div>
+        <div class="study-title">Phiên ${t.short} bị rớt mất rồi</div>
+        <div class="study-sub">Chị đã rời app khoảng ${STUDY_TEST_MODE ? Math.round(awayMs / 1000) + ' giây' : mins + ' phút'} (quá 5 phút liền) nên phiên này không được tính.<br>Mình làm lại nha, lần này tập trung hết mình!</div>
+        <button type="button" class="study-primary-btn" onclick="closeStudyResult(); startStudySession('${type}')">▶ Bắt đầu lại ${t.short}</button>
+        <button type="button" class="study-later-btn" onclick="closeStudyResult()">Để sau</button>`;
+      document.getElementById('studyResultOverlay').classList.add('active');
+      closeStudyMain();
+    }
+
+    function closeStudyResult() {
+      const ov = document.getElementById('studyResultOverlay');
+      if (ov) ov.classList.remove('active');
+    }
+    window.closeStudyResult = closeStudyResult;
+
+    // ---------- Init & lifecycle ----------
+    function initDailyStudy() {
+      const chip = document.getElementById('btnStreakChip');
+      if (chip) chip.addEventListener('click', () => openStudyMain('streak'));
+      const pill = document.getElementById('studyPill');
+      if (pill) pill.addEventListener('click', () => openStudyMain('streak'));
+      const cancelBtn = document.getElementById('studyPillCancel');
+      if (cancelBtn) cancelBtn.addEventListener('click', cancelStudySession);
+      const mainOv = document.getElementById('studyMainOverlay');
+      if (mainOv) mainOv.addEventListener('click', (e) => { if (e.target === mainOv) closeStudyMain(); });
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          studyHiddenAt = Date.now();
+          if (studySession) { studySession.savedAt = Date.now(); saveStudySession(); }
+          return;
+        }
+        const hiddenFor = studyHiddenAt ? Date.now() - studyHiddenAt : 0;
+        studyHiddenAt = 0;
+        updateStreakChip();
+        if (studySession) {
+          studyTick(); // may complete or fail the session
+          if (studySession) requestStudyWakeLock();
+          return;
+        }
+        if (hiddenFor >= STUDY_REMIND_AFTER_HIDDEN_MS) maybeShowStudyReminder();
+        else if (studyMainMode) refreshStudyMain();
+      });
+      window.addEventListener('pagehide', () => {
+        if (studySession) { studySession.savedAt = Date.now(); saveStudySession(); }
+      });
+
+      updateStreakChip();
+      if (studySession) {
+        startStudyTicker(); // checks away gap from the last heartbeat (reload / reopen)
+        if (studySession) requestStudyWakeLock();
+      }
+      setTimeout(maybeShowStudyReminder, 700);
+    }
+
     // Initialize Page (Guaranteed execution on all mobile browsers & WebViews)
     function startApp() {
       initDictionaryData();
@@ -10380,6 +11278,9 @@ ${chunkText}
       updateGroupWordsState();
       renderGroupDropdown();
       renderVocabList();
+
+      // Daily study streak, focus timer & reminder popup
+      initDailyStudy();
 
       // Automatically sync and load latest data from Supabase Cloud
       loadFromCloud(false);
