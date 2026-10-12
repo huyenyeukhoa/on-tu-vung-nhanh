@@ -3184,22 +3184,22 @@
         </div>
 
         <!-- Tiny Vocabulary Stats Bar (H6 奶绿 & H7-9 奶棕 counts & legend) -->
-        <div id="readingVocabStatsBar" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 9px; padding: 0 4px;">
-          <div style="display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-            <span style="font-size: 11px; font-weight: 700; color: #3d6b46; background: #edf6f0; border: 1px solid #cce5d4; padding: 1.5px 7px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mali);" title="Từ vựng thuộc list HSK 6 (gạch chân màu 奶绿)">
-              <span style="width: 10px; height: 2.5px; background: #689f76; border-radius: 2px; display: inline-block;"></span>
+        <div id="readingVocabStatsBar" style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 9px; padding: 0 2px; flex-wrap: nowrap;">
+          <div style="display: inline-flex; align-items: center; gap: 5px; flex-wrap: nowrap; flex-shrink: 0;">
+            <span style="font-size: 10.5px; font-weight: 700; color: #3d6b46; background: #edf6f0; border: 1px solid #cce5d4; padding: 1.5px 6px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mali); white-space: nowrap; flex-shrink: 0;" title="Từ vựng thuộc list HSK 6 (gạch chân màu 奶绿)">
+              <span style="width: 8px; height: 2.5px; background: #689f76; border-radius: 2px; display: inline-block; flex-shrink: 0;"></span>
               H6: <b id="statCountH6">0</b> từ
             </span>
-            <span style="font-size: 11px; font-weight: 700; color: #7c5335; background: #faf4ef; border: 1px solid #ebd9cb; padding: 1.5px 7px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mali);" title="Từ vựng thuộc list HSK 7-9 (gạch chân màu 奶棕)">
-              <span style="width: 10px; height: 2.5px; background: #b08968; border-radius: 2px; display: inline-block;"></span>
+            <span style="font-size: 10.5px; font-weight: 700; color: #7c5335; background: #faf4ef; border: 1px solid #ebd9cb; padding: 1.5px 6px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mali); white-space: nowrap; flex-shrink: 0;" title="Từ vựng thuộc list HSK 7-9 (gạch chân màu 奶棕)">
+              <span style="width: 8px; height: 2.5px; background: #b08968; border-radius: 2px; display: inline-block; flex-shrink: 0;"></span>
               H7-9: <b id="statCountH79">0</b> từ
             </span>
           </div>
-          <div style="display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;">
-            <button id="btnToggleReadingGloss" class="tiny-underline-toggle-btn" style="font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0;" title="Chạm để ẩn hoặc hiện nghĩa Tiếng Việt dưới các từ đã lưu (highlight)">
+          <div style="display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;">
+            <button id="btnToggleReadingGloss" class="tiny-underline-toggle-btn" style="font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0; white-space: nowrap;" title="Chạm để ẩn hoặc hiện nghĩa Tiếng Việt dưới các từ đã lưu (highlight)">
               <span id="glossToggleText">Nghĩa TV</span>
             </button>
-            <button id="btnToggleReadingUnderlines" class="tiny-underline-toggle-btn" style="font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0;" title="Chạm để ẩn hoặc hiện đường gạch chân từ vựng">
+            <button id="btnToggleReadingUnderlines" class="tiny-underline-toggle-btn" style="font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0; white-space: nowrap;" title="Chạm để ẩn hoặc hiện đường gạch chân từ vựng">
               <span id="underlineToggleText">Gạch chân</span>
             </button>
           </div>
@@ -9613,7 +9613,6 @@ ${chunkText}
           btn.style.border = '1.2px solid #dfd3ef';
           btn.title = 'Chạm để ẩn nghĩa Tiếng Việt dưới các từ đã lưu';
         }
-        if (text) text.textContent = 'Nghĩa TV';
       } else {
         if (container) container.classList.remove('show-vi-gloss');
         if (btn) {
@@ -9622,8 +9621,8 @@ ${chunkText}
           btn.style.border = '1.2px dashed #d1d5db';
           btn.title = 'Chạm để hiện nghĩa Tiếng Việt dưới các từ đã lưu';
         }
-        if (text) text.textContent = 'Ẩn nghĩa TV';
       }
+      if (text) text.textContent = 'Nghĩa TV';
     }
 
     function toggleReadingGloss() {
@@ -9647,7 +9646,6 @@ ${chunkText}
           btn.style.border = '1.2px solid #dfd3ef';
           btn.title = 'Chạm để ẩn đường gạch chân từ vựng';
         }
-        if (text) text.textContent = 'Gạch chân';
       } else {
         if (container) container.classList.add('hide-underlines');
         if (btn) {
@@ -9656,8 +9654,8 @@ ${chunkText}
           btn.style.border = '1.2px dashed #d1d5db';
           btn.title = 'Chạm để hiện lại đường gạch chân từ vựng';
         }
-        if (text) text.textContent = 'Ẩn gạch chân';
       }
+      if (text) text.textContent = 'Gạch chân';
     }
 
     function toggleReadingUnderlines() {
