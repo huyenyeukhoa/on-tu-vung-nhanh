@@ -1271,15 +1271,15 @@
 
     .reading-audio-btn {
       background: none;
-      border: none;
+      border: 1.2px solid transparent;
       font-size: 19px;
       cursor: pointer;
-      padding: 3px 6px;
-      border-radius: 50%;
+      padding: 3px 5px;
+      border-radius: 8px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.15s ease, background 0.15s ease;
+      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
       line-height: 1;
       vertical-align: middle;
       user-select: none;
@@ -1287,12 +1287,39 @@
     }
 
     .reading-audio-btn:active {
-      transform: scale(1.2);
+      transform: scale(1.15);
     }
 
     .reading-audio-btn.playing {
-      animation: pulseAudioRing 1.2s infinite ease-in-out;
-      background: #f3eef9;
+      background: #efe6fb !important;
+      border-color: #dcd0ef !important;
+      border-radius: 8px !important;
+      padding: 3px 5px !important;
+      box-shadow: 0 1px 4px rgba(135, 114, 168, 0.18) !important;
+      animation: none !important;
+    }
+
+    .reading-audio-btn.playing .reading-music-note {
+      animation: dancingMusicNote 0.85s infinite ease-in-out !important;
+      display: inline-block;
+      transform-origin: 50% 85%;
+      filter: drop-shadow(0 1px 2px rgba(106, 82, 142, 0.25));
+    }
+
+    .reading-audio-btn.paused {
+      background: #f7f3fb !important;
+      border-color: #e2d8ef !important;
+      border-radius: 8px !important;
+      padding: 3px 5px !important;
+    }
+
+    @keyframes dancingMusicNote {
+      0% { transform: translateY(0) rotate(0deg) scale(1); }
+      20% { transform: translateY(-3px) rotate(-14deg) scale(1.1); }
+      45% { transform: translateY(1px) rotate(4deg) scale(0.95); }
+      65% { transform: translateY(-2.5px) rotate(12deg) scale(1.08); }
+      85% { transform: translateY(0.5px) rotate(-4deg) scale(0.98); }
+      100% { transform: translateY(0) rotate(0deg) scale(1); }
     }
 
     @keyframes pulseAudioRing {
@@ -9710,15 +9737,18 @@ ${chunkText}
       const speed = getReadingAudioSpeed();
       if (isPlaying && !isPaused) {
         btn.classList.add('playing');
-        btn.textContent = '⏸️';
-        btn.title = `Chạm để tạm dừng (${speed}x)`;
+        btn.classList.remove('paused');
+        btn.innerHTML = `<svg class="reading-music-note" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#654d86" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3.2" fill="#8772a8"/><circle cx="18" cy="16" r="3.2" fill="#8772a8"/></svg>`;
+        btn.title = `Đang phát (${speed}x) - Chạm để tạm dừng. Giữ để đổi tốc độ.`;
       } else if (isPaused) {
         btn.classList.remove('playing');
-        btn.textContent = '📖';
-        btn.title = `Chạm để đọc tiếp (${speed}x)`;
+        btn.classList.add('paused');
+        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle;"><polygon points="6 3 20 12 6 21 6 3"/></svg>`;
+        btn.title = `Chạm để đọc tiếp (${speed}x). Giữ để đổi tốc độ.`;
       } else {
         btn.classList.remove('playing');
-        btn.textContent = '📖';
+        btn.classList.remove('paused');
+        btn.innerHTML = '📖';
         btn.title = `Chạm để Đọc bài (${speed}x). Ấn giữ để chỉnh tốc độ.`;
       }
     }
