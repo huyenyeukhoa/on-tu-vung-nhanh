@@ -1962,8 +1962,8 @@
     .srs-lv-row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 12px;
+      gap: 7px;
+      font-size: 11.5px;
       font-family: var(--font-mali);
     }
     .srs-lv-chip {
@@ -1974,13 +1974,16 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     .srs-lv-name {
-      width: 105px;
+      white-space: nowrap !important;
       flex-shrink: 0;
       color: #4b3b66;
       font-weight: 600;
+      font-size: 11.5px;
+      line-height: 1.2;
     }
     .srs-lv-track {
       flex: 1;
+      min-width: 35px;
       height: 7px;
       background: #f0eaf8;
       border-radius: 999px;
@@ -1992,7 +1995,7 @@
       transition: width 0.3s ease;
     }
     .srs-lv-count {
-      width: 32px;
+      width: 30px;
       text-align: right;
       font-weight: 700;
       color: #766299;
@@ -4054,7 +4057,15 @@
     const SRS_INTERVALS = [1, 2, 4, 8, 16, 35];
     const SRS_MAX_LEVEL = SRS_INTERVALS.length - 1;
     const SRS_COLORS = ['#F4B9C1', '#F6CBA3', '#F3DE9C', '#BFDDBB', '#B8D4EA', '#C8B4E3'];
-    const SRS_COLOR_NAMES = ['草莓奶', '奶橘', '奶黄', '奶绿', '奶蓝', '香芋紫'];
+    const SRS_LEVEL_NAMES = [
+      'Phàm Phẩm · 凡品',
+      'Linh Phẩm · 灵品',
+      'Huyền Phẩm · 玄品',
+      'Địa Phẩm · 地品',
+      'Thiên Phẩm · 天品',
+      'Thần Phẩm · 神品'
+    ];
+    const SRS_COLOR_NAMES = SRS_LEVEL_NAMES;
     const SRS_LEECH_LAPSES = 3;
     const SRS_CORRECTION_WINDOW_MS = 20000;
 
@@ -4259,7 +4270,7 @@
       if (!r) return '';
       const lv = Math.max(0, Math.min(SRS_MAX_LEVEL, r.l || 0));
       const safe = String(hanzi).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-      return `<span class="srs-dot" style="--srs-c:${SRS_COLORS[lv]};" onclick="showSrsWordInfo('${safe}', event)" title="Cấp ${lv}"></span>`;
+      return `<span class="srs-dot" style="--srs-c:${SRS_COLORS[lv]};" onclick="showSrsWordInfo('${safe}', event)" title="Cấp ${lv} · ${SRS_LEVEL_NAMES[lv]}"></span>`;
     }
 
     function showSrsWordInfo(hanzi, event) {
@@ -4269,7 +4280,7 @@
       const t = srsToday();
       const lv = r.l || 0;
       const dueTxt = r.d <= t ? 'đến hạn hôm nay' : `ôn lại ${srsDayToLabel(r.d)} (còn ${r.d - t} ngày)`;
-      showToast(`${hanzi} · Cấp ${lv} ${SRS_COLOR_NAMES[lv]} · ${dueTxt}${r.x ? ` · quên ${r.x} lần` : ''}`);
+      showToast(`${hanzi} · Cấp ${lv} (${SRS_LEVEL_NAMES[lv]}) · ${dueTxt}${r.x ? ` · quên ${r.x} lần` : ''}`);
     }
     window.showSrsWordInfo = showSrsWordInfo;
 
@@ -4355,7 +4366,7 @@
       const levelRows = levelCounts.map((c, lv) => `
         <div class="srs-lv-row">
           <span class="srs-lv-chip" style="background:${SRS_COLORS[lv]};"></span>
-          <span class="srs-lv-name">Cấp ${lv} · ${SRS_COLOR_NAMES[lv]}</span>
+          <span class="srs-lv-name">Cấp ${lv} · ${SRS_LEVEL_NAMES[lv]}</span>
           <div class="srs-lv-track"><div class="srs-lv-fill" style="width:${Math.round(c / maxLevel * 100)}%; background:${SRS_COLORS[lv]};"></div></div>
           <span class="srs-lv-count">${c}</span>
         </div>`).join('');
