@@ -1250,22 +1250,49 @@
       border-bottom: 1px solid rgba(226, 216, 239, 0.6);
     }
 
+    #btnPrevReadingArticle:disabled,
+    #btnNextReadingArticle:disabled {
+      opacity: 0.3 !important;
+      cursor: not-allowed !important;
+      pointer-events: none !important;
+    }
+
     #readingViewModal .modal-body {
-      padding: 8px 10px 100px 10px !important;
+      padding: 6px 8px 10px 8px !important;
       flex: 1;
-      overflow-y: auto;
+      min-height: 0;
+      overflow: hidden !important;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #readingVocabStatsBar::-webkit-scrollbar {
+      display: none !important;
     }
 
     @media (max-width: 480px) {
       #readingViewModal .modal-body {
-        padding: 6px 6px 100px 6px !important;
+        padding: 5px 6px 8px 6px !important;
       }
       .reading-passage-box {
-        padding: 12px 9px !important;
-        border-radius: 14px !important;
+        padding: 12px 10px 80px 10px !important;
+        border-radius: 16px !important;
       }
       .reading-para-vi-box {
         padding: 8px 9px !important;
+      }
+      .vocab-unit-text {
+        display: none !important;
+      }
+      #readingVocabStatsBar {
+        gap: 2.5px !important;
+      }
+      #readingVocabStatsBar .tiny-underline-toggle-btn {
+        padding: 2px 5px !important;
+        font-size: 9.5px !important;
+      }
+      #readingVocabStatsBar span {
+        font-size: 9.5px !important;
       }
     }
 
@@ -1328,22 +1355,30 @@
     }
 
     .reading-passage-box {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
       background: rgba(255, 255, 255, 0.93);
       border: 1px solid rgba(226, 216, 239, 0.8);
-      border-radius: 16px;
-      padding: 14px 14px;
+      border-radius: 16px !important;
+      padding: 14px 14px 80px 14px;
       font-family: var(--font-hanzi) !important;
       font-size: 20px;
       line-height: 2.1;
       color: #1f2937;
+      text-align: justify;
+      text-justify: inter-ideograph;
+      text-align-last: left;
+      line-break: strict;
+      -webkit-line-break: strict;
       word-break: break-word;
       overflow-wrap: break-word;
       word-wrap: break-word;
       box-shadow: 0 4px 20px rgba(0,0,0,0.04);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      letter-spacing: 0 !important;
-      word-spacing: 0 !important;
     }
 
     .reading-token {
@@ -1360,16 +1395,18 @@
       transition: background-color 0.15s ease, color 0.15s ease;
       font-weight: 500;
       -webkit-tap-highlight-color: transparent;
-      letter-spacing: 0 !important;
-      word-spacing: 0 !important;
       line-height: 1.15;
     }
 
     .reading-token .token-text {
       display: inline;
-      letter-spacing: 0 !important;
-      word-spacing: 0 !important;
       line-height: inherit;
+    }
+
+    .reading-punct {
+      display: inline;
+      line-break: strict;
+      -webkit-line-break: strict;
     }
 
     .reading-token:hover {
@@ -1414,6 +1451,41 @@
       color: #3b2859 !important;
       font-weight: 700 !important;
       line-height: 1.15 !important;
+    }
+
+    /* Reading Review Mode (Chế độ Ôn bài - Làm mờ các từ đã lưu) */
+    #readingPassageContainer.reading-review-mode .reading-token.selected:not(.revealed) {
+      background: rgba(135, 114, 168, 0.16) !important;
+      border-radius: 4px !important;
+      cursor: pointer !important;
+      box-shadow: 0 0 0 1px rgba(135, 114, 168, 0.28) !important;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease !important;
+    }
+    #readingPassageContainer.reading-review-mode .reading-token.selected:not(.revealed) .token-text {
+      filter: blur(5.5px) !important;
+      opacity: 0.18 !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      pointer-events: none !important;
+      transition: filter 0.22s ease, opacity 0.22s ease !important;
+      display: inline-block !important;
+    }
+    #readingPassageContainer.reading-review-mode .reading-token.selected.revealed {
+      background: rgba(135, 114, 168, 0.22) !important;
+      border-radius: 4px !important;
+      box-shadow: 0 0 0 1.2px rgba(118, 98, 153, 0.45) !important;
+      animation: popRevealToken 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #readingPassageContainer.reading-review-mode .reading-token.selected.revealed .token-text {
+      filter: none !important;
+      opacity: 1 !important;
+      transition: filter 0.2s ease, opacity 0.2s ease !important;
+      display: inline-block !important;
+    }
+    @keyframes popRevealToken {
+      0% { transform: scale(0.92); }
+      55% { transform: scale(1.08); }
+      100% { transform: scale(1); }
     }
 
     /* Underline for HSK 6 vocabulary: 奶绿 (Milky Matcha Green) */
@@ -1468,6 +1540,11 @@
       margin: 0 0 14px 0 !important;
       border: none !important;
       box-shadow: none !important;
+      text-align: justify;
+      text-justify: inter-ideograph;
+      text-align-last: left;
+      line-break: strict;
+      -webkit-line-break: strict;
     }
     #readingPassageContainer.show-vi-gloss .reading-para-box {
       line-height: 2.45;
@@ -3244,43 +3321,45 @@
   <!-- Interactive Reading Passage View Modal -->
   <div class="modal-overlay" id="readingViewModal">
     <div class="modal-card" style="position: relative;">
-      <div class="modal-header">
-        <div class="modal-title" id="readingViewModalTitle" style="font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 4px;">
+      <div class="modal-header" style="padding: 7px 10px; display: flex; align-items: center; justify-content: space-between; gap: 5px;">
+        <div style="display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0;">
           <button id="btnHeaderAudioToggle" class="reading-audio-btn" title="Chạm để Đọc / Dừng toàn bộ bài (Giọng Nam AI Qwen - loongjohn)">📖</button>
+          <button id="btnPrevReadingArticle" class="icon-action-btn" style="padding: 4px 6px; font-size: 11px; font-weight: 700; color: #766299; border-radius: 6px; background: transparent; border: none; cursor: pointer;" title="Bài trước">◀</button>
+        </div>
+        <div class="modal-title" id="btnCustomArticleSelect" style="font-size: 14.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 3px; cursor: pointer;" title="Chạm để chọn bài khác">
           <span id="readingViewModalTitleText" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Đọc bài khóa</span>
+          <span style="font-size: 9px; color: #766299; flex-shrink: 0;">▼</span>
+          <span id="customArticleSelectText" style="display: none;"></span>
         </div>
-        <button class="modal-close-btn" id="btnCloseReadingViewModal">✕</button>
+        <div style="display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;">
+          <button id="btnNextReadingArticle" class="icon-action-btn" style="padding: 4px 6px; font-size: 11px; font-weight: 700; color: #766299; border-radius: 6px; background: transparent; border: none; cursor: pointer;" title="Bài tiếp">▶</button>
+          <button id="btnOpenStudyGroupFromReading" class="icon-action-btn" style="padding: 3px 7px; font-size: 11px; font-weight: 700; color: #5e438c; background: #efe6fb; border: 1px solid #dfd3ef; border-radius: 7px; cursor: pointer;" title="Mở giao diện ôn tập 2 cột">📝 Học</button>
+          <button class="modal-close-btn" id="btnCloseReadingViewModal" style="margin-left: 2px;">✕</button>
+        </div>
       </div>
-      <div class="modal-body" id="readingViewModalBody" style="padding-bottom: 80px; position: relative;">
-        <!-- Article Switcher Bar top inside reader -->
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 10px; background: #f3eef9; padding: 6px 10px; border-radius: 12px; border: 1px solid #e2d8ef;">
-          <button id="btnPrevReadingArticle" class="icon-action-btn" style="padding: 4px 6px; font-size: 12px; font-weight: 700; color: #766299;" title="Bài trước">◀</button>
-          <div id="btnCustomArticleSelect" class="custom-group-select-btn" style="margin: 0; flex: 1; min-width: 0; padding: 5px 8px; font-size: 12px; font-weight: 700; color: #3c2e54; background: #ffffff; border: 1px solid #d4c5e8; border-radius: 8px; font-family: var(--font-mali) !important; display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
-            <span id="customArticleSelectText" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📖 1. Bài đọc...</span>
-            <span style="font-size: 9px; color: #766299; margin-left: 4px; flex-shrink: 0;">▼</span>
-          </div>
-          <button id="btnNextReadingArticle" class="icon-action-btn" style="padding: 4px 6px; font-size: 12px; font-weight: 700; color: #766299;" title="Bài tiếp">▶</button>
-          <button class="primary-submit-btn" id="btnOpenStudyGroupFromReading" style="padding: 5px 9px; font-size: 11.5px; font-weight: 700; border-radius: 8px; white-space: nowrap; flex-shrink: 0;" title="Mở giao diện ôn tập 2 cột">📝 Học 2 cột</button>
-        </div>
+      <div class="modal-body" id="readingViewModalBody" style="position: relative;">
 
-        <!-- Tiny Vocabulary Stats Bar (H6 奶绿 & H7-9 奶棕 counts & legend) -->
-        <div id="readingVocabStatsBar" style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 9px; padding: 0 2px; flex-wrap: nowrap;">
-          <div style="display: inline-flex; align-items: center; gap: 5px; flex-wrap: nowrap; flex-shrink: 0;">
-            <span style="font-size: 10.5px; font-weight: 700; color: #3d6b46; background: #edf6f0; border: 1px solid #cce5d4; padding: 1.5px 6px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mali); white-space: nowrap; flex-shrink: 0;" title="Từ vựng thuộc list HSK 6 (gạch chân màu 奶绿)">
-              <span style="width: 8px; height: 2.5px; background: #689f76; border-radius: 2px; display: inline-block; flex-shrink: 0;"></span>
-              H6: <b id="statCountH6">0</b> từ
+        <!-- Tiny Vocabulary Stats Bar (H6 奶绿 & H7-9 奶棕 counts & legend & review toggle) -->
+        <div id="readingVocabStatsBar" style="display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 8px; padding: 0 1px; flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;">
+          <div style="display: inline-flex; align-items: center; gap: 4px; flex-wrap: nowrap !important; flex-shrink: 0;">
+            <span style="font-size: 10px; font-weight: 700; color: #3d6b46; background: #edf6f0; border: 1px solid #cce5d4; padding: 1.5px 5px; border-radius: 6px; display: inline-flex; align-items: center; gap: 3.5px; font-family: var(--font-mali); white-space: nowrap !important; flex-shrink: 0;" title="Từ vựng thuộc list HSK 6 (gạch chân màu 奶绿)">
+              <span style="width: 7px; height: 2.5px; background: #689f76; border-radius: 2px; display: inline-block; flex-shrink: 0;"></span>
+              H6: <b id="statCountH6">0</b><span class="vocab-unit-text"> từ</span>
             </span>
-            <span style="font-size: 10.5px; font-weight: 700; color: #7c5335; background: #faf4ef; border: 1px solid #ebd9cb; padding: 1.5px 6px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mali); white-space: nowrap; flex-shrink: 0;" title="Từ vựng thuộc list HSK 7-9 (gạch chân màu 奶棕)">
-              <span style="width: 8px; height: 2.5px; background: #b08968; border-radius: 2px; display: inline-block; flex-shrink: 0;"></span>
-              H7-9: <b id="statCountH79">0</b> từ
+            <span style="font-size: 10px; font-weight: 700; color: #7c5335; background: #faf4ef; border: 1px solid #ebd9cb; padding: 1.5px 5px; border-radius: 6px; display: inline-flex; align-items: center; gap: 3.5px; font-family: var(--font-mali); white-space: nowrap !important; flex-shrink: 0;" title="Từ vựng thuộc list HSK 7-9 (gạch chân màu 奶棕)">
+              <span style="width: 7px; height: 2.5px; background: #b08968; border-radius: 2px; display: inline-block; flex-shrink: 0;"></span>
+              H7-9: <b id="statCountH79">0</b><span class="vocab-unit-text"> từ</span>
             </span>
           </div>
-          <div style="display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;">
-            <button id="btnToggleReadingGloss" class="tiny-underline-toggle-btn" style="font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0; white-space: nowrap;" title="Chạm để ẩn hoặc hiện nghĩa Tiếng Việt dưới các từ đã lưu (highlight)">
+          <div style="display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; flex-wrap: nowrap !important;">
+            <button id="btnToggleReadingGloss" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0; white-space: nowrap !important;" title="Chạm để ẩn hoặc hiện nghĩa Tiếng Việt dưới các từ đã lưu (highlight)">
               <span id="glossToggleText">Nghĩa TV</span>
             </button>
-            <button id="btnToggleReadingUnderlines" class="tiny-underline-toggle-btn" style="font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0; white-space: nowrap;" title="Chạm để ẩn hoặc hiện đường gạch chân từ vựng">
+            <button id="btnToggleReadingUnderlines" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0; white-space: nowrap !important;" title="Chạm để ẩn hoặc hiện đường gạch chân từ vựng">
               <span id="underlineToggleText">Gạch chân</span>
+            </button>
+            <button id="btnToggleReadingReview" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0; white-space: nowrap !important;" title="Chạm để bật/tắt chế độ ôn bài (làm mờ các từ đã lưu để tự kiểm tra, chạm vào chữ để hiện lại)">
+              <span id="reviewToggleText">Ôn bài</span>
             </button>
           </div>
         </div>
@@ -9758,10 +9837,10 @@ ${chunkText}
     // Save current reading scroll position in active article
     function saveCurrentReadingScroll() {
       if (!activeReadingArticleId) return;
-      const body = document.getElementById('readingViewModalBody');
-      if (!body) return;
+      const scrollEl = document.getElementById('readingPassageContainer') || document.getElementById('readingViewModalBody');
+      if (!scrollEl) return;
       try {
-        const top = body.scrollTop;
+        const top = scrollEl.scrollTop;
         const scrollMap = JSON.parse(localStorage.getItem('hsk_reading_scroll_map') || '{}');
         scrollMap[activeReadingArticleId] = top > 40 ? Math.round(top) : 0;
         localStorage.setItem('hsk_reading_scroll_map', JSON.stringify(scrollMap));
@@ -9770,9 +9849,9 @@ ${chunkText}
 
     let readingScrollSaveTimeout = null;
     function handleReadingBodyScroll() {
-      const body = document.getElementById('readingViewModalBody');
-      if (!body || !activeReadingArticleId) return;
-      const top = body.scrollTop;
+      const scrollEl = document.getElementById('readingPassageContainer') || document.getElementById('readingViewModalBody');
+      if (!scrollEl || !activeReadingArticleId) return;
+      const top = scrollEl.scrollTop;
 
       const btnTop = document.getElementById('btnReadingScrollToTop');
       if (btnTop) {
@@ -9800,6 +9879,9 @@ ${chunkText}
 
       if (activeReadingArticleId !== articleId) {
         stopReadingPassageAudio(true);
+        if (isReadingReviewModeActive) {
+          isReadingReviewModeActive = false;
+        }
       }
 
       activeReadingArticleId = articleId;
@@ -9832,23 +9914,23 @@ ${chunkText}
         savedScroll = scrollMap[articleId] || 0;
       } catch(e) {}
 
-      const body = document.getElementById('readingViewModalBody');
+      const scrollEl = document.getElementById('readingPassageContainer') || document.getElementById('readingViewModalBody');
       const btnTop = document.getElementById('btnReadingScrollToTop');
 
       if (savedScroll > 40) {
         requestAnimationFrame(() => {
           setTimeout(() => {
-            if (body && readingViewModal.classList.contains('active')) {
-              body.scrollTop = savedScroll;
+            if (scrollEl && readingViewModal.classList.contains('active')) {
+              scrollEl.scrollTop = savedScroll;
               if (btnTop) {
-                btnTop.style.display = body.scrollTop > 180 ? 'inline-flex' : 'none';
+                btnTop.style.display = scrollEl.scrollTop > 180 ? 'inline-flex' : 'none';
               }
               showToast('📖 Đang tiếp tục tại vị trí bạn đọc dở');
             }
           }, 50);
         });
       } else {
-        if (body) body.scrollTop = 0;
+        if (scrollEl) scrollEl.scrollTop = 0;
         resetModalScroll(readingViewModal);
         if (btnTop) btnTop.style.display = 'none';
       }
@@ -9944,7 +10026,7 @@ ${chunkText}
             const globalIdx = overallTokenIdx++;
             if (!tok.isVocab) {
               const formattedPunct = (tok.hanzi || '').replace(/\n/g, '<br/>');
-              return `<span>${formattedPunct}</span>`;
+              return `<span class="reading-punct">${formattedPunct}</span>`;
             }
 
             const isSelected = selectedMap.has(tok.hanzi);
@@ -10003,6 +10085,7 @@ ${chunkText}
 
       updateReadingGlossToggleUI();
       updateReadingUnderlinesToggleUI();
+      updateReadingReviewToggleUI();
 
       const btnToggleGloss = document.getElementById('btnToggleReadingGloss');
       if (btnToggleGloss && !btnToggleGloss.dataset.bound) {
@@ -10014,6 +10097,12 @@ ${chunkText}
       if (btnToggleUnderlines && !btnToggleUnderlines.dataset.bound) {
         btnToggleUnderlines.addEventListener('click', toggleReadingUnderlines);
         btnToggleUnderlines.dataset.bound = 'true';
+      }
+
+      const btnToggleReview = document.getElementById('btnToggleReadingReview');
+      if (btnToggleReview && !btnToggleReview.dataset.bound) {
+        btnToggleReview.addEventListener('click', toggleReadingReview);
+        btnToggleReview.dataset.bound = 'true';
       }
     }
 
@@ -10083,6 +10172,59 @@ ${chunkText}
       updateReadingUnderlinesToggleUI();
     }
 
+    let isReadingReviewModeActive = false;
+
+    function updateReadingReviewToggleUI() {
+      const btn = document.getElementById('btnToggleReadingReview');
+      const container = document.getElementById('readingPassageContainer');
+      const text = document.getElementById('reviewToggleText');
+
+      if (isReadingReviewModeActive) {
+        if (container) container.classList.add('reading-review-mode');
+        if (btn) {
+          btn.style.background = '#766299';
+          btn.style.color = '#ffffff';
+          btn.style.border = '1.2px solid #5e438c';
+          btn.title = 'Chế độ ôn bài đang BẬT: Chạm vào chữ mờ để hiện lại chữ Hán. Chạm nút này để tắt.';
+        }
+      } else {
+        if (container) container.classList.remove('reading-review-mode');
+        if (btn) {
+          btn.style.background = '#f3eef9';
+          btn.style.color = '#766299';
+          btn.style.border = '1.2px solid #dfd3ef';
+          btn.title = 'Chạm để bật chế độ ôn bài (làm mờ các từ đã lưu để tự kiểm tra)';
+        }
+      }
+      if (text) text.textContent = 'Ôn bài';
+    }
+
+    function toggleReadingReview() {
+      const art = readingArticles.find(a => a.id === activeReadingArticleId);
+      const selectedCount = art && art.selectedWords ? art.selectedWords.length : 0;
+
+      isReadingReviewModeActive = !isReadingReviewModeActive;
+      updateReadingReviewToggleUI();
+
+      if (isReadingReviewModeActive) {
+        // Reset previously revealed words when activating review mode
+        document.querySelectorAll('#readingPassageContainer .reading-token.revealed').forEach(el => {
+          el.classList.remove('revealed');
+        });
+
+        if (selectedCount === 0) {
+          showToast('💡 Bài này chưa có từ nào được lưu. Hãy chạm vào từ vựng bất kỳ và chọn "Thêm vào list ôn tập" để làm mờ nhé!');
+        } else {
+          showToast(`🎯 Chế độ ôn bài: Đã làm mờ ${selectedCount} từ đã lưu. Chạm vào chữ mờ để hiện chữ Hán!`);
+        }
+      } else {
+        document.querySelectorAll('#readingPassageContainer .reading-token.revealed').forEach(el => {
+          el.classList.remove('revealed');
+        });
+        showToast('📖 Đã tắt chế độ ôn bài');
+      }
+    }
+
     // Token clicked inside Interactive Reader
     function handleReadingTokenClick(articleId, tokenIndex, event) {
       const art = readingArticles.find(a => a.id === articleId);
@@ -10091,15 +10233,28 @@ ${chunkText}
       const tok = art.tokens[tokenIndex];
       activeTokenItem = tok;
 
+      const targetEl = event && event.currentTarget
+        ? event.currentTarget
+        : document.querySelector(`#readingPassageContainer .reading-token[data-index="${tokenIndex}"]`);
+      const isSelected = (art.selectedWords || []).some(w => w.hanzi === tok.hanzi);
+
+      // In Review Mode: first tap on a blurred saved word un-blurs (reveals) the Hanzi!
+      if (isReadingReviewModeActive && isSelected && targetEl) {
+        if (!targetEl.classList.contains('revealed')) {
+          targetEl.classList.add('revealed');
+          if (autoSpeakOnTick && tok.hanzi) {
+            speakChinese(tok.hanzi);
+          }
+          return; // Reveal in-place without opening drawer
+        }
+      }
+
       // Update active token highlight in passage DOM
       document.querySelectorAll('#readingPassageContainer .reading-token').forEach(el => {
         el.classList.remove('active-token');
       });
-      if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active-token');
-      } else {
-        const targetEl = document.querySelector(`#readingPassageContainer .reading-token[data-index="${tokenIndex}"]`);
-        if (targetEl) targetEl.classList.add('active-token');
+      if (targetEl) {
+        targetEl.classList.add('active-token');
       }
 
       drawerHanzi.textContent = tok.hanzi;
@@ -10107,8 +10262,6 @@ ${chunkText}
       drawerMeaning.textContent = `Nghĩa: ${tok.vietnamese || ''}`;
       btnSpeakDrawerWord.onclick = () => speakChinese(tok.hanzi);
 
-
-      const isSelected = (art.selectedWords || []).some(w => w.hanzi === tok.hanzi);
       updateDrawerButtonState(isSelected);
 
       btnToggleWordInReviewList.onclick = () => toggleWordInReadingArticle(articleId, tok);
@@ -10387,6 +10540,10 @@ ${chunkText}
           saveCurrentReadingScroll();
           readingViewModal.classList.remove('active');
           stopReadingPassageAudio(true);
+          if (isReadingReviewModeActive) {
+            isReadingReviewModeActive = false;
+            updateReadingReviewToggleUI();
+          }
         });
       }
 
@@ -10404,8 +10561,17 @@ ${chunkText}
             saveCurrentReadingScroll();
             readingViewModal.classList.remove('active');
             stopReadingPassageAudio(true);
+            if (isReadingReviewModeActive) {
+              isReadingReviewModeActive = false;
+              updateReadingReviewToggleUI();
+            }
           }
         });
+      }
+
+      const passageEl = document.getElementById('readingPassageContainer');
+      if (passageEl) {
+        passageEl.addEventListener('scroll', handleReadingBodyScroll, { passive: true });
       }
 
       const modalBodyEl = document.getElementById('readingViewModalBody');
@@ -10416,9 +10582,9 @@ ${chunkText}
       const btnScrollTopEl = document.getElementById('btnReadingScrollToTop');
       if (btnScrollTopEl) {
         btnScrollTopEl.addEventListener('click', () => {
-          const body = document.getElementById('readingViewModalBody');
-          if (body) {
-            body.scrollTo({ top: 0, behavior: 'smooth' });
+          const scrollEl = document.getElementById('readingPassageContainer') || document.getElementById('readingViewModalBody');
+          if (scrollEl) {
+            scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
           }
         });
       }
