@@ -890,6 +890,27 @@
       font-size: 12px;
     }
 
+    .colloc-empty-hint {
+      font-size: 11.5px;
+      color: #766299;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 1.5px 8px;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px dashed #d8c7ec;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+      font-family: var(--font-mali);
+    }
+
+    .colloc-empty-hint:hover, .colloc-empty-hint:active {
+      background: #f3eef9;
+      border-color: #766299;
+      color: #4c1d95;
+    }
+
     /* Column Styles */
     .col-main {
       padding-right: 8px;
@@ -6957,11 +6978,25 @@ Viết bằng tiếng Việt, đúng chính tả, không dùng chữ phồn th�
     // Fetch Single AI Explanation from OpenRouter (gemini-2.5-flash) - Returns cached or newly fetched data
     async function fetchSingleAiExplanation(hanzi, pinyin) {
       if (aiCache[hanzi] && aiCache[hanzi].context && aiCache[hanzi].context.includes('important-highlight')) {
+        if (!aiCache[hanzi].collocations || aiCache[hanzi].collocations.length === 0) {
+          const foundCollocs = typeof getWordCollocations === 'function' ? getWordCollocations(hanzi) : null;
+          if (foundCollocs && foundCollocs.length > 0) {
+            aiCache[hanzi].collocations = foundCollocs;
+            persistAiEntry(hanzi);
+          }
+        }
         return aiCache[hanzi];
       }
       // Make sure the on-device store has finished loading before deciding to call the AI API
       await aiStoreReady;
       if (aiCache[hanzi] && aiCache[hanzi].context && aiCache[hanzi].context.includes('important-highlight')) {
+        if (!aiCache[hanzi].collocations || aiCache[hanzi].collocations.length === 0) {
+          const foundCollocs = typeof getWordCollocations === 'function' ? getWordCollocations(hanzi) : null;
+          if (foundCollocs && foundCollocs.length > 0) {
+            aiCache[hanzi].collocations = foundCollocs;
+            persistAiEntry(hanzi);
+          }
+        }
         return aiCache[hanzi];
       }
 
@@ -7056,6 +7091,9 @@ Lưu ý quan trọng:
       try {
         const parsed = await fetchSingleAiExplanation(hanzi, pinyin);
         renderAiExplanation(parsed);
+        if (showCollocations && parsed && parsed.collocations && parsed.collocations.length > 0) {
+          renderVocabList(false);
+        }
       } catch (err) {
         console.error('AI error:', err);
         modalCard.classList.remove('transparent-loading');
@@ -7233,6 +7271,37 @@ Lưu ý quan trọng:
         `;
       }).join('');
 
+      const wordCollocs = (Array.isArray(data.collocations) && data.collocations.length > 0)
+        ? data.collocations
+        : (typeof getWordCollocations === 'function' ? getWordCollocations(data.hanzi) : null);
+
+      let collocsSectionHTML = '';
+      if (wordCollocs && wordCollocs.length > 0) {
+        const chips = wordCollocs.slice(0, 4).map(c => {
+          const zh = (c.zh || c.hanzi || '').trim();
+          const vi = (c.vi || c.vietnamese || '').trim();
+          const safeZh = zh.replace(/'/g, "\\'");
+          return `
+            <div style="background: #ffffff; border: 1.2px solid #dfd3ef; border-radius: 9px; padding: 5px 10px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); cursor: pointer; transition: all 0.15s ease;" onclick="speakChinese('${safeZh}')" title="chạm để nghe phát âm">
+              <span style="font-family: var(--font-hanzi); font-size: 14.5px; font-weight: 700; color: #3c2e54;">${zh}</span>
+              ${vi ? `<span style="font-size: 12px; color: #6b7280; font-family: var(--font-mali);">(${vi})</span>` : ''}
+              <span style="font-size: 11px; color: #766299;">🔊</span>
+            </div>
+          `;
+        }).join('');
+
+        collocsSectionHTML = `
+          <div style="background: #fbf9fd; padding: 11px 13px; border-radius: 14px; border: 1.2px solid #ebdff5; margin-bottom: 14px;">
+            <div style="font-size: 12.5px; font-weight: 700; color: #684e92; margin-bottom: 7px; display: flex; align-items: center; gap: 5px;">
+              <span>⚔️ Cụm đi kèm vàng (搭配):</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 7px;">
+              ${chips}
+            </div>
+          </div>
+        `;
+      }
+
       const hanVietUpper = (data.hanViet || getHanViet(data.hanzi) || '').trim().toUpperCase();
       if (hanVietUpper && (!data.hanViet || data.hanViet !== hanVietUpper)) {
         data.hanViet = hanVietUpper;
@@ -7298,6 +7367,8 @@ Lưu ý quan trọng:
           <div style="margin-bottom: 4px; font-size: 13px; color: #3c2e54;"><b>Nghĩa:</b> ${data.meaning || ''}</div>
           <div style="line-height: 1.55; font-size: 13px; color: #3c2e54;">${formatContextTextWithPurpleExamples(data.context || '')}</div>
         </div>
+
+        ${collocsSectionHTML}
 
         <div style="font-size: 13.5px; font-weight: 700; color: #766299; margin-bottom: 8px;">📝 Các câu ví dụ minh họa (${data.examples ? data.examples.length : 3} câu):</div>
 
@@ -7407,17 +7478,50 @@ Lưu ý:
       }
     }
 
+    // Helper function to extract sample collocations from example sentences
+    function extractCollocationsFromExamples(hanzi, examples) {
+      if (!hanzi || !Array.isArray(examples)) return null;
+      const results = [];
+      for (const ex of examples) {
+        if (!ex || !ex.hanzi || !ex.hanzi.includes(hanzi)) continue;
+        const zhClean = ex.hanzi.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢/g, '').trim();
+        const clauses = zhClean.split(/[，。！？,.!?；;]/).map(s => s.trim()).filter(Boolean);
+        const matchingClause = clauses.find(c => c.includes(hanzi));
+        if (matchingClause) {
+          const idx = matchingClause.indexOf(hanzi);
+          const start = Math.max(0, idx - 2);
+          const end = Math.min(matchingClause.length, idx + hanzi.length + 2);
+          const phrase = matchingClause.substring(start, end).trim();
+          if (phrase.length >= hanzi.length && phrase.length <= 8 && !results.some(r => r.zh === phrase)) {
+            const viMeaning = (ex.vietnamese || '').split(/[,;.]/)[0].trim() || 'cụm mẫu trong ví dụ';
+            results.push({ zh: phrase, vi: viMeaning });
+            if (results.length >= 2) break;
+          }
+        }
+      }
+      return results.length > 0 ? results : null;
+    }
+
     // Helper function to resolve collocations (搭配) for a Hanzi word
     function getWordCollocations(hanzi) {
       if (!hanzi) return null;
       const clean = String(hanzi).trim();
-      // 1. Check pre-built HSK_COLLOCATIONS dictionary
-      if (typeof HSK_COLLOCATIONS !== 'undefined' && HSK_COLLOCATIONS && HSK_COLLOCATIONS[clean]) {
-        return HSK_COLLOCATIONS[clean];
+      const direct = (typeof HSK_COLLOCATIONS !== 'undefined' && HSK_COLLOCATIONS) || (typeof window !== 'undefined' && window.HSK_COLLOCATIONS);
+      if (direct && direct[clean] && direct[clean].length > 0) {
+        return direct[clean];
       }
-      // 2. Check aiCache
+      const inverted = (typeof HSK_COLLOCATIONS_INVERTED !== 'undefined' && HSK_COLLOCATIONS_INVERTED) || (typeof window !== 'undefined' && window.HSK_COLLOCATIONS_INVERTED);
+      if (inverted && inverted[clean] && inverted[clean].length > 0) {
+        return inverted[clean];
+      }
+      // 3. Check aiCache
       if (typeof aiCache !== 'undefined' && aiCache && aiCache[clean] && Array.isArray(aiCache[clean].collocations) && aiCache[clean].collocations.length > 0) {
         return aiCache[clean].collocations;
+      }
+      // 4. Fallback: extract from aiCache examples if present
+      if (typeof aiCache !== 'undefined' && aiCache && aiCache[clean] && Array.isArray(aiCache[clean].examples) && aiCache[clean].examples.length > 0) {
+        const extracted = extractCollocationsFromExamples(clean, aiCache[clean].examples);
+        if (extracted && extracted.length > 0) return extracted;
       }
       return null;
     }
@@ -7510,7 +7614,7 @@ Lưu ý:
       if (showCollocations) {
         const collocs = getWordCollocations(item.hanzi);
         if (collocs && collocs.length > 0) {
-          const itemsHTML = collocs.map(c => {
+          const itemsHTML = collocs.slice(0, 3).map(c => {
             const zh = (c.zh || c.hanzi || '').trim();
             const vi = (c.vi || c.vietnamese || '').trim();
             const safeZh = zh.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
@@ -7524,6 +7628,13 @@ Lưu ý:
             <div class="vocab-collocation-row">
               <span class="colloc-badge">💡 搭配</span>
               <div class="colloc-list">${itemsHTML}</div>
+            </div>
+          `;
+        } else {
+          collocationHTML = `
+            <div class="vocab-collocation-row">
+              <span class="colloc-badge">💡 搭配</span>
+              <span class="colloc-empty-hint" onclick="fetchAiExplanation('${safeHanzi}', '${safePinyin}')" title="Chạm để AI gợi ý cụm 搭配">chưa có cụm mẫu · chạm nạp AI ⚡</span>
             </div>
           `;
         }

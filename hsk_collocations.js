@@ -1,6 +1,146 @@
-// HSK 6 & HSK 7-9 Collocations Dictionary (搭配)
-// Provides instant high-frequency collocations offline
+// HSK Collocations Dictionary (Linh Dược Phối Phương / 搭配)
+// Provides instant high-frequency collocations offline with bidirectional inverted indexing
 const HSK_COLLOCATIONS = {
+  "基础": [
+    {
+      "zh": "奠定基础",
+      "vi": "đặt nền móng"
+    },
+    {
+      "zh": "打好基础",
+      "vi": "đặt nền tảng vững chắc"
+    },
+    {
+      "zh": "夯实基础",
+      "vi": "củng cố nền tảng vững vàng"
+    },
+    {
+      "zh": "基础扎实",
+      "vi": "nền móng vững chắc"
+    }
+  ],
+  "向来": [
+    {
+      "zh": "向来如此",
+      "vi": "xưa nay đều thế"
+    },
+    {
+      "zh": "向来严格",
+      "vi": "trước nay luôn nghiêm ngặt"
+    },
+    {
+      "zh": "向来重视",
+      "vi": "từ trước đến nay luôn coi trọng"
+    }
+  ],
+  "偏心": [
+    {
+      "zh": "过于偏心",
+      "vi": "quá đỗi thiên vị"
+    },
+    {
+      "zh": "偏心偏袒",
+      "vi": "thiên vị bênh vực"
+    },
+    {
+      "zh": "父母偏心",
+      "vi": "cha mẹ thiên vị"
+    }
+  ],
+  "懦夫": [
+    {
+      "zh": "胆小懦夫",
+      "vi": "kẻ nhát gan hèn nhát"
+    },
+    {
+      "zh": "决非懦夫",
+      "vi": "tuyệt đối không phải kẻ yếu hèn"
+    },
+    {
+      "zh": "懦夫行径",
+      "vi": "hành vi hèn nhát"
+    }
+  ],
+  "不争气": [
+    {
+      "zh": "太不争气",
+      "vi": "quá đỗi kém cỏi/không nên thân"
+    },
+    {
+      "zh": "身体不争气",
+      "vi": "sức khỏe không chiều lòng người"
+    },
+    {
+      "zh": "真不争气",
+      "vi": "thật không chịu cố gắng"
+    }
+  ],
+  "守门员": [
+    {
+      "zh": "优秀守门员",
+      "vi": "thủ môn xuất sắc"
+    },
+    {
+      "zh": "专职守门员",
+      "vi": "thủ môn chuyên nghiệp"
+    },
+    {
+      "zh": "替补守门员",
+      "vi": "thủ môn dự bị"
+    }
+  ],
+  "月嫂": [
+    {
+      "zh": "请月嫂",
+      "vi": "thuê bảo mẫu sau sinh"
+    },
+    {
+      "zh": "金牌月嫂",
+      "vi": "bảo mẫu sau sinh cao cấp"
+    },
+    {
+      "zh": "专业月嫂",
+      "vi": "bảo mẫu sau sinh chuyên nghiệp"
+    }
+  ],
+  "不档次": [
+    {
+      "zh": "不上档次",
+      "vi": "kém sang, không đẳng cấp"
+    },
+    {
+      "zh": "不够档次",
+      "vi": "chưa đủ tầm đẳng cấp"
+    }
+  ],
+  "档次": [
+    {
+      "zh": "提高档次",
+      "vi": "nâng tầm đẳng cấp"
+    },
+    {
+      "zh": "拉开档次",
+      "vi": "tạo khoảng cách đẳng cấp"
+    },
+    {
+      "zh": "讲究档次",
+      "vi": "chú trọng đẳng cấp"
+    },
+    {
+      "zh": "高档次",
+      "vi": "đẳng cấp cao"
+    }
+  ],
+  "上档次": [
+    {
+      "zh": "高档上档次",
+      "vi": "cao cấp sang trọng"
+    },
+    {
+      "zh": "很有档次",
+      "vi": "rất có đẳng cấp"
+    }
+  ],
   "安置": [
     {
       "zh": "妥善安置",
@@ -59,6 +199,48 @@ const HSK_COLLOCATIONS = {
     {
       "zh": "翱翔蓝天",
       "vi": "bay lượn giữa trời xanh"
+    }
+  ],
+  "爱不释手": [
+    {
+      "zh": "令人爱不释手",
+      "vi": "khiến người ta yêu thích không nỡ rời tay"
+    }
+  ],
+  "安居乐业": [
+    {
+      "zh": "百姓安居乐业",
+      "vi": "nhân dân an cư lạc nghiệp"
+    }
+  ],
+  "昂贵": [
+    {
+      "zh": "价格昂贵",
+      "vi": "giá cả đắt đỏ"
+    },
+    {
+      "zh": "造价昂贵",
+      "vi": "chi phí xây dựng đắt đỏ"
+    }
+  ],
+  "傲慢": [
+    {
+      "zh": "态度傲慢",
+      "vi": "thái độ ngạo mạn"
+    },
+    {
+      "zh": "傲慢无礼",
+      "vi": "ngạo mạn vô lễ"
+    }
+  ],
+  "哀悼": [
+    {
+      "zh": "沉痛哀悼",
+      "vi": "vô cùng thương tiếc chia buồn"
+    },
+    {
+      "zh": "表示哀悼",
+      "vi": "bày tỏ lòng tiếc thương"
     }
   ],
   "拔苗助长": [
@@ -265,6 +447,178 @@ const HSK_COLLOCATIONS = {
     {
       "zh": "迈出坚实步伐",
       "vi": "vững vàng sải bước"
+    }
+  ],
+  "保障": [
+    {
+      "zh": "保障权益",
+      "vi": "bảo đảm quyền lợi"
+    },
+    {
+      "zh": "有力保障",
+      "vi": "sự bảo đảm vững chắc"
+    }
+  ],
+  "辩解": [
+    {
+      "zh": "百般辩解",
+      "vi": "tìm mọi cách biện giải"
+    },
+    {
+      "zh": "无力辩解",
+      "vi": "bất lực không thể bào chữa"
+    }
+  ],
+  "变迁": [
+    {
+      "zh": "时代变迁",
+      "vi": "thời thế đổi thay"
+    },
+    {
+      "zh": "历史变迁",
+      "vi": "biến thiên lịch sử"
+    }
+  ],
+  "辨认": [
+    {
+      "zh": "难以辨认",
+      "vi": "khó lòng nhận ra"
+    },
+    {
+      "zh": "辨认方向",
+      "vi": "nhận định phương hướng"
+    }
+  ],
+  "表彰": [
+    {
+      "zh": "受到表彰",
+      "vi": "được biểu dương khen thưởng"
+    },
+    {
+      "zh": "隆重表彰",
+      "vi": "biểu dương long trọng"
+    }
+  ],
+  "濒临": [
+    {
+      "zh": "濒临灭绝",
+      "vi": "bên bờ vực tuyệt chủng"
+    },
+    {
+      "zh": "濒临破产",
+      "vi": "trên đà phá sản"
+    }
+  ],
+  "不屈不挠": [
+    {
+      "zh": "不屈不挠的精神",
+      "vi": "tinh thần bất khuất kiên cường"
+    },
+    {
+      "zh": "不屈不挠的斗争",
+      "vi": "cuộc đấu tranh kiên cường"
+    }
+  ],
+  "不由自主": [
+    {
+      "zh": "不由自主地笑出声",
+      "vi": "bất giác bật cười thành tiếng"
+    },
+    {
+      "zh": "不由自主地震颤",
+      "vi": "bất giác run rẩy"
+    }
+  ],
+  "不容置疑": [
+    {
+      "zh": "不容置疑的真理",
+      "vi": "chân lý không thể nghi ngờ"
+    },
+    {
+      "zh": "事实不容置疑",
+      "vi": "sự thật không thể chối cãi"
+    }
+  ],
+  "不言而喻": [
+    {
+      "zh": "重要性不言而喻",
+      "vi": "tầm quan trọng không cần nói cũng rõ"
+    },
+    {
+      "zh": "道理不言而喻",
+      "vi": "đạo lý hiển nhiên"
+    }
+  ],
+  "不可或缺": [
+    {
+      "zh": "不可或缺的一部分",
+      "vi": "một phần không thể thiếu"
+    }
+  ],
+  "不谋而合": [
+    {
+      "zh": "不谋而合的看法",
+      "vi": "quan điểm bất ngờ trùng hợp"
+    }
+  ],
+  "不知所措": [
+    {
+      "zh": "显得不知所措",
+      "vi": "tỏ ra lúng túng không biết làm sao"
+    }
+  ],
+  "饱和": [
+    {
+      "zh": "市场饱和",
+      "vi": "thị trường bão hòa"
+    },
+    {
+      "zh": "趋于饱和",
+      "vi": "có xu hướng bão hòa"
+    }
+  ],
+  "保卫": [
+    {
+      "zh": "保卫祖国",
+      "vi": "bảo vệ tổ quốc"
+    },
+    {
+      "zh": "保卫和平",
+      "vi": "bảo vệ hòa bình"
+    }
+  ],
+  "把握": [
+    {
+      "zh": "把握机遇",
+      "vi": "nắm bắt cơ hội"
+    },
+    {
+      "zh": "把握分寸",
+      "vi": "nắm vững chừng mực"
+    },
+    {
+      "zh": "把握方向",
+      "vi": "nắm chắc phương hướng"
+    }
+  ],
+  "弊端": [
+    {
+      "zh": "消除弊端",
+      "vi": "loại bỏ tệ nạn/nhược điểm"
+    },
+    {
+      "zh": "暴露弊端",
+      "vi": "bộc lộ mặt hạn chế"
+    }
+  ],
+  "边缘": [
+    {
+      "zh": "处于边缘",
+      "vi": "nằm ở rìa/ngoài lề"
+    },
+    {
+      "zh": "濒临危险边缘",
+      "vi": "bên bờ vực nguy hiểm"
     }
   ],
   "操劳": [
@@ -507,6 +861,58 @@ const HSK_COLLOCATIONS = {
       "vi": "làm nảy sinh ngành nghề mới"
     }
   ],
+  "层出不穷": [
+    {
+      "zh": "新事物层出不穷",
+      "vi": "sự vật mới xuất hiện lớp lớp không dứt"
+    }
+  ],
+  "诧异": [
+    {
+      "zh": "感到十分诧异",
+      "vi": "cảm thấy vô cùng kinh ngạc"
+    }
+  ],
+  "阐明": [
+    {
+      "zh": "阐明立场",
+      "vi": "làm rõ lập trường"
+    },
+    {
+      "zh": "阐明道理",
+      "vi": "nêu bật đạo lý"
+    }
+  ],
+  "促进": [
+    {
+      "zh": "促进发展",
+      "vi": "thúc đẩy phát triển"
+    },
+    {
+      "zh": "促进合作",
+      "vi": "thúc đẩy hợp tác"
+    }
+  ],
+  "创造": [
+    {
+      "zh": "创造奇迹",
+      "vi": "tạo nên kỳ tích"
+    },
+    {
+      "zh": "创造价值",
+      "vi": "tạo ra giá trị"
+    }
+  ],
+  "筹备": [
+    {
+      "zh": "筹备工作",
+      "vi": "công tác chuẩn bị"
+    },
+    {
+      "zh": "积极筹备",
+      "vi": "tích cực chuẩn bị"
+    }
+  ],
   "诞生": [
     {
       "zh": "应运而生",
@@ -711,6 +1117,36 @@ const HSK_COLLOCATIONS = {
       "vi": "dám khẳng định chắc nịch"
     }
   ],
+  "达成": [
+    {
+      "zh": "达成共识",
+      "vi": "đạt được đồng thuận"
+    },
+    {
+      "zh": "达成协议",
+      "vi": "đạt được thỏa thuận"
+    }
+  ],
+  "抵制": [
+    {
+      "zh": "自觉抵制",
+      "vi": "tự giác tẩy chay"
+    },
+    {
+      "zh": "坚决抵制",
+      "vi": "kiên quyết phản đối/tẩy chay"
+    }
+  ],
+  "动摇": [
+    {
+      "zh": "毫不动摇",
+      "vi": "kiên định không hề lung lay"
+    },
+    {
+      "zh": "动摇根基",
+      "vi": "lung lay tận gốc rễ"
+    }
+  ],
   "恶化": [
     {
       "zh": "病情恶化",
@@ -889,6 +1325,22 @@ const HSK_COLLOCATIONS = {
       "vi": "giao phó quyền lực"
     }
   ],
+  "发挥": [
+    {
+      "zh": "发挥作用",
+      "vi": "phát huy tác dụng"
+    },
+    {
+      "zh": "发挥优势",
+      "vi": "phát huy thế mạnh"
+    }
+  ],
+  "繁琐": [
+    {
+      "zh": "手续繁琐",
+      "vi": "thủ tục rườm rà phiền phức"
+    }
+  ],
   "尴尬": [
     {
       "zh": "缓解尴尬",
@@ -1037,6 +1489,36 @@ const HSK_COLLOCATIONS = {
       "vi": "bảo vệ chân lý"
     }
   ],
+  "巩固": [
+    {
+      "zh": "巩固成果",
+      "vi": "củng cố thành quả"
+    },
+    {
+      "zh": "巩固地位",
+      "vi": "củng cố vị thế"
+    }
+  ],
+  "改革": [
+    {
+      "zh": "深化改革",
+      "vi": "đi sâu cải cách"
+    },
+    {
+      "zh": "推行改革",
+      "vi": "thúc đẩy cải cách"
+    }
+  ],
+  "改进": [
+    {
+      "zh": "改进方法",
+      "vi": "cải tiến phương pháp"
+    },
+    {
+      "zh": "改进作风",
+      "vi": "chỉnh đốn tác phong"
+    }
+  ],
   "浩瀚": [
     {
       "zh": "浩瀚星空",
@@ -1165,6 +1647,26 @@ const HSK_COLLOCATIONS = {
     {
       "zh": "性格豁达",
       "vi": "tính cách phóng khoáng"
+    }
+  ],
+  "缓解": [
+    {
+      "zh": "缓解压力",
+      "vi": "giải tỏa áp lực"
+    },
+    {
+      "zh": "缓解疲劳",
+      "vi": "xua tan mệt mỏi"
+    }
+  ],
+  "恢复": [
+    {
+      "zh": "恢复元气",
+      "vi": "phục hồi nguyên khí"
+    },
+    {
+      "zh": "恢复健康",
+      "vi": "bình phục sức khỏe"
     }
   ],
   "击败": [
@@ -1347,6 +1849,32 @@ const HSK_COLLOCATIONS = {
       "vi": "ý thức thức tỉnh"
     }
   ],
+  "竭尽全力": [
+    {
+      "zh": "竭尽全力完成任务",
+      "vi": "dốc hết sức hoàn thành nhiệm vụ"
+    }
+  ],
+  "积累": [
+    {
+      "zh": "积累经验",
+      "vi": "tích lũy kinh nghiệm"
+    },
+    {
+      "zh": "积累财富",
+      "vi": "tích lũy của cải"
+    }
+  ],
+  "加剧": [
+    {
+      "zh": "加剧矛盾",
+      "vi": "làm trầm trọng thêm mâu thuẫn"
+    },
+    {
+      "zh": "加剧恶化",
+      "vi": "làm xấu đi nhanh chóng"
+    }
+  ],
   "开拓": [
     {
       "zh": "开拓进取",
@@ -1417,6 +1945,26 @@ const HSK_COLLOCATIONS = {
       "vi": "thua chạy tan tác"
     }
   ],
+  "克服": [
+    {
+      "zh": "克服困难",
+      "vi": "khắc phục khó khăn"
+    },
+    {
+      "zh": "克服缺点",
+      "vi": "khắc phục nhược điểm"
+    }
+  ],
+  "勘探": [
+    {
+      "zh": "勘探石油",
+      "vi": "thăm dò dầu mỏ"
+    },
+    {
+      "zh": "实地勘探",
+      "vi": "khảo sát thực địa"
+    }
+  ],
   "理智": [
     {
       "zh": "保持理智",
@@ -1479,6 +2027,16 @@ const HSK_COLLOCATIONS = {
     {
       "zh": "履行承诺",
       "vi": "thực hiện lời hứa"
+    }
+  ],
+  "落实": [
+    {
+      "zh": "抓好落实",
+      "vi": "nắm chắc thực thi"
+    },
+    {
+      "zh": "落实政策",
+      "vi": "triển khai chính sách"
     }
   ],
   "埋没": [
@@ -1575,6 +2133,16 @@ const HSK_COLLOCATIONS = {
       "vi": "nêu gương đi đầu"
     }
   ],
+  "面临": [
+    {
+      "zh": "面临挑战",
+      "vi": "đối mặt thách thức"
+    },
+    {
+      "zh": "面临抉择",
+      "vi": "đứng trước ngã rẽ lựa chọn"
+    }
+  ],
   "凝结": [
     {
       "zh": "凝结成霜",
@@ -1667,6 +2235,16 @@ const HSK_COLLOCATIONS = {
     {
       "zh": "谱写华章",
       "vi": "tấu khúc ca huy hoàng"
+    }
+  ],
+  "披露": [
+    {
+      "zh": "披露细节",
+      "vi": "tiết lộ chi tiết"
+    },
+    {
+      "zh": "公开披露",
+      "vi": "công khai vạch trần"
     }
   ],
   "启迪": [
@@ -1799,6 +2377,26 @@ const HSK_COLLOCATIONS = {
       "vi": "ánh mắt trong veo"
     }
   ],
+  "倾听": [
+    {
+      "zh": "倾听民意",
+      "vi": "lắng nghe ý nguyện nhân dân"
+    },
+    {
+      "zh": "耐心倾听",
+      "vi": "kiên nhẫn lắng nghe"
+    }
+  ],
+  "确保": [
+    {
+      "zh": "确保安全",
+      "vi": "đảm bảo an toàn"
+    },
+    {
+      "zh": "确保质量",
+      "vi": "đảm bảo chất lượng"
+    }
+  ],
   "融合": [
     {
       "zh": "深度融合",
@@ -1923,6 +2521,26 @@ const HSK_COLLOCATIONS = {
       "vi": "thuận theo tự nhiên"
     }
   ],
+  "深化": [
+    {
+      "zh": "深化改革",
+      "vi": "đi sâu cải cách"
+    },
+    {
+      "zh": "深化合作",
+      "vi": "làm sâu sắc hợp tác"
+    }
+  ],
+  "抒发": [
+    {
+      "zh": "抒发情感",
+      "vi": "bộc bạch cảm xúc"
+    },
+    {
+      "zh": "抒发胸怀",
+      "vi": "giãi bày tấm lòng"
+    }
+  ],
   "踏实": [
     {
       "zh": "脚踏实地",
@@ -1981,6 +2599,26 @@ const HSK_COLLOCATIONS = {
     {
       "zh": "达成妥协",
       "vi": "đạt được sự thỏa hiệp"
+    }
+  ],
+  "推进": [
+    {
+      "zh": "稳步推进",
+      "vi": "vững bước thúc đẩy"
+    },
+    {
+      "zh": "扎实推进",
+      "vi": "thúc đẩy thực chất"
+    }
+  ],
+  "拓宽": [
+    {
+      "zh": "拓宽渠道",
+      "vi": "mở rộng kênh tiếp cận"
+    },
+    {
+      "zh": "拓宽思路",
+      "vi": "mở rộng hướng suy nghĩ"
     }
   ],
   "瓦解": [
@@ -2227,6 +2865,340 @@ const HSK_COLLOCATIONS = {
       "vi": "hàm chứa đạo lý"
     }
   ],
+  "爱惜": [
+    {
+      "zh": "爱惜粮食",
+      "vi": "quý trọng lương thực"
+    },
+    {
+      "zh": "爱惜身体",
+      "vi": "giữ gìn sức khỏe thân thể"
+    }
+  ],
+  "饱受": [
+    {
+      "zh": "饱受折磨",
+      "vi": "chịu đủ mọi giày vò"
+    },
+    {
+      "zh": "饱受苦难",
+      "vi": "trải qua muôn vàn gian truân"
+    }
+  ],
+  "包揽": [
+    {
+      "zh": "包揽奖牌",
+      "vi": "thâu tóm trọn bộ huy chương"
+    },
+    {
+      "zh": "包揽一切",
+      "vi": "ôm đồm lo liệu tất cả"
+    }
+  ],
+  "采纳": [
+    {
+      "zh": "采纳建议",
+      "vi": "tiếp thu kiến nghị"
+    },
+    {
+      "zh": "采纳意见",
+      "vi": "tiếp thu ý kiến đóng góp"
+    }
+  ],
+  "查获": [
+    {
+      "zh": "查获走私",
+      "vi": "bắt giữ hàng buôn lậu"
+    },
+    {
+      "zh": "查获毒品",
+      "vi": "thu giữ ma túy"
+    }
+  ],
+  "承受": [
+    {
+      "zh": "承受压力",
+      "vi": "chịu đựng áp lực"
+    },
+    {
+      "zh": "承受重创",
+      "vi": "chịu tổn thất nặng nề"
+    }
+  ],
+  "充实": [
+    {
+      "zh": "充实生活",
+      "vi": "làm cho cuộc sống phong phú"
+    },
+    {
+      "zh": "充实内容",
+      "vi": "bổ sung nội dung vững chắc"
+    }
+  ],
+  "传承": [
+    {
+      "zh": "传承文化",
+      "vi": "kế thừa phát huy văn hóa"
+    },
+    {
+      "zh": "传承技艺",
+      "vi": "lưu truyền tay nghề"
+    }
+  ],
+  "打破": [
+    {
+      "zh": "打破常规",
+      "vi": "phá vỡ thông lệ"
+    },
+    {
+      "zh": "打破僵局",
+      "vi": "phá vỡ thế bế tắc"
+    },
+    {
+      "zh": "打破记录",
+      "vi": "phá kỷ lục"
+    }
+  ],
+  "打击": [
+    {
+      "zh": "沉重打击",
+      "vi": "giáng đòn nặng nề"
+    },
+    {
+      "zh": "严厉打击",
+      "vi": "trấn áp nghiêm khắc"
+    }
+  ],
+  "代理": [
+    {
+      "zh": "代理律师",
+      "vi": "luật sư đại diện"
+    },
+    {
+      "zh": "代理业务",
+      "vi": "đại lý ủy thác nghiệp vụ"
+    }
+  ],
+  "抵御": [
+    {
+      "zh": "抵御寒冷",
+      "vi": "chống chọi giá rét"
+    },
+    {
+      "zh": "抵御外敌",
+      "vi": "chống giặc ngoại xâm"
+    }
+  ],
+  "发扬": [
+    {
+      "zh": "发扬光大",
+      "vi": "phát huy rạng rỡ"
+    },
+    {
+      "zh": "发扬风格",
+      "vi": "phát huy phong cách cao đẹp"
+    }
+  ],
+  "妨碍": [
+    {
+      "zh": "妨碍交通",
+      "vi": "cản trở giao thông"
+    },
+    {
+      "zh": "妨碍工作",
+      "vi": "gây trở ngại công việc"
+    }
+  ],
+  "归纳": [
+    {
+      "zh": "归纳总结",
+      "vi": "quy nạp đúc kết"
+    },
+    {
+      "zh": "归纳要点",
+      "vi": "tóm lược các điểm chính"
+    }
+  ],
+  "寄托": [
+    {
+      "zh": "寄托哀思",
+      "vi": "gửi gắm niềm tiếc thương"
+    },
+    {
+      "zh": "寄托希望",
+      "vi": "gửi gắm niềm hy vọng"
+    }
+  ],
+  "揭露": [
+    {
+      "zh": "揭露真相",
+      "vi": "vạch trần chân tướng"
+    },
+    {
+      "zh": "揭露丑闻",
+      "vi": "phanh phui bê bối"
+    }
+  ],
+  "培育": [
+    {
+      "zh": "培育人才",
+      "vi": "vun đắp đào tạo nhân tài"
+    },
+    {
+      "zh": "培育幼苗",
+      "vi": "ươm mầm cây non"
+    }
+  ],
+  "确立": [
+    {
+      "zh": "确立目标",
+      "vi": "xác lập mục tiêu"
+    },
+    {
+      "zh": "确立地位",
+      "vi": "xác lập vị thế"
+    }
+  ],
+  "协调": [
+    {
+      "zh": "协调发展",
+      "vi": "phát triển hài hòa đồng bộ"
+    },
+    {
+      "zh": "协调关系",
+      "vi": "điều hòa các mối quan hệ"
+    }
+  ],
+  "严谨": [
+    {
+      "zh": "治学严谨",
+      "vi": "học thuật cẩn trọng chuẩn mực"
+    },
+    {
+      "zh": "作风严谨",
+      "vi": "tác phong nghiêm cẩn"
+    }
+  ],
+  "摇摆": [
+    {
+      "zh": "摇摆不定",
+      "vi": "dao động dùng dằng khó quyết"
+    }
+  ],
+  "迎合": [
+    {
+      "zh": "迎合市场",
+      "vi": "bắt kịp chiều chuộng thị trường"
+    },
+    {
+      "zh": "迎合大众",
+      "vi": "chiều theo thị hiếu số đông"
+    }
+  ],
+  "赢得": [
+    {
+      "zh": "赢得尊重",
+      "vi": "nhận được sự tôn trọng"
+    },
+    {
+      "zh": "赢得信任",
+      "vi": "giành trọn niềm tin"
+    },
+    {
+      "zh": "赢得掌声",
+      "vi": "được khen ngợi tán thưởng"
+    }
+  ],
+  "战胜": [
+    {
+      "zh": "战胜困难",
+      "vi": "chiến thắng muôn vàn trắc trở"
+    },
+    {
+      "zh": "战胜疾病",
+      "vi": "chiến thắng tật bệnh"
+    }
+  ],
+  "争夺": [
+    {
+      "zh": "争夺冠军",
+      "vi": "tranh chức vô địch"
+    },
+    {
+      "zh": "争夺市场",
+      "vi": "cạnh tranh giành giật thị trường"
+    }
+  ],
+  "征服": [
+    {
+      "zh": "征服自然",
+      "vi": "chinh phục giới tự nhiên"
+    },
+    {
+      "zh": "征服高山",
+      "vi": "chinh phục đỉnh núi cao"
+    }
+  ],
+  "拯救": [
+    {
+      "zh": "拯救生命",
+      "vi": "cứu sống mạng người"
+    },
+    {
+      "zh": "拯救地球",
+      "vi": "giải cứu trái đất"
+    }
+  ],
+  "指导": [
+    {
+      "zh": "指导工作",
+      "vi": "chỉ đạo công tác"
+    },
+    {
+      "zh": "指导实践",
+      "vi": "chỉ đạo thực tiễn"
+    }
+  ],
+  "致富": [
+    {
+      "zh": "勤劳致富",
+      "vi": "chăm chỉ làm giàu"
+    },
+    {
+      "zh": "科技致富",
+      "vi": "làm giàu nhờ khoa học công nghệ"
+    }
+  ],
+  "重温": [
+    {
+      "zh": "重温旧梦",
+      "vi": "sống lại giấc mộng xưa"
+    },
+    {
+      "zh": "重温历史",
+      "vi": "ôn lại trang sử cũ"
+    }
+  ],
+  "筑牢": [
+    {
+      "zh": "筑牢防线",
+      "vi": "xây chắc bức tường phòng thủ"
+    },
+    {
+      "zh": "筑牢根基",
+      "vi": "đắp bền nền móng vững chắc"
+    }
+  ],
+  "撰写": [
+    {
+      "zh": "撰写论文",
+      "vi": "chắp bút viết luận văn"
+    },
+    {
+      "zh": "撰写报告",
+      "vi": "soạn thảo báo cáo"
+    }
+  ],
   "赞叹": [
     {
       "zh": "由衷赞叹",
@@ -2408,6 +3380,36 @@ const HSK_COLLOCATIONS = {
     }
   ]
 };
+
+// Inverted index: maps any subword inside collocations to its parent collocations
+const HSK_COLLOCATIONS_INVERTED = {};
+(function buildInvertedIndex() {
+  for (const [headword, list] of Object.entries(HSK_COLLOCATIONS)) {
+    if (!Array.isArray(list)) continue;
+    for (const item of list) {
+      if (!item || !item.zh) continue;
+      const phrase = item.zh;
+      for (let len = 2; len <= Math.min(phrase.length, 4); len++) {
+        for (let i = 0; i <= phrase.length - len; i++) {
+          const sub = phrase.substring(i, i + len);
+          if (sub !== headword) {
+            if (!HSK_COLLOCATIONS_INVERTED[sub]) {
+              HSK_COLLOCATIONS_INVERTED[sub] = [];
+            }
+            if (!HSK_COLLOCATIONS_INVERTED[sub].some(x => x.zh === item.zh)) {
+              HSK_COLLOCATIONS_INVERTED[sub].push(item);
+            }
+          }
+        }
+      }
+    }
+  }
+})();
+
 if (typeof window !== 'undefined') {
   window.HSK_COLLOCATIONS = HSK_COLLOCATIONS;
+  window.HSK_COLLOCATIONS_INVERTED = HSK_COLLOCATIONS_INVERTED;
+}
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { HSK_COLLOCATIONS, HSK_COLLOCATIONS_INVERTED };
 }
