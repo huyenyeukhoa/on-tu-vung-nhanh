@@ -1250,6 +1250,43 @@
       border-bottom: 1px solid rgba(226, 216, 239, 0.6);
     }
 
+    /* Reading Modal Title Auto-Scroll Marquee */
+    .reading-title-marquee-container {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .reading-title-marquee-container.has-marquee {
+      justify-content: flex-start;
+      mask-image: linear-gradient(to right, transparent 0%, black 8px, black calc(100% - 8px), transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8px, black calc(100% - 8px), transparent 100%);
+    }
+
+    .reading-title-marquee-content {
+      display: inline-block;
+      white-space: nowrap;
+      vertical-align: middle;
+      will-change: transform;
+    }
+
+    .reading-title-marquee-content.is-marquee {
+      animation: readingTitleMarqueeBounce var(--marquee-duration, 8s) ease-in-out infinite alternate !important;
+    }
+
+    @keyframes readingTitleMarqueeBounce {
+      0%, 15% {
+        transform: translateX(0);
+      }
+      85%, 100% {
+        transform: translateX(var(--marquee-dist, -50px));
+      }
+    }
+
     #btnPrevReadingArticle:disabled,
     #btnNextReadingArticle:disabled {
       opacity: 0.3 !important;
@@ -2490,9 +2527,12 @@
       font-size: 13.5px;
       font-weight: 700;
       color: #1f2937;
-      white-space: nowrap;
+      line-height: 1.35;
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
-      text-overflow: ellipsis;
     }
     .rd-row-meta {
       display: flex;
@@ -3326,9 +3366,11 @@
           <button id="btnHeaderAudioToggle" class="reading-audio-btn" title="Chạm để Đọc / Dừng toàn bộ bài (Giọng Nam AI Qwen - loongjohn)">📖</button>
           <button id="btnPrevReadingArticle" class="icon-action-btn" style="padding: 4px 6px; font-size: 11px; font-weight: 700; color: #766299; border-radius: 6px; background: transparent; border: none; cursor: pointer;" title="Bài trước">◀</button>
         </div>
-        <div class="modal-title" id="btnCustomArticleSelect" style="font-size: 14.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 3px; cursor: pointer;" title="Chạm để chọn bài khác">
-          <span id="readingViewModalTitleText" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Đọc bài khóa</span>
-          <span style="font-size: 9px; color: #766299; flex-shrink: 0;">▼</span>
+        <div class="modal-title" id="btnCustomArticleSelect" style="font-size: 14.5px; font-weight: 700; flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 3px; cursor: pointer; overflow: hidden; padding: 0 4px;" title="Chạm để chọn bài khác">
+          <div class="reading-title-marquee-container">
+            <span id="readingViewModalTitleText" class="reading-title-marquee-content">Đọc bài khóa</span>
+          </div>
+          <span style="font-size: 9px; color: #766299; flex-shrink: 0; margin-left: 1px;">▼</span>
           <span id="customArticleSelectText" style="display: none;"></span>
         </div>
         <div style="display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;">
@@ -9020,7 +9062,7 @@ ${chunkText}
             <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
               <span style="font-size: 14px; font-weight: 700; flex-shrink:0;">${isActive ? '▶' : '📖'}</span>
               <div style="min-width:0; flex:1;">
-                <div style="font-size: 13.5px; font-weight: 700; color: #1f2937; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                <div style="font-size: 13.5px; font-weight: 700; color: #1f2937; line-height: 1.35; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                   ${idx + 1}. ${art.title}
                 </div>
                 <div style="font-size: 11px; color: #6b7280; margin-top: 2px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; font-family: var(--font-mali);">
@@ -9869,6 +9911,32 @@ ${chunkText}
       }, 150);
     }
 
+    // Auto-scroll marquee for long article titles in reading viewer header
+    function updateReadingTitleMarquee() {
+      const textEl = document.getElementById('readingViewModalTitleText');
+      if (!textEl) return;
+      const container = textEl.closest('.reading-title-marquee-container');
+      if (!container) return;
+
+      textEl.classList.remove('is-marquee');
+      textEl.style.transform = '';
+      container.classList.remove('has-marquee');
+
+      requestAnimationFrame(() => {
+        const containerW = container.clientWidth;
+        const textW = textEl.scrollWidth;
+
+        if (containerW > 0 && textW > containerW + 4) {
+          const overflowPx = Math.ceil(textW - containerW) + 8;
+          const durationSec = Math.max(5, Math.min(14, (overflowPx / 18) + 4));
+          textEl.style.setProperty('--marquee-dist', `-${overflowPx}px`);
+          textEl.style.setProperty('--marquee-duration', `${durationSec.toFixed(1)}s`);
+          container.classList.add('has-marquee');
+          textEl.classList.add('is-marquee');
+        }
+      });
+    }
+
     // Open Interactive Reading Passage Viewer
     function openReadingViewModal(articleId) {
       const art = readingArticles.find(a => a.id === articleId);
@@ -9911,6 +9979,8 @@ ${chunkText}
       renderReadingPassageContent(art);
 
       readingViewModal.classList.add('active');
+      setTimeout(updateReadingTitleMarquee, 60);
+      setTimeout(updateReadingTitleMarquee, 250);
 
       // Auto-resume reading position
       let savedScroll = 0;
@@ -10450,6 +10520,7 @@ ${chunkText}
     window.openStudyGroupFromReading = openStudyGroupFromReading;
     window.deleteReadingArticle = deleteReadingArticle;
     window.handleReadingTokenClick = handleReadingTokenClick;
+    window.updateReadingTitleMarquee = updateReadingTitleMarquee;
       if (btnShuffleWords) {
         btnShuffleWords.addEventListener('click', toggleShuffle);
       }
@@ -10620,6 +10691,7 @@ ${chunkText}
           renderArticlePickerList();
           if (readingArticlePickerModal) readingArticlePickerModal.classList.add('active');
         });
+        window.addEventListener('resize', updateReadingTitleMarquee);
       }
 
       if (btnCloseArticlePickerModal) {
