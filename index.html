@@ -1424,10 +1424,20 @@
     /* Paragraph box with uniform line-height transition */
     .reading-para-box {
       line-height: 2.1;
-      transition: line-height 0.2s ease;
+      transition: line-height 0.2s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+      padding: 3px 6px;
+      border-radius: 10px;
     }
     #readingPassageContainer.show-vi-gloss .reading-para-box {
       line-height: 2.45;
+    }
+
+    .reading-para-box.active-playing-para,
+    .reading-para-vi-box.active-playing-para {
+      background: rgba(135, 114, 168, 0.08) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 0 0 2px #8772a8, 0 4px 14px rgba(135, 114, 168, 0.18) !important;
+      transition: all 0.25s ease !important;
     }
 
     /* Vietnamese gloss layer under highlighted words (invisible overlay layer) */
@@ -2409,23 +2419,38 @@
     }
     .rd-mark { background: #efe6fb; color: #4b3b66; border-radius: 3px; padding: 0 1px; }
 
-    .tiny-para-toggle-btn {
+    .tiny-para-toggle-btn,
+    .tiny-para-audio-btn {
       font-size: 13.5px !important;
-      padding: 0 2px !important;
+      padding: 1px 3px !important;
       border: none !important;
       background: transparent !important;
       cursor: pointer !important;
-      display: inline-block !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
       vertical-align: middle !important;
-      margin-right: 3px !important;
+      margin-right: 2px !important;
       text-indent: 0 !important;
-      transition: transform 0.15s ease !important;
+      transition: transform 0.15s ease, background 0.15s ease !important;
       box-shadow: none !important;
       outline: none !important;
+      border-radius: 6px !important;
+      -webkit-tap-highlight-color: transparent !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      touch-action: manipulation;
     }
 
-    .tiny-para-toggle-btn:active {
-      transform: scale(1.25);
+    .tiny-para-toggle-btn:active,
+    .tiny-para-audio-btn:active {
+      transform: scale(1.2);
+    }
+
+    .tiny-para-audio-btn.playing {
+      background: rgba(135, 114, 168, 0.22) !important;
+      box-shadow: 0 0 0 2px rgba(135, 114, 168, 0.3) !important;
+      animation: pulseAudioRing 1.2s infinite;
     }
 
     .token-popover-drawer {
@@ -9223,6 +9248,11 @@ ${chunkText}
 
       // Tap 2: Currently Playing -> Pause Audio
       if (isQwenAudioPlaying && !isQwenAudioPaused) {
+        if (currentPlayingParaIdx !== null) {
+          stopParagraphSpeech();
+          showToast('⏸️ Đã dừng đọc đoạn');
+          return;
+        }
         if (!qwenAudioPlayer.paused) {
           qwenAudioPlayer.pause();
         } else if (window.speechSynthesis && window.speechSynthesis.speaking) {
@@ -9404,6 +9434,244 @@ ${chunkText}
       showToast(`🔊 Đang đọc bài (Giọng Nam Phổ Thông - ${speed}x)...`);
     }
 
+    // ==========================================
+    // PARAGRAPH-LEVEL AUDIO PLAYER (Option 3: Tap single / Hold continuous)
+    // ==========================================
+    let currentPlayingParaIdx = null;
+    let currentPlayingParaMode = null; // 'single' | 'continuous'
+    let activeParaUtterance = null;
+
+    function stopParagraphSpeechUI() {
+      currentPlayingParaIdx = null;
+      currentPlayingParaMode = null;
+      activeParaUtterance = null;
+      document.querySelectorAll('.active-playing-para').forEach(el => el.classList.remove('active-playing-para'));
+      document.querySelectorAll('.tiny-para-audio-btn').forEach(btn => {
+        btn.classList.remove('playing');
+        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle; flex-shrink: 0;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+        btn.title = 'Chạm: Đọc riêng đoạn này | Giữ 0.5s: Đọc tiếp từ đoạn này đến hết';
+      });
+    }
+
+    function stopParagraphSpeech() {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      stopParagraphSpeechUI();
+      isQwenAudioPlaying = false;
+      isQwenAudioPaused = false;
+      updateAudioBtnUI(false, false);
+    }
+
+    function playParagraphSpeech(pIdx, mode = 'single') {
+      const art = readingArticles.find(a => String(a.id) === String(activeReadingArticleId)) || readingArticles[0];
+      if (!art) return;
+
+      // If already playing this paragraph, tapping again pauses/stops
+      if (currentPlayingParaIdx === pIdx && (isQwenAudioPlaying || (window.speechSynthesis && window.speechSynthesis.speaking))) {
+        stopParagraphSpeech();
+        showToast('⏸️ Đã dừng đọc đoạn');
+        return;
+      }
+
+      // Stop any existing full-passage or other audio
+      if (qwenAudioPlayer) {
+        qwenAudioPlayer.pause();
+        qwenAudioPlayer.currentTime = 0;
+      }
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+
+      // Ensure standardized paragraphs
+      let paragraphs = art.paragraphs;
+      if (!paragraphs || !Array.isArray(paragraphs) || paragraphs.length === 0) {
+        paragraphs = [];
+        let currentP = { vietnamese: '', tokens: [] };
+        (art.tokens || []).forEach(tok => {
+          if (!tok.isVocab && (tok.hanzi || '').includes('\n')) {
+            if (currentP.tokens.length > 0) {
+              paragraphs.push(currentP);
+              currentP = { vietnamese: '', tokens: [] };
+            }
+          } else {
+            currentP.tokens.push(tok);
+          }
+        });
+        if (currentP.tokens.length > 0) paragraphs.push(currentP);
+        art.paragraphs = paragraphs;
+      }
+
+      if (pIdx < 0 || pIdx >= paragraphs.length) {
+        stopParagraphSpeech();
+        return;
+      }
+
+      const para = paragraphs[pIdx];
+      const text = (para.tokens || []).map(t => t.hanzi || '').join('')
+        .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|📖|📝/g, '').trim();
+
+      if (!text) {
+        if (mode === 'continuous' && pIdx + 1 < paragraphs.length) {
+          playParagraphSpeech(pIdx + 1, 'continuous');
+        } else {
+          stopParagraphSpeech();
+        }
+        return;
+      }
+
+      if (!('speechSynthesis' in window)) {
+        showToast('Trình duyệt không hỗ trợ phát âm!');
+        return;
+      }
+
+      currentPlayingParaIdx = pIdx;
+      currentPlayingParaMode = mode;
+      isQwenAudioPlaying = true;
+      isQwenAudioPaused = false;
+      updateAudioBtnUI(true, false);
+
+      // Visual highlight
+      document.querySelectorAll('.active-playing-para').forEach(el => el.classList.remove('active-playing-para'));
+      const targetBox = document.getElementById('readingParaBox_' + pIdx) || document.getElementById('readingParaViBox_' + pIdx);
+      if (targetBox) {
+        targetBox.classList.add('active-playing-para');
+        const modalBody = document.getElementById('readingViewModalBody');
+        if (modalBody) {
+          const boxRect = targetBox.getBoundingClientRect();
+          const bodyRect = modalBody.getBoundingClientRect();
+          if (boxRect.top < bodyRect.top + 30 || boxRect.bottom > bodyRect.bottom - 30) {
+            targetBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+      }
+
+      // Reset all buttons and activate current
+      document.querySelectorAll('.tiny-para-audio-btn').forEach(btn => {
+        btn.classList.remove('playing');
+        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle; flex-shrink: 0;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+        btn.title = 'Chạm: Đọc riêng đoạn này | Giữ 0.5s: Đọc tiếp từ đoạn này đến hết';
+      });
+
+      const activeBtn = document.getElementById('btnParaAudio_' + pIdx);
+      if (activeBtn) {
+        activeBtn.classList.add('playing');
+        activeBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#4b3b66" style="vertical-align: middle; flex-shrink: 0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+        activeBtn.title = 'Đang phát - Chạm để dừng';
+      }
+
+      const speed = getReadingAudioSpeed();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'zh-CN';
+      utter.rate = speed * 0.9;
+
+      const voices = window.speechSynthesis.getVoices();
+      const voice = voices.find(v => v.lang.startsWith('zh') && (
+        v.name.includes('Yunxi') ||
+        v.name.includes('Yunyang') ||
+        v.name.includes('Kangkang') ||
+        v.name.toLowerCase().includes('male')
+      )) || xiaoxiaoVoice || voices.find(v => v.lang.startsWith('zh'));
+      if (voice) utter.voice = voice;
+
+      utter.onend = () => {
+        if (currentPlayingParaIdx === pIdx) {
+          if (mode === 'continuous' && pIdx + 1 < paragraphs.length) {
+            playParagraphSpeech(pIdx + 1, 'continuous');
+          } else {
+            stopParagraphSpeech();
+            if (mode === 'continuous') {
+              showToast('🏁 Đã đọc xong bài khóa!');
+            }
+          }
+        }
+      };
+
+      utter.onerror = () => {
+        if (currentPlayingParaIdx === pIdx) {
+          stopParagraphSpeech();
+        }
+      };
+
+      activeParaUtterance = utter;
+      window.currentActiveUtterance = utter;
+      window.speechSynthesis.speak(utter);
+    }
+
+    function attachParaAudioPress(btn, pIdx) {
+      if (!btn) return;
+      let timer = null;
+      let isLongPress = false;
+      let startX = 0, startY = 0;
+
+      function startHold(e) {
+        isLongPress = false;
+        if (e.touches && e.touches[0]) {
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+        } else {
+          startX = e.clientX || 0;
+          startY = e.clientY || 0;
+        }
+        timer = setTimeout(() => {
+          isLongPress = true;
+          if (navigator.vibrate) {
+            try { navigator.vibrate(50); } catch(ex) {}
+          }
+          showToast('▶️ Đang đọc tiếp từ đoạn này đến hết bài...');
+          playParagraphSpeech(pIdx, 'continuous');
+        }, 450);
+      }
+
+      function cancelHold() {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+      }
+
+      function endHold(e) {
+        const wasLongPress = isLongPress;
+        cancelHold();
+        if (!wasLongPress) {
+          if (currentPlayingParaIdx === pIdx && (isQwenAudioPlaying || (window.speechSynthesis && window.speechSynthesis.speaking))) {
+            stopParagraphSpeech();
+            showToast('⏸️ Đã dừng đọc đoạn');
+          } else {
+            showToast('🔊 Đang đọc riêng đoạn này...');
+            playParagraphSpeech(pIdx, 'single');
+          }
+        }
+        if (e.type === 'touchend' && e.cancelable) {
+          e.preventDefault();
+        }
+      }
+
+      function moveHold(e) {
+        let curX = 0, curY = 0;
+        if (e.touches && e.touches[0]) {
+          curX = e.touches[0].clientX;
+          curY = e.touches[0].clientY;
+        } else {
+          curX = e.clientX || 0;
+          curY = e.clientY || 0;
+        }
+        if (Math.abs(curX - startX) > 10 || Math.abs(curY - startY) > 10) {
+          cancelHold();
+        }
+      }
+
+      btn.addEventListener('mousedown', startHold);
+      btn.addEventListener('mouseup', endHold);
+      btn.addEventListener('mouseleave', cancelHold);
+
+      btn.addEventListener('touchstart', startHold, { passive: false });
+      btn.addEventListener('touchend', endHold, { passive: false });
+      btn.addEventListener('touchmove', moveHold, { passive: true });
+      btn.addEventListener('touchcancel', cancelHold);
+      btn.addEventListener('contextmenu', e => e.preventDefault());
+    }
+
     function stopReadingPassageAudio(resetState = true) {
       if (qwenAudioPlayer) {
         qwenAudioPlayer.pause();
@@ -9412,6 +9680,7 @@ ${chunkText}
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
+      stopParagraphSpeechUI();
       isQwenAudioPlaying = false;
       isQwenAudioPaused = false;
       updateAudioBtnUI(false, false);
@@ -9436,6 +9705,8 @@ ${chunkText}
       }
     }
     window.toggleReadingPassageAudio = toggleReadingPassageAudio;
+    window.playParagraphSpeech = playParagraphSpeech;
+    window.stopParagraphSpeech = stopParagraphSpeech;
 
     // Save current reading scroll position in active article
     function saveCurrentReadingScroll() {
@@ -9605,13 +9876,15 @@ ${chunkText}
 
         const purpleLeafSVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle; flex-shrink: 0;"><path d="M17 2C10 2 4 7 4 14c0 3.3 2.7 6 6 6 7 0 12-5 12-12 0-3.3-2.7-6-5-6zm-1.5 10.5L10 18l-1.5-1.5L14 11l1.5 1.5z"/></svg>`;
         const tinyBtnHTML = `<button class="tiny-para-toggle-btn" onclick="toggleParagraphTranslation(${pIdx})" title="${btnTitle}">${purpleLeafSVG}</button>`;
+        const purpleSpeakerSVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle; flex-shrink: 0;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+        const tinyAudioBtnHTML = `<button class="tiny-para-audio-btn" data-pidx="${pIdx}" id="btnParaAudio_${pIdx}" title="Chạm: Đọc riêng đoạn này | Giữ 0.5s: Đọc tiếp từ đoạn này đến hết">${purpleSpeakerSVG}</button>`;
 
         if (isToggledVi) {
           const viText = para.vietnamese || 'Đoạn này chưa có bản dịch.';
           return `
             <div style="margin-bottom: 14px; line-height: 1.6;">
-              <div style="display: flex; align-items: flex-start; gap: 8px; background: #f3eef9; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2d8ef;">
-                <span style="flex-shrink: 0; margin-top: 2px;">${tinyBtnHTML}</span>
+              <div class="reading-para-vi-box" data-pidx="${pIdx}" id="readingParaViBox_${pIdx}" style="display: flex; align-items: flex-start; gap: 8px; background: #f3eef9; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2d8ef; transition: all 0.25s ease;">
+                <span style="display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; margin-top: 2px; text-indent: 0;">${tinyBtnHTML}${tinyAudioBtnHTML}</span>
                 <div style="flex: 1; font-size: 14px; color: #4b3b66; font-style: italic; font-weight: 500; font-family: var(--font-mali) !important; word-break: normal !important; overflow-wrap: break-word !important; word-wrap: break-word !important; line-height: 1.6;">
                   ${viText}
                 </div>
@@ -9644,8 +9917,8 @@ ${chunkText}
           }).join('');
 
           return `
-            <div class="reading-para-box" style="margin-bottom: 14px; position: relative;">
-              <span style="display: inline-block; vertical-align: middle; margin-right: 6px;">${tinyBtnHTML}</span>
+            <div class="reading-para-box" data-pidx="${pIdx}" id="readingParaBox_${pIdx}" style="margin-bottom: 14px; position: relative;">
+              <span style="display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; margin-right: 6px; text-indent: 0;">${tinyBtnHTML}${tinyAudioBtnHTML}</span>
               ${paraTokensHTML}
             </div>
           `;
@@ -9653,6 +9926,24 @@ ${chunkText}
       }).join('');
 
       readingPassageContainer.innerHTML = paragraphsHTML || '<div class="reading-para-box" style="margin-bottom: 14px;"></div>';
+
+      // Attach touch/click long-press listeners to each paragraph audio button
+      document.querySelectorAll('#readingPassageContainer .tiny-para-audio-btn').forEach(btn => {
+        const pIdx = parseInt(btn.getAttribute('data-pidx'), 10);
+        if (!isNaN(pIdx)) attachParaAudioPress(btn, pIdx);
+      });
+
+      // Restore active playing highlight if an utterance is currently playing
+      if (currentPlayingParaIdx !== null) {
+        const activeBox = document.getElementById('readingParaBox_' + currentPlayingParaIdx) || document.getElementById('readingParaViBox_' + currentPlayingParaIdx);
+        if (activeBox) activeBox.classList.add('active-playing-para');
+        const activeBtn = document.getElementById('btnParaAudio_' + currentPlayingParaIdx);
+        if (activeBtn) {
+          activeBtn.classList.add('playing');
+          activeBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#4b3b66" style="vertical-align: middle; flex-shrink: 0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+          activeBtn.title = 'Đang phát - Chạm để dừng';
+        }
+      }
 
       // Update Vocabulary Statistics Tag Bar (H6 奶绿 & H7-9 奶棕 counts)
       const stats = getArticleHskVocabStats(art);
