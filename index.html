@@ -24,6 +24,7 @@
   <script src="./hsk_dictionary.js"></script>
   <script src="./opencc_t2cn.js"></script>
   <script src="./hanviet_dict.js"></script>
+  <script src="./hsk_collocations.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -793,6 +794,100 @@
       border: none;
       overflow: hidden;
       transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Collocation Sub-row (Linh Dược Phối Phương) */
+    .vocab-collocation-row {
+      grid-column: 1 / -1;
+      margin-top: 8px;
+      padding: 6px 10px;
+      background: #faf7fd;
+      border: 1px solid #ebdff5;
+      border-radius: 9px;
+      font-size: 12px;
+      line-height: 1.45;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      box-shadow: 0 1px 3px rgba(118, 98, 153, 0.05);
+      animation: fadeInRow 0.15s ease-out;
+    }
+
+    .colloc-badge {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #684e92;
+      background: #ede6f6;
+      border: 1px solid #d8c7ec;
+      padding: 1.5px 6px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      letter-spacing: 0.2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .colloc-list {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .colloc-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(223, 211, 239, 0.5);
+      transition: all 0.15s ease;
+    }
+
+    .colloc-chip:hover, .colloc-chip:active {
+      background: #f3eef9;
+      border-color: #d4c5e8;
+      transform: translateY(-0.5px);
+    }
+
+    .colloc-zh {
+      font-family: var(--font-hanzi);
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #2b1f3d;
+      letter-spacing: 0.2px;
+    }
+
+    .colloc-vi {
+      font-size: 11.5px;
+      color: #6b7280;
+      font-weight: 500;
+      transition: filter 0.2s ease, opacity 0.2s ease;
+    }
+
+    .colloc-blurred {
+      filter: blur(4.5px);
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: pointer;
+      opacity: 0.65;
+    }
+
+    .colloc-blurred:hover {
+      filter: blur(2px);
+      opacity: 0.85;
+    }
+
+    .colloc-sep {
+      color: #d1c4e9;
+      font-weight: 700;
+      font-size: 12px;
     }
 
     /* Column Styles */
@@ -2939,6 +3034,11 @@
         <span id="alwaysShowLabel">cột 2: tick mới hiện</span>
       </button>
 
+      <button class="control-btn" id="btnToggleCollocations" title="Ẩn hoặc hiện cụm phối từ 搭配 dưới mỗi thẻ từ">
+        <span id="collocationIcon">🧩</span>
+        <span id="collocationLabel">cụm 搭配: hiện</span>
+      </button>
+
       <button class="control-btn" id="btnPreloadAiGroup" title="Tải ngầm dữ liệu AI cho cả nhóm để chạm mở popup tức thì không chờ đợi">
         <span id="preloadAiIcon">⚡</span>
         <span id="preloadAiLabel">nạp AI nhóm</span>
@@ -3438,7 +3538,8 @@
           </div>
           <button id="btnCloseTokenDrawer" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #9ca3af; flex-shrink: 0;">✕</button>
         </div>
-        <div id="drawerMeaning" style="font-size: 13.5px; color: #374151; margin-bottom: 10px; line-height: 1.4;"></div>
+        <div id="drawerMeaning" style="font-size: 13.5px; color: #374151; margin-bottom: 6px; line-height: 1.4;"></div>
+        <div id="drawerCollocations" style="display: none; font-size: 11.5px; color: #5a4b75; margin-bottom: 10px; line-height: 1.4; padding: 5px 8px; background: #faf7fd; border: 1px solid #ebdff5; border-radius: 7px;"></div>
         <button id="btnToggleWordInReviewList" class="primary-submit-btn" style="width: 100%; padding: 9px; font-size: 13px; font-weight: 700; border-radius: 12px;">
           ➕ Thêm vào list ôn tập bài này
         </button>
@@ -3572,6 +3673,7 @@
     let hanziInCol1 = true;
     let autoSpeakOnTick = true;
     let alwaysShowCol2 = false;  // Default: Hide column 2 completely until ticked or tapped
+    let showCollocations = safeGetStorage('hsk_show_collocations', 'true') === 'true'; // Default: Show collocations
     let tapHanziMode = 'speak';  // 'speak' or 'ai'
     let isPanelCollapsed = false;
     let xiaoxiaoVoice = null;
@@ -3826,6 +3928,9 @@
     const btnToggleAlwaysShow = document.getElementById('btnToggleAlwaysShow');
     const alwaysShowLabel = document.getElementById('alwaysShowLabel');
     const alwaysShowIcon = document.getElementById('alwaysShowIcon');
+    const btnToggleCollocations = document.getElementById('btnToggleCollocations');
+    const collocationLabel = document.getElementById('collocationLabel');
+    const collocationIcon = document.getElementById('collocationIcon');
     const btnToggleTapMode = document.getElementById('btnToggleTapMode');
     const tapModeIcon = document.getElementById('tapModeIcon');
     const tapModeLabel = document.getElementById('tapModeLabel');
@@ -6870,6 +6975,10 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json) với đ�
   "hanViet": "Âm Hán Việt IN HOA chuẩn xác của từ này (ví dụ: NHÂN SƠN NHÂN HẢI, NHẬT ÍCH, CHƯNG CHƯNG NHẬT THƯỢNG, BẤT KHẢ TƯ NGHỊ,...)",
   "meaning": "Nghĩa tiếng Việt ngắn gọn, chuẩn xác",
   "context": "Hãy giải thích cách dùng tự nhiên VÀ BẮT BUỘC KÈM THEO 2-3 VÍ DỤ TÌNH HUỐNG ĐỜI SỐNG CỤ THỂ THỰC TẾ. Viết sao cho người học dễ hình dung nhất. Trong đoạn giải thích này: 1) BẮT BUỘC bao quanh DUY NHẤT MỘT cụm từ dài hoặc một vế câu quan trọng nhất thể hiện rõ rệt sắc thái cốt lõi của từ này bằng thẻ <span class=\\'important-highlight\\'>cụm từ/vế câu cần bôi đỏ</span>. (Lưu ý: BẮT BUỘC dùng dấu nháy đơn ' cho class). 2) BẮT BUỘC bao quanh TẤT CẢ các câu/dòng lấy ví dụ ngữ cảnh (bắt đầu bằng Ví dụ, Hoặc khi, Chẳng hạn...) bằng thẻ <span class=\\'context-example-purple\\'>câu ví dụ</span> để in đậm màu tím. Yêu cầu cực kỳ nghiêm ngặt: Mỗi từ CHỈ ĐƯỢC BÔI ĐỎ ĐÚNG 1 VỊ TRÍ DUY NHẤT cho cụm từ mấu chốt.",
+  "collocations": [
+    {"zh": "cụm phối từ hay gặp 1", "vi": "nghĩa tiếng việt 1"},
+    {"zh": "cụm phối từ hay gặp 2", "vi": "nghĩa tiếng việt 2"}
+  ],
   "examples": [
     {"hanzi": "câu chữ hán 1", "pinyin": "pinyin 1", "vietnamese": "nghĩa tiếng việt 1"},
     {"hanzi": "câu chữ hán 2", "pinyin": "pinyin 2", "vietnamese": "nghĩa tiếng việt 2"},
@@ -6909,6 +7018,7 @@ Lưu ý quan trọng:
       parsedJSON.hanzi = hanzi;
       parsedJSON.pinyin = pinyin || '';
       parsedJSON.hanViet = (parsedJSON.hanViet || getHanViet(hanzi) || '').trim().toUpperCase();
+      parsedJSON.collocations = Array.isArray(parsedJSON.collocations) ? parsedJSON.collocations : [];
       if (isIdiomWord(parsedJSON)) {
         const role = getIdiomRole(parsedJSON);
         parsedJSON.pos = `Thành ngữ (${role})`;
@@ -7297,6 +7407,22 @@ Lưu ý:
       }
     }
 
+    // Helper function to resolve collocations (搭配) for a Hanzi word
+    function getWordCollocations(hanzi) {
+      if (!hanzi) return null;
+      const clean = String(hanzi).trim();
+      // 1. Check pre-built HSK_COLLOCATIONS dictionary
+      if (typeof HSK_COLLOCATIONS !== 'undefined' && HSK_COLLOCATIONS && HSK_COLLOCATIONS[clean]) {
+        return HSK_COLLOCATIONS[clean];
+      }
+      // 2. Check aiCache
+      if (typeof aiCache !== 'undefined' && aiCache && aiCache[clean] && Array.isArray(aiCache[clean].collocations) && aiCache[clean].collocations.length > 0) {
+        return aiCache[clean].collocations;
+      }
+      return null;
+    }
+    window.getWordCollocations = getWordCollocations;
+
     // Helper function to build row HTML content string
     function buildRowContent(item) {
       const status = getWordStatus(item.hanzi);
@@ -7380,6 +7506,29 @@ Lưu ý:
         }
       }
 
+      let collocationHTML = '';
+      if (showCollocations) {
+        const collocs = getWordCollocations(item.hanzi);
+        if (collocs && collocs.length > 0) {
+          const itemsHTML = collocs.map(c => {
+            const zh = (c.zh || c.hanzi || '').trim();
+            const vi = (c.vi || c.vietnamese || '').trim();
+            const safeZh = zh.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+            const viHTML = isCol2Visible
+              ? (vi ? `<span class="colloc-vi">(${vi})</span>` : '')
+              : (vi ? `<span class="colloc-vi colloc-blurred" onclick="toggleRevealItem('${safeId}', event)" title="chạm để xem nghĩa">(${vi})</span>` : '');
+            return `<span class="colloc-chip" onclick="speakChinese('${safeZh}')" title="chạm để nghe: ${zh}"><b class="colloc-zh">${zh}</b> ${viHTML}</span>`;
+          }).join('<span class="colloc-sep">·</span>');
+
+          collocationHTML = `
+            <div class="vocab-collocation-row">
+              <span class="colloc-badge">💡 搭配</span>
+              <div class="colloc-list">${itemsHTML}</div>
+            </div>
+          `;
+        }
+      }
+
       const isCrossActive = status === 'wrong' ? 'active' : '';
       const isCheckActive = status === 'correct' ? 'active' : '';
 
@@ -7390,6 +7539,7 @@ Lưu ý:
           <button class="btn-circle btn-cross ${isCrossActive}" onclick="handleMark('${safeHanzi}', 'wrong', event)" title="chưa thuộc (✕)">✕</button>
           <button class="btn-circle btn-check ${isCheckActive}" onclick="handleMark('${safeHanzi}', 'correct', event)" title="đã thuộc (✓)">✓</button>
         </div>
+        ${collocationHTML}
       `;
     }
 
@@ -10347,6 +10497,16 @@ ${chunkText}
       drawerHanzi.textContent = tok.hanzi;
       drawerPinyin.textContent = tok.pinyin || '';
       drawerMeaning.textContent = `Nghĩa: ${tok.vietnamese || ''}`;
+      const drawerCollocs = document.getElementById('drawerCollocations');
+      if (drawerCollocs) {
+        const collocs = getWordCollocations(tok.hanzi);
+        if (collocs && collocs.length > 0) {
+          drawerCollocs.innerHTML = `<span style="font-weight:700; color:#684e92; margin-right:4px;">💡 搭配:</span> ` + collocs.map(c => `<span style="display:inline-block; margin-right:6px;"><b>${c.zh}</b> <span style="color:#6b7280;">(${c.vi})</span></span>`).join('· ');
+          drawerCollocs.style.display = 'block';
+        } else {
+          drawerCollocs.style.display = 'none';
+        }
+      }
       btnSpeakDrawerWord.onclick = () => speakChinese(tok.hanzi);
 
       updateDrawerButtonState(isSelected);
@@ -11497,6 +11657,20 @@ ${chunkText}
         alwaysShowIcon.textContent = alwaysShowIcon ? '🔓' : '🔒';
         renderVocabList(true);
       });
+
+      // Collocations (搭配) Toggle
+      if (btnToggleCollocations) {
+        btnToggleCollocations.classList.toggle('active', showCollocations);
+        if (collocationLabel) collocationLabel.textContent = showCollocations ? 'cụm 搭配: hiện' : 'cụm 搭配: ẩn';
+        btnToggleCollocations.addEventListener('click', () => {
+          showCollocations = !showCollocations;
+          btnToggleCollocations.classList.toggle('active', showCollocations);
+          if (collocationLabel) collocationLabel.textContent = showCollocations ? 'cụm 搭配: hiện' : 'cụm 搭配: ẩn';
+          try { localStorage.setItem('hsk_show_collocations', showCollocations ? 'true' : 'false'); } catch (e) {}
+          renderVocabList(true);
+          showToast(showCollocations ? '🧩 Đã bật hiển thị cụm 搭配' : '🧩 Đã ẩn cụm 搭配');
+        });
+      }
 
       // Auto Speak Switch
       switchAutoSpeak.addEventListener('change', (e) => {
