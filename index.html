@@ -1256,6 +1256,19 @@
       overflow-y: auto;
     }
 
+    @media (max-width: 480px) {
+      #readingViewModal .modal-body {
+        padding: 6px 6px 100px 6px !important;
+      }
+      .reading-passage-box {
+        padding: 12px 9px !important;
+        border-radius: 14px !important;
+      }
+      .reading-para-vi-box {
+        padding: 8px 9px !important;
+      }
+    }
+
     .reading-audio-btn {
       background: none;
       border: none;
@@ -1421,23 +1434,28 @@
       text-decoration: none !important;
     }
 
-    /* Paragraph box with uniform line-height transition */
+    /* Paragraph box with uniform line-height transition (0 padding to maximize reading width) */
     .reading-para-box {
       line-height: 2.1;
-      transition: line-height 0.2s ease, background-color 0.25s ease, box-shadow 0.25s ease;
-      padding: 3px 6px;
-      border-radius: 10px;
+      transition: line-height 0.2s ease;
+      padding: 0 !important;
+      margin: 0 0 14px 0 !important;
+      border: none !important;
+      box-shadow: none !important;
     }
     #readingPassageContainer.show-vi-gloss .reading-para-box {
       line-height: 2.45;
     }
 
-    .reading-para-box.active-playing-para,
+    .reading-para-box.active-playing-para {
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      background: transparent !important;
+    }
     .reading-para-vi-box.active-playing-para {
-      background: rgba(135, 114, 168, 0.08) !important;
-      border-radius: 12px !important;
-      box-shadow: 0 0 0 2px #8772a8, 0 4px 14px rgba(135, 114, 168, 0.18) !important;
-      transition: all 0.25s ease !important;
+      box-shadow: none !important;
+      border-color: #8772a8 !important;
     }
 
     /* Vietnamese gloss layer under highlighted words (invisible overlay layer) */
@@ -9448,7 +9466,7 @@ ${chunkText}
       document.querySelectorAll('.active-playing-para').forEach(el => el.classList.remove('active-playing-para'));
       document.querySelectorAll('.tiny-para-audio-btn').forEach(btn => {
         btn.classList.remove('playing');
-        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle; flex-shrink: 0;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+        btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle; flex-shrink: 0;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
         btn.title = 'Chạm: Đọc riêng đoạn này | Giữ 0.5s: Đọc tiếp từ đoạn này đến hết';
       });
     }
@@ -9549,14 +9567,14 @@ ${chunkText}
       // Reset all buttons and activate current
       document.querySelectorAll('.tiny-para-audio-btn').forEach(btn => {
         btn.classList.remove('playing');
-        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle; flex-shrink: 0;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+        btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle; flex-shrink: 0;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
         btn.title = 'Chạm: Đọc riêng đoạn này | Giữ 0.5s: Đọc tiếp từ đoạn này đến hết';
       });
 
       const activeBtn = document.getElementById('btnParaAudio_' + pIdx);
       if (activeBtn) {
         activeBtn.classList.add('playing');
-        activeBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#4b3b66" style="vertical-align: middle; flex-shrink: 0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+        activeBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#5e438c" style="vertical-align: middle; flex-shrink: 0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
         activeBtn.title = 'Đang phát - Chạm để dừng';
       }
 
@@ -9874,9 +9892,10 @@ ${chunkText}
         const isToggledVi = !!activeParagraphToggles[pIdx];
         const btnTitle = isToggledVi ? 'Bấm để chuyển về chữ Hán gốc' : 'Bấm để xem dịch Tiếng Việt đoạn này';
 
-        const purpleLeafSVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle; flex-shrink: 0;"><path d="M17 2C10 2 4 7 4 14c0 3.3 2.7 6 6 6 7 0 12-5 12-12 0-3.3-2.7-6-5-6zm-1.5 10.5L10 18l-1.5-1.5L14 11l1.5 1.5z"/></svg>`;
-        const tinyBtnHTML = `<button class="tiny-para-toggle-btn" onclick="toggleParagraphTranslation(${pIdx})" title="${btnTitle}">${purpleLeafSVG}</button>`;
-        const purpleSpeakerSVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle; flex-shrink: 0;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+        const translateIconSVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${isToggledVi ? '#5e438c' : '#8772a8'}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; flex-shrink: 0;"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>`;
+        const tinyBtnBg = isToggledVi ? 'background: rgba(135, 114, 168, 0.18); border-radius: 5px;' : '';
+        const tinyBtnHTML = `<button class="tiny-para-toggle-btn" onclick="toggleParagraphTranslation(${pIdx})" style="${tinyBtnBg}" title="${btnTitle}">${translateIconSVG}</button>`;
+        const purpleSpeakerSVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle; flex-shrink: 0;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
         const tinyAudioBtnHTML = `<button class="tiny-para-audio-btn" data-pidx="${pIdx}" id="btnParaAudio_${pIdx}" title="Chạm: Đọc riêng đoạn này | Giữ 0.5s: Đọc tiếp từ đoạn này đến hết">${purpleSpeakerSVG}</button>`;
 
         if (isToggledVi) {
@@ -9940,7 +9959,7 @@ ${chunkText}
         const activeBtn = document.getElementById('btnParaAudio_' + currentPlayingParaIdx);
         if (activeBtn) {
           activeBtn.classList.add('playing');
-          activeBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="#4b3b66" style="vertical-align: middle; flex-shrink: 0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+          activeBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#5e438c" style="vertical-align: middle; flex-shrink: 0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
           activeBtn.title = 'Đang phát - Chạm để dừng';
         }
       }
