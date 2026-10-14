@@ -3416,10 +3416,8 @@
       </div>
 
       <!-- Loading View -->
-      <div class="ai-story-body" id="aiStoryLoadingView" style="display: none; text-align: center; padding: 48px 20px;">
-        <img src="./loading.gif" style="width: 48px; height: 48px; object-fit: contain; margin-bottom: 14px;" />
-        <div id="aiStoryLoadingMsg" style="font-size: 15px; font-weight: 700; color: #553c7b; margin-bottom: 6px;">Đang sáng tác mẩu chuyện ngắn...</div>
-        <div id="aiStoryLoadingSubMsg" style="font-size: 12px; color: #766299;">Lồng ghép khéo léo các từ bạn vừa chọn</div>
+      <div class="ai-story-body" id="aiStoryLoadingView" style="display: none; text-align: center; padding: 36px 20px;">
+        <img src="./story_loading.gif" alt="Đang sáng tác..." style="width: 160px; max-width: 85%; height: auto; object-fit: contain; display: inline-block;" />
       </div>
 
       <!-- Result View -->
@@ -11691,10 +11689,6 @@ ${chunkText}
       }
 
       showStoryView('loading');
-      const loadingMsg = document.getElementById('aiStoryLoadingMsg');
-      const loadingSubMsg = document.getElementById('aiStoryLoadingSubMsg');
-      if (loadingMsg) loadingMsg.textContent = '✍️ Đang sáng tác mẩu chuyện ngắn...';
-      if (loadingSubMsg) loadingSubMsg.textContent = `Lồng ghép khéo léo ${aiStorySelectedWords.length} từ bạn vừa chọn`;
 
       const styleObj = AI_STORY_STYLES[aiStoryCurrentStyle] || AI_STORY_STYLES.daily;
       const targetWordsList = aiStorySelectedWords.map((w, idx) => `${idx + 1}. ${w.hanzi} (pinyin: ${w.pinyin || ''}, nghĩa: ${w.vietnamese || ''})`).join('\n');
@@ -11755,9 +11749,6 @@ Yêu cầu BẮT BUỘC:
         aiStoryLastResult = parsedStory;
 
         // STEP 2: Phân tích & Tách cụm từ bài đọc (Cơ chế Y HỆT tạo bài đọc bình thường)
-        if (loadingMsg) loadingMsg.textContent = '⚡ AI đang tách cụm từ & tạo bài đọc...';
-        if (loadingSubMsg) loadingSubMsg.textContent = 'Phân tích ngữ cảnh & nghĩa tiếng Việt từng cụm từ';
-
         let allParagraphs = [];
         let allTokens = [];
 
