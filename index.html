@@ -3903,7 +3903,6 @@
               <span id="drawerPinyin" style="font-size: 13.5px; font-weight: 700; color: var(--primary-color); margin-top: 2px;"></span>
             </div>
             <button class="icon-action-btn" id="btnSpeakDrawerWord" style="padding: 2px 6px; font-size: 14px; flex-shrink: 0;" title="Nghe phát âm">🔊</button>
-            <button class="icon-action-btn" id="btnDrawerAiExplain" style="padding: 3px 8px; font-size: 11.5px; flex-shrink: 0; font-family: var(--font-mali); font-weight: 700; color: #6b21a8; background: #f3edf9; border: 1px solid #d4c5e8; border-radius: 8px; cursor: pointer;" title="Tra cứu giải thích chi tiết">🔍 Tra từ</button>
           </div>
           <button id="btnCloseTokenDrawer" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #9ca3af; flex-shrink: 0;">✕</button>
         </div>
@@ -6771,7 +6770,7 @@
         console.warn('Standard JSON.parse failed, attempting repair...', e1);
       }
 
-      // Attempt 2: Escape raw unescaped newlines/tabs inside double-quoted string values
+      // Attempt 2: Escape raw unescaped newlines/tabs AND unescaped internal double quotes inside string values
       let inString = false;
       let escapedStr = '';
       for (let i = 0; i < cleaned.length; i++) {
@@ -6779,8 +6778,42 @@
         const prevChar = i > 0 ? cleaned[i - 1] : '';
 
         if (char === '"' && prevChar !== '\\') {
-          inString = !inString;
-          escapedStr += char;
+          if (!inString) {
+            inString = true;
+            escapedStr += char;
+          } else {
+            let j = i + 1;
+            while (j < cleaned.length && /\s/.test(cleaned[j])) j++;
+            const nextCh = j < cleaned.length ? cleaned[j] : '';
+            if (nextCh === '}' || nextCh === ']' || nextCh === '') {
+              inString = false;
+              escapedStr += char;
+            } else if (nextCh === ':') {
+              let k = j + 1;
+              while (k < cleaned.length && /\s/.test(cleaned[k])) k++;
+              const afterColon = k < cleaned.length ? cleaned[k] : '';
+              const lastOpenQuote = escapedStr.lastIndexOf('"');
+              const keyCandidate = lastOpenQuote !== -1 ? escapedStr.slice(lastOpenQuote + 1) : '';
+              if (/^[a-zA-Z0-9_]+$/.test(keyCandidate) && (afterColon === '"' || afterColon === '{' || afterColon === '[' || /[tfn0-9\-]/.test(afterColon))) {
+                inString = false;
+                escapedStr += char;
+              } else {
+                escapedStr += '\\"';
+              }
+            } else if (nextCh === ',') {
+              let k = j + 1;
+              while (k < cleaned.length && /\s/.test(cleaned[k])) k++;
+              const rest = cleaned.slice(k);
+              if (rest.startsWith('{') || rest.startsWith('[') || rest.startsWith('}') || rest.startsWith(']') || /^"[a-zA-Z0-9_]+\s*"\s*:/.test(rest)) {
+                inString = false;
+                escapedStr += char;
+              } else {
+                escapedStr += '\\"';
+              }
+            } else {
+              escapedStr += '\\"';
+            }
+          }
         } else if (inString) {
           if (char === '\n') escapedStr += '\\n';
           else if (char === '\r') escapedStr += '\\r';
@@ -6797,7 +6830,7 @@
         console.warn('Escaped string JSON.parse failed, attempting comma repair...', e2);
       }
 
-      // Attempt 3: Fix trailing commas and unescaped quotes
+      // Attempt 3: Fix trailing commas
       try {
         let repaired = escapedStr
           .replace(/,\s*}/g, '}')
@@ -9560,8 +9593,8 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
 1) QUY TẮC GOM CỤM TỪ & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH (CỰC KỲ QUAN TRỌNG):
    - BẮT BUỘC gom các cụm từ ghép, cụm từ vựng có nghĩa, cụm ngữ pháp hay, cụm diễn đạt hoàn chỉnh thành 1 token có nghĩa tự nhiên để người học bấm vào hiểu được cả cụm!
-   - Ví dụ gom cụm chuẩn: "很感兴趣的样子" (dáng vẻ rất hứng thú), "刚起了一个头" (vừa mới mở đầu / vừa mới cất lời), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ / kỳ lạ), "一落千丈" (tuột dốc không phanh), "硬生生" (cứng rắn / sống sượng), "首次会面" (cuộc gặp đầu tiên), "半年以来" (nửa năm qua), "随身遗物" (di vật cá nhân), "若有所思" (như đang suy tư), "情谊深厚" (tình cảm sâu đậm), "急匆匆地问" (vội vã hỏi), "咖啡机" (máy pha cà phê), "办公室" (văn phòng), "扶了扶眼镜" (đẩy kính lên), "无奈地说" (bất lực nói), "阴晴不定" (thất thường / lúc nắng lúc mưa), "很乐意" (rất sẵn lòng), "热水" (nước nóng), "关键时刻" (thời khắc then chốt), "罢工了" (đình công rồi / đình chỉ hoạt động), "一拍大腿" (vỗ đùi một cái), "提神续命" (tỉnh táo nạp năng lượng), "工作效率" (hiệu suất làm việc), "打对折" (giảm một nửa), "神秘一笑" (cười bí hiểm), "手冲壶" (ấm pha cà phê thủ công), "燃眉之急" (việc gấp trước mắt).
-   - TUYỆT ĐỐI KHÔNG xé lẻ vụn vặt từng chữ đơn lẻ như "早", "上", "冲", "进", "办", "公", "室", "咖", "啡"! Phải gom thành từ/cụm từ có nghĩa hoàn chỉnh!
+   - Ví dụ gom cụm chuẩn: "很感兴趣的样子" (dáng vẻ rất hứng thú), "刚起了一个头" (vừa mới mở đầu / vừa mới cất lời), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ / kỳ lạ), "一落千丈" (tuột dốc không phanh), "硬生生" (cứng rắn / sống sượng), "首次会面" (cuộc gặp đầu tiên), "半年以来" (nửa năm qua), "随身遗物" (di vật cá nhân), "若有所思" (như đang suy tư), "情谊深厚" (tình cảm sâu đậm), "有所触动" (có phần xúc động / thức tỉnh), "慢悠悠地" (thong thả / chậm rãi), "擦了擦嘴" (lau miệng), "瞬间语塞" (tức khắc nghẹn lời), "说不出口了" (không nói nên lời), "默默走开" (lặng lẽ bỏ đi), "身材走样" (vóc dáng biến dạng), "急匆匆地问" (vội vã hỏi), "咖啡机" (máy pha cà phê), "办公室" (văn phòng), "扶了扶眼镜" (đẩy kính lên), "无奈地说" (bất lực nói), "阴晴不定" (thất thường / lúc nắng lúc mưa), "很乐意" (rất sẵn lòng), "热水" (nước nóng), "关键时刻" (thời khắc then chốt), "罢工了" (đình công rồi), "一拍大腿" (vỗ đùi một cái), "提神续命" (tỉnh táo nạp năng lượng), "工作效率" (hiệu suất làm việc), "打对折" (giảm một nửa), "神秘一笑" (cười bí hiểm), "手冲壶" (ấm pha cà phê thủ công), "燃眉之急" (việc gấp trước mắt).
+   - TUYỆT ĐỐI KHÔNG xé lẻ vụn vặt từng chữ đơn lẻ như "有", "所", "触", "动", "早", "上", "冲", "进", "办", "公", "室", "咖", "啡"! Phải gom thành từ/cụm từ có nghĩa hoàn chỉnh (ví dụ "有所触动" phải là 1 token duy nhất)!
 ${targetSpecialRule}
 
 2) QUY TẮC NGHĨA VIỆT CỦA CỤM TỪ:
@@ -9580,9 +9613,10 @@ ${targetSpecialRule}
 4) TỰ ĐỘNG SỬA LỖI GRAMMAR "地" / "的":
    - Trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (như "头也不回地走了", "急匆匆地问"), nếu bài gốc viết sai thành chữ "的", bạn BẮT BUỘC sửa thành "地" đúng chuẩn ngữ pháp!
 
-5) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU:
+5) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU & AN TOÀN JSON:
    - BẮT BUỘC bổ sung và chuẩn hóa dấu câu tiếng Trung (，, 。, ！, ？, ：“”, 《》) nếu bài gốc thiếu hoặc dính liền chữ.
    - Giữ lại đầy đủ mọi dấu câu trong mảng tokens (với dấu câu set "isVocab": false, "pinyin": "", "vietnamese": "").
+   - TUYỆT ĐỐI KHÔNG dùng dấu ngoặc kép thẳng (") bên trong nội dung chuỗi JSON (trong bản dịch tiếng Việt nếu có lời thoại/trích dẫn, bắt buộc dùng ngoặc kép cong “ ” hoặc dấu nháy đơn ' ').
 
 ${(isFirstChunk && !aiAutoTitle) ? `6) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ (3 đến 6 từ).` : ''}
 ${(isFirstChunk && !aiAutoTitle) ? '7)' : '6)'} Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo ngắt đoạn gốc:
@@ -10770,6 +10804,43 @@ ${chunkText}
       setTimeout(updateReadingTitleMarquee, 60);
       setTimeout(updateReadingTitleMarquee, 250);
 
+      // Auto-heal legacy AI story articles that had single-character token splits from older versions
+      const vocabToks = (art.tokens || []).filter(t => t && t.isVocab && t.hanzi);
+      const brokenSingleCharToks = vocabToks.filter(t => t.hanzi.length === 1 && !t.pinyin && !t.vietnamese);
+      const isBrokenLegacyArticle = vocabToks.length > 8 && (brokenSingleCharToks.length / vocabToks.length > 0.25);
+      const apiKey = localStorage.getItem('openrouter_api_key');
+
+      if (isBrokenLegacyArticle && apiKey && !art._reTokenizing) {
+        art._reTokenizing = true;
+        let rawClean = art.rawText || art.content || (art.tokens || []).map(t => t.hanzi).join('');
+        (art.selectedWords || []).forEach(w => {
+          if (w && w.hanzi) {
+            rawClean = rawClean.replace(new RegExp(`[“"「『]${escapeRegex(w.hanzi)}[”"」』]`, 'g'), w.hanzi);
+          }
+        });
+        showToast('✨ Đang tự động gom lại cụm từ chuẩn cho bài đọc...');
+        parsePassageChunksWithAi(rawClean, apiKey, {
+          targetWords: art.selectedWords || [],
+          customTitle: art.title
+        }).then(res => {
+          art._reTokenizing = false;
+          if (res && res.paragraphs && res.paragraphs.length > 0) {
+            art.rawText = rawClean;
+            art.content = rawClean;
+            art.paragraphs = res.paragraphs;
+            art.tokens = res.tokens;
+            saveReadingArticlesToStorage();
+            if (activeReadingArticleId === art.id) {
+              renderReadingPassageContent(art);
+              showToast('✅ Đã gom cụm từ hoàn chỉnh!');
+            }
+          }
+        }).catch(err => {
+          art._reTokenizing = false;
+          console.warn('Auto re-tokenize warning:', err);
+        });
+      }
+
       // Auto-resume reading position
       let savedScroll = 0;
       try {
@@ -11142,13 +11213,8 @@ ${chunkText}
 
       drawerHanzi.textContent = tok.hanzi;
       drawerPinyin.textContent = resolvedPinyin;
-      drawerMeaning.textContent = resolvedMeaning ? `Nghĩa: ${resolvedMeaning}` : 'Chạm "🔍 Tra từ" để tra cứu chi tiết AI';
+      drawerMeaning.textContent = resolvedMeaning ? `Nghĩa: ${resolvedMeaning}` : 'Chạm vào chữ Hán để tra cứu chi tiết AI';
       btnSpeakDrawerWord.onclick = () => speakChinese(tok.hanzi);
-
-      const btnExplain = document.getElementById('btnDrawerAiExplain');
-      if (btnExplain) {
-        btnExplain.onclick = () => fetchAiExplanation(tok.hanzi, resolvedPinyin);
-      }
       drawerHanzi.onclick = () => fetchAiExplanation(tok.hanzi, resolvedPinyin);
 
       updateDrawerButtonState(isSelected);
@@ -11561,99 +11627,6 @@ ${chunkText}
       return null;
     }
 
-    function buildStoryTokens(content, translation, targetWords) {
-      const paragraphsText = (content || '').split(/\n+/).map(p => p.trim()).filter(Boolean);
-      const lookup = srsGetLookup();
-      const targetMap = new Map();
-      (targetWords || []).forEach(w => {
-        if (w && w.hanzi) targetMap.set(w.hanzi, w);
-      });
-
-      const allParagraphs = [];
-      const allTokens = [];
-
-      paragraphsText.forEach((pText, pIdx) => {
-        const pTokens = [];
-        let remaining = pText;
-
-        while (remaining.length > 0) {
-          const punctMatch = remaining.match(/^[，。！？；：、“”《》（）…—\s,.!?;:()]+/);
-          if (punctMatch) {
-            const punct = punctMatch[0];
-            const tok = { hanzi: punct, pinyin: '', vietnamese: '', isVocab: false };
-            pTokens.push(tok);
-            allTokens.push(tok);
-            remaining = remaining.slice(punct.length);
-            continue;
-          }
-
-          let foundTarget = null;
-          for (const [hanzi, w] of targetMap.entries()) {
-            if (remaining.startsWith(hanzi)) {
-              if (!foundTarget || hanzi.length > foundTarget.hanzi.length) {
-                foundTarget = { hanzi, w };
-              }
-            }
-          }
-
-          if (foundTarget) {
-            const tok = {
-              hanzi: foundTarget.hanzi,
-              pinyin: foundTarget.w.pinyin || '',
-              vietnamese: foundTarget.w.vietnamese || foundTarget.w.meaning || '',
-              isVocab: true
-            };
-            pTokens.push(tok);
-            allTokens.push(tok);
-            remaining = remaining.slice(foundTarget.hanzi.length);
-            continue;
-          }
-
-          let matchedWord = null;
-          for (let len = Math.min(4, remaining.length); len >= 2; len--) {
-            const sub = remaining.slice(0, len);
-            if (lookup.has(sub)) {
-              matchedWord = lookup.get(sub);
-              break;
-            }
-          }
-
-          if (matchedWord) {
-            const tok = {
-              hanzi: matchedWord.hanzi,
-              pinyin: matchedWord.pinyin || '',
-              vietnamese: matchedWord.vietnamese || matchedWord.vi || matchedWord.meaning || '',
-              isVocab: true
-            };
-            pTokens.push(tok);
-            allTokens.push(tok);
-            remaining = remaining.slice(matchedWord.hanzi.length);
-            continue;
-          }
-
-          const singleChar = remaining[0];
-          const singleWord = lookup.get(singleChar);
-          const tok = {
-            hanzi: singleChar,
-            pinyin: singleWord ? (singleWord.pinyin || '') : '',
-            vietnamese: singleWord ? (singleWord.vietnamese || singleWord.vi || singleWord.meaning || '') : '',
-            isVocab: /[\u4e00-\u9fa5]/.test(singleChar)
-          };
-          pTokens.push(tok);
-          allTokens.push(tok);
-          remaining = remaining.slice(1);
-        }
-
-        allParagraphs.push({
-          chinese: pText,
-          vietnamese: pIdx === 0 ? (translation || '') : '',
-          tokens: pTokens
-        });
-      });
-
-      return { allParagraphs, allTokens };
-    }
-
     async function tokenizeChineseTextWithAi(chunkText, targetWords, apiKey) {
       const res = await parsePassageChunksWithAi(chunkText, apiKey, { targetWords });
       return { allParagraphs: res.paragraphs, allTokens: res.tokens };
@@ -11687,8 +11660,9 @@ Yêu cầu BẮT BUỘC:
 1. ĐỘ DÀI: Khoảng 120 - 150 chữ Hán Giản Thể (cô đọng, cuốn hút, giàu tình huống để nhớ từ).
 2. TRÌNH ĐỘ: Ngữ pháp lưu loát, phù hợp trình độ cao cấp HSK 6 - HSK 9.
 3. CHỮ VIẾT: BẮT BUỘC dùng CHỮ GIẢN THỂ (简体字, chuẩn Trung Quốc đại lục).
-4. KHÔNG DÙNG NGOẶC KÉP THẲNG ("): Tuyệt đối không dùng dấu ngoặc kép thẳng (") trong nội dung truyện hoặc bản dịch để tránh lỗi JSON. Nếu có trích dẫn hoặc đối thoại hãy dùng ngoặc cong (“ ”) hoặc ngoặc vuông.
-5. BẮT BUỘC TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON (không bọc trong markdown):
+4. KHÔNG BỌC TỪ MỤC TIÊU TRONG NGOẶC KÉP: Tuyệt đối KHÔNG bọc các từ vựng mục tiêu trong dấu ngoặc kép (“ ”, " ") hay ký hiệu đánh dấu nào — hãy viết các từ đó hòa vào câu văn tự nhiên như văn bản bình thường.
+5. KHÔNG DÙNG NGOẶC KÉP THẲNG ("): Tuyệt đối không dùng dấu ngoặc kép thẳng (") trong nội dung truyện hoặc bản dịch để tránh lỗi JSON. Nếu có lời thoại nhân vật hãy dùng ngoặc cong (“ ”).
+6. BẮT BUỘC TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON (không bọc trong markdown):
 {
   "title": "Tiêu đề tiếng Trung (4-8 chữ Giản Thể)",
   "titleVi": "Tiêu đề dịch tiếng Việt",
@@ -11728,6 +11702,13 @@ Yêu cầu BẮT BUỘC:
         if (!parsedStory || !parsedStory.content) {
           throw new Error('Dữ liệu AI trả về bị thiếu nội dung. Vui lòng bấm "Thử lại"!');
         }
+
+        // Strip any accidental quotation marks wrapped around target words
+        aiStorySelectedWords.forEach(w => {
+          if (w && w.hanzi) {
+            parsedStory.content = parsedStory.content.replace(new RegExp(`[“"「『]${escapeRegex(w.hanzi)}[”"」』]`, 'g'), w.hanzi);
+          }
+        });
 
         aiStoryLastResult = parsedStory;
 
