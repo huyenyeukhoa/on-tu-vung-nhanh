@@ -9530,44 +9530,39 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       return chunks.length > 0 ? chunks : [text];
     }
 
-    // AI Tokenize Chinese Reading Passage via Gemini 2.5 Flash with Chunking & Progress %
-    async function analyzeReadingPassageWithAi() {
-      const apiKey = localStorage.getItem('openrouter_api_key');
-      if (!apiKey) {
-        apiKeyModal.classList.add('active');
-        showToast('Vui lòng nhập OpenRouter API Key!');
-        return;
-      }
-
-      const title = toSimplified((readingTitleInput.value || '').trim());
-      const rawText = toSimplified((readingTextInput.value || '').trim());
-
-      if (!rawText) {
-        showToast('Vui lòng nhập hoặc dán đoạn văn tiếng Trung!');
-        return;
-      }
-
-      btnAnalyzeReadingText.disabled = true;
-
+    // Unified AI Passage Parser & Tokenizer via Gemini 2.5 Flash
+    // Used by BOTH standard reading passage creation AND AI Story creation
+    async function parsePassageChunksWithAi(rawText, apiKey, options = {}) {
+      const { targetWords = [], customTitle = '', onProgress = null } = options;
       const chunks = splitTextIntoChunks(rawText, 550);
       let allParagraphs = [];
       let allTokens = [];
-      let aiAutoTitle = '';
+      let aiAutoTitle = customTitle || '';
 
-      try {
-        for (let i = 0; i < chunks.length; i++) {
+      const targetWordsHanzi = (targetWords || []).map(w => w && w.hanzi).filter(Boolean);
+      const targetSpecialRule = targetWordsHanzi.length > 0
+        ? `\n- QUY TẮC ĐẶC BIỆT CHO CÁC TỪ VỰNG MỤC TIÊU CẦN ÔN TẬP:
+   - Các từ sau đây là TỪ VỰNG MỤC TIÊU: ${targetWordsHanzi.join(', ')}.
+   - BẮT BUỘC giữ mỗi từ mục tiêu này thành MỘT TOKEN RIÊNG BIỆT (isVocab: true), KHÔNG ghép dính từ mục tiêu với các chữ xung quanh không liên quan!
+   - Ví dụ: Với từ "供给", token BẮT BUỘC là {"hanzi": "供给", "pinyin": "gōng jǐ", "vietnamese": "cung cấp, cung ứng", "isVocab": true}.`
+        : '';
+
+      for (let i = 0; i < chunks.length; i++) {
+        if (typeof onProgress === 'function') {
           const pct = Math.round(((i + 1) / chunks.length) * 100);
-          btnAnalyzeReadingText.innerHTML = `<img src="./loading.gif" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 4px;" /> Đang tạo bài ${pct}%`;
+          onProgress(pct, i, chunks.length);
+        }
 
-          const isFirstChunk = (i === 0);
-          const chunkText = chunks[i];
+        const isFirstChunk = (i === 0);
+        const chunkText = chunks[i];
 
-          const prompt = `Bạn là chuyên gia ngôn ngữ Tiếng Trung và biên tập viên dịch thuật cao cấp. Hãy phân tích đoạn văn tiếng Trung sau (phần ${i + 1}/${chunks.length}):
+        const prompt = `Bạn là chuyên gia ngôn ngữ Tiếng Trung và biên tập viên dịch thuật cao cấp. Hãy phân tích đoạn văn tiếng Trung sau (phần ${i + 1}/${chunks.length}):
 
 1) QUY TẮC GOM CỤM TỪ & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH (CỰC KỲ QUAN TRỌNG):
-   - BẮT BUỘC gom các cụm từ ghép, cụm ngữ pháp hay, cụm diễn đạt hoàn chỉnh thành 1 token có nghĩa tự nhiên để người học bấm vào hiểu được cả cụm!
-   - Ví dụ gom cụm chuẩn: "很感兴趣的样子" (dáng vẻ rất hứng thú), "刚起了一个头" (vừa mới mở đầu / vừa mới cất lời), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ / kỳ lạ), "一落千丈" (tuột dốc không phanh), "硬生生" (cứng rắn / sống sượng), "首次会面" (cuộc gặp đầu tiên), "半年以来" (nửa năm qua).
-   - TUYỆT ĐỐI KHÔNG xé lẻ vụn vặt 1-2 chữ đơn như "起" hay "感" hay "感兴趣" khi chúng nằm trong một cụm diễn đạt đầy đủ như "很感兴趣的样子" hay "刚起了一个头"!
+   - BẮT BUỘC gom các cụm từ ghép, cụm từ vựng có nghĩa, cụm ngữ pháp hay, cụm diễn đạt hoàn chỉnh thành 1 token có nghĩa tự nhiên để người học bấm vào hiểu được cả cụm!
+   - Ví dụ gom cụm chuẩn: "很感兴趣的样子" (dáng vẻ rất hứng thú), "刚起了一个头" (vừa mới mở đầu / vừa mới cất lời), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ / kỳ lạ), "一落千丈" (tuột dốc không phanh), "硬生生" (cứng rắn / sống sượng), "首次会面" (cuộc gặp đầu tiên), "半年以来" (nửa năm qua), "随身遗物" (di vật cá nhân), "若有所思" (như đang suy tư), "情谊深厚" (tình cảm sâu đậm), "急匆匆地问" (vội vã hỏi), "咖啡机" (máy pha cà phê), "办公室" (văn phòng), "扶了扶眼镜" (đẩy kính lên), "无奈地说" (bất lực nói), "阴晴不定" (thất thường / lúc nắng lúc mưa), "很乐意" (rất sẵn lòng), "热水" (nước nóng), "关键时刻" (thời khắc then chốt), "罢工了" (đình công rồi / đình chỉ hoạt động), "一拍大腿" (vỗ đùi một cái), "提神续命" (tỉnh táo nạp năng lượng), "工作效率" (hiệu suất làm việc), "打对折" (giảm một nửa), "神秘一笑" (cười bí hiểm), "手冲壶" (ấm pha cà phê thủ công), "燃眉之急" (việc gấp trước mắt).
+   - TUYỆT ĐỐI KHÔNG xé lẻ vụn vặt từng chữ đơn lẻ như "早", "上", "冲", "进", "办", "公", "室", "咖", "啡"! Phải gom thành từ/cụm từ có nghĩa hoàn chỉnh!
+${targetSpecialRule}
 
 2) QUY TẮC NGHĨA VIỆT CỦA CỤM TỪ:
    - Trong mảng tokens, trường "vietnamese" BẮT BUỘC dịch ĐÚNG SÁT NGHĨA CỦA CHÍNH CỤM TỪ HÁN ĐÓ!
@@ -9583,14 +9578,14 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
    - KHÔNG ghép liên từ "与" vào đầu từ B trong "A 与 B" (Ví dụ: tách "大小姐", "与", "佐野").
 
 4) TỰ ĐỘNG SỬA LỖI GRAMMAR "地" / "的":
-   - Trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (như "头也不回地走了", "气愤地着", "高兴地笑"), nếu bài gốc viết sai thành chữ "的", bạn BẮT BUỘC sửa thành "地" đúng chuẩn ngữ pháp!
+   - Trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (như "头也不回地走了", "急匆匆地问"), nếu bài gốc viết sai thành chữ "的", bạn BẮT BUỘC sửa thành "地" đúng chuẩn ngữ pháp!
 
 5) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU:
    - BẮT BUỘC bổ sung và chuẩn hóa dấu câu tiếng Trung (，, 。, ！, ？, ：“”, 《》) nếu bài gốc thiếu hoặc dính liền chữ.
    - Giữ lại đầy đủ mọi dấu câu trong mảng tokens (với dấu câu set "isVocab": false, "pinyin": "", "vietnamese": "").
 
-${isFirstChunk ? `6) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ (3 đến 6 từ).` : ''}
-${isFirstChunk ? '7)' : '6)'} Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo ngắt đoạn gốc:
+${(isFirstChunk && !aiAutoTitle) ? `6) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ (3 đến 6 từ).` : ''}
+${(isFirstChunk && !aiAutoTitle) ? '7)' : '6)'} Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo ngắt đoạn gốc:
    - Dịch toàn bộ đoạn đó sang TIẾNG VIỆT mượt mà, chuẩn ngữ cảnh.
    - Phân tách thành chuỗi các CỤM TỪ / DẤU CÂU nối tiếp nhau hoàn chỉnh thành đoạn văn.
 
@@ -9601,7 +9596,7 @@ ${chunkText}
 
 Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown):
 {
-  ${isFirstChunk ? '"title": "Tiêu đề tiếng Việt tự nhiên mượt mà",' : ''}
+  ${(isFirstChunk && !aiAutoTitle) ? '"title": "Tiêu đề tiếng Việt tự nhiên mượt mà",' : ''}
   "paragraphs": [
     {
       "vietnamese": "Dịch nghĩa tiếng Việt mượt mà đầy đủ của đoạn",
@@ -9628,6 +9623,10 @@ ${chunkText}
   ]
 }`;
 
+        let chunkSuccess = false;
+        let lastErr = null;
+
+        for (let attempt = 0; attempt < 2 && !chunkSuccess; attempt++) {
           try {
             const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
               method: 'POST',
@@ -9654,41 +9653,123 @@ ${chunkText}
 
             let parsedJSON = safeParseJSON(content);
             if (parsedJSON && typeof parsedJSON === 'object') {
-              if (isFirstChunk && parsedJSON.title) {
+              if (isFirstChunk && parsedJSON.title && !aiAutoTitle) {
                 aiAutoTitle = parsedJSON.title.replace(/^["'“`]+|["'”`]+$/g, '').trim();
               }
-              if (Array.isArray(parsedJSON.paragraphs)) {
-                allParagraphs = allParagraphs.concat(parsedJSON.paragraphs);
-                parsedJSON.paragraphs.forEach(p => {
+              let chunkParagraphs = [];
+              if (Array.isArray(parsedJSON.paragraphs) && parsedJSON.paragraphs.length > 0) {
+                chunkParagraphs = parsedJSON.paragraphs;
+              } else if (Array.isArray(parsedJSON.tokens) && parsedJSON.tokens.length > 0) {
+                chunkParagraphs = [{ vietnamese: '', tokens: parsedJSON.tokens }];
+              }
+
+              if (chunkParagraphs.length > 0) {
+                allParagraphs = allParagraphs.concat(chunkParagraphs);
+                chunkParagraphs.forEach(p => {
                   if (Array.isArray(p.tokens)) {
                     allTokens = allTokens.concat(p.tokens);
                   }
                 });
-              } else if (Array.isArray(parsedJSON.tokens)) {
-                allParagraphs.push({ vietnamese: '', tokens: parsedJSON.tokens });
-                allTokens = allTokens.concat(parsedJSON.tokens);
+                chunkSuccess = true;
               }
-            } else {
-              allParagraphs.push({ vietnamese: '', tokens: [{ hanzi: chunkText, pinyin: '', vietnamese: '', isVocab: false }] });
             }
           } catch (chunkErr) {
-            console.warn(`Chunk ${i+1} AI analysis fallback:`, chunkErr);
-            allParagraphs.push({ vietnamese: '', tokens: [{ hanzi: chunkText, pinyin: '', vietnamese: '', isVocab: false }] });
+            lastErr = chunkErr;
+            console.warn(`Chunk ${i+1} attempt ${attempt+1} warning:`, chunkErr);
           }
         }
 
-        if (allParagraphs.length === 0) {
+        if (!chunkSuccess) {
+          console.warn(`Chunk ${i+1} fallback:`, lastErr);
+          allParagraphs.push({ vietnamese: '', tokens: [{ hanzi: chunkText, pinyin: '', vietnamese: '', isVocab: false }] });
+        }
+      }
+
+      if (allParagraphs.length === 0) {
+        throw new Error('Không thể phân tích dữ liệu bài đọc.');
+      }
+
+      // Target word isolation safety net:
+      // Ensure target words appearing inside compound tokens are cleanly split into their own token!
+      if (targetWordsHanzi.length > 0 && allParagraphs.length > 0) {
+        targetWordsHanzi.forEach(tHanzi => {
+          allParagraphs.forEach(para => {
+            if (!Array.isArray(para.tokens)) return;
+            const newTokens = [];
+            para.tokens.forEach(tok => {
+              if (tok.isVocab && tok.hanzi && tok.hanzi !== tHanzi && tok.hanzi.includes(tHanzi)) {
+                const parts = tok.hanzi.split(tHanzi);
+                parts.forEach((part, pIdx) => {
+                  if (part) {
+                    newTokens.push({ hanzi: part, pinyin: '', vietnamese: '', isVocab: true });
+                  }
+                  if (pIdx < parts.length - 1) {
+                    const twObj = targetWords.find(w => w && w.hanzi === tHanzi);
+                    newTokens.push({
+                      hanzi: tHanzi,
+                      pinyin: twObj ? twObj.pinyin : '',
+                      vietnamese: twObj ? (twObj.vietnamese || twObj.meaning || '') : '',
+                      isVocab: true
+                    });
+                  }
+                });
+              } else {
+                if (tok.hanzi === tHanzi) tok.isVocab = true;
+                newTokens.push(tok);
+              }
+            });
+            para.tokens = newTokens;
+          });
+        });
+
+        allTokens = [];
+        allParagraphs.forEach(p => {
+          if (Array.isArray(p.tokens)) allTokens.push(...p.tokens);
+        });
+      }
+
+      return { paragraphs: allParagraphs, tokens: allTokens, title: aiAutoTitle };
+    }
+
+    // AI Tokenize Chinese Reading Passage via Gemini 2.5 Flash with Chunking & Progress %
+    async function analyzeReadingPassageWithAi() {
+      const apiKey = localStorage.getItem('openrouter_api_key');
+      if (!apiKey) {
+        apiKeyModal.classList.add('active');
+        showToast('Vui lòng nhập OpenRouter API Key!');
+        return;
+      }
+
+      const title = toSimplified((readingTitleInput.value || '').trim());
+      const rawText = toSimplified((readingTextInput.value || '').trim());
+
+      if (!rawText) {
+        showToast('Vui lòng nhập hoặc dán đoạn văn tiếng Trung!');
+        return;
+      }
+
+      btnAnalyzeReadingText.disabled = true;
+
+      try {
+        const result = await parsePassageChunksWithAi(rawText, apiKey, {
+          customTitle: title,
+          onProgress: (pct) => {
+            btnAnalyzeReadingText.innerHTML = `<img src="./loading.gif" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 4px;" /> Đang tạo bài ${pct}%`;
+          }
+        });
+
+        if (!result.paragraphs || result.paragraphs.length === 0) {
           throw new Error('Không thể phân tích dữ liệu bài đọc.');
         }
 
         const newArticleId = 'art_' + Date.now();
-        const articleTitle = title || aiAutoTitle || `Bài đọc ${readingArticles.length + 1}`;
+        const articleTitle = title || result.title || `Bài đọc ${readingArticles.length + 1}`;
         const articleObj = {
           id: newArticleId,
           title: articleTitle,
           rawText,
-          paragraphs: allParagraphs,
-          tokens: allTokens,
+          paragraphs: result.paragraphs,
+          tokens: result.tokens,
           selectedWords: [],
           createdAt: new Date().toLocaleDateString('vi-VN')
         };
@@ -9716,7 +9797,7 @@ ${chunkText}
 
         if (readingInputModal) readingInputModal.classList.remove('active');
         openReadingViewModal(newArticleId);
-        showToast(`🎉 Đã tạo bài đọc thành công (${chunks.length} phần)!`);
+        showToast(`🎉 Đã tạo bài đọc thành công!`);
       } catch (err) {
         console.error('Reading AI analysis error:', err);
         showToast(`❌ Lỗi AI: ${err.message}`);
@@ -11574,104 +11655,8 @@ ${chunkText}
     }
 
     async function tokenizeChineseTextWithAi(chunkText, targetWords, apiKey) {
-      const targetWordsHanzi = (targetWords || []).map(w => w.hanzi).filter(Boolean);
-      const targetSpecialRule = targetWordsHanzi.length > 0
-        ? `\n6) QUY TẮC ĐẶC BIỆT CHO CÁC TỪ VỰNG MỤC TIÊU CẦN ÔN TẬP:
-   - Các từ sau đây là TỪ VỰNG MỤC TIÊU: ${targetWordsHanzi.join(', ')}.
-   - BẮT BUỘC giữ mỗi từ mục tiêu này thành MỘT TOKEN RIÊNG BIỆT (isVocab: true), KHÔNG ghép dính từ mục tiêu với các chữ xung quanh không liên quan!
-   - Ví dụ: Với từ "供给", token BẮT BUỘC là {"hanzi": "供给", "pinyin": "gōng jǐ", "vietnamese": "cung cấp, cung ứng", "isVocab": true}.`
-        : '';
-
-      const prompt = `Bạn là chuyên gia ngôn ngữ Tiếng Trung và biên tập viên dịch thuật cao cấp. Hãy phân tích và tách cụm từ cho đoạn văn tiếng Trung sau:
-
-1) QUY TẮC GOM CỤM TỪ & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH (CỰC KỲ QUAN TRỌNG):
-   - BẮT BUỘC gom các cụm từ ghép, cụm từ vựng có nghĩa, cụm ngữ pháp hay, cụm diễn đạt hoàn chỉnh thành 1 token có nghĩa tự nhiên để người học bấm vào hiểu được cả cụm!
-   - Ví dụ gom cụm chuẩn: "最近" (gần đây), "发现" (phát hiện / nhận thấy), "咖啡馆" (quán cà phê), "特别好" (rất tốt / rất hay), "很感兴趣的样子" (dáng vẻ rất hứng thú), "刚起了一个头" (vừa mới mở đầu), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ), "硬生生" (cứng rắn), "情绪价值" (giá trị cảm xúc), "工作压力大" (áp lực công việc lớn), "放松的空间" (không gian thư giãn).
-   - TUYỆT ĐỐI KHÔNG xé lẻ vụn vặt từng chữ đơn như "最" và "近", "发" và "现", "咖" và "啡" hay "特别" và "好"! BẮT BUỘC gom thành từ/cụm từ hoàn chỉnh!
-
-2) QUY TẮC NGHĨA VIỆT CỦA CỤM TỪ:
-   - Trong mảng tokens, trường "vietnamese" BẮT BUỘC dịch ĐÚNG SÁT NGHĨA CỦA CHÍNH TỪ/CỤM TỪ ĐÓ!
-   - Tuyệt đối không để trống trường "vietnamese" của các từ vựng/cụm từ (isVocab: true).
-
-3) QUY TẮC VỀ TRỢ TỪ "的" VÀ LIÊN TỪ "与":
-   - Nếu trợ từ "的" nối 2 cụm danh từ riêng lẻ, hãy tách chữ "的" thành 1 token riêng (isVocab: false).
-   - Nhưng nếu "的" nằm trong cấu trúc trọn vẹn (như "新开的", "很感兴趣的样子"), hãy GIỮ NGUYÊN cả cụm!
-
-4) TỰ ĐỘNG SỬA LỖI GRAMMAR "地" / "的":
-   - Trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (như "笑眯眯地说", "头也不回地走了"), nếu bài gốc viết sai thành chữ "的", bạn BẮT BUỘC sửa thành "地" đúng chuẩn ngữ pháp!
-
-5) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU:
-   - Bổ sung và chuẩn hóa dấu câu tiếng Trung (，, 。, ！, ？, ：“”, 《》).
-   - Giữ lại đầy đủ mọi dấu câu trong mảng tokens (với dấu câu set "isVocab": false, "pinyin": "", "vietnamese": "").
-${targetSpecialRule}
-
-Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo ngắt đoạn gốc:
-- Dịch toàn bộ đoạn đó sang TIẾNG VIỆT mượt mà, chuẩn ngữ cảnh vào trường "vietnamese" của đoạn.
-- Phân tách thành chuỗi các CỤM TỪ / DẤU CÂU nối tiếp nhau hoàn chỉnh thành đoạn văn.
-
-Đoạn văn gốc:
-"""
-${chunkText}
-"""
-
-Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown):
-{
-  "paragraphs": [
-    {
-      "vietnamese": "Dịch nghĩa tiếng Việt mượt mà đầy đủ của đoạn",
-      "tokens": [
-        { "hanzi": "最近", "pinyin": "zuì jìn", "vietnamese": "gần đây", "isVocab": true },
-        { "hanzi": "发现", "pinyin": "fā xiàn", "vietnamese": "nhận thấy", "isVocab": true },
-        { "hanzi": "一家", "pinyin": "yī jiā", "vietnamese": "một", "isVocab": true },
-        { "hanzi": "新开的", "pinyin": "xīn kāi de", "vietnamese": "mới mở", "isVocab": true },
-        { "hanzi": "咖啡馆", "pinyin": "kā fēi guǎn", "vietnamese": "quán cà phê", "isVocab": true },
-        { "hanzi": "特别好", "pinyin": "tè bié hǎo", "vietnamese": "rất hay", "isVocab": true },
-        { "hanzi": "。", "pinyin": "", "vietnamese": "", "isVocab": false }
-      ]
-    }
-  ]
-}`;
-
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.href,
-          'X-Title': 'HSK Vocab App'
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
-            { role: 'user', content: prompt }
-          ],
-          response_format: { type: 'json_object' },
-          max_tokens: 3000
-        })
-      });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error?.message || `Lỗi HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      let content = data.choices?.[0]?.message?.content || '{}';
-      content = content.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
-
-      const parsedJSON = safeParseJSON(content);
-      if (parsedJSON && Array.isArray(parsedJSON.paragraphs) && parsedJSON.paragraphs.length > 0) {
-        const allParagraphs = parsedJSON.paragraphs;
-        const allTokens = [];
-        allParagraphs.forEach(p => {
-          if (Array.isArray(p.tokens)) {
-            allTokens.push(...p.tokens);
-          }
-        });
-        return { allParagraphs, allTokens };
-      }
-      return null;
+      const res = await parsePassageChunksWithAi(chunkText, apiKey, { targetWords });
+      return { allParagraphs: res.paragraphs, allTokens: res.tokens };
     }
 
     async function generateAiStory() {
@@ -11726,9 +11711,7 @@ Yêu cầu BẮT BUỘC:
             messages: [
               { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
               { role: 'user', content: promptStory }
-            ],
-            response_format: { type: 'json_object' },
-            max_tokens: 1500
+            ]
           })
         });
 
@@ -11748,25 +11731,14 @@ Yêu cầu BẮT BUỘC:
 
         aiStoryLastResult = parsedStory;
 
-        // STEP 2: Phân tích & Tách cụm từ bài đọc (Cơ chế Y HỆT tạo bài đọc bình thường)
-        let allParagraphs = [];
-        let allTokens = [];
+        // STEP 2: Phân tích & Tách cụm từ bài đọc qua parsePassageChunksWithAi (Cơ chế Y HỆT tạo bài đọc bình thường!)
+        const parsedPassage = await parsePassageChunksWithAi(parsedStory.content, apiKey, {
+          targetWords: aiStorySelectedWords,
+          customTitle: parsedStory.title
+        });
 
-        try {
-          const tokenized = await tokenizeChineseTextWithAi(parsedStory.content, aiStorySelectedWords, apiKey);
-          if (tokenized && tokenized.allParagraphs && tokenized.allParagraphs.length > 0) {
-            allParagraphs = tokenized.allParagraphs;
-            allTokens = tokenized.allTokens;
-          }
-        } catch (tokErr) {
-          console.warn('AI passage tokenization warning, falling back to local builder:', tokErr);
-        }
-
-        // Fallback to local token builder if AI tokenization failed
-        if (allParagraphs.length === 0 || allTokens.length === 0) {
-          const built = buildStoryTokens(parsedStory.content, parsedStory.translation, aiStorySelectedWords);
-          allParagraphs = built.allParagraphs;
-          allTokens = built.allTokens;
+        if (!parsedPassage.paragraphs || parsedPassage.paragraphs.length === 0) {
+          throw new Error('Không thể tách cụm từ bài đọc. Vui lòng bấm thử lại!');
         }
 
         const newArticleId = 'ai_story_' + Date.now();
@@ -11779,9 +11751,9 @@ Yêu cầu BẮT BUỘC:
           titleVi: parsedStory.titleVi || '',
           rawText: parsedStory.content,
           content: parsedStory.content,
-          translation: parsedStory.translation || allParagraphs.map(p => p.vietnamese).filter(Boolean).join('\n\n'),
-          paragraphs: allParagraphs,
-          tokens: allTokens,
+          translation: parsedStory.translation || parsedPassage.paragraphs.map(p => p.vietnamese).filter(Boolean).join('\n\n'),
+          paragraphs: parsedPassage.paragraphs,
+          tokens: parsedPassage.tokens,
           selectedWords: aiStorySelectedWords.map(w => ({
             hanzi: w.hanzi,
             pinyin: w.pinyin || '',
@@ -11813,10 +11785,13 @@ Yêu cầu BẮT BUỘC:
           localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
         }
 
-        // Render Result View in modal
-        renderStoryResult(parsedStory, aiStorySelectedWords);
-        showStoryView('result');
-        showToast('🎉 Đã tạo bài đọc tương tác thành công! Hãy đọc và khắc sâu từ vựng!');
+        // Bỏ khung kết quả trung gian, đóng modal và mở TRỰC TIẾP trình đọc tương tác!
+        const modal = document.getElementById('aiStoryModal');
+        if (modal) modal.classList.remove('active');
+        showStoryView('setup');
+
+        openReadingViewModal(newArticleId);
+        showToast('🎉 Mẩu chuyện đã sẵn sàng trong Trình đọc tương tác!');
       } catch (err) {
         console.error('generateAiStory error:', err);
         showToast(`❌ Lỗi tạo bài đọc: ${err.message}`);
