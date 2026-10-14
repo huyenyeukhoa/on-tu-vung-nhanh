@@ -1715,7 +1715,7 @@
       box-shadow: 0 0 0 1.4px #ffffff, 0 0 6px rgba(155, 81, 168, 0.7);
     }
 
-    /* Column 1 Listen-Only Mode Chip (Cột 1: Chỉ Nghe 🔊) */
+    /* Column 1 Listen-Only Mode Mascot Button (Cột 1: Chỉ Nghe 🔊) */
     .listen-col-wrap {
       display: inline-flex;
       align-items: center;
@@ -1726,25 +1726,27 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2px;
-      padding: 6px 13px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #f6f2fb 0%, #ede5f8 100%);
-      border: 1.3px dashed #c8b6e2;
-      color: #6b5691;
-      font-family: var(--font-mali);
-      font-size: 12.5px;
-      font-weight: 700;
+      gap: 1px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      background: transparent;
+      border: none;
       cursor: pointer;
       user-select: none;
       -webkit-user-select: none;
-      transition: transform 0.14s ease, background 0.15s ease, border-color 0.15s ease;
-      box-shadow: 0 1px 4px rgba(135, 114, 168, 0.08);
+      transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.15s ease;
     }
     .listen-col-chip:active {
-      transform: scale(0.95);
-      background: #e5daf5;
-      border-color: #9b85c1;
+      transform: scale(0.88);
+      filter: drop-shadow(0 2px 6px rgba(135, 114, 168, 0.35));
+    }
+    .listen-mascot-img {
+      width: 44px;
+      height: 32px;
+      object-fit: contain;
+      display: block;
+      pointer-events: none;
+      filter: drop-shadow(0 1px 2px rgba(107, 86, 145, 0.14));
     }
     .listen-col-py {
       font-size: 11px;
@@ -6237,9 +6239,11 @@
     }
 
     // Speak Chinese Function (Xiaoxiao Voice)
-    function speakChinese(text) {
+    function speakChinese(text, hideToastText = false) {
       if (!text) return;
-      showToast(`🔊 ${text}`);
+      if (!hideToastText) {
+        showToast(`🔊 ${text}`);
+      }
       
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -8208,9 +8212,9 @@ Trả về đúng JSON thuần túy (không bọc markdown):
         if (col1Mode === 'listen' && !isCol2Visible) {
           const listenUpgradeBlock = `
             <div class="listen-col-wrap">
-              <button type="button" class="listen-col-chip" onclick="event.stopPropagation(); speakChinese('${safeHanzi}')" title="Chạm để nghe phát âm từ gốc">
+              <button type="button" class="listen-col-chip" onclick="event.stopPropagation(); speakChinese('${safeHanzi}', true)" title="Chạm để nghe phát âm từ gốc">
                 ${showPinyin && item.pinyin ? `<span class="listen-col-py">${escapeHtml(item.pinyin)}</span>` : ''}
-                <span>🔊 Chạm nghe</span>
+                <img src="./listen_mascot.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/01/f5/8a/01f58a65c01b54bfc47c08fd5ba80dcc.jpg';" class="listen-mascot-img" alt="Chạm nghe">
               </button>
               ${levelBadgeHTML}
             </div>
@@ -8246,9 +8250,9 @@ Trả về đúng JSON thuần túy (không bọc markdown):
             const listenBlock = `
               <div class="listen-col-wrap">
                 ${srsDot}
-                <button type="button" class="listen-col-chip" onclick="event.stopPropagation(); speakChinese('${safeHanzi}')" title="Chạm để nghe phát âm giọng Xiaoxiao">
+                <button type="button" class="listen-col-chip" onclick="event.stopPropagation(); speakChinese('${safeHanzi}', true)" title="Chạm để nghe phát âm giọng Xiaoxiao">
                   ${showPinyin && item.pinyin ? `<span class="listen-col-py">${escapeHtml(item.pinyin)}</span>` : ''}
-                  <span>🔊 Chạm nghe</span>
+                  <img src="./listen_mascot.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/01/f5/8a/01f58a65c01b54bfc47c08fd5ba80dcc.jpg';" class="listen-mascot-img" alt="Chạm nghe">
                 </button>
                 ${levelBadgeHTML}
               </div>
