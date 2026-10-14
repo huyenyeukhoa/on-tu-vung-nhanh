@@ -405,50 +405,16 @@
       color: #8772a8;
     }
 
-    /* Compact Group Bar */
-    .compact-group-bar {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      flex: 1 1 auto;
-      min-width: 0;
-      margin: 0 !important;
-      padding: 0 !important;
-      background: transparent !important;
-      border: none !important;
-      height: 34px;
-    }
-
-    .compact-group-bar .group-nav-btn {
-      width: 26px !important;
-      height: 34px !important;
-      font-size: 16px !important;
-      line-height: 1 !important;
-      padding: 0 !important;
-      flex-shrink: 0;
-      border-radius: 10px !important;
-      background: rgba(255, 255, 255, 0.88) !important;
-      border: 1.5px solid rgba(226, 216, 239, 0.95) !important;
-      color: var(--primary-color, #766299) !important;
-      box-shadow: 0 1.5px 5px rgba(135, 114, 168, 0.10) !important;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    .compact-group-bar .group-nav-btn:active {
-      background: #f3eef9 !important;
-      transform: scale(0.92);
-    }
-
-    .compact-group-bar .custom-group-select-btn {
+    /* Compact Group Select Button */
+    .compact-study-row .custom-group-select-btn,
+    .custom-group-select-btn.compact-bar-btn {
       flex: 1 1 auto;
       min-width: 0;
       height: 34px !important;
       padding: 0 8px !important;
       font-size: 11.5px !important;
-      border-radius: 10px !important;
+      font-weight: 700 !important;
+      border-radius: 12px !important;
       background: rgba(255, 255, 255, 0.88) !important;
       border: 1.5px solid rgba(226, 216, 239, 0.95) !important;
       color: var(--primary-color, #766299) !important;
@@ -457,6 +423,16 @@
       align-items: center;
       justify-content: center;
       gap: 3px;
+      cursor: pointer;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .compact-study-row .custom-group-select-btn:active,
+    .custom-group-select-btn.compact-bar-btn:active {
+      transform: scale(0.96);
+      background: #f3eef9 !important;
     }
 
     /* Compact Search Box on Far Right of Study Bar */
@@ -2980,14 +2956,12 @@
         </div>
       </div>
 
-      <!-- 2. Group Navigation Bar -->
-      <div class="group-bar compact-group-bar" id="groupBar">
-        <div class="custom-group-select-btn" id="btnCustomGroupSelect" title="Chọn nhóm ôn tập">
-          <span id="customGroupSelectText" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1 1 auto;">Nhóm 1 (1 - 100 từ)</span>
-          <span class="select-arrow" style="font-size: 9px; margin-left: 3px;">▼</span>
-        </div>
-        <select class="group-select" id="selectGroup" style="display:none;"></select>
+      <!-- 2. Group Selector Button -->
+      <div class="custom-group-select-btn compact-bar-btn" id="btnCustomGroupSelect" title="Chọn nhóm ôn tập">
+        <span id="customGroupSelectText" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1 1 auto; text-align: center;">Nhóm 1 (1 - 100 từ)</span>
+        <span class="select-arrow" style="font-size: 9px; margin-left: 3px; flex-shrink: 0;">▼</span>
       </div>
+      <select class="group-select" id="selectGroup" style="display:none;"></select>
 
       <!-- 3. Category Filter Dropdown -->
       <div class="dropdown-container" id="filterDropdownContainer">
