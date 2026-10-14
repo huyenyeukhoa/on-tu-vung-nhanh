@@ -9438,8 +9438,9 @@ ${targetRuleText}
      - Token "刚起了一个头" ➔ vietnamese: "vừa mới mở đầu" (dịch chuẩn nghĩa bóng cả cụm ly hợp)
      - Token "头也不回地" ➔ vietnamese: "không ngoảnh đầu lại"
 
-3) QUY TẮC VỀ TRỢ TỪ "的" VÀ LIÊN TỪ "与":
+3) QUY TẮC VỀ TRỢ TỪ "的", "地" VÀ LIÊN TỪ "与":
    - Trợ từ "的" nối định ngữ và danh từ thông thường (như "半年以来" + "的" + "首次" + "会面", hoặc "大小姐" + "的" + "故事"), hãy tách chữ "的" thành 1 token riêng (isVocab: false).
+   - Trợ từ "地" đứng sau tính từ 2 âm tiết thông thường (như "和蔼" + "地", "气愤" + "地", "高兴" + "地"), hãy tách chữ "地" thành 1 token riêng để người học lưu được từ gốc chuẩn ("和蔼", "气愤"). Chỉ gộp "地" khi thuộc cụm quán dụng/thành ngữ cố định (như "头也不回地").
    - KHÔNG ghép liên từ "与" vào đầu từ B trong "A 与 B" (Ví dụ: tách "大小姐", "与", "佐野").
 
 4) TỰ ĐỘNG SỬA LỖI GRAMMAR "地" / "的":
@@ -9460,7 +9461,7 @@ ${isFirstChunk && !customTitle ? '7)' : '6)'} Chia văn bản thành các ĐOẠ
 ${chunkText}
 """
 
-Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown). Để phản hồi cực nhanh, mỗi phần tử trong mảng "tokens" dùng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt" (với dấu câu hoặc trợ từ "的" chỉ cần ghi chính ký tự đó, ví dụ "，" hoặc "的"):
+Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown). Để phản hồi cực nhanh, mỗi phần tử trong mảng "tokens" dùng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt" (với dấu câu hoặc trợ từ "的", "地" chỉ cần ghi chính ký tự đó, ví dụ "，", "的", "地"):
 {
   ${isFirstChunk && !customTitle ? '"title": "Tiêu đề tiếng Việt tự nhiên mượt mà",' : ''}
   "paragraphs": [
@@ -9483,7 +9484,8 @@ ${chunkText}
         "怼了回去|duì le huí qù|bật lại / cãi lại",
         "，",
         "然后|rán hòu|sau đó",
-        "气愤地|qì fèn de|tức giận",
+        "气愤|qì fèn|tức giận",
+        "地",
         "头也不回地|tóu yě bù huí de|không ngoảnh đầu lại",
         "走了|zǒu le|bỏ đi",
         "。"
@@ -9569,7 +9571,7 @@ ${chunkText}
         if (!hanzi) return null;
         const pinyin = (parts[1] || '').trim();
         const vietnamese = (parts[2] || '').trim();
-        const isPunctOrDe = AI_PUNCT_TEST_RE.test(hanzi) || hanzi === '的' || hanzi === '与';
+        const isPunctOrDe = AI_PUNCT_TEST_RE.test(hanzi) || hanzi === '的' || hanzi === '地' || hanzi === '得' || hanzi === '与';
         const meta = (!pinyin || !vietnamese) && !AI_PUNCT_TEST_RE.test(hanzi) ? lookupDictMetaForToken(hanzi) : { pinyin: '', vietnamese: '' };
         return {
           hanzi,
@@ -9581,7 +9583,7 @@ ${chunkText}
       if (typeof item === 'object' && item.hanzi) {
         const hanzi = toSimplified(String(item.hanzi).trim());
         if (!hanzi) return null;
-        const isPunctOrDe = AI_PUNCT_TEST_RE.test(hanzi) || hanzi === '的' || hanzi === '与';
+        const isPunctOrDe = AI_PUNCT_TEST_RE.test(hanzi) || hanzi === '的' || hanzi === '地' || hanzi === '得' || hanzi === '与';
         const meta = (!item.pinyin || !item.vietnamese) && !AI_PUNCT_TEST_RE.test(hanzi) ? lookupDictMetaForToken(hanzi) : { pinyin: '', vietnamese: '' };
         return {
           hanzi,
@@ -11689,18 +11691,21 @@ ${chunkText}
         .map(w => `- ${w.hanzi} (${w.pinyin || ''}): ${w.vietnamese || ''}`)
         .join('\n');
 
-      const storyPrompt = `Bạn là tác giả viết truyện tiếng Trung HSK cao cấp và chuyên gia phân tích từ vựng. Hãy viết một đoạn văn ngắn (khoảng 120 - 150 chữ Hán) theo phong cách: ${styleDesc}.
-BẮT BUỘC lồng ghép tự nhiên, chuẩn ngữ pháp HSK 6-9 TẤT CẢ các từ vựng mục tiêu sau đây vào mạch văn:
+      const storyPrompt = `Bạn là tác giả viết truyện tiếng Trung HSK cao cấp và chuyên gia ngôn ngữ học Hán ngữ. Hãy viết một đoạn văn ngắn (khoảng 120 - 150 chữ Hán) theo phong cách: ${styleDesc}.
+BẮT BUỘC lồng ghép tự nhiên, chuẩn ngữ pháp Hán ngữ hiện đại TẤT CẢ các từ vựng mục tiêu sau đây vào mạch văn:
 ${wordListPrompt}
 
 Yêu cầu quan trọng:
-1. Độ dài đoạn văn: khoảng 120 - 150 chữ Hán giản thể chuẩn, mạch truyện cuốn hút, tự nhiên.
-2. Giữ nguyên mặt chữ của các từ mục tiêu (${targetHanziList.join(', ')}) và BẮT BUỘC tách mỗi từ mục tiêu thành 1 phần tử độc lập trong mảng tokens (TUYỆT ĐỐI KHÔNG đặt dấu ngoặc kép “ ” hay 「 」 bao quanh từ mục tiêu).
+1. Độ dài & Tần suất: Đoạn văn dài khoảng 120 - 150 chữ Hán giản thể, mạch truyện tự nhiên, cuốn hút. Mỗi từ mục tiêu (${targetHanziList.join(', ')}) CHỈ DÙNG ĐÚNG 1 LẦN DUY NHẤT (1 lần đắt giá, tự nhiên nhất), TUYỆT ĐỐI KHÔNG lặp lại cùng một từ mục tiêu 2 lần trong bài đọc ngắn.
+2. QUY TẮC NGỮ PHÁP TIẾNG TRUNG BẮT BUỘC CHO TỪ MỤC TIÊU:
+   - Nếu từ mục tiêu kết thúc bằng trợ từ trạng ngữ "地" (ví dụ: 和蔼地, 气愤地, 悄悄地, 头也不回地...): BẮT BUỘC phải đặt NGAY TRƯỚC ĐỘNG TỪ hoặc CỤM ĐỘNG TỪ để làm trạng ngữ (Cấu trúc chuẩn: [Từ + 地] + Động từ, ví dụ: "和蔼地笑着", "和蔼地逗着小猫", "和蔼地询问"). TUYỆT ĐỐI CẤM đặt từ có đuôi "地" ở cuối mệnh đề trước dấu câu hoặc làm vị ngữ sau "待人" (ví dụ viết "待人和蔼地，" là SAI NGỮ PHÁP NGHIÊM TRỌNG!).
+   - Đặt mỗi từ mục tiêu đúng từ loại và chức năng câu chuẩn xác (danh từ làm chủ/tân/định ngữ; động từ làm vị ngữ kèm tân ngữ phù hợp; phó từ đứng trước động/tính từ; thành ngữ đặt đúng ngữ cảnh).
+   - Giữ nguyên mặt chữ của các từ mục tiêu (${targetHanziList.join(', ')}) và BẮT BUỘC tách mỗi từ mục tiêu thành 1 phần tử độc lập trong mảng tokens (TUYỆT ĐỐI KHÔNG đặt dấu ngoặc kép “ ” hay 「 」 bao quanh từ mục tiêu).
 3. QUY TẮC TÁCH TOKEN TRONG MẢNG "tokens":
-   - TÁCH RIÊNG đối với tổ hợp tự do (nghĩa cộng gộp 1 + 1 = 2): ví dụ tách "感到|gǎn dào|cảm thấy" và "害怕|hài pà|sợ hãi" (không gộp "感到害怕"), tách "产生|chǎn shēng|nảy sinh" và "共鸣|gòng míng|sự đồng cảm".
+   - TÁCH RIÊNG đối với tổ hợp tự do (nghĩa cộng gộp 1 + 1 = 2): ví dụ tách "感到|gǎn dào|cảm thấy" và "害怕|hài pà|sợ hãi" (không gộp "感到害怕"), tách "产生|chǎn shēng|nảy sinh" và "共鸣|gòng míng|sự đồng cảm". Với tính từ 2 âm tiết thông thường + "地" (nếu không phải từ mục tiêu có sẵn "地"), tách riêng tính từ và trợ từ "地".
    - GỘP TRỌN CẢ CỤM đối với cụm quán dụng, động từ ly hợp có chèn thành phần, thành ngữ 4 chữ & cấu trúc cố định (phải nhìn cả cụm mới hiểu đúng nghĩa): ví dụ "刚起了一个头|gāng qǐ le yī gè tóu|vừa mới mở đầu", "头也不回地|tóu yě bù huí de|không ngoảnh đầu lại", "叹了口气|tàn le kǒu qì|thở dài một tiếng", "吃了一惊|chī le yī jīng|giật cả mình", "有所触动|yǒu suǒ chù dòng|có chút xúc động".
    - TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết chuẩn thành chữ đơn.
-   - Mỗi từ/cụm ghi dạng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt". Với dấu câu hoặc trợ từ "的" chỉ cần ghi chính ký tự đó (ví dụ "，" hoặc "的").
+   - Mỗi từ/cụm ghi dạng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt". Với dấu câu hoặc trợ từ "的", "地", "得" chỉ cần ghi chính ký tự đó (ví dụ "，" hoặc "的").
 4. Không dùng dấu ngoặc kép thẳng " bên trong nội dung chuỗi JSON.
 5. Trả về đúng JSON thuần túy (không bọc markdown):
 {
