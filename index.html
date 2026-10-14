@@ -9460,32 +9460,33 @@ ${isFirstChunk && !customTitle ? '7)' : '6)'} Chia văn bản thành các ĐOẠ
 ${chunkText}
 """
 
-Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown):
+Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown). Để phản hồi cực nhanh, mỗi phần tử trong mảng "tokens" dùng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt" (với dấu câu hoặc trợ từ "的" chỉ cần ghi chính ký tự đó, ví dụ "，" hoặc "的"):
 {
   ${isFirstChunk && !customTitle ? '"title": "Tiêu đề tiếng Việt tự nhiên mượt mà",' : ''}
   "paragraphs": [
     {
       "vietnamese": "Dịch nghĩa tiếng Việt mượt mà đầy đủ của đoạn",
       "tokens": [
-        { "hanzi": "看着", "pinyin": "kàn zhe", "vietnamese": "nhìn thấy", "isVocab": true },
-        { "hanzi": "柯南", "pinyin": "kē nán", "vietnamese": "Conan", "isVocab": true },
-        { "hanzi": "感到", "pinyin": "gǎn dào", "vietnamese": "cảm thấy", "isVocab": true },
-        { "hanzi": "害怕", "pinyin": "hài pà", "vietnamese": "sợ hãi", "isVocab": true },
-        { "hanzi": "，", "pinyin": "", "vietnamese": "", "isVocab": false },
-        { "hanzi": "大小姐", "pinyin": "dà xiǎo jiě", "vietnamese": "tiểu thư", "isVocab": true },
-        { "hanzi": "的", "pinyin": "de", "vietnamese": "của", "isVocab": false },
-        { "hanzi": "故事", "pinyin": "gù shi", "vietnamese": "câu chuyện", "isVocab": true },
-        { "hanzi": "刚起了一个头", "pinyin": "gāng qǐ le yī gè tóu", "vietnamese": "vừa mới mở đầu", "isVocab": true },
-        { "hanzi": "就", "pinyin": "jiù", "vietnamese": "thì", "isVocab": true },
-        { "hanzi": "被", "pinyin": "bèi", "vietnamese": "bị", "isVocab": true },
-        { "hanzi": "玉田儿", "pinyin": "yù tián ér", "vietnamese": "Tam Điền Nhi", "isVocab": true },
-        { "hanzi": "硬生生", "pinyin": "yìng shēng shēng", "vietnamese": "cứng rắn", "isVocab": true },
-        { "hanzi": "怼了回去", "pinyin": "duì le huí qù", "vietnamese": "bật lại / cãi lại", "isVocab": true },
-        { "hanzi": "，", "pinyin": "", "vietnamese": "", "isVocab": false },
-        { "hanzi": "然后", "pinyin": "rán hòu", "vietnamese": "sau đó", "isVocab": true },
-        { "hanzi": "气愤地", "pinyin": "qì fèn de", "vietnamese": "tức giận", "isVocab": true },
-        { "hanzi": "头也不回地", "pinyin": "tóu yě bù huí de", "vietnamese": "không ngoảnh đầu lại", "isVocab": true },
-        { "hanzi": "走了", "pinyin": "zǒu le", "vietnamese": "bỏ đi", "isVocab": true }
+        "看着|kàn zhe|nhìn thấy",
+        "柯南|kē nán|Conan",
+        "感到|gǎn dào|cảm thấy",
+        "害怕|hài pà|sợ hãi",
+        "，",
+        "大小姐|dà xiǎo jiě|tiểu thư",
+        "的",
+        "故事|gù shi|câu chuyện",
+        "刚起了一个头|gāng qǐ le yī gè tóu|vừa mới mở đầu",
+        "就|jiù|thì",
+        "被|bèi|bị",
+        "玉田儿|yù tián ér|Tam Điền Nhi",
+        "硬生生|yìng shēng shēng|cứng rắn",
+        "怼了回去|duì le huí qù|bật lại / cãi lại",
+        "，",
+        "然后|rán hòu|sau đó",
+        "气愤地|qì fèn de|tức giận",
+        "头也不回地|tóu yě bù huí de|không ngoảnh đầu lại",
+        "走了|zǒu le|bỏ đi",
+        "。"
       ]
     }
   ]
@@ -9504,7 +9505,7 @@ ${chunkText}
               },
               body: JSON.stringify({
                 model: 'google/gemini-2.5-flash',
-                reasoning: { effort: 'low' },
+                reasoning: { max_tokens: 0 },
                 messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
               })
             });
@@ -9531,12 +9532,13 @@ ${chunkText}
               }
 
               if (chunkParagraphs.length > 0) {
-                allParagraphs = allParagraphs.concat(chunkParagraphs);
                 chunkParagraphs.forEach(p => {
                   if (Array.isArray(p.tokens)) {
+                    p.tokens = p.tokens.map(normalizeAiTokenItem).filter(Boolean);
                     allTokens = allTokens.concat(p.tokens);
                   }
                 });
+                allParagraphs = allParagraphs.concat(chunkParagraphs);
                 chunkSuccess = true;
               }
             }
@@ -9558,8 +9560,48 @@ ${chunkText}
       return { paragraphs: isolated.paragraphs, tokens: isolated.tokens, title: aiAutoTitle };
     }
 
+    const AI_PUNCT_TEST_RE = /^[，。！？；：、“”‘’（）《》【】…—,.!?;:"'()\[\]\-\s]+$/;
+    function normalizeAiTokenItem(item) {
+      if (!item) return null;
+      if (typeof item === 'string') {
+        const parts = item.split('|');
+        const hanzi = toSimplified((parts[0] || '').trim());
+        if (!hanzi) return null;
+        const pinyin = (parts[1] || '').trim();
+        const vietnamese = (parts[2] || '').trim();
+        const isPunctOrDe = AI_PUNCT_TEST_RE.test(hanzi) || hanzi === '的' || hanzi === '与';
+        const meta = (!pinyin || !vietnamese) && !AI_PUNCT_TEST_RE.test(hanzi) ? lookupDictMetaForToken(hanzi) : { pinyin: '', vietnamese: '' };
+        return {
+          hanzi,
+          pinyin: pinyin || meta.pinyin || '',
+          vietnamese: vietnamese || meta.vietnamese || '',
+          isVocab: !isPunctOrDe
+        };
+      }
+      if (typeof item === 'object' && item.hanzi) {
+        const hanzi = toSimplified(String(item.hanzi).trim());
+        if (!hanzi) return null;
+        const isPunctOrDe = AI_PUNCT_TEST_RE.test(hanzi) || hanzi === '的' || hanzi === '与';
+        const meta = (!item.pinyin || !item.vietnamese) && !AI_PUNCT_TEST_RE.test(hanzi) ? lookupDictMetaForToken(hanzi) : { pinyin: '', vietnamese: '' };
+        return {
+          hanzi,
+          pinyin: item.pinyin || meta.pinyin || '',
+          vietnamese: item.vietnamese || meta.vietnamese || '',
+          isVocab: typeof item.isVocab === 'boolean' ? item.isVocab : !isPunctOrDe
+        };
+      }
+      return null;
+    }
+
     function isolateTargetWordsInParagraphs(allParagraphs, targetWords = []) {
       const targetWordsHanzi = (targetWords || []).map(w => (typeof w === 'string' ? w : (w && w.hanzi))).filter(Boolean);
+      if (Array.isArray(allParagraphs)) {
+        allParagraphs.forEach(para => {
+          if (Array.isArray(para.tokens)) {
+            para.tokens = para.tokens.map(normalizeAiTokenItem).filter(Boolean);
+          }
+        });
+      }
       if (targetWordsHanzi.length > 0 && Array.isArray(allParagraphs) && allParagraphs.length > 0) {
         targetWordsHanzi.forEach(tHanzi => {
           allParagraphs.forEach(para => {
@@ -11556,6 +11598,13 @@ ${chunkText}
           if (!paragraphs && Array.isArray(obj.tokens) && obj.tokens.length > 0) {
             paragraphs = [{ vietnamese: (obj.translation || obj.vietnamese || '').trim(), tokens: obj.tokens }];
           }
+          if (paragraphs) {
+            paragraphs.forEach(p => {
+              if (Array.isArray(p.tokens)) {
+                p.tokens = p.tokens.map(normalizeAiTokenItem).filter(Boolean);
+              }
+            });
+          }
           let content = (obj.content || obj.story || '').trim();
           if (!content && paragraphs) {
             content = paragraphs.map(p => (p.tokens || []).map(t => t.hanzi || '').join('')).join('\n').trim();
@@ -11622,7 +11671,7 @@ ${chunkText}
       aiStoryAbortController = new AbortController();
       const timeoutId = setTimeout(() => {
         if (aiStoryAbortController) aiStoryAbortController.abort();
-      }, 35000);
+      }, 65000);
 
       const modal = document.getElementById('aiStoryModal');
       if (modal) modal.classList.add('active');
@@ -11646,12 +11695,12 @@ ${wordListPrompt}
 
 Yêu cầu quan trọng:
 1. Độ dài đoạn văn: khoảng 120 - 150 chữ Hán giản thể chuẩn, mạch truyện cuốn hút, tự nhiên.
-2. Giữ nguyên mặt chữ của các từ mục tiêu (${targetHanziList.join(', ')}) và BẮT BUỘC tách mỗi từ mục tiêu thành 1 token độc lập trong mảng tokens (TUYỆT ĐỐI KHÔNG đặt dấu ngoặc kép “ ” hay 「 」 bao quanh từ mục tiêu).
+2. Giữ nguyên mặt chữ của các từ mục tiêu (${targetHanziList.join(', ')}) và BẮT BUỘC tách mỗi từ mục tiêu thành 1 phần tử độc lập trong mảng tokens (TUYỆT ĐỐI KHÔNG đặt dấu ngoặc kép “ ” hay 「 」 bao quanh từ mục tiêu).
 3. QUY TẮC TÁCH TOKEN TRONG MẢNG "tokens":
-   - TÁCH RIÊNG đối với tổ hợp tự do (nghĩa cộng gộp 1 + 1 = 2): ví dụ tách "感到" + "害怕" (không gộp "感到害怕"), tách "产生" + "共鸣", tách "非常" + "感兴趣".
-   - GỘP TRỌN CẢ CỤM đối với cụm quán dụng, động từ ly hợp có chèn thành phần, thành ngữ 4 chữ & cấu trúc cố định (phải nhìn cả cụm mới hiểu đúng nghĩa): ví dụ "刚起了一个头", "头也不回地", "叹了口气", "吃了一惊", "有所触动", "莫名其妙", "怼了回去".
+   - TÁCH RIÊNG đối với tổ hợp tự do (nghĩa cộng gộp 1 + 1 = 2): ví dụ tách "感到|gǎn dào|cảm thấy" và "害怕|hài pà|sợ hãi" (không gộp "感到害怕"), tách "产生|chǎn shēng|nảy sinh" và "共鸣|gòng míng|sự đồng cảm".
+   - GỘP TRỌN CẢ CỤM đối với cụm quán dụng, động từ ly hợp có chèn thành phần, thành ngữ 4 chữ & cấu trúc cố định (phải nhìn cả cụm mới hiểu đúng nghĩa): ví dụ "刚起了一个头|gāng qǐ le yī gè tóu|vừa mới mở đầu", "头也不回地|tóu yě bù huí de|không ngoảnh đầu lại", "叹了口气|tàn le kǒu qì|thở dài một tiếng", "吃了一惊|chī le yī jīng|giật cả mình", "有所触动|yǒu suǒ chù dòng|có chút xúc động".
    - TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết chuẩn thành chữ đơn.
-   - Trợ từ "的" nối định ngữ thông thường tách riêng (isVocab: false). Dấu câu giữ đầy đủ (isVocab: false, pinyin: "", vietnamese: "").
+   - Mỗi từ/cụm ghi dạng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt". Với dấu câu hoặc trợ từ "的" chỉ cần ghi chính ký tự đó (ví dụ "，" hoặc "的").
 4. Không dùng dấu ngoặc kép thẳng " bên trong nội dung chuỗi JSON.
 5. Trả về đúng JSON thuần túy (không bọc markdown):
 {
@@ -11661,8 +11710,12 @@ Yêu cầu quan trọng:
     {
       "vietnamese": "Bản dịch tiếng Việt mượt mà, sát nghĩa của toàn bộ đoạn văn...",
       "tokens": [
-        { "hanzi": "Từ/cụm Hán", "pinyin": "pinyin chuẩn", "vietnamese": "nghĩa sát của từ/cụm đó", "isVocab": true },
-        { "hanzi": "，", "pinyin": "", "vietnamese": "", "isVocab": false }
+        "看着|kàn zhe|nhìn thấy",
+        "他|tā|anh ấy",
+        "，",
+        "我|wǒ|tôi",
+        "叹了口气|tàn le kǒu qì|thở dài một tiếng",
+        "。"
       ]
     }
   ]
@@ -11680,7 +11733,7 @@ Yêu cầu quan trọng:
           },
           body: JSON.stringify({
             model: 'google/gemini-2.5-flash',
-            reasoning: { effort: 'low' },
+            reasoning: { max_tokens: 0 },
             messages: [
               { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
               { role: 'user', content: storyPrompt }
