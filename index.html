@@ -2991,8 +2991,8 @@
         <span id="tapModeLabel" style="display:none;">chạm chữ: phát âm</span>
       </button>
 
-      <button class="control-btn" id="btnTogglePinyin" title="Hiện / Ẩn Pinyin (👁)">
-        <span id="pinyinIcon">👁</span>
+      <button class="control-btn" id="btnTogglePinyin" title="Bật / Tắt hiển thị Pinyin (🀄)">
+        <span id="pinyinIcon">🀄</span>
         <span id="pinyinLabel" style="display:none;">pinyin: ẩn</span>
       </button>
 
@@ -3006,8 +3006,8 @@
         <span id="alwaysShowLabel" style="display:none;">cột 2: tick mới hiện</span>
       </button>
 
-      <button class="control-btn" id="btnPreloadAiGroup" title="Tải trước dữ liệu AI cho cả nhóm (⚡)">
-        <span id="preloadAiIcon">⚡</span>
+      <button class="control-btn" id="btnPreloadAiGroup" title="Nạp AI nhóm: Mở hộp thoại nạp ngầm dữ liệu phân tích AI cho cả nhóm (🎐)">
+        <span id="preloadAiIcon">🎐</span>
         <span id="preloadAiLabel" style="display:none;">nạp AI nhóm</span>
       </button>
 
@@ -7228,11 +7228,11 @@ Lưu ý quan trọng:
         if (btnIcon) btnIcon.textContent = '⏳';
         if (btnLabel) btnLabel.textContent = `${preloadDoneCount}/${preloadTotal}`;
         if (statusBox) statusBox.style.display = 'block';
-        if (statusText) statusText.textContent = `⚡ AI đang nạp ngầm (${preloadGroupName})...`;
+        if (statusText) statusText.textContent = `🎐 AI đang nạp ngầm (${preloadGroupName})...`;
         if (statusSubText) statusSubText.textContent = `Đã nạp ${preloadDoneCount} / ${preloadTotal} từ`;
         if (btnStop) btnStop.style.display = 'block';
       } else {
-        if (btnIcon) btnIcon.textContent = '⚡';
+        if (btnIcon) btnIcon.textContent = '🎐';
         if (btnLabel) btnLabel.textContent = 'nạp AI nhóm';
         if (statusBox) statusBox.style.display = 'none';
         if (btnStop) btnStop.style.display = 'none';
@@ -11810,7 +11810,7 @@ ${chunkText}
         showPinyin = !showPinyin;
         btnTogglePinyin.classList.toggle('active', showPinyin);
         pinyinLabel.textContent = showPinyin ? 'pinyin: hiện' : 'pinyin: ẩn';
-        showToast(showPinyin ? '👁 Pinyin: HIỆN' : '👁 Pinyin: ẨN');
+        showToast(showPinyin ? '🀄 Pinyin: HIỆN' : '🀄 Pinyin: ẨN');
         renderVocabList(true);
       });
 
