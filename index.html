@@ -9405,7 +9405,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       let aiAutoTitle = customTitle;
 
       const targetRuleText = targetWordsHanzi.length > 0
-        ? `\n0) TÁCH RIÊNG CÁC TỪ VỰNG MỤC TIÊU (${targetWordsHanzi.join(', ')}):\n   - Khi gặp bất kỳ từ nào trong danh sách (${targetWordsHanzi.join(', ')}), BẮT BUỘC giữ nguyên từ đó thành 1 token độc lập đúng mặt chữ (isVocab: true, đầy đủ pinyin và vietnamese).\n   - Các phần còn lại trong câu vẫn BẮT BUỘC gom thành cụm từ hoàn chỉnh có nghĩa tự nhiên (ví dụ: "有所触动", "很感兴趣的样子", "刚起了一个头"), TUYỆT ĐỐI KHÔNG xé lẻ từng chữ đơn!\n`
+        ? `\n0) TÁCH RIÊNG CÁC TỪ VỰNG MỤC TIÊU (${targetWordsHanzi.join(', ')}):\n   - Khi gặp bất kỳ từ nào trong danh sách (${targetWordsHanzi.join(', ')}), BẮT BUỘC giữ nguyên từ đó thành 1 token độc lập đúng mặt chữ (isVocab: true, đầy đủ pinyin và vietnamese).\n`
         : '';
 
       for (let i = 0; i < chunks.length; i++) {
@@ -9417,26 +9417,30 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
         const prompt = `Bạn là chuyên gia ngôn ngữ Tiếng Trung và biên tập viên dịch thuật cao cấp. Hãy phân tích đoạn văn tiếng Trung sau (phần ${i + 1}/${chunks.length}):
 ${targetRuleText}
-1) QUY TẮC GOM CỤM TỪ & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH (CỰC KỲ QUAN TRỌNG):
-   - BẮT BUỘC gom các cụm từ ghép, cụm ngữ pháp hay, cụm diễn đạt hoàn chỉnh thành 1 token có nghĩa tự nhiên để người học bấm vào hiểu được cả cụm!
-   - Ví dụ gom cụm chuẩn: "很感兴趣的样子" (dáng vẻ rất hứng thú), "有所触动" (có chút xúc động / chạm đến lòng), "刚起了一个头" (vừa mới mở đầu / vừa mới cất lời), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ / kỳ lạ), "一落千丈" (tuột dốc không phanh), "硬生生" (cứng rắn / sống sượng), "首次会面" (cuộc gặp đầu tiên), "半年以来" (nửa năm qua).
-   - TUYỆT ĐỐI KHÔNG xé lẻ vụn vặt 1 chữ đơn như "所", "起", "感" khi chúng nằm trong một cụm diễn đạt đầy đủ như "有所触动", "很感兴趣的样子" hay "刚起了一个头"!
+1) QUY TẮC VÀNG PHÂN BIỆT "TỪ ĐỘC LẬP (TÁCH)" VÀ "CỤM QUÁN DỤNG / LY HỢP (GỘP)" (CỰC KỲ QUAN TRỌNG):
+   - **A. TÁCH RIÊNG đối với Tổ hợp tự do (Nghĩa cộng gộp 1 + 1 = 2)**:
+     + Khi động từ cảm xúc/nhận thức hoặc phó từ ghép với từ vựng độc lập đứng sau mà mỗi từ vẫn giữ nguyên nghĩa từ điển của nó, BẮT BUỘC tách thành từng từ vựng chuẩn (2–4 chữ) để người học bấm tra/lưu đúng từ cần học.
+     + Ví dụ tách chuẩn: tách "感到" + "害怕" (KHÔNG gộp thành "感到害怕"), tách "产生" + "共鸣", tách "显得" + "局促不安", tách "非常" + "感兴趣", tách "首次" + "会面".
+   - **B. GỘP TRỌN CẢ CỤM đối với Cụm quán dụng, Động từ ly hợp bị chèn giữa, Thành ngữ & Cấu trúc cố định (Phải nhìn cả cụm mới hiểu đúng nghĩa)**:
+     + Nếu tách lẻ mà bị biến thành nghĩa đen ngô nghê hoặc mất nghĩa bóng/nghĩa cấu trúc, BẮT BUỘC gom trọn thành 1 token!
+     + Ví dụ bắt buộc gom cả cụm: "刚起了一个头" (vừa mới mở đầu / cất lời), "头也不回地" / "一头也不转" (không ngoảnh đầu lại), "叹了口气" (thở dài một tiếng), "捏了一把汗" (lo sốt vó / toát mồ hôi hột), "吃了一惊" (giật cả mình), "有所触动" (có chút xúc động), "莫名其妙" (vô duyên vô cớ), "一落千丈" (tuột dốc không phanh), "硬生生" (cứng rắn / sống sượng), "怼了回去" (bật lại / cãi lại).
+   - **C. TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết thành chữ đơn**:
+     + Các từ 2 âm tiết chuẩn (như "感到", "害怕", "触动", "故事", "气愤") luôn giữ nguyên 2 chữ, tuyệt đối không cắt vụn thành 1 chữ đơn ("所", "起", "感", "害", "怕").
 
-2) QUY TẮC NGHĨA VIỆT CỦA CỤM TỪ:
-   - Trong mảng tokens, trường "vietnamese" BẮT BUỘC dịch ĐÚNG SÁT NGHĨA CỦA CHÍNH CỤM TỪ HÁN ĐÓ!
-   - Tuyệt đối không thêm các từ ngữ cảnh ở xa ngoài phạm vi cụm từ đó vào nghĩa tiếng Việt.
+2) QUY TẮC NGHĨA VIỆT CỦA TOKEN:
+   - Trong mảng tokens, trường "vietnamese" BẮT BUỘC dịch ĐÚNG SÁT NGHĨA CỦA CHÍNH TỪ / CỤM TỪ HÁN ĐÓ!
+   - Tuyệt đối không thêm các từ ngữ cảnh ở xa ngoài phạm vi token đó vào nghĩa tiếng Việt.
    - **Ví dụ**:
-     - Token "很感兴趣的样子" ➔ vietnamese: "dáng vẻ rất hứng thú" (ĐÚNG, dịch chuẩn nghĩa cả cụm)
-     - Token "刚起了一个头" ➔ vietnamese: "vừa mới mở đầu" (ĐÚNG, dịch chuẩn nghĩa cả cụm)
-     - Token "他们五个人" ➔ vietnamese: "5 người bọn họ" (ĐÚNG - KHÔNG dịch thành "lần gặp mặt của 5 người họ" vì "lần gặp mặt" thuộc về từ khác).
+     - Token "感到" ➔ vietnamese: "cảm thấy" | Token "害怕" ➔ vietnamese: "sợ hãi"
+     - Token "刚起了一个头" ➔ vietnamese: "vừa mới mở đầu" (dịch chuẩn nghĩa bóng cả cụm ly hợp)
+     - Token "头也不回地" ➔ vietnamese: "không ngoảnh đầu lại"
 
 3) QUY TẮC VỀ TRỢ TỪ "的" VÀ LIÊN TỪ "与":
-   - Nếu trợ từ "的" nối 2 cụm danh từ riêng lẻ (như "半年以来" + "的" + "首次会面"), hãy tách chữ "的" thành 1 token riêng (isVocab: false).
-   - Nhưng nếu "的" nằm trong cấu trúc trọn vẹn (như "很感兴趣的样子"), hãy GIỮ NGUYÊN cả cụm "很感兴趣的样子"!
+   - Trợ từ "的" nối định ngữ và danh từ thông thường (như "半年以来" + "的" + "首次" + "会面", hoặc "大小姐" + "的" + "故事"), hãy tách chữ "的" thành 1 token riêng (isVocab: false).
    - KHÔNG ghép liên từ "与" vào đầu từ B trong "A 与 B" (Ví dụ: tách "大小姐", "与", "佐野").
 
 4) TỰ ĐỘNG SỬA LỖI GRAMMAR "地" / "的":
-   - Trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (như "头也不回地走了", "气愤地着", "高兴地笑"), nếu bài gốc viết sai thành chữ "的", bạn BẮT BUỘC sửa thành "地" đúng chuẩn ngữ pháp!
+   - Trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (như "头也不回地走了", "气愤地说着", "高兴地笑"), nếu bài gốc viết sai thành chữ "的", bạn BẮT BUỘC sửa thành "地" đúng chuẩn ngữ pháp!
 
 5) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU:
    - BẮT BUỘC bổ sung và chuẩn hóa dấu câu tiếng Trung (，, 。, ！, ？, ：“”, 《》) nếu bài gốc thiếu hoặc dính liền chữ.
@@ -9446,7 +9450,7 @@ ${targetRuleText}
 ${isFirstChunk && !customTitle ? `6) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ (3 đến 6 từ).` : ''}
 ${isFirstChunk && !customTitle ? '7)' : '6)'} Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo ngắt đoạn gốc:
    - Dịch toàn bộ đoạn đó sang TIẾNG VIỆT mượt mà, chuẩn ngữ cảnh.
-   - Phân tách thành chuỗi các CỤM TỪ / DẤU CÂU nối tiếp nhau hoàn chỉnh thành đoạn văn.
+   - Phân tách thành chuỗi các TỪ / CỤM QUÁN DỤNG / DẤU CÂU nối tiếp nhau hoàn chỉnh thành đoạn văn.
 
 Đoạn văn gốc:
 """
@@ -9462,10 +9466,12 @@ ${chunkText}
       "tokens": [
         { "hanzi": "看着", "pinyin": "kàn zhe", "vietnamese": "nhìn thấy", "isVocab": true },
         { "hanzi": "柯南", "pinyin": "kē nán", "vietnamese": "Conan", "isVocab": true },
-        { "hanzi": "很感兴趣的样子", "pinyin": "hěn gǎn xìng qù de yàng zi", "vietnamese": "dáng vẻ rất hứng thú", "isVocab": true },
+        { "hanzi": "感到", "pinyin": "gǎn dào", "vietnamese": "cảm thấy", "isVocab": true },
+        { "hanzi": "害怕", "pinyin": "hài pà", "vietnamese": "sợ hãi", "isVocab": true },
         { "hanzi": "，", "pinyin": "", "vietnamese": "", "isVocab": false },
         { "hanzi": "大小姐", "pinyin": "dà xiǎo jiě", "vietnamese": "tiểu thư", "isVocab": true },
-        { "hanzi": "的故事", "pinyin": "de gù shi", "vietnamese": "câu chuyện của", "isVocab": true },
+        { "hanzi": "的", "pinyin": "de", "vietnamese": "của", "isVocab": false },
+        { "hanzi": "故事", "pinyin": "gù shi", "vietnamese": "câu chuyện", "isVocab": true },
         { "hanzi": "刚起了一个头", "pinyin": "gāng qǐ le yī gè tóu", "vietnamese": "vừa mới mở đầu", "isVocab": true },
         { "hanzi": "就", "pinyin": "jiù", "vietnamese": "thì", "isVocab": true },
         { "hanzi": "被", "pinyin": "bèi", "vietnamese": "bị", "isVocab": true },
