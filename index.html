@@ -1949,6 +1949,322 @@
     .srs-mini-btn:active {
       transform: scale(0.96);
     }
+    .srs-ai-story-btn {
+      background: linear-gradient(135deg, #9966cc 0%, #766299 100%) !important;
+      color: #ffffff !important;
+      border: none !important;
+      padding: 6px 11px !important;
+      font-size: 11.5px !important;
+      font-weight: 700 !important;
+      border-radius: 10px !important;
+      box-shadow: 0 2px 7px rgba(118, 98, 153, 0.3) !important;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .srs-ai-story-btn:active {
+      transform: scale(0.95);
+    }
+    .srs-btn-outline {
+      background: #f5f0fb !important;
+      color: #766299 !important;
+      border: 1px solid #d4c5e8 !important;
+      box-shadow: none !important;
+    }
+    .srs-banner-review {
+      background: linear-gradient(135deg, #fdf8fb 0%, #ffffff 100%) !important;
+      border-color: #eeddf4 !important;
+    }
+
+    /* AI Story Generator Modal Styles */
+    .ai-story-modal-card {
+      max-width: 520px;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-radius: 20px;
+    }
+    .ai-story-body {
+      padding: 14px 18px 20px 18px;
+      overflow-y: auto;
+      flex: 1;
+      font-family: var(--font-mali);
+    }
+    .ai-story-banner-note {
+      background: #f6f1fc;
+      border: 1px solid #e3d3f5;
+      color: #553c7b;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+    .ai-story-section-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .ai-story-sec-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #4b3869;
+    }
+    .ai-story-btn-dice {
+      background: #f3edf9;
+      border: 1px solid #d8c7ed;
+      color: #766299;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--font-mali);
+      transition: all 0.15s ease;
+    }
+    .ai-story-btn-dice:active {
+      transform: scale(0.94);
+      background: #e9def5;
+    }
+    .ai-story-chips-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      max-height: 120px;
+      overflow-y: auto;
+      padding: 4px 0;
+    }
+    .ai-story-chip {
+      background: #ffffff;
+      border: 1.5px solid #dcd1ec;
+      color: #374151;
+      padding: 5px 10px;
+      border-radius: 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .ai-story-chip.selected {
+      background: #f2eafd;
+      border-color: #8772a8;
+      color: #6b21a8;
+      font-weight: 700;
+    }
+    .ai-story-chip .chip-hanzi {
+      font-family: var(--font-hanzi);
+      font-size: 14.5px;
+    }
+    .ai-story-styles-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .ai-story-style-chip {
+      flex: 1 1 45%;
+      background: #faf7fd;
+      border: 1.5px solid #e7dff2;
+      color: #55446e;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font-mali);
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+    .ai-story-style-chip.active {
+      background: linear-gradient(135deg, rgba(163, 142, 190, 0.25) 0%, rgba(135, 114, 168, 0.35) 100%);
+      border-color: #8772a8;
+      color: #5b21b6;
+      font-weight: 700;
+    }
+    .ai-story-result-card {
+      background: linear-gradient(135deg, #fdfbfe 0%, #f7f2fc 100%);
+      border: 1.5px solid #dfd3ef;
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: 0 3px 12px rgba(118, 98, 153, 0.08);
+      margin-bottom: 14px;
+    }
+    .ai-story-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ebdff8;
+    }
+    .ai-story-ch-title {
+      font-family: var(--font-hanzi);
+      font-size: 17px;
+      font-weight: 700;
+      color: #3b2260;
+      line-height: 1.3;
+    }
+    .ai-story-vi-title {
+      font-size: 12px;
+      color: #766299;
+      margin-top: 2px;
+      font-weight: 600;
+    }
+    .ai-story-audio-btn {
+      background: #8772a8;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(135, 114, 168, 0.3);
+      font-family: var(--font-mali);
+    }
+    .ai-story-hanzi-content {
+      font-family: var(--font-hanzi);
+      font-size: 17.5px;
+      line-height: 1.85;
+      color: #1f2937;
+      letter-spacing: 0.6px;
+      margin-bottom: 12px;
+    }
+    .ai-story-target-mark {
+      background: rgba(147, 51, 234, 0.15) !important;
+      color: #6b21a8 !important;
+      font-weight: 700 !important;
+      padding: 2px 6px !important;
+      border-radius: 6px !important;
+      border: 1px solid rgba(135, 114, 168, 0.35) !important;
+      display: inline-block;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .ai-story-target-mark:active {
+      transform: scale(1.08);
+      background: #766299 !important;
+      color: #ffffff !important;
+    }
+    .ai-story-trans-wrap {
+      margin-top: 10px;
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #ebdff8;
+      overflow: hidden;
+    }
+    .ai-story-trans-toggle {
+      padding: 8px 12px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #6b21a8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+      background: #faf7fd;
+    }
+    .ai-story-trans-content {
+      padding: 10px 12px;
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #4b5563;
+      border-top: 1px dashed #ebdff8;
+      font-style: italic;
+    }
+    .ai-story-vocab-summary {
+      background: #ffffff;
+      border: 1px solid #e6dcf3;
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+    }
+    .ai-story-vocab-summary-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .ai-story-mark-done-btn {
+      background: #eef8f1;
+      border: 1px solid #a7e2b7;
+      color: #15803d;
+      padding: 4px 9px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--font-mali);
+      transition: all 0.15s;
+    }
+    .ai-story-mark-done-btn:active {
+      transform: scale(0.95);
+      background: #dcf2e3;
+    }
+    .ai-story-vocab-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+    .ai-story-vocab-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      background: #faf8fc;
+      border-radius: 8px;
+      font-size: 12px;
+      gap: 8px;
+    }
+    .ai-story-vocab-item-hanzi {
+      font-family: var(--font-hanzi);
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #6b21a8;
+      cursor: pointer;
+    }
+    .ai-story-bottom-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .ai-story-act-btn {
+      width: 100%;
+      padding: 11px;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: var(--font-mali);
+      text-align: center;
+      border: none;
+      transition: all 0.15s ease;
+    }
+    .ai-story-act-btn.reader {
+      background: linear-gradient(135deg, #a08dc2 0%, #766299 100%);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(118, 98, 153, 0.25);
+    }
+    .ai-story-act-btn.next {
+      background: #f4eefa;
+      color: #6b21a8;
+      border: 1.5px solid #d3bee8;
+    }
+    .ai-story-act-btn:active {
+      transform: scale(0.97);
+    }
     .srs-picker-summary {
       background: #fcfaff;
       border: 1px dashed #d8c8ed;
@@ -3048,6 +3364,97 @@
       </div>
       <div class="modal-body" id="aiModalBody">
         <!-- AI Content Rendered Dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Story Generator Modal -->
+  <div class="modal-overlay" id="aiStoryModal">
+    <div class="modal-card ai-story-modal-card">
+      <div class="modal-header">
+        <div class="modal-title" id="aiStoryModalTitle">✨ AI Sáng tác bài đọc ngắn</div>
+        <button class="modal-close-btn" id="btnCloseAiStoryModal">✕</button>
+      </div>
+      
+      <!-- Setup View -->
+      <div class="ai-story-body" id="aiStorySetupView">
+        <div class="ai-story-banner-note">
+          💡 AI sẽ viết một mẩu chuyện / tin tức ngắn (~120–150 chữ Hán) theo chuẩn HSK 6–9, lồng ghép tự nhiên các từ bạn hay quên để bạn nhớ sâu qua ngữ cảnh.
+        </div>
+
+        <div class="ai-story-section-bar">
+          <div class="ai-story-sec-title">📌 Chọn từ lồng vào bài (<span id="aiStorySelectedCount">0</span> từ):</div>
+          <button type="button" class="ai-story-btn-dice" id="btnStoryShuffleBatch">🎲 Đổi 5 từ khác</button>
+        </div>
+
+        <div class="ai-story-chips-list" id="aiStoryChipsList">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <div style="margin-top: 14px; margin-bottom: 8px;" class="ai-story-sec-title">🎨 Chọn phong cách bài viết:</div>
+        <div class="ai-story-styles-row" id="aiStoryStylesRow">
+          <div class="ai-story-style-chip active" data-style="daily">☕ Đời thường & Hài hước</div>
+          <div class="ai-story-style-chip" data-style="news">📰 Thời sự & Xã hội</div>
+          <div class="ai-story-style-chip" data-style="work">💼 Công sở & Phỏng vấn</div>
+          <div class="ai-story-style-chip" data-style="story">🕵️ Trinh thám & Kịch tính</div>
+        </div>
+
+        <div style="margin-top: 16px;">
+          <button type="button" class="ai-story-act-btn reader" id="btnStartGenerateStory" style="padding: 13px; font-size: 14px;">
+            🚀 Bắt đầu viết bài (~130 chữ)
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading View -->
+      <div class="ai-story-body" id="aiStoryLoadingView" style="display: none; text-align: center; padding: 48px 20px;">
+        <img src="./loading.gif" style="width: 48px; height: 48px; object-fit: contain; margin-bottom: 14px;" />
+        <div style="font-size: 15px; font-weight: 700; color: #553c7b; margin-bottom: 6px;">Đang sáng tác mẩu chuyện ngắn...</div>
+        <div style="font-size: 12.5px; color: #766299;" id="aiStoryLoadingHint">Gemini 2.5 Flash đang kết nối ngữ cảnh & lồng ghép 5 từ vựng</div>
+      </div>
+
+      <!-- Result View -->
+      <div class="ai-story-body" id="aiStoryResultView" style="display: none;">
+        <div class="ai-story-result-card">
+          <div class="ai-story-card-top">
+            <div>
+              <div class="ai-story-ch-title" id="aiStoryResultChTitle"></div>
+              <div class="ai-story-vi-title" id="aiStoryResultViTitle"></div>
+            </div>
+            <button type="button" class="ai-story-audio-btn" id="btnPlayStoryAudio">🔊 Nghe đọc</button>
+          </div>
+
+          <div class="ai-story-hanzi-content" id="aiStoryResultHanzi">
+            <!-- Chinese text with highlighted target words -->
+          </div>
+
+          <div class="ai-story-trans-wrap">
+            <div class="ai-story-trans-toggle" id="btnToggleStoryTrans">
+              <span>📖 Xem bản dịch tiếng Việt</span>
+              <span id="aiStoryTransChevron">▾</span>
+            </div>
+            <div class="ai-story-trans-content" id="aiStoryResultTrans" style="display: none;">
+              <!-- Vietnamese translation -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Target Vocab summary box -->
+        <div class="ai-story-vocab-summary">
+          <div class="ai-story-vocab-summary-head">
+            <div style="font-size: 13px; font-weight: 700; color: #553c7b;">📝 Từ vựng đã lồng ghép (<span id="aiStoryResultVocabCount">0</span>):</div>
+            <button type="button" class="ai-story-mark-done-btn" id="btnStoryMarkDone">✓ Đánh dấu đã thuộc</button>
+          </div>
+          <div class="ai-story-vocab-grid" id="aiStoryResultVocabGrid">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <div class="ai-story-bottom-actions">
+          <button type="button" class="ai-story-act-btn reader" id="btnStoryOpenReader">📖 Mở trong Trình đọc tương tác</button>
+          <button type="button" class="ai-story-act-btn next" id="btnStoryNextBatch">🔄 Viết bài tiếp theo (5 từ khác)</button>
+          <button type="button" class="ai-story-act-btn" id="btnStoryBackToSetup" style="background:#f3edf9; color:#766299; border:1px solid #d8c7ed; font-size:12px; padding:8px;">◀ Chọn lại từ khác</button>
+        </div>
       </div>
     </div>
   </div>
@@ -4376,14 +4783,33 @@
       if (dueSubMode === 'leech') {
         const n = srsGetLeeches().length;
         return `
-          <div class="srs-banner">
+          <div class="srs-banner srs-banner-review">
             <div class="srs-banner-main">
               <div class="srs-banner-title">😵 Từ hay quên</div>
-              <div class="srs-banner-sub">${n} từ bị quên ≥ ${SRS_LEECH_LAPSES} lần · xem kỹ ví dụ, đặt câu để nhớ sâu</div>
+              <div class="srs-banner-sub">${n} từ bị quên ≥ ${SRS_LEECH_LAPSES} lần · Lồng vào bài đọc ngắn để nhớ sâu</div>
             </div>
-            <button type="button" class="srs-mini-btn" onclick="srsGoToDue('due')">◀ Ôn hôm nay</button>
+            <div style="display:flex; gap:6px; align-items:center;">
+              ${n > 0 ? `<button type="button" class="srs-mini-btn srs-ai-story-btn" onclick="openAiStoryModal('leech')">✨ Viết bài AI</button>` : ''}
+              <button type="button" class="srs-mini-btn srs-btn-outline" onclick="srsGoToDue('due')">◀ Ôn hôm nay</button>
+            </div>
           </div>`;
       }
+
+      const wrongCount = groupWordsState.filter(item => getWordStatus(item.hanzi) === 'wrong').length;
+      if (activeTab === 'review' && wrongCount > 0) {
+        return `
+          <div class="srs-banner srs-banner-review">
+            <div class="srs-banner-main">
+              <div class="srs-banner-title">❌ Từ cần ôn tập (${wrongCount} từ)</div>
+              <div class="srs-banner-sub">Lồng ghép vào mẩu chuyện ngắn để nhớ sâu qua ngữ cảnh</div>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button type="button" class="srs-mini-btn srs-ai-story-btn" onclick="openAiStoryModal('review')">✨ Viết bài AI</button>
+              <button type="button" class="srs-mini-btn srs-btn-outline" onclick="openSrsStatsModal()">📊 Lịch ôn</button>
+            </div>
+          </div>`;
+      }
+
       const remaining = srsRemainingToday();
       const total = srsSession.queue.length;
       return `
@@ -7749,6 +8175,18 @@ Lưu ý:
         const bannerWrap = document.createElement('div');
         bannerWrap.innerHTML = buildSrsBannerHTML();
         if (bannerWrap.firstElementChild) fragment.appendChild(bannerWrap.firstElementChild);
+      } else if (activeTab === 'review' && filteredData.length > 0) {
+        const reviewBanner = document.createElement('div');
+        reviewBanner.className = 'srs-banner srs-banner-review';
+        reviewBanner.style.marginBottom = '12px';
+        reviewBanner.innerHTML = `
+          <div class="srs-banner-main">
+            <div class="srs-banner-title">❌ Từ chưa thuộc (${filteredData.length} từ)</div>
+            <div class="srs-banner-sub">Lồng vào bài đọc ngắn HSK 6-9 để nhớ từ qua ngữ cảnh</div>
+          </div>
+          <button type="button" class="srs-mini-btn srs-ai-story-btn" onclick="openAiStoryModal('current_review')">✨ Viết bài AI</button>
+        `;
+        fragment.appendChild(reviewBanner);
       }
 
       // Prepend Back to Reading Passage Banner if studying a Reading Article group
@@ -10797,6 +11235,534 @@ ${chunkText}
     window.deleteReadingArticle = deleteReadingArticle;
     window.handleReadingTokenClick = handleReadingTokenClick;
     window.updateReadingTitleMarquee = updateReadingTitleMarquee;
+
+    // ==========================================
+    // AI STORY GENERATOR (HSK 6-9 SHORT STORIES FOR FAILED WORDS)
+    // ==========================================
+    function escapeRegex(str) {
+      return (str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    let aiStoryCurrentPool = [];
+    let aiStorySelectedWords = [];
+    let aiStoryBatchOffset = 0;
+    let aiStoryCurrentStyle = 'daily';
+    let aiStoryLastResult = null;
+    let aiStoryLastArticleId = null;
+    let aiStoryIsSpeaking = false;
+
+    const AI_STORY_STYLES = {
+      daily: {
+        name: 'Đời thường & Hài hước',
+        desc: 'Mẩu chuyện đời sống hằng ngày, đối thoại dí dỏm, tình huống bất ngờ gần gũi'
+      },
+      news: {
+        name: 'Thời sự & Xã hội',
+        desc: 'Bản tin ngắn hoặc bình luận thời sự, hiện tượng xã hội hiện đại, đời sống đô thị'
+      },
+      work: {
+        name: 'Công sở & Phỏng vấn',
+        desc: 'Môi trường làm việc, phỏng vấn xin việc, đàm phán hợp đồng, đối nhân xử thế văn phòng'
+      },
+      story: {
+        name: 'Trinh thám & Kịch tính',
+        desc: 'Cốt truyện ly kỳ, manh mối hồi hộp, tình tiết bất ngờ cuốn hút'
+      }
+    };
+
+    function getAvailableStoryWords(sourceMode) {
+      const lookup = srsGetLookup();
+      let pool = [];
+
+      if (sourceMode === 'leech' || dueSubMode === 'leech') {
+        pool = srsGetLeeches().map(h => lookup.get(h)).filter(Boolean);
+      } else if (sourceMode === 'review' || sourceMode === 'current_review' || activeTab === 'review') {
+        pool = groupWordsState.filter(item => getWordStatus(item.hanzi) === 'wrong');
+      } else {
+        pool = groupWordsState.filter(item => getWordStatus(item.hanzi) === 'wrong');
+        if (pool.length === 0) {
+          pool = srsGetLeeches().map(h => lookup.get(h)).filter(Boolean);
+        }
+      }
+
+      const seen = new Set();
+      const res = [];
+      pool.forEach(item => {
+        const h = item.hanzi || item.word;
+        if (!h || seen.has(h)) return;
+        seen.add(h);
+        res.push({
+          hanzi: h,
+          pinyin: item.pinyin || '',
+          pos: item.pos || '',
+          vietnamese: item.vietnamese || item.vi || item.meaning || ''
+        });
+      });
+      return res;
+    }
+
+    function pickStoryBatch(offset = 0) {
+      if (!aiStoryCurrentPool || aiStoryCurrentPool.length === 0) return;
+      const count = Math.min(5, aiStoryCurrentPool.length);
+      aiStoryBatchOffset = offset % aiStoryCurrentPool.length;
+      const picked = [];
+      for (let i = 0; i < count; i++) {
+        const idx = (aiStoryBatchOffset + i) % aiStoryCurrentPool.length;
+        picked.push(aiStoryCurrentPool[idx]);
+      }
+      aiStorySelectedWords = picked;
+      renderStoryChips();
+    }
+
+    function shuffleStoryBatch() {
+      if (aiStoryCurrentPool.length <= 5) {
+        aiStorySelectedWords = [...aiStoryCurrentPool];
+        renderStoryChips();
+        showToast(`Đã chọn toàn bộ ${aiStoryCurrentPool.length} từ trong danh sách`);
+        return;
+      }
+      aiStoryBatchOffset = (aiStoryBatchOffset + 5) % aiStoryCurrentPool.length;
+      pickStoryBatch(aiStoryBatchOffset);
+      showToast(`🎲 Đã đổi sang 5 từ tiếp theo (${aiStoryBatchOffset + 1}-${Math.min(aiStoryBatchOffset + 5, aiStoryCurrentPool.length)} / ${aiStoryCurrentPool.length})`);
+    }
+
+    function renderStoryChips() {
+      const container = document.getElementById('aiStoryChipsList');
+      const countEl = document.getElementById('aiStorySelectedCount');
+      if (!container) return;
+
+      if (countEl) countEl.textContent = String(aiStorySelectedWords.length);
+
+      container.innerHTML = '';
+      aiStoryCurrentPool.forEach(w => {
+        const isSel = aiStorySelectedWords.some(sw => sw.hanzi === w.hanzi);
+        const chip = document.createElement('div');
+        chip.className = `ai-story-chip ${isSel ? 'selected' : ''}`;
+        chip.setAttribute('data-hanzi', w.hanzi);
+        chip.innerHTML = `
+          <span class="chip-hanzi">${escapeHtml(w.hanzi)}</span>
+          <span style="font-size:11px; opacity:0.8;">${escapeHtml(w.pinyin || '')}</span>
+          <span>${isSel ? '✓' : '+'}</span>
+        `;
+        chip.onclick = () => toggleStoryWordChip(w);
+        container.appendChild(chip);
+      });
+
+      const diceBtn = document.getElementById('btnStoryShuffleBatch');
+      if (diceBtn) {
+        diceBtn.style.display = aiStoryCurrentPool.length > 5 ? 'inline-block' : 'none';
+      }
+    }
+
+    function toggleStoryWordChip(word) {
+      const idx = aiStorySelectedWords.findIndex(sw => sw.hanzi === word.hanzi);
+      if (idx >= 0) {
+        if (aiStorySelectedWords.length <= 2) {
+          showToast('⚠️ Nên giữ ít nhất 2 từ để bài đọc có ý nghĩa!');
+          return;
+        }
+        aiStorySelectedWords.splice(idx, 1);
+      } else {
+        if (aiStorySelectedWords.length >= 6) {
+          showToast('⚠️ Nên chọn tối đa 5-6 từ để bài đọc cô đọng (~130 chữ)!');
+          return;
+        }
+        aiStorySelectedWords.push(word);
+      }
+      renderStoryChips();
+    }
+
+    function showStoryView(viewName) {
+      const setupView = document.getElementById('aiStorySetupView');
+      const loadingView = document.getElementById('aiStoryLoadingView');
+      const resultView = document.getElementById('aiStoryResultView');
+
+      if (setupView) setupView.style.display = viewName === 'setup' ? 'block' : 'none';
+      if (loadingView) loadingView.style.display = viewName === 'loading' ? 'block' : 'none';
+      if (resultView) resultView.style.display = viewName === 'result' ? 'block' : 'none';
+
+      if (viewName !== 'result') {
+        stopAiStoryAudio();
+      }
+    }
+
+    function openAiStoryModal(sourceMode = 'auto') {
+      const words = getAvailableStoryWords(sourceMode);
+      if (!words || words.length === 0) {
+        showToast('✨ Không có từ sai nào cần tạo bài đọc!');
+        return;
+      }
+
+      aiStoryCurrentPool = words;
+      aiStoryBatchOffset = 0;
+      pickStoryBatch(0);
+
+      const modal = document.getElementById('aiStoryModal');
+      if (modal) {
+        showStoryView('setup');
+        modal.classList.add('active');
+      }
+    }
+
+    async function generateAiStory() {
+      const apiKey = localStorage.getItem('openrouter_api_key');
+      if (!apiKey) {
+        const keyModal = document.getElementById('apiKeyModal');
+        if (keyModal) keyModal.classList.add('active');
+        showToast('Vui lòng nhập OpenRouter API Key để dùng tính năng AI!');
+        return;
+      }
+
+      if (!aiStorySelectedWords || aiStorySelectedWords.length < 2) {
+        showToast('Vui lòng chọn ít nhất 2 từ để AI tạo bài!');
+        return;
+      }
+
+      showStoryView('loading');
+      const loadingHint = document.getElementById('aiStoryLoadingHint');
+      if (loadingHint) {
+        const wordsPreview = aiStorySelectedWords.map(w => w.hanzi).join(', ');
+        loadingHint.textContent = `Đang kết nối OpenRouter Gemini 2.5 Flash để lồng ghép: ${wordsPreview}...`;
+      }
+
+      const styleObj = AI_STORY_STYLES[aiStoryCurrentStyle] || AI_STORY_STYLES.daily;
+      const targetWordsList = aiStorySelectedWords.map((w, idx) => `${idx + 1}. ${w.hanzi} (pinyin: ${w.pinyin || ''}, nghĩa: ${w.vietnamese || ''})`).join('\n');
+
+      const prompt = `Bạn là chuyên gia giảng dạy tiếng Trung HSK 6-9 cao cấp và tác giả viết truyện ngắn song ngữ.
+Nhiệm vụ của bạn: Hãy sáng tác một mẩu chuyện ngắn hoặc mẩu tin tức ngắn (~120 đến 150 chữ Hán Giản Thể) theo phong cách: "${styleObj.name}" (${styleObj.desc}).
+BẮT BUỘC lồng ghép khéo léo, tự nhiên đúng ${aiStorySelectedWords.length} từ vựng sau vào mạch văn của bài:
+${targetWordsList}
+
+Yêu cầu cụ thể:
+1. ĐỘ DÀI: Khoảng 120 - 150 chữ Hán Giản Thể (không quá ngắn dưới 100 chữ, không quá dài trên 180 chữ).
+2. TRÌNH ĐỘ: Ngữ pháp tự nhiên, lưu loát, phù hợp trình độ cao cấp HSK 6 - HSK 9.
+3. LỒNG GHÉP: Các từ mục tiêu phải xuất hiện tự nhiên đúng ngữ cảnh, không gượng ép.
+4. NỘI DUNG: Hấp dẫn, có mở đầu, diễn biến và kết thúc ngắn gọn, súc tích.
+5. ĐỊNH DẠNG TRẢ VỀ: BẮT BUỘC trả về JSON thuần tuý (Valid JSON, KHÔNG bọc trong markdown \`\`\`json, không có ký tự thừa nào ngoài JSON):
+{
+  "title": "Tiêu đề tiếng Trung (chữ Giản Thể, ngắn gọn 4-8 chữ)",
+  "titleVi": "Tiêu đề dịch tiếng Việt",
+  "content": "Toàn bộ bài đọc bằng chữ Hán Giản Thể (~120-150 chữ)",
+  "translation": "Bản dịch tiếng Việt trôi chảy, văn phong tự nhiên của cả bài",
+  "usedWords": ["từ 1", "từ 2"],
+  "paragraphs": [
+    {
+      "chinese": "Đoạn văn chữ Hán",
+      "vietnamese": "Dịch nghĩa đoạn văn này",
+      "tokens": [
+        {"hanzi": "chữ/từ", "pinyin": "pinyin", "vietnamese": "nghĩa tiếng Việt", "isVocab": true}
+      ]
+    }
+  ]
+}
+
+Lưu ý:
+- BẮT BUỘC dùng CHỮ GIẢN THỂ (简体字).
+- JSON phải tuyệt đối hợp lệ, escape đúng các dấu nháy kép.`;
+
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.href,
+            'X-Title': 'HSK Vocab App'
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [
+              { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
+              { role: 'user', content: prompt }
+            ],
+            max_tokens: 3000
+          })
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error((err && err.error && err.error.message) || `Lỗi HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        let content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+        if (!content) throw new Error('Không nhận được nội dung từ AI.');
+
+        content = content.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
+        const parsed = safeParseJSON(content);
+        if (!parsed || !parsed.content) {
+          throw new Error('Dữ liệu JSON từ AI không đúng cấu trúc.');
+        }
+
+        aiStoryLastResult = parsed;
+
+        // Auto-save to readingArticles
+        const newArticleId = 'ai_story_' + Date.now();
+        aiStoryLastArticleId = newArticleId;
+
+        const allParagraphs = Array.isArray(parsed.paragraphs) && parsed.paragraphs.length > 0
+          ? parsed.paragraphs
+          : [{ chinese: parsed.content, vietnamese: parsed.translation || '', tokens: [] }];
+
+        const allTokens = allParagraphs.flatMap(p => p.tokens || []);
+
+        const articleObj = {
+          id: newArticleId,
+          title: parsed.title ? `✨ ${parsed.title}` : `✨ Bài đọc ôn từ (${aiStorySelectedWords.length} từ)`,
+          titleVi: parsed.titleVi || '',
+          rawText: parsed.content,
+          content: parsed.content,
+          translation: parsed.translation || '',
+          paragraphs: allParagraphs,
+          tokens: allTokens,
+          selectedWords: aiStorySelectedWords.map(w => ({
+            hanzi: w.hanzi,
+            pinyin: w.pinyin || '',
+            pos: w.pos || '',
+            meaning: w.vietnamese || '',
+            vietnamese: w.vietnamese || ''
+          })),
+          sourceType: 'ai_story',
+          createdAt: new Date().toLocaleDateString('vi-VN')
+        };
+
+        readingArticles.unshift(articleObj);
+        saveReadingArticlesToStorage();
+        if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+
+        // Render Result View
+        renderStoryResult(parsed, aiStorySelectedWords);
+        showStoryView('result');
+        showToast('🎉 Đã viết xong mẩu chuyện! Hãy đọc và khắc sâu từ vựng!');
+      } catch (err) {
+        console.error('generateAiStory error:', err);
+        showToast(`❌ Lỗi tạo bài đọc: ${err.message}`);
+        showStoryView('setup');
+      }
+    }
+
+    function renderStoryResult(story, targetWords) {
+      const chTitleEl = document.getElementById('aiStoryResultChTitle');
+      const viTitleEl = document.getElementById('aiStoryResultViTitle');
+      const hanziEl = document.getElementById('aiStoryResultHanzi');
+      const transEl = document.getElementById('aiStoryResultTrans');
+      const transChevron = document.getElementById('aiStoryTransChevron');
+      const vocabCountEl = document.getElementById('aiStoryResultVocabCount');
+      const vocabGrid = document.getElementById('aiStoryResultVocabGrid');
+      const btnMarkDone = document.getElementById('btnStoryMarkDone');
+
+      if (chTitleEl) chTitleEl.textContent = story.title || 'Mẩu chuyện ngắn';
+      if (viTitleEl) viTitleEl.textContent = story.titleVi || '';
+      if (transEl) {
+        transEl.textContent = story.translation || '';
+        transEl.style.display = 'none';
+      }
+      if (transChevron) transChevron.textContent = '▾';
+
+      if (hanziEl) {
+        let raw = story.content || '';
+        const sorted = [...targetWords].sort((a, b) => b.hanzi.length - a.hanzi.length);
+        sorted.forEach(w => {
+          if (!w.hanzi) return;
+          const re = new RegExp(escapeRegex(w.hanzi), 'g');
+          raw = raw.replace(re, `[[TARGET_MARK_${escapeHtml(w.hanzi)}]]`);
+        });
+        let html = escapeHtml(raw);
+        sorted.forEach(w => {
+          const token = `[[TARGET_MARK_${escapeHtml(w.hanzi)}]]`;
+          const markHtml = `<span class="ai-story-target-mark" onclick="handleStoryTargetWordClick('${escapeHtml(w.hanzi)}', '${escapeHtml(w.pinyin || '')}', '${escapeHtml(w.vietnamese || '')}')">${escapeHtml(w.hanzi)}</span>`;
+          html = html.split(token).join(markHtml);
+        });
+        hanziEl.innerHTML = html;
+      }
+
+      if (vocabCountEl) vocabCountEl.textContent = String(targetWords.length);
+      if (vocabGrid) {
+        vocabGrid.innerHTML = '';
+        targetWords.forEach(w => {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'ai-story-vocab-item';
+          itemDiv.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="ai-story-vocab-item-hanzi" onclick="handleStoryTargetWordClick('${escapeHtml(w.hanzi)}', '${escapeHtml(w.pinyin || '')}', '${escapeHtml(w.vietnamese || '')}')">${escapeHtml(w.hanzi)}</span>
+              <span style="font-size:12px; color:#766299; font-weight:600;">${escapeHtml(w.pinyin || '')}</span>
+              ${w.pos ? `<span style="font-size:10.5px; background:#f0ebf8; color:#6b21a8; padding:1px 5px; border-radius:4px;">${escapeHtml(w.pos)}</span>` : ''}
+            </div>
+            <div style="font-size:12px; color:#4b5563; text-align:right;">${escapeHtml(w.vietnamese || '')}</div>
+          `;
+          vocabGrid.appendChild(itemDiv);
+        });
+      }
+
+      if (btnMarkDone) {
+        btnMarkDone.textContent = `✓ Đã nhớ cả ${targetWords.length} từ`;
+        btnMarkDone.disabled = false;
+        btnMarkDone.style.opacity = '1';
+      }
+
+      const btnNext = document.getElementById('btnStoryNextBatch');
+      if (btnNext) {
+        btnNext.style.display = aiStoryCurrentPool.length > 5 ? 'block' : 'none';
+      }
+    }
+
+    function handleStoryTargetWordClick(hanzi, pinyin, meaning) {
+      speakChinese(hanzi);
+      showToast(`🔊 ${hanzi} [${pinyin}]: ${meaning}`);
+    }
+
+    function toggleStoryTrans() {
+      const transEl = document.getElementById('aiStoryResultTrans');
+      const chevron = document.getElementById('aiStoryTransChevron');
+      if (!transEl) return;
+      const isHidden = transEl.style.display === 'none';
+      transEl.style.display = isHidden ? 'block' : 'none';
+      if (chevron) chevron.textContent = isHidden ? '▴' : '▾';
+    }
+
+    function playAiStoryAudio() {
+      if (!aiStoryLastResult || !aiStoryLastResult.content) return;
+      const btn = document.getElementById('btnPlayStoryAudio');
+      if (aiStoryIsSpeaking) {
+        stopAiStoryAudio();
+        return;
+      }
+
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utt = new SpeechSynthesisUtterance(aiStoryLastResult.content);
+        utt.lang = 'zh-CN';
+        utt.rate = 0.88;
+        utt.pitch = 1.0;
+
+        if (Array.isArray(window.chineseVoices) && window.chineseVoices.length > 0) {
+          const v = window.chineseVoices.find(x => x.name.includes('Xiaoxiao') || x.name.includes('Natural')) || window.chineseVoices[0];
+          if (v) utt.voice = v;
+        }
+
+        utt.onstart = () => {
+          aiStoryIsSpeaking = true;
+          if (btn) btn.textContent = '⏹ Dừng đọc';
+        };
+        utt.onend = () => {
+          stopAiStoryAudio();
+        };
+        utt.onerror = () => {
+          stopAiStoryAudio();
+        };
+
+        window.speechSynthesis.speak(utt);
+      } else {
+        showToast('Trình duyệt không hỗ trợ phát âm.');
+      }
+    }
+
+    function stopAiStoryAudio() {
+      aiStoryIsSpeaking = false;
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      const btn = document.getElementById('btnPlayStoryAudio');
+      if (btn) btn.textContent = '🔊 Nghe đọc';
+    }
+
+    function markStoryWordsLearned() {
+      if (!aiStorySelectedWords || aiStorySelectedWords.length === 0) return;
+      const count = aiStorySelectedWords.length;
+      aiStorySelectedWords.forEach(w => {
+        const h = w.hanzi;
+        const cur = getWordStatus(h);
+        setWordStatus(h, 'correct');
+        srsOnTick(h, cur, 'correct', currentLevel === 'due' ? 'due' : 'group');
+      });
+
+      renderVocabList();
+      updateCounters();
+      srsUpdateBellBadge();
+
+      const btn = document.getElementById('btnStoryMarkDone');
+      if (btn) {
+        btn.textContent = '🎉 Đã đánh dấu thuộc!';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+      }
+      showToast(`🎉 Đã đánh dấu thuộc ${count} từ vừa ôn!`);
+    }
+
+    function proceedToNextStoryBatch() {
+      if (!aiStoryCurrentPool || aiStoryCurrentPool.length <= 5) {
+        showToast('Đã hết từ trong danh sách!');
+        return;
+      }
+      aiStoryBatchOffset = (aiStoryBatchOffset + 5) % aiStoryCurrentPool.length;
+      pickStoryBatch(aiStoryBatchOffset);
+      showStoryView('setup');
+      showToast(`🎲 Đã chuyển sang 5 từ tiếp theo (${aiStoryBatchOffset + 1}-${Math.min(aiStoryBatchOffset + 5, aiStoryCurrentPool.length)} / ${aiStoryCurrentPool.length})`);
+    }
+
+    function openGeneratedStoryInReader() {
+      if (!aiStoryLastArticleId) return;
+      const modal = document.getElementById('aiStoryModal');
+      if (modal) modal.classList.remove('active');
+      stopAiStoryAudio();
+      openReadingViewModal(aiStoryLastArticleId);
+    }
+
+    function setupAiStoryEventListeners() {
+      const modal = document.getElementById('aiStoryModal');
+      const btnClose = document.getElementById('btnCloseAiStoryModal');
+      const btnShuffle = document.getElementById('btnStoryShuffleBatch');
+      const btnStart = document.getElementById('btnStartGenerateStory');
+      const btnAudio = document.getElementById('btnPlayStoryAudio');
+      const btnTrans = document.getElementById('btnToggleStoryTrans');
+      const btnMarkDone = document.getElementById('btnStoryMarkDone');
+      const btnReader = document.getElementById('btnStoryOpenReader');
+      const btnNext = document.getElementById('btnStoryNextBatch');
+      const btnBack = document.getElementById('btnStoryBackToSetup');
+
+      if (btnClose && modal) {
+        btnClose.addEventListener('click', () => {
+          modal.classList.remove('active');
+          stopAiStoryAudio();
+          resetModalScroll(modal);
+        });
+      }
+
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            modal.classList.remove('active');
+            stopAiStoryAudio();
+            resetModalScroll(modal);
+          }
+        });
+      }
+
+      if (btnShuffle) btnShuffle.addEventListener('click', shuffleStoryBatch);
+      if (btnStart) btnStart.addEventListener('click', generateAiStory);
+      if (btnAudio) btnAudio.addEventListener('click', playAiStoryAudio);
+      if (btnTrans) btnTrans.addEventListener('click', toggleStoryTrans);
+      if (btnMarkDone) btnMarkDone.addEventListener('click', markStoryWordsLearned);
+      if (btnReader) btnReader.addEventListener('click', openGeneratedStoryInReader);
+      if (btnNext) btnNext.addEventListener('click', proceedToNextStoryBatch);
+      if (btnBack) btnBack.addEventListener('click', () => showStoryView('setup'));
+
+      document.querySelectorAll('#aiStoryStylesRow .ai-story-style-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          document.querySelectorAll('#aiStoryStylesRow .ai-story-style-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          aiStoryCurrentStyle = chip.getAttribute('data-style') || 'daily';
+        });
+      });
+    }
+
+    // Expose to window
+    window.openAiStoryModal = openAiStoryModal;
+    window.handleStoryTargetWordClick = handleStoryTargetWordClick;
+
+    // Initialize AI Story events
+    setupAiStoryEventListeners();
+
       if (btnShuffleWords) {
         btnShuffleWords.addEventListener('click', toggleShuffle);
       }
