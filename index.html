@@ -2958,7 +2958,7 @@
         </button>
         <div class="compact-dropdown-menu" id="levelDropdownMenu">
           <div class="dropdown-menu-item level-tab srs-level-tab" data-level="due" id="tabLevelDue">
-            <span>🔔 Ôn hôm nay</span>
+            <span>Ôn hôm nay</span>
             <span class="dropdown-item-count" id="countLevelDue">0 từ</span>
           </div>
           <div class="dropdown-menu-item level-tab" data-level="hsk6" id="tabLevelHsk6">
@@ -2970,11 +2970,11 @@
             <span class="dropdown-item-count" id="countLevelHsk79">5601 từ</span>
           </div>
           <div class="dropdown-menu-item level-tab" data-level="custom" id="tabLevelCustom">
-            <span>📁 Nhóm tự tạo</span>
+            <span>Nhóm tự tạo</span>
             <span class="dropdown-item-count" id="countLevelCustom">0 từ</span>
           </div>
           <div class="dropdown-menu-item level-tab" data-level="upgrade" id="tabLevelUpgrade">
-            <span>✨ Nâng cấp vốn từ</span>
+            <span>Nâng cấp vốn từ</span>
             <span class="dropdown-item-count" id="countLevelUpgrade">0 từ</span>
           </div>
         </div>
@@ -4541,9 +4541,9 @@
       if (!lbl) return;
       if (currentLevel === 'hsk6') lbl.textContent = 'HSK 6';
       else if (currentLevel === 'hsk79') lbl.textContent = 'HSK 7-9';
-      else if (currentLevel === 'custom') lbl.textContent = '📁 Tự tạo';
-      else if (currentLevel === 'upgrade') lbl.textContent = '✨ Nâng cấp';
-      else if (currentLevel === 'due') lbl.textContent = dueSubMode === 'leech' ? '😵 Hay quên' : '🔔 Ôn hôm nay';
+      else if (currentLevel === 'custom') lbl.textContent = 'Tự tạo';
+      else if (currentLevel === 'upgrade') lbl.textContent = 'Nâng cấp';
+      else if (currentLevel === 'due') lbl.textContent = dueSubMode === 'leech' ? 'Hay quên' : 'Ôn hôm nay';
     }
 
     function updateFilterDropdownLabel() {
@@ -5269,7 +5269,7 @@
         const customTextEl = document.getElementById('customGroupSelectText');
         if (customTextEl) {
           if (currentCustomGroupId === 'all_custom_groups') {
-            customTextEl.innerHTML = `🌟 Tất cả nhóm tự tạo (${totalCombinedCount} từ)`;
+            customTextEl.innerHTML = `Tất cả nhóm tự tạo (${totalCombinedCount} từ)`;
           } else {
             let activeGroup = customGroups.find(g => g.id === currentCustomGroupId);
             if (!activeGroup) {
@@ -5277,7 +5277,7 @@
               currentCustomGroupId = activeGroup.id;
             }
             const words = activeGroup.words || [];
-            customTextEl.innerHTML = `📁 ${activeGroup.name} (${words.length} từ)`;
+            customTextEl.innerHTML = `${activeGroup.name} (${words.length} từ)`;
           }
         }
 
@@ -5419,11 +5419,11 @@
             listContainer.appendChild(itemDiv);
           });
         }
-        if (appHeaderTitle) appHeaderTitle.textContent = currentCustomGroupId === 'all_custom_groups' ? `🌟 Ôn tổng` : `📁 Tự tạo`;
+        if (appHeaderTitle) appHeaderTitle.textContent = currentCustomGroupId === 'all_custom_groups' ? `Ôn tổng` : `Tự tạo`;
         return;
       }
 
-      // 🔔 Smart review level (daily due queue / leeches)
+      // Smart review level (daily due queue / leeches)
       if (currentLevel === 'due') {
         const dueWords = getCurrentLevelWords();
         const totalGroupsDue = Math.max(1, Math.ceil(dueWords.length / 100));
@@ -5434,8 +5434,8 @@
         const customTextEl = document.getElementById('customGroupSelectText');
         if (customTextEl) {
           customTextEl.innerHTML = dueSubMode === 'leech'
-            ? `😵 Hay quên (${dueWords.length} từ)`
-            : (dueWords.length === 0 ? `🔔 Không có từ đến hạn` : `🔔 Nhóm ${currentGroupIndex + 1} (${s + 1}-${e})`);
+            ? `Hay quên (${dueWords.length} từ)`
+            : (dueWords.length === 0 ? `Không có từ đến hạn` : `Nhóm ${currentGroupIndex + 1} (${s + 1}-${e})`);
         }
 
         if (listContainer) {
@@ -5527,7 +5527,7 @@
           listContainer.appendChild(leechDiv);
         }
 
-        if (appHeaderTitle) appHeaderTitle.textContent = dueSubMode === 'leech' ? '😵 Hay quên' : '🔔 Ôn hôm nay';
+        if (appHeaderTitle) appHeaderTitle.textContent = dueSubMode === 'leech' ? 'Hay quên' : 'Ôn hôm nay';
         return;
       }
 
@@ -5657,15 +5657,15 @@
       if (currentSearchQuery) {
         const customTextEl = document.getElementById('customGroupSelectText');
         if (customTextEl) {
-          customTextEl.innerHTML = `🔍 Tìm: "${escapeHtml(currentSearchQuery)}" (${groupWordsState.length} từ)`;
+          customTextEl.innerHTML = `Tìm: "${escapeHtml(currentSearchQuery)}" (${groupWordsState.length} từ)`;
         }
-        if (appHeaderTitle) appHeaderTitle.textContent = `🔍 Tìm kiếm`;
+        if (appHeaderTitle) appHeaderTitle.textContent = `Tìm kiếm`;
       } else {
         if (currentLevel === 'hsk6') appHeaderTitle.textContent = `HSK 6`;
         else if (currentLevel === 'hsk79') appHeaderTitle.textContent = `HSK 7-9`;
-        else if (currentLevel === 'upgrade') appHeaderTitle.textContent = `✨ Nâng cấp`;
-        else if (currentLevel === 'due') appHeaderTitle.textContent = dueSubMode === 'leech' ? '😵 Hay quên' : '🔔 Ôn hôm nay';
-        else appHeaderTitle.textContent = `📁 Tự tạo`;
+        else if (currentLevel === 'upgrade') appHeaderTitle.textContent = `Nâng cấp`;
+        else if (currentLevel === 'due') appHeaderTitle.textContent = dueSubMode === 'leech' ? 'Hay quên' : 'Ôn hôm nay';
+        else appHeaderTitle.textContent = `Tự tạo`;
       }
     }
 
