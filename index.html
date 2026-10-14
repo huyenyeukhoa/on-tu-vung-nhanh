@@ -3011,8 +3011,8 @@
         <span id="preloadAiLabel" style="display:none;">nạp AI nhóm</span>
       </button>
 
-      <button class="control-btn active" id="btnToggleAutoSpeak" title="Tự động phát âm khi tick đúng/sai (🗣️)">
-        <span id="autoSpeakIcon">🗣️</span>
+      <button class="control-btn active" id="btnToggleAutoSpeak" title="Tự động phát âm khi tick đúng/sai (🎙)">
+        <span id="autoSpeakIcon">🎙</span>
         <input type="checkbox" id="switchAutoSpeak" class="switch-input" checked style="display:none;">
       </button>
     </div>
@@ -11841,7 +11841,7 @@ ${chunkText}
           autoSpeakOnTick = !autoSpeakOnTick;
           btnToggleAutoSpeak.classList.toggle('active', autoSpeakOnTick);
           if (switchAutoSpeak) switchAutoSpeak.checked = autoSpeakOnTick;
-          showToast(autoSpeakOnTick ? '🗣️ Tự đọc khi tick: BẬT' : '🗣️ Tự đọc khi tick: TẮT');
+          showToast(autoSpeakOnTick ? '🎙 Tự đọc khi tick: BẬT' : '🎙 Tự đọc khi tick: TẮT');
         });
       }
 
