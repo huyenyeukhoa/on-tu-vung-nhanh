@@ -90,7 +90,11 @@
     .zh-text,
     .upgraded-hanzi,
     .col-main .hanzi-text,
-    #readingTextInput {
+    #readingTextInput,
+    .ai-story-target-mark,
+    .ai-story-hanzi-content,
+    .ai-story-ch-title,
+    .chip-hanzi {
       font-family: var(--font-hanzi) !important;
     }
 
@@ -1953,17 +1957,18 @@
       background: linear-gradient(135deg, #9966cc 0%, #766299 100%) !important;
       color: #ffffff !important;
       border: none !important;
-      padding: 6px 11px !important;
-      font-size: 11.5px !important;
+      padding: 5px 8px !important;
+      font-size: 14px !important;
       font-weight: 700 !important;
-      border-radius: 10px !important;
+      border-radius: 9px !important;
       box-shadow: 0 2px 7px rgba(118, 98, 153, 0.3) !important;
       cursor: pointer;
       white-space: nowrap;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      justify-content: center;
       transition: all 0.15s ease;
+      line-height: 1;
     }
     .srs-ai-story-btn:active {
       transform: scale(0.95);
@@ -2008,12 +2013,15 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 6px;
       margin-bottom: 8px;
+      flex-wrap: nowrap;
     }
     .ai-story-sec-title {
       font-size: 13px;
       font-weight: 700;
       color: #4b3869;
+      white-space: nowrap;
     }
     .ai-story-btn-dice {
       background: #f3edf9;
@@ -2026,6 +2034,8 @@
       cursor: pointer;
       font-family: var(--font-mali);
       transition: all 0.15s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .ai-story-btn-dice:active {
       transform: scale(0.94);
@@ -2142,20 +2152,23 @@
       margin-bottom: 12px;
     }
     .ai-story-target-mark {
-      background: rgba(147, 51, 234, 0.15) !important;
-      color: #6b21a8 !important;
+      font-family: var(--font-hanzi) !important;
+      background: rgba(135, 114, 168, 0.18) !important;
+      color: #766299 !important;
       font-weight: 700 !important;
-      padding: 2px 6px !important;
-      border-radius: 6px !important;
-      border: 1px solid rgba(135, 114, 168, 0.35) !important;
+      padding: 0 3px !important;
+      margin: 0 1px !important;
+      border-radius: 4px !important;
+      border: none !important;
       display: inline-block;
       cursor: pointer;
       transition: all 0.15s ease;
+      line-height: 1.25;
     }
     .ai-story-target-mark:active {
-      transform: scale(1.08);
-      background: #766299 !important;
-      color: #ffffff !important;
+      transform: scale(1.05);
+      background: rgba(135, 114, 168, 0.35) !important;
+      color: #3b2859 !important;
     }
     .ai-story-trans-wrap {
       margin-top: 10px;
@@ -3372,15 +3385,15 @@
   <div class="modal-overlay" id="aiStoryModal">
     <div class="modal-card ai-story-modal-card">
       <div class="modal-header">
-        <div class="modal-title" id="aiStoryModalTitle">✨ AI Sáng tác bài đọc ngắn</div>
+        <div class="modal-title" id="aiStoryModalTitle">✨ Mẩu chuyện nhớ từ</div>
         <button class="modal-close-btn" id="btnCloseAiStoryModal">✕</button>
       </div>
       
       <!-- Setup View -->
       <div class="ai-story-body" id="aiStorySetupView">
         <div class="ai-story-section-bar">
-          <div class="ai-story-sec-title">📌 Chọn từ lồng vào bài (<span id="aiStorySelectedCount">0</span> từ):</div>
-          <button type="button" class="ai-story-btn-dice" id="btnStoryShuffleBatch">🎲 Đổi 5 từ khác</button>
+          <div class="ai-story-sec-title">📌 Chọn từ (<span id="aiStorySelectedCount">0</span>):</div>
+          <button type="button" class="ai-story-btn-dice" id="btnStoryShuffleBatch">🎲 Đổi 5 từ</button>
         </div>
 
         <div class="ai-story-chips-list" id="aiStoryChipsList">
@@ -3397,7 +3410,7 @@
 
         <div style="margin-top: 16px;">
           <button type="button" class="ai-story-act-btn reader" id="btnStartGenerateStory" style="padding: 13px; font-size: 14px;">
-            🚀 Bắt đầu viết bài (~130 chữ)
+            ✨ Sáng tác mẩu chuyện (~130 chữ)
           </button>
         </div>
       </div>
@@ -3431,17 +3444,6 @@
             <div class="ai-story-trans-content" id="aiStoryResultTrans" style="display: none;">
               <!-- Vietnamese translation -->
             </div>
-          </div>
-        </div>
-
-        <!-- Target Vocab summary box -->
-        <div class="ai-story-vocab-summary">
-          <div class="ai-story-vocab-summary-head">
-            <div style="font-size: 13px; font-weight: 700; color: #553c7b;">📝 Từ vựng đã lồng ghép (<span id="aiStoryResultVocabCount">0</span>):</div>
-            <button type="button" class="ai-story-mark-done-btn" id="btnStoryMarkDone">✓ Đánh dấu đã thuộc</button>
-          </div>
-          <div class="ai-story-vocab-grid" id="aiStoryResultVocabGrid">
-            <!-- Rendered dynamically -->
           </div>
         </div>
 
@@ -3897,12 +3899,13 @@
       <!-- Bottom Inspector Drawer for Tapped Token -->
       <div id="readingTokenDrawer" class="token-popover-drawer" style="display: none;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-          <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
             <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0; line-height: 1.2;">
-              <span id="drawerHanzi" style="font-family: var(--font-hanzi); font-size: 24px; font-weight: 700; color: #111827; white-space: nowrap;"></span>
+              <span id="drawerHanzi" style="font-family: var(--font-hanzi); font-size: 24px; font-weight: 700; color: #111827; white-space: nowrap; cursor: pointer;" title="Chạm để tra cứu chi tiết"></span>
               <span id="drawerPinyin" style="font-size: 13.5px; font-weight: 700; color: var(--primary-color); margin-top: 2px;"></span>
             </div>
             <button class="icon-action-btn" id="btnSpeakDrawerWord" style="padding: 2px 6px; font-size: 14px; flex-shrink: 0;" title="Nghe phát âm">🔊</button>
+            <button class="icon-action-btn" id="btnDrawerAiExplain" style="padding: 3px 8px; font-size: 11.5px; flex-shrink: 0; font-family: var(--font-mali); font-weight: 700; color: #6b21a8; background: #f3edf9; border: 1px solid #d4c5e8; border-radius: 8px; cursor: pointer;" title="Tra cứu giải thích chi tiết">🔍 Tra từ</button>
           </div>
           <button id="btnCloseTokenDrawer" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #9ca3af; flex-shrink: 0;">✕</button>
         </div>
@@ -4783,7 +4786,7 @@
               <div class="srs-banner-title" style="font-size: 14.5px; margin: 0; white-space: nowrap;">😵 Hay quên (${n} từ)</div>
             </div>
             <div style="display:flex; gap:6px; align-items:center; flex-shrink: 0;">
-              ${n > 0 ? `<button type="button" class="srs-mini-btn srs-ai-story-btn" onclick="openAiStoryModal('leech')">✨ Viết bài AI</button>` : ''}
+              ${n > 0 ? `<button type="button" class="srs-mini-btn srs-ai-story-btn" onclick="openAiStoryModal('leech')" title="Mẩu chuyện nhớ từ">✨</button>` : ''}
               <button type="button" class="srs-mini-btn srs-btn-outline" onclick="srsGoToDue('due')">◀ Ôn hôm nay</button>
             </div>
           </div>`;
@@ -4797,7 +4800,7 @@
               <div class="srs-banner-title" style="font-size: 14.5px; margin: 0; white-space: nowrap;">❌ Cần ôn (${wrongCount} từ)</div>
             </div>
             <div style="display:flex; gap:6px; align-items:center; flex-shrink: 0;">
-              <button type="button" class="srs-mini-btn srs-ai-story-btn" onclick="openAiStoryModal('review')">✨ Viết bài AI</button>
+              <button type="button" class="srs-mini-btn srs-ai-story-btn" onclick="openAiStoryModal('review')" title="Mẩu chuyện nhớ từ">✨</button>
               <button type="button" class="srs-mini-btn srs-btn-outline" onclick="openSrsStatsModal()">📊 Lịch ôn</button>
             </div>
           </div>`;
@@ -8176,7 +8179,7 @@ Lưu ý:
           <div class="srs-banner-main" style="min-width: 0;">
             <div class="srs-banner-title" style="font-size: 14.5px; margin: 0; white-space: nowrap;">❌ Chưa thuộc (${filteredData.length} từ)</div>
           </div>
-          <button type="button" class="srs-mini-btn srs-ai-story-btn" onclick="openAiStoryModal('current_review')">✨ Viết bài AI</button>
+          <button type="button" class="srs-mini-btn srs-ai-story-btn" onclick="openAiStoryModal('current_review')" title="Mẩu chuyện nhớ từ">✨</button>
         `;
         fragment.appendChild(reviewBanner);
       }
@@ -11038,10 +11041,36 @@ ${chunkText}
         targetEl.classList.add('active-token');
       }
 
+      const lookup = srsGetLookup();
+      const lw = lookup.get(tok.hanzi);
+      const selWord = (art.selectedWords || []).find(w => w.hanzi === tok.hanzi);
+      const customGroup = customGroups.find(g => g.id === 'custom_' + art.id);
+      const cgWord = customGroup && customGroup.words ? customGroup.words.find(w => w.hanzi === tok.hanzi) : null;
+
+      const resolvedMeaning = (selWord && (selWord.vietnamese || selWord.meaning))
+        || tok.vietnamese
+        || (cgWord && (cgWord.vietnamese || cgWord.meaning))
+        || (lw && (lw.vietnamese || lw.vi || lw.meaning))
+        || (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].vietnamese)
+        || '';
+
+      const resolvedPinyin = tok.pinyin
+        || (selWord && selWord.pinyin)
+        || (cgWord && cgWord.pinyin)
+        || (lw && lw.pinyin)
+        || (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].pinyin)
+        || '';
+
       drawerHanzi.textContent = tok.hanzi;
-      drawerPinyin.textContent = tok.pinyin || '';
-      drawerMeaning.textContent = `Nghĩa: ${tok.vietnamese || ''}`;
+      drawerPinyin.textContent = resolvedPinyin;
+      drawerMeaning.textContent = resolvedMeaning ? `Nghĩa: ${resolvedMeaning}` : 'Chạm "🔍 Tra từ" để tra cứu chi tiết AI';
       btnSpeakDrawerWord.onclick = () => speakChinese(tok.hanzi);
+
+      const btnExplain = document.getElementById('btnDrawerAiExplain');
+      if (btnExplain) {
+        btnExplain.onclick = () => fetchAiExplanation(tok.hanzi, resolvedPinyin);
+      }
+      drawerHanzi.onclick = () => fetchAiExplanation(tok.hanzi, resolvedPinyin);
 
       updateDrawerButtonState(isSelected);
 
@@ -11413,7 +11442,8 @@ ${chunkText}
             title: (obj.title || 'Mẩu chuyện ngắn').trim(),
             titleVi: (obj.titleVi || '').trim(),
             content: (obj.content || obj.story || '').trim(),
-            translation: (obj.translation || obj.vietnamese || '').trim()
+            translation: (obj.translation || obj.vietnamese || '').trim(),
+            paragraphs: Array.isArray(obj.paragraphs) && obj.paragraphs.length > 0 ? obj.paragraphs : null
           };
         }
       } catch (e1) {}
@@ -11426,7 +11456,8 @@ ${chunkText}
             title: (obj.title || 'Mẩu chuyện ngắn').trim(),
             titleVi: (obj.titleVi || '').trim(),
             content: (obj.content || obj.story || '').trim(),
-            translation: (obj.translation || obj.vietnamese || '').trim()
+            translation: (obj.translation || obj.vietnamese || '').trim(),
+            paragraphs: Array.isArray(obj.paragraphs) && obj.paragraphs.length > 0 ? obj.paragraphs : null
           };
         }
       } catch (e2) {}
@@ -11447,7 +11478,8 @@ ${chunkText}
           title: getField('title') || 'Mẩu chuyện ngắn',
           titleVi: getField('titleVi') || '',
           content: content,
-          translation: getField('translation') || getField('vietnamese') || ''
+          translation: getField('translation') || getField('vietnamese') || '',
+          paragraphs: null
         };
       }
 
@@ -11581,7 +11613,16 @@ Yêu cầu BẮT BUỘC:
   "title": "Tiêu đề tiếng Trung (4-8 chữ Giản Thể)",
   "titleVi": "Tiêu đề dịch tiếng Việt",
   "content": "Toàn bộ bài đọc bằng chữ Hán Giản Thể (~120-150 chữ)",
-  "translation": "Bản dịch tiếng Việt trôi chảy, tự nhiên của cả bài"
+  "translation": "Bản dịch tiếng Việt trôi chảy, tự nhiên của cả bài",
+  "paragraphs": [
+    {
+      "vietnamese": "Dịch nghĩa tiếng Việt của đoạn này",
+      "tokens": [
+        { "hanzi": "từ_hoặc_cụm_từ", "pinyin": "pinyin", "vietnamese": "nghĩa tiếng Việt", "isVocab": true },
+        { "hanzi": "，", "pinyin": "", "vietnamese": "", "isVocab": false }
+      ]
+    }
+  ]
 }`;
 
       try {
@@ -11620,15 +11661,30 @@ Yêu cầu BẮT BUỘC:
 
         aiStoryLastResult = parsed;
 
-        // Auto-save to readingArticles with locally generated rich tokens
         const newArticleId = 'ai_story_' + Date.now();
         aiStoryLastArticleId = newArticleId;
 
-        const { allParagraphs, allTokens } = buildStoryTokens(parsed.content, parsed.translation, aiStorySelectedWords);
+        let allParagraphs = [];
+        let allTokens = [];
+
+        if (parsed.paragraphs && Array.isArray(parsed.paragraphs) && parsed.paragraphs.length > 0) {
+          allParagraphs = parsed.paragraphs;
+          parsed.paragraphs.forEach(p => {
+            if (Array.isArray(p.tokens)) {
+              allTokens = allTokens.concat(p.tokens);
+            }
+          });
+        }
+
+        if (allParagraphs.length === 0 || allTokens.length === 0) {
+          const built = buildStoryTokens(parsed.content, parsed.translation, aiStorySelectedWords);
+          allParagraphs = built.allParagraphs;
+          allTokens = built.allTokens;
+        }
 
         const articleObj = {
           id: newArticleId,
-          title: parsed.title ? `✨ ${parsed.title}` : `✨ Bài đọc ôn từ (${aiStorySelectedWords.length} từ)`,
+          title: parsed.title ? `✨ ${parsed.title}` : `✨ Mẩu chuyện nhớ từ (${aiStorySelectedWords.length} từ)`,
           titleVi: parsed.titleVi || '',
           rawText: parsed.content,
           content: parsed.content,
@@ -11650,6 +11706,22 @@ Yêu cầu BẮT BUỘC:
         saveReadingArticlesToStorage();
         if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
 
+        // Create matching custom group for study list 2-column & review integration
+        const customGroupId = 'custom_' + newArticleId;
+        if (!customGroups.some(g => g.id === customGroupId)) {
+          customGroups.push({
+            id: customGroupId,
+            name: `📖 ${parsed.title || 'Mẩu chuyện nhớ từ'}`,
+            words: aiStorySelectedWords.map(w => ({
+              hanzi: w.hanzi,
+              pinyin: w.pinyin || '',
+              vietnamese: w.vietnamese || '',
+              pos: w.pos || ''
+            }))
+          });
+          localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+        }
+
         // Render Result View
         renderStoryResult(parsed, aiStorySelectedWords);
         showStoryView('result');
@@ -11667,9 +11739,6 @@ Yêu cầu BẮT BUỘC:
       const hanziEl = document.getElementById('aiStoryResultHanzi');
       const transEl = document.getElementById('aiStoryResultTrans');
       const transChevron = document.getElementById('aiStoryTransChevron');
-      const vocabCountEl = document.getElementById('aiStoryResultVocabCount');
-      const vocabGrid = document.getElementById('aiStoryResultVocabGrid');
-      const btnMarkDone = document.getElementById('btnStoryMarkDone');
 
       if (chTitleEl) chTitleEl.textContent = story.title || 'Mẩu chuyện ngắn';
       if (viTitleEl) viTitleEl.textContent = story.titleVi || '';
@@ -11696,30 +11765,6 @@ Yêu cầu BẮT BUỘC:
         hanziEl.innerHTML = html;
       }
 
-      if (vocabCountEl) vocabCountEl.textContent = String(targetWords.length);
-      if (vocabGrid) {
-        vocabGrid.innerHTML = '';
-        targetWords.forEach(w => {
-          const itemDiv = document.createElement('div');
-          itemDiv.className = 'ai-story-vocab-item';
-          itemDiv.innerHTML = `
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span class="ai-story-vocab-item-hanzi" onclick="handleStoryTargetWordClick('${escapeHtml(w.hanzi)}', '${escapeHtml(w.pinyin || '')}', '${escapeHtml(w.vietnamese || '')}')">${escapeHtml(w.hanzi)}</span>
-              <span style="font-size:12px; color:#766299; font-weight:600;">${escapeHtml(w.pinyin || '')}</span>
-              ${w.pos ? `<span style="font-size:10.5px; background:#f0ebf8; color:#6b21a8; padding:1px 5px; border-radius:4px;">${escapeHtml(w.pos)}</span>` : ''}
-            </div>
-            <div style="font-size:12px; color:#4b5563; text-align:right;">${escapeHtml(w.vietnamese || '')}</div>
-          `;
-          vocabGrid.appendChild(itemDiv);
-        });
-      }
-
-      if (btnMarkDone) {
-        btnMarkDone.textContent = `✓ Đã nhớ cả ${targetWords.length} từ`;
-        btnMarkDone.disabled = false;
-        btnMarkDone.style.opacity = '1';
-      }
-
       const btnNext = document.getElementById('btnStoryNextBatch');
       if (btnNext) {
         btnNext.style.display = aiStoryCurrentPool.length > 5 ? 'block' : 'none';
@@ -11740,7 +11785,7 @@ Yêu cầu BẮT BUỘC:
       if (chevron) chevron.textContent = isHidden ? '▴' : '▾';
     }
 
-    function playAiStoryAudio() {
+    async function playAiStoryAudio() {
       if (!aiStoryLastResult || !aiStoryLastResult.content) return;
       const btn = document.getElementById('btnPlayStoryAudio');
       if (aiStoryIsSpeaking) {
@@ -11748,17 +11793,133 @@ Yêu cầu BẮT BUỘC:
         return;
       }
 
+      const textToRead = (aiStoryLastResult.content || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|📖|📝/g, '').trim();
+      if (!textToRead) return;
+
+      const artId = aiStoryLastArticleId;
+
+      // 1. Check if persistent cached Loongjohn audio already exists
+      let cachedAudio = null;
+      if (artId) {
+        cachedAudio = await getQwenAudioPersistent(artId);
+        if (!cachedAudio) {
+          const art = readingArticles.find(a => String(a.id) === String(artId));
+          if (art && art.audioUrl) cachedAudio = art.audioUrl;
+        }
+      }
+
+      if (cachedAudio) {
+        playStoryQwenAudio(cachedAudio);
+        return;
+      }
+
+      // 2. If OpenRouter API key exists, generate Qwen Loongjohn TTS
+      const apiKey = localStorage.getItem('openrouter_api_key');
+      if (apiKey) {
+        if (btn) btn.textContent = '⏳ Đang tạo Loongjohn...';
+        showToast('🔊 Đang tạo giọng đọc Nam AI Qwen (loongjohn)...');
+
+        try {
+          let response = await fetch('https://openrouter.ai/api/v1/audio/speech', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'qwen/qwen-audio-3.0-tts-flash',
+              input: textToRead,
+              voice: 'loongjohn',
+              response_format: 'mp3'
+            })
+          });
+
+          if (!response.ok) {
+            response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                model: 'qwen/qwen-audio-3.0-tts-flash',
+                messages: [{ role: 'user', content: textToRead }],
+                modalities: ['text', 'audio'],
+                audio: { voice: 'loongjohn', format: 'mp3' }
+              })
+            });
+
+            if (response.ok) {
+              const resData = await response.json();
+              const base64Audio = resData.choices?.[0]?.message?.audio?.data;
+              if (base64Audio) {
+                const audioUrl = `data:audio/mp3;base64,${base64Audio}`;
+                if (artId) await saveQwenAudioPersistent(artId, audioUrl);
+                const art = readingArticles.find(a => String(a.id) === String(artId));
+                if (art) art.audioUrl = audioUrl;
+                playStoryQwenAudio(audioUrl);
+                return;
+              }
+            }
+          } else {
+            const blob = await response.blob();
+            if (artId) await saveQwenAudioPersistent(artId, blob);
+            const playUrl = artId ? await getQwenAudioPersistent(artId) : null;
+            const finalUrl = playUrl || URL.createObjectURL(blob);
+            const art = readingArticles.find(a => String(a.id) === String(artId));
+            if (art) art.audioUrl = finalUrl;
+            playStoryQwenAudio(finalUrl);
+            return;
+          }
+        } catch (apiErr) {
+          console.warn('AI Story Qwen TTS fetch warning, fallback to Web Speech:', apiErr);
+        }
+      }
+
+      // 3. Fallback to Web Speech
+      playStoryWebSpeechFallback(textToRead);
+    }
+
+    function playStoryQwenAudio(audioUrl) {
+      const btn = document.getElementById('btnPlayStoryAudio');
+      qwenAudioPlayer.src = audioUrl;
+      const speed = typeof getReadingAudioSpeed === 'function' ? getReadingAudioSpeed() : 1.0;
+      qwenAudioPlayer.playbackRate = speed;
+      aiStoryIsSpeaking = true;
+      if (btn) btn.textContent = '⏹ Dừng đọc';
+
+      qwenAudioPlayer.onended = () => {
+        stopAiStoryAudio();
+      };
+
+      qwenAudioPlayer.onerror = () => {
+        stopAiStoryAudio();
+      };
+
+      qwenAudioPlayer.play().catch(e => {
+        console.warn('qwenAudioPlayer play error:', e);
+        stopAiStoryAudio();
+      });
+    }
+
+    function playStoryWebSpeechFallback(textToRead) {
+      const btn = document.getElementById('btnPlayStoryAudio');
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        const utt = new SpeechSynthesisUtterance(aiStoryLastResult.content);
+        const utt = new SpeechSynthesisUtterance(textToRead);
         utt.lang = 'zh-CN';
         utt.rate = 0.88;
         utt.pitch = 1.0;
 
-        if (Array.isArray(window.chineseVoices) && window.chineseVoices.length > 0) {
-          const v = window.chineseVoices.find(x => x.name.includes('Xiaoxiao') || x.name.includes('Natural')) || window.chineseVoices[0];
-          if (v) utt.voice = v;
-        }
+        const voices = window.speechSynthesis.getVoices();
+        const maleVoice = voices.find(v => v.lang.startsWith('zh') && (
+          v.name.includes('Yunxi') ||
+          v.name.includes('Yunyang') ||
+          v.name.includes('Kangkang') ||
+          v.name.toLowerCase().includes('male')
+        )) || voices.find(v => v.lang.startsWith('zh'));
+
+        if (maleVoice) utt.voice = maleVoice;
 
         utt.onstart = () => {
           aiStoryIsSpeaking = true;
@@ -11774,39 +11935,21 @@ Yêu cầu BẮT BUỘC:
         window.speechSynthesis.speak(utt);
       } else {
         showToast('Trình duyệt không hỗ trợ phát âm.');
+        stopAiStoryAudio();
       }
     }
 
     function stopAiStoryAudio() {
       aiStoryIsSpeaking = false;
+      if (qwenAudioPlayer) {
+        qwenAudioPlayer.pause();
+        qwenAudioPlayer.currentTime = 0;
+      }
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
       const btn = document.getElementById('btnPlayStoryAudio');
       if (btn) btn.textContent = '🔊 Nghe đọc';
-    }
-
-    function markStoryWordsLearned() {
-      if (!aiStorySelectedWords || aiStorySelectedWords.length === 0) return;
-      const count = aiStorySelectedWords.length;
-      aiStorySelectedWords.forEach(w => {
-        const h = w.hanzi;
-        const cur = getWordStatus(h);
-        setWordStatus(h, 'correct');
-        srsOnTick(h, cur, 'correct', currentLevel === 'due' ? 'due' : 'group');
-      });
-
-      renderVocabList();
-      updateCounters();
-      srsUpdateBellBadge();
-
-      const btn = document.getElementById('btnStoryMarkDone');
-      if (btn) {
-        btn.textContent = '🎉 Đã đánh dấu thuộc!';
-        btn.disabled = true;
-        btn.style.opacity = '0.7';
-      }
-      showToast(`🎉 Đã đánh dấu thuộc ${count} từ vừa ôn!`);
     }
 
     function proceedToNextStoryBatch() {
@@ -11835,7 +11978,6 @@ Yêu cầu BẮT BUỘC:
       const btnStart = document.getElementById('btnStartGenerateStory');
       const btnAudio = document.getElementById('btnPlayStoryAudio');
       const btnTrans = document.getElementById('btnToggleStoryTrans');
-      const btnMarkDone = document.getElementById('btnStoryMarkDone');
       const btnReader = document.getElementById('btnStoryOpenReader');
       const btnNext = document.getElementById('btnStoryNextBatch');
       const btnBack = document.getElementById('btnStoryBackToSetup');
@@ -11862,7 +12004,6 @@ Yêu cầu BẮT BUỘC:
       if (btnStart) btnStart.addEventListener('click', generateAiStory);
       if (btnAudio) btnAudio.addEventListener('click', playAiStoryAudio);
       if (btnTrans) btnTrans.addEventListener('click', toggleStoryTrans);
-      if (btnMarkDone) btnMarkDone.addEventListener('click', markStoryWordsLearned);
       if (btnReader) btnReader.addEventListener('click', openGeneratedStoryInReader);
       if (btnNext) btnNext.addEventListener('click', proceedToNextStoryBatch);
       if (btnBack) btnBack.addEventListener('click', () => showStoryView('setup'));
