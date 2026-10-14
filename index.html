@@ -1694,6 +1694,82 @@
       display: block !important;
     }
 
+    /* Small purple dot above reading tokens that are in the user's Leech / Due / Wrong lists */
+    .reading-token .reading-memory-dot {
+      position: absolute;
+      top: -3.5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 5.5px;
+      height: 5.5px;
+      border-radius: 50%;
+      background: #8772a8;
+      box-shadow: 0 0 0 1.4px #ffffff, 0 1px 4px rgba(135, 114, 168, 0.55);
+      pointer-events: none;
+      z-index: 4;
+    }
+    .reading-token .reading-memory-dot.is-leech {
+      background: #9b51a8;
+      width: 6px;
+      height: 6px;
+      box-shadow: 0 0 0 1.4px #ffffff, 0 0 6px rgba(155, 81, 168, 0.7);
+    }
+
+    /* Column 1 Listen-Only Mode Chip (Cột 1: Chỉ Nghe 🔊) */
+    .listen-col-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .listen-col-chip {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 6px 13px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #f6f2fb 0%, #ede5f8 100%);
+      border: 1.3px dashed #c8b6e2;
+      color: #6b5691;
+      font-family: var(--font-mali);
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: transform 0.14s ease, background 0.15s ease, border-color 0.15s ease;
+      box-shadow: 0 1px 4px rgba(135, 114, 168, 0.08);
+    }
+    .listen-col-chip:active {
+      transform: scale(0.95);
+      background: #e5daf5;
+      border-color: #9b85c1;
+    }
+    .listen-col-py {
+      font-size: 11px;
+      color: #8772a8;
+      font-weight: 600;
+      line-height: 1.1;
+    }
+
+    /* Quick Upgrade HSK 7-9 Inline Card (inside aiModal & readingTokenDrawer) */
+    .quick-upgrade-box {
+      background: linear-gradient(135deg, #faf7fe 0%, #f3eef9 100%);
+      border: 1.4px solid #dfd3ef;
+      border-radius: 14px;
+      padding: 11px 13px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 10px rgba(135, 114, 168, 0.08);
+    }
+    .quick-upgrade-item {
+      background: #ffffff;
+      border: 1px solid #e7dff3;
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-top: 7px;
+    }
+
     /* ===== Settings Modal (purple card system) ===== */
     .st-group-label {
       font-size: 10.5px;
@@ -3697,6 +3773,10 @@
               <span style="width: 7px; height: 2.5px; background: #b08968; border-radius: 2px; display: inline-block; flex-shrink: 0;"></span>
               H7-9: <b id="statCountH79">0</b><span class="vocab-unit-text"> từ</span>
             </span>
+            <span id="statMemoryAlertBadge" style="display: none; font-size: 10px; font-weight: 700; color: #6b21a8; background: #f3eef9; border: 1px solid #d4c5e8; padding: 1.5px 5px; border-radius: 6px; align-items: center; gap: 3.5px; font-family: var(--font-mali); white-space: nowrap !important; flex-shrink: 0; cursor: pointer;" title="Từ Hay quên / Đang ôn của bạn xuất hiện trong bài (có chấm tím trên đầu chữ)">
+              <span style="width: 5.5px; height: 5.5px; background: #8772a8; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
+              Ôn: <b id="statCountMemory">0</b>
+            </span>
           </div>
           <div style="display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; flex-wrap: nowrap !important;">
             <button id="btnToggleReadingGloss" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0; white-space: nowrap !important;" title="Chạm để ẩn hoặc hiện nghĩa Tiếng Việt dưới các từ đã lưu (highlight)">
@@ -3734,10 +3814,17 @@
           </div>
           <button id="btnCloseTokenDrawer" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #9ca3af; flex-shrink: 0;">✕</button>
         </div>
-        <div id="drawerMeaning" style="font-size: 13.5px; color: #374151; margin-bottom: 10px; line-height: 1.4;"></div>
-        <button id="btnToggleWordInReviewList" class="primary-submit-btn" style="width: 100%; padding: 9px; font-size: 13px; font-weight: 700; border-radius: 12px;">
-          ➕ Thêm vào list ôn tập bài này
-        </button>
+        <div id="drawerMemoryAlertBanner" style="display: none; font-size: 11.5px; font-weight: 700; color: #6b21a8; background: #f3eef9; border: 1px solid #dfd3ef; padding: 4px 9px; border-radius: 8px; margin-bottom: 6px; font-family: var(--font-mali);"></div>
+        <div id="drawerMeaning" style="font-size: 13.5px; color: #374151; margin-bottom: 8px; line-height: 1.4;"></div>
+        <div id="drawerUpgradeContainer" style="max-height: 220px; overflow-y: auto;"></div>
+        <div style="display: flex; gap: 7px; align-items: center;">
+          <button id="btnToggleWordInReviewList" class="primary-submit-btn" style="flex: 1.35; padding: 9px 10px; font-size: 12.5px; font-weight: 700; border-radius: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            ➕ Thêm vào list ôn
+          </button>
+          <button id="btnDrawerQuickUpgrade" type="button" style="flex: 1; padding: 9px 10px; font-size: 12px; font-weight: 700; border-radius: 12px; background: #f3eef9; color: #766299; border: 1.3px solid #d4c5e8; cursor: pointer; font-family: var(--font-mali); white-space: nowrap; transition: all 0.15s ease;" title="Tìm từ nâng cấp HSK 7-9 & Thành ngữ 4 chữ tương đương">
+            🌟 Nâng cấp HSK 7-9
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -3866,6 +3953,8 @@
 
     let showPinyin = false;
     let hanziInCol1 = true;
+    let col1Mode = 'hanzi'; // 'hanzi' | 'vi' | 'listen'
+    let reviewPinnedSet = new Set();
     let autoSpeakOnTick = true;
     let alwaysShowCol2 = false;  // Default: Hide column 2 completely until ticked or tapped
     let tapHanziMode = 'speak';  // 'speak' or 'ai'
@@ -5881,6 +5970,7 @@
     function resetShuffleState() {
       isGroupShuffled = false;
       shuffledGroupWords = null;
+      if (typeof reviewPinnedSet !== 'undefined' && reviewPinnedSet) reviewPinnedSet.clear();
       const btn = document.getElementById('btnShuffleWords');
       const icon = document.getElementById('shuffleIcon');
       const label = document.getElementById('shuffleLabel');
@@ -7659,15 +7749,20 @@ Lưu ý quan trọng:
       aiModalBody.innerHTML = `
         <!-- Harmonious Word Identity Header Card -->
         <div class="ai-word-header-card" style="background: linear-gradient(135deg, #f7f3fb 0%, #ffffff 100%); border: 1.5px solid #dfd3ef; border-radius: 16px; padding: 13px 15px; margin-bottom: 12px; box-shadow: 0 3px 12px rgba(118, 98, 153, 0.07);">
-          <!-- Top row: Hanzi + Audio + Compare button (Nowrap guaranteed) -->
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <!-- Top row: Hanzi + Audio + Upgrade & Compare buttons -->
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;">
             <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; min-width: 0;">
               <span style="font-family: var(--font-hanzi); font-size: ${hanziFontSize}; font-weight: 800; color: #2a1b40; line-height: 1.15; letter-spacing: 0.5px; white-space: nowrap !important; word-break: keep-all !important; flex-shrink: 0;">${data.hanzi}</span>
               <button class="icon-action-btn" onclick="speakChinese('${data.hanzi}')" title="Phát âm từ này giọng Xiaoxiao" style="width: 32px; height: 32px; font-size: 15px; border-radius: 50%; background: #ede4f7; border: 1px solid #d8c7ee; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(118,98,153,0.15); flex-shrink: 0;">🔊</button>
             </div>
-            <button id="btnToggleCompareInput" style="background: #ffffff; border: 1.5px solid #dfd3ef; color: #766299; font-weight: 700; font-size: 11.5px; padding: 4px 10px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 4px rgba(118,98,153,0.08); flex-shrink: 0; font-family: var(--font-mali); transition: all 0.2s;" title="Chạm để nhập chữ Hán cần phân biệt">
-              <span>⚖️ Phân biệt từ</span>
-            </button>
+            <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
+              <button id="btnTriggerQuickUpgradeModal" type="button" style="background: #f3eef9; border: 1.5px solid #d4c5e8; color: #6b21a8; font-weight: 700; font-size: 11px; padding: 4px 9px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; gap: 3px; box-shadow: 0 1px 4px rgba(118,98,153,0.08); flex-shrink: 0; font-family: var(--font-mali); transition: all 0.2s;" title="Tìm từ nâng cấp HSK 7-9 & Thành ngữ 4 chữ tương đương">
+                <span>🌟 Nâng cấp</span>
+              </button>
+              <button id="btnToggleCompareInput" type="button" style="background: #ffffff; border: 1.5px solid #dfd3ef; color: #766299; font-weight: 700; font-size: 11px; padding: 4px 9px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; gap: 3px; box-shadow: 0 1px 4px rgba(118,98,153,0.08); flex-shrink: 0; font-family: var(--font-mali); transition: all 0.2s;" title="Chạm để nhập chữ Hán cần phân biệt">
+                <span>⚖️ Phân biệt</span>
+              </button>
+            </div>
           </div>
 
           <!-- Bottom row: Linguistic Metadata (Pinyin, Hán Việt, POS) -->
@@ -7690,6 +7785,7 @@ Lưu ý quan trọng:
         </div>
 
         <div id="compareResultContainer"></div>
+        <div id="aiModalQuickUpgradeContainer"></div>
 
         <div style="background: #f3eef9; padding: 12px 14px; border-radius: 14px; border: 1px solid #e2d8ef; margin-bottom: 14px;">
           <div style="font-size: 13px; font-weight: 700; color: #766299; margin-bottom: 4px; display:flex; align-items:center; gap:4px;">
@@ -7711,6 +7807,13 @@ Lưu ý quan trọng:
       `;
 
       resetModalScroll(aiModal);
+
+      const btnQuickUpgradeModal = document.getElementById('btnTriggerQuickUpgradeModal');
+      if (btnQuickUpgradeModal) {
+        btnQuickUpgradeModal.addEventListener('click', () => {
+          handleTriggerQuickUpgrade(data.hanzi, data.pinyin || '', data.meaning || '', 'aiModalQuickUpgradeContainer');
+        });
+      }
 
       const btnToggleCompare = document.getElementById('btnToggleCompareInput');
       const compareContainer = document.getElementById('compareInputContainer');
@@ -7807,6 +7910,243 @@ Lưu ý:
       }
     }
 
+    // ==========================================
+    // QUICK UPGRADE HSK 7-9 (Direct 1-Tap inside AI Modal & Reading Drawer)
+    // ==========================================
+    let aiQuickUpgradeCache = safeGetJSON('hsk_quick_upgrade_cache', {});
+
+    async function fetchQuickUpgradeData(hanzi, pinyin = '', meaning = '') {
+      const cleanH = toSimplified((hanzi || '').trim());
+      if (!cleanH) throw new Error('Từ vựng không hợp lệ');
+
+      const existingInStore = (upgradeList || []).find(w => w && w.hanzi === cleanH && w.upgrade1 && w.upgrade2);
+      if (existingInStore) {
+        aiQuickUpgradeCache[cleanH] = existingInStore;
+        return existingInStore;
+      }
+
+      if (aiQuickUpgradeCache[cleanH] && aiQuickUpgradeCache[cleanH].upgrade1 && aiQuickUpgradeCache[cleanH].upgrade2) {
+        return aiQuickUpgradeCache[cleanH];
+      }
+
+      const apiKey = localStorage.getItem('openrouter_api_key');
+      if (!apiKey) {
+        if (typeof apiKeyModal !== 'undefined' && apiKeyModal) apiKeyModal.classList.add('active');
+        throw new Error('Vui lòng nhập OpenRouter API Key!');
+      }
+
+      const prompt = `Bạn là chuyên gia ngôn ngữ & giáo viên tiếng Trung HSK 7-9 cao cấp. Hãy tìm cặp từ nâng cấp chuẩn xác nhất cho từ/cụm từ: "${cleanH}" (${pinyin ? `pinyin: ${pinyin}, ` : ''}${meaning ? `nghĩa: ${meaning}` : ''}).
+
+QUY TẮC NÂNG CẤP NGHIÊM NGẶT:
+1. Giữ nguyên 100% nét nghĩa cốt lõi, hướng nghĩa (tích cực/tiêu cực) và từ loại của "${cleanH}". Không chọn thành ngữ chỉ vì trùng 1 chữ Hán nếu lệch nghĩa.
+2. Dạng 1 (upgrade1): Từ 2-3 âm tiết văn viết cao cấp (书面语 / HSK 7-9) đồng nghĩa trực tiếp nhưng trang trọng, sắc sảo hơn (nếu "${cleanH}" vốn đã là từ cao cấp, hãy chọn từ đồng nghĩa văn nhã tương đương để mở rộng vốn từ).
+3. Dạng 2 (upgrade2): Thành ngữ 4 chữ (成语) đồng nghĩa sát nhất và hay gặp trong đề thi HSK cao cấp.
+
+Trả về đúng JSON thuần túy (không bọc markdown):
+{
+  "hanzi": "${cleanH}",
+  "pinyin": "${pinyin || 'pinyin có dấu thanh'}",
+  "vietnamese": "${meaning || 'nghĩa tiếng Việt ngắn gọn'}",
+  "explanation": "Giải thích ngắn gọn 1-2 câu sắc thái nâng cấp của Dạng 1 và Dạng 2 so với '${cleanH}'.",
+  "upgrade1": {
+    "hanzi": "Từ 2-3 âm tiết văn viết cao cấp",
+    "pinyin": "pinyin dạng 1",
+    "pos": "Văn viết (2-3 âm tiết)",
+    "vietnamese": "Nghĩa tiếng Việt Dạng 1",
+    "example": {
+      "hanzi": "Câu ví dụ ngắn gọn tự nhiên dùng từ Dạng 1",
+      "pinyin": "pinyin câu Dạng 1",
+      "vietnamese": "Dịch nghĩa câu Dạng 1"
+    }
+  },
+  "upgrade2": {
+    "hanzi": "Thành ngữ 4 chữ đồng nghĩa",
+    "pinyin": "pinyin dạng 2",
+    "pos": "Thành ngữ (4 chữ)",
+    "vietnamese": "Nghĩa tiếng Việt Dạng 2",
+    "example": {
+      "hanzi": "Câu ví dụ ngắn gọn tự nhiên dùng Thành ngữ Dạng 2",
+      "pinyin": "pinyin câu Dạng 2",
+      "vietnamese": "Dịch nghĩa câu Dạng 2"
+    }
+  },
+  "basicExample": {
+    "hanzi": "Câu ví dụ ngắn dùng từ gốc ${cleanH}",
+    "pinyin": "pinyin câu gốc",
+    "vietnamese": "Dịch nghĩa câu gốc"
+  }
+}`;
+
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.href,
+          'X-Title': 'HSK Vocab App'
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          reasoning: { max_tokens: 0 },
+          messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
+        })
+      });
+
+      if (!response.ok) throw new Error('Không thể kết nối AI nâng cấp từ');
+      const data = await response.json();
+      const contentStr = data.choices?.[0]?.message?.content || '{}';
+      const parsed = safeParseJSON(contentStr);
+      if (!parsed || !parsed.upgrade1) throw new Error('AI chưa trả về dữ liệu nâng cấp hợp lệ');
+
+      parsed.hanzi = cleanH;
+      aiQuickUpgradeCache[cleanH] = parsed;
+      try { localStorage.setItem('hsk_quick_upgrade_cache', JSON.stringify(aiQuickUpgradeCache)); } catch (e) {}
+      return parsed;
+    }
+
+    function renderQuickUpgradeCard(containerId, upData, baseHanzi) {
+      const container = document.getElementById(containerId);
+      if (!container || !upData) return;
+
+      const up1 = upData.upgrade1 || {};
+      const up2 = upData.upgrade2 || {};
+      const isSaved = (upgradeList || []).some(w => w && w.hanzi === baseHanzi);
+
+      const safeBaseH = String(baseHanzi || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const safeUp1H = String(up1.hanzi || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const safeUp2H = String(up2.hanzi || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const safeEx1H = String((up1.example && up1.example.hanzi) || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const safeEx2H = String((up2.example && up2.example.hanzi) || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+      container.innerHTML = `
+        <div class="quick-upgrade-box">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;">
+            <span style="font-size: 12.5px; font-weight: 800; color: #5e4b7e; font-family: var(--font-mali);">🌟 Nâng cấp vốn từ HSK 7-9: <b style="color: #6b21a8; font-family: var(--font-hanzi); font-size: 15px;">${escapeHtml(baseHanzi)}</b></span>
+            <button type="button" onclick="document.getElementById('${containerId}').innerHTML=''" style="background: none; border: none; color: #9ca3af; font-size: 14px; cursor: pointer; padding: 0 4px;">✕</button>
+          </div>
+          ${upData.explanation ? `<div style="font-size: 11.5px; color: #4b3b66; line-height: 1.45; margin-bottom: 6px;">💡 ${escapeHtml(upData.explanation)}</div>` : ''}
+
+          ${up1.hanzi ? `
+            <div class="quick-upgrade-item">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                <div style="cursor: pointer;" onclick="speakChinese('${safeUp1H}')">
+                  <span style="font-size: 11.5px; font-weight: 700; color: #766299;">🔹 Văn viết:</span>
+                  <b style="font-family: var(--font-hanzi); font-size: 16.5px; color: #5b3e85; margin-left: 3px;">${escapeHtml(up1.hanzi)}</b>
+                  <span style="font-size: 11.5px; color: #766299; font-weight: 600; margin-left: 3px;">(${escapeHtml(up1.pinyin || '')}) 🔊</span>
+                </div>
+              </div>
+              <div style="font-size: 12px; color: #374151; margin-top: 2px;"><b>Nghĩa:</b> ${escapeHtml(up1.vietnamese || '')}</div>
+              ${up1.example && up1.example.hanzi ? `
+                <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #ece5f6; font-size: 12.5px; color: #3c2e54; cursor: pointer;" onclick="speakChinese('${safeEx1H}')" title="Chạm nghe câu ví dụ">
+                  <span style="font-family: var(--font-hanzi); font-size: 14px; color: #2a1b40;">${escapeHtml(up1.example.hanzi)}</span>
+                  <div style="font-size: 11.5px; color: #6b7280; margin-top: 1px;">${escapeHtml(up1.example.vietnamese || '')}</div>
+                </div>
+              ` : ''}
+            </div>
+          ` : ''}
+
+          ${up2.hanzi ? `
+            <div class="quick-upgrade-item">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                <div style="cursor: pointer;" onclick="speakChinese('${safeUp2H}')">
+                  <span style="font-size: 11.5px; font-weight: 700; color: #8e5899;">🌟 Thành ngữ:</span>
+                  <b style="font-family: var(--font-hanzi); font-size: 16.5px; color: #793a85; margin-left: 3px;">${escapeHtml(up2.hanzi)}</b>
+                  <span style="font-size: 11.5px; color: #8e5899; font-weight: 600; margin-left: 3px;">(${escapeHtml(up2.pinyin || '')}) 🔊</span>
+                </div>
+              </div>
+              <div style="font-size: 12px; color: #374151; margin-top: 2px;"><b>Nghĩa:</b> ${escapeHtml(up2.vietnamese || '')}</div>
+              ${up2.example && up2.example.hanzi ? `
+                <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #ece5f6; font-size: 12.5px; color: #3c2e54; cursor: pointer;" onclick="speakChinese('${safeEx2H}')" title="Chạm nghe câu ví dụ">
+                  <span style="font-family: var(--font-hanzi); font-size: 14px; color: #2a1b40;">${escapeHtml(up2.example.hanzi)}</span>
+                  <div style="font-size: 11.5px; color: #6b7280; margin-top: 1px;">${escapeHtml(up2.example.vietnamese || '')}</div>
+                </div>
+              ` : ''}
+            </div>
+          ` : ''}
+
+          <button type="button" id="btnSaveQuickUpgrade_${containerId}" onclick="saveQuickUpgradeToList('${safeBaseH}', '${containerId}')" style="margin-top: 8px; width: 100%; padding: 8px 10px; font-size: 12px; font-weight: 700; border-radius: 10px; border: 1.2px solid ${isSaved ? '#d1d5db' : '#8772a8'}; background: ${isSaved ? '#f3f4f6' : 'linear-gradient(135deg, #9b86bd 0%, #7d669e 100%)'}; color: ${isSaved ? '#6b7280' : '#ffffff'}; cursor: pointer; font-family: var(--font-mali); transition: all 0.15s ease;">
+            ${isSaved ? '✓ Đã có trong kho Nâng cấp vốn từ' : '➕ Lưu vào kho Nâng cấp vốn từ'}
+          </button>
+        </div>
+      `;
+    }
+
+    async function handleTriggerQuickUpgrade(hanzi, pinyin, meaning, containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const cleanH = toSimplified((hanzi || '').trim());
+      if (!cleanH) return;
+
+      container.innerHTML = `
+        <div class="quick-upgrade-box" style="text-align: center; padding: 14px 10px;">
+          <div style="font-size: 12px; font-weight: 700; color: #766299; font-family: var(--font-mali);">⏳ AI đang tìm từ nâng cấp HSK 7-9 & Thành ngữ cho "${escapeHtml(cleanH)}"...</div>
+        </div>
+      `;
+
+      try {
+        const upData = await fetchQuickUpgradeData(cleanH, pinyin, meaning);
+        renderQuickUpgradeCard(containerId, upData, cleanH);
+      } catch (err) {
+        container.innerHTML = `
+          <div class="quick-upgrade-box" style="background: #fef2f2; border-color: #fecaca; color: #dc2626; font-size: 12px;">
+            <b>❌ Không thể tải từ nâng cấp:</b> ${escapeHtml(err.message || 'Lỗi kết nối')}
+          </div>
+        `;
+      }
+    }
+    window.handleTriggerQuickUpgrade = handleTriggerQuickUpgrade;
+
+    function saveQuickUpgradeToList(baseHanzi, containerId) {
+      const cleanH = toSimplified((baseHanzi || '').trim());
+      const upData = aiQuickUpgradeCache[cleanH];
+      if (!upData) return;
+
+      if ((upgradeList || []).some(w => w && w.hanzi === cleanH)) {
+        showToast(`✨ Từ "${cleanH}" đã có trong kho Nâng cấp vốn từ!`);
+        return;
+      }
+
+      const up1 = upData.upgrade1 || {};
+      const up2 = upData.upgrade2 || {};
+      const upgradedHanzi = up2.hanzi ? `${up1.hanzi || ''} | ${up2.hanzi}` : (up1.hanzi || '');
+      const upgradedPinyin = up2.pinyin ? `${up1.pinyin || ''} | ${up2.pinyin}` : (up1.pinyin || '');
+      const upgradedVi = up2.vietnamese ? `${up1.vietnamese || ''} | ${up2.vietnamese}` : (up1.vietnamese || '');
+
+      const newItem = {
+        id: `upgrade_${Date.now()}`,
+        hanzi: cleanH,
+        pinyin: upData.pinyin || cleanH,
+        vietnamese: upData.vietnamese || '',
+        upgradedHanzi,
+        upgradedPinyin,
+        upgradedPos: '',
+        upgradedVi,
+        upgrade1: up1.hanzi ? up1 : null,
+        upgrade2: up2.hanzi ? up2 : null,
+        explanation: upData.explanation || '',
+        basicExample: upData.basicExample || { hanzi: cleanH, pinyin: '', vietnamese: '' },
+        upgradedExample: (up1 && up1.example) ? up1.example : { hanzi: upgradedHanzi, pinyin: '', vietnamese: '' },
+        level: 'upgrade'
+      };
+
+      upgradeList.push(newItem);
+      localStorage.setItem('hsk_upgrade_words', JSON.stringify(upgradeList));
+      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+
+      updateCustomLevelTabCount();
+      renderUpgradeGroupWords();
+      if (currentLevel === 'upgrade') {
+        updateGroupWordsState();
+        renderGroupDropdown();
+        renderVocabList(true);
+      }
+
+      renderQuickUpgradeCard(containerId, upData, cleanH);
+      showToast(`🌟 Đã lưu "${cleanH} ➔ ${upgradedHanzi}" vào mục Nâng cấp vốn từ!`);
+    }
+    window.saveQuickUpgradeToList = saveQuickUpgradeToList;
+
     // Helper function to build row HTML content string
     function buildRowContent(item) {
       const status = getWordStatus(item.hanzi);
@@ -7865,8 +8205,22 @@ Lưu ý:
           </div>
         `;
 
-        col1HTML = `<div class="col-main">${basicBlock}</div>`;
-        col2HTML = `<div class="col-main">${isCol2Visible ? upgradedBlock : blankBlockUpgrade}</div>`;
+        if (col1Mode === 'listen' && !isCol2Visible) {
+          const listenUpgradeBlock = `
+            <div class="listen-col-wrap">
+              <button type="button" class="listen-col-chip" onclick="event.stopPropagation(); speakChinese('${safeHanzi}')" title="Chạm để nghe phát âm từ gốc">
+                ${showPinyin && item.pinyin ? `<span class="listen-col-py">${escapeHtml(item.pinyin)}</span>` : ''}
+                <span>🔊 Chạm nghe</span>
+              </button>
+              ${levelBadgeHTML}
+            </div>
+          `;
+          col1HTML = `<div class="col-main">${listenUpgradeBlock}</div>`;
+          col2HTML = `<div class="col-main">${blankBlockUpgrade}</div>`;
+        } else {
+          col1HTML = `<div class="col-main">${basicBlock}</div>`;
+          col2HTML = `<div class="col-main">${isCol2Visible ? upgradedBlock : blankBlockUpgrade}</div>`;
+        }
       } else {
         const srsDot = srsLevelDotHTML(item.hanzi);
         const hanziBlock = `
@@ -7884,7 +8238,25 @@ Lưu ý:
           <div class="col-empty-blank" onclick="toggleRevealItem('${safeId}', event)"></div>
         `;
 
-        if (hanziInCol1) {
+        if (col1Mode === 'listen') {
+          if (isCol2Visible) {
+            col1HTML = `<div class="col-main">${hanziBlock}</div>`;
+            col2HTML = `<div class="col-main">${vietnameseBlock}</div>`;
+          } else {
+            const listenBlock = `
+              <div class="listen-col-wrap">
+                ${srsDot}
+                <button type="button" class="listen-col-chip" onclick="event.stopPropagation(); speakChinese('${safeHanzi}')" title="Chạm để nghe phát âm giọng Xiaoxiao">
+                  ${showPinyin && item.pinyin ? `<span class="listen-col-py">${escapeHtml(item.pinyin)}</span>` : ''}
+                  <span>🔊 Chạm nghe</span>
+                </button>
+                ${levelBadgeHTML}
+              </div>
+            `;
+            col1HTML = `<div class="col-main">${listenBlock}</div>`;
+            col2HTML = `<div class="col-main">${blankBlock}</div>`;
+          }
+        } else if (col1Mode === 'hanzi') {
           col1HTML = `<div class="col-main">${hanziBlock}</div>`;
           col2HTML = `<div class="col-main">${isCol2Visible ? vietnameseBlock : blankBlock}</div>`;
         } else {
@@ -7972,7 +8344,7 @@ Lưu ý:
         if (currentSearchQuery) return true; // Khi tìm kiếm từ, luôn hiển thị toàn bộ kết quả tìm được, không bị tab 学新/复习 chặn
         const status = getWordStatus(item.hanzi);
         if (activeTab === 'new') return status === null;
-        if (activeTab === 'review') return status === 'wrong';
+        if (activeTab === 'review') return status === 'wrong' || reviewPinnedSet.has(item.hanzi);
         return true;
       });
 
@@ -8018,7 +8390,7 @@ Lưu ý:
           <div class="srs-banner">
             <div class="srs-banner-main">
               <div class="srs-banner-title" style="white-space: nowrap;">✕ Từ chưa thuộc trong nhóm</div>
-              <div class="srs-banner-sub"><b id="reviewBannerWrongCount">${filteredData.length}</b> từ đánh dấu ✕</div>
+              <div class="srs-banner-sub"><b id="reviewBannerWrongCount">${filteredData.length}</b> từ đang ôn lại</div>
             </div>
             <div class="srs-banner-actions">
               <button type="button" class="srs-mini-btn srs-story-btn" onclick="openAiStoryModal('review')">📝 Tạo bài (${pickCount})</button>
@@ -8137,6 +8509,10 @@ Lưu ý:
         }
       }
 
+      if (updatedStatus === 'correct' && reviewPinnedSet.has(hanzi)) {
+        reviewPinnedSet.delete(hanzi);
+      }
+
       // Smart review scheduling (upgrade group is self-managed → skipped)
       const markItem = groupWordsState.find(v => v.hanzi === hanzi);
       const isUpgradeMark = (markItem && markItem.level === 'upgrade') || (!currentSearchQuery && currentLevel === 'upgrade');
@@ -8146,14 +8522,14 @@ Lưu ý:
 
       // Update state item revealed flag
       const item = groupWordsState.find(v => v.hanzi === hanzi);
-      if (item) item.revealed = true;
+      if (item) item.revealed = updatedStatus !== null;
 
       const safeSelector = CSS && CSS.escape ? CSS.escape(hanzi) : hanzi.replace(/"/g, '\\"');
       const targetRow = vocabListEl.querySelector(`.vocab-item[data-hanzi="${safeSelector}"]`);
 
       const belongsInTab = Boolean(currentSearchQuery) || (activeTab === 'all') ||
                            (activeTab === 'new' && updatedStatus === null) ||
-                           (activeTab === 'review' && updatedStatus === 'wrong');
+                           (activeTab === 'review' && (updatedStatus === 'wrong' || reviewPinnedSet.has(hanzi)));
 
       if (targetRow && item) {
         if (belongsInTab) {
@@ -8185,6 +8561,7 @@ Lưu ý:
 
       const correctCount = groupWords.filter(v => getWordStatus(v.hanzi) === 'correct').length;
       const wrongCount = groupWords.filter(v => getWordStatus(v.hanzi) === 'wrong').length;
+      const reviewTabCount = groupWords.filter(v => getWordStatus(v.hanzi) === 'wrong' || reviewPinnedSet.has(v.hanzi)).length;
       const newCount = groupWords.filter(v => getWordStatus(v.hanzi) === null).length;
       const totalCount = groupWords.length;
 
@@ -8193,7 +8570,10 @@ Lưu ý:
 
       countTabAll.textContent = totalCount;
       countTabNew.textContent = newCount;
-      countTabReview.textContent = wrongCount;
+      countTabReview.textContent = reviewTabCount;
+
+      const bannerWrongEl = document.getElementById('reviewBannerWrongCount');
+      if (bannerWrongEl) bannerWrongEl.textContent = reviewTabCount;
 
       if (typeof updateFilterDropdownLabel === 'function') {
         updateFilterDropdownLabel();
@@ -10765,6 +11145,60 @@ ${chunkText}
       }
     }
 
+    // Detect if a reading token belongs to user's Leech (Hay quên), Wrong (✕), or Due Today (Ôn hôm nay) lists
+    function getReadingTokenMemoryAlert(hanzi) {
+      if (!hanzi) return null;
+      const t = typeof srsToday === 'function' ? srsToday() : 0;
+
+      const checkSingle = (w) => {
+        if (!w) return null;
+        const r = typeof srsGet === 'function' ? srsGet(w) : null;
+        if (r && (r.x || 0) >= SRS_LEECH_LAPSES) {
+          return {
+            type: 'leech',
+            word: w,
+            dotClass: 'leech-dot',
+            shortTitle: `😵 Hay quên (${w}: quên ${r.x} lần)`,
+            bannerText: `😵 Từ "<b>${escapeHtml(w)}</b>" nằm trong mục <b>Hay quên</b> (đã quên ${r.x} lần) — nay lại bắt gặp trong bài đọc này!`
+          };
+        }
+        const isWrong = (userProgress && userProgress[w] === 'wrong') || (typeof srsSession !== 'undefined' && srsSession && srsSession.ticks && srsSession.ticks[w] === 'wrong');
+        if (isWrong) {
+          return {
+            type: 'wrong',
+            word: w,
+            dotClass: 'leech-dot',
+            shortTitle: `✕ Đang ôn lại (${w}: vừa bấm quên)`,
+            bannerText: `🎯 Từ "<b>${escapeHtml(w)}</b>" bạn đang đánh dấu <b>Chưa thuộc (✕)</b> — nay xuất hiện trong ngữ cảnh bài đọc này!`
+          };
+        }
+        if (r && r.d <= t && (!srsSession || !srsSession.ticks || srsSession.ticks[w] !== 'correct')) {
+          return {
+            type: 'due',
+            word: w,
+            dotClass: '',
+            shortTitle: `🔔 Ôn hôm nay (${w})`,
+            bannerText: `🔔 Từ "<b>${escapeHtml(w)}</b>" nằm trong danh sách <b>Ôn hôm nay</b> của bạn — gặp lại ngay trong bài đọc này!`
+          };
+        }
+        return null;
+      };
+
+      const direct = checkSingle(hanzi);
+      if (direct) return direct;
+
+      if (hanzi.length > 2 && typeof segmentTokenForHsk === 'function') {
+        const segs = segmentTokenForHsk(hanzi);
+        for (const s of segs) {
+          if (s && s.text && s.text.length >= 2) {
+            const sub = checkSingle(s.text);
+            if (sub) return sub;
+          }
+        }
+      }
+      return null;
+    }
+
     // Render interactive HTML passage content with 2-character Chinese paragraph indentation & paragraph translation toggles
     function renderReadingPassageContent(art) {
       if (!readingPassageContainer) return;
@@ -10773,6 +11207,7 @@ ${chunkText}
       const selectedMeaningMap = new Map((art.selectedWords || []).map(w => [w.hanzi, w.vietnamese || '']));
       const customGroup = customGroups.find(g => g.id === 'custom_' + art.id);
       const customGroupWordMap = new Map((customGroup && customGroup.words ? customGroup.words : []).map(w => [w.hanzi, w.vietnamese || '']));
+      const memoryAlertWordsSet = new Set();
 
       function resolveTokenMeaning(tok) {
         if (selectedMeaningMap.has(tok.hanzi) && selectedMeaningMap.get(tok.hanzi)) {
@@ -10839,6 +11274,12 @@ ${chunkText}
         const tinyAudioBtnHTML = `<button class="tiny-para-audio-btn" data-pidx="${pIdx}" id="btnParaAudio_${pIdx}" title="Chạm: Đọc riêng đoạn này | Giữ 0.5s: Đọc tiếp từ đoạn này đến hết">${purpleSpeakerSVG}</button>`;
 
         if (isToggledVi) {
+          (para.tokens || []).forEach(tok => {
+            if (tok && tok.isVocab && tok.hanzi) {
+              const memAlert = getReadingTokenMemoryAlert(tok.hanzi);
+              if (memAlert) memoryAlertWordsSet.add(memAlert.word || tok.hanzi);
+            }
+          });
           const viText = para.vietnamese || 'Đoạn này chưa có bản dịch.';
           return `
             <div style="margin-bottom: 14px; line-height: 1.6;">
@@ -10872,7 +11313,16 @@ ${chunkText}
             const shortMeaning = getShortGloss(rawMeaning);
             const glossHTML = shortMeaning ? `<span class="token-vi-gloss">${shortMeaning}</span>` : '';
 
-            return `<span class="reading-token ${selectedClass}" data-index="${globalIdx}" data-hanzi="${tok.hanzi}" title="${tok.hanzi}${hskTitle}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)"><span class="token-text">${innerHTML}</span>${glossHTML}</span>`;
+            const memAlert = getReadingTokenMemoryAlert(tok.hanzi);
+            let memDotHTML = '';
+            let memTitleSuffix = '';
+            if (memAlert) {
+              memoryAlertWordsSet.add(memAlert.word || tok.hanzi);
+              memDotHTML = `<span class="reading-memory-dot ${memAlert.dotClass || ''}" title="${escapeHtml(memAlert.shortTitle)}"></span>`;
+              memTitleSuffix = ` · ${memAlert.shortTitle}`;
+            }
+
+            return `<span class="reading-token ${selectedClass}" data-index="${globalIdx}" data-hanzi="${tok.hanzi}" title="${tok.hanzi}${hskTitle}${memTitleSuffix}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)"><span class="token-text">${innerHTML}</span>${memDotHTML}${glossHTML}</span>`;
           }).join('');
 
           return `
@@ -10953,13 +11403,28 @@ ${chunkText}
         }
       }
 
-      // Update Vocabulary Statistics Tag Bar (H6 奶绿 & H7-9 奶棕 counts)
+      // Update Vocabulary Statistics Tag Bar (H6 奶绿 & H7-9 奶棕 & Memory Alert counts)
       const stats = getArticleHskVocabStats(art);
       const statCountH6El = document.getElementById('statCountH6');
       const statCountH79El = document.getElementById('statCountH79');
+      const statMemoryBadgeEl = document.getElementById('statMemoryAlertBadge');
+      const statCountMemoryEl = document.getElementById('statCountMemory');
 
       if (statCountH6El) statCountH6El.textContent = stats.h6Count;
       if (statCountH79El) statCountH79El.textContent = stats.h79Count;
+      if (statMemoryBadgeEl && statCountMemoryEl) {
+        const memCount = memoryAlertWordsSet.size;
+        statCountMemoryEl.textContent = memCount;
+        statMemoryBadgeEl.style.display = memCount > 0 ? 'inline-flex' : 'none';
+        if (memCount > 0) {
+          const listStr = Array.from(memoryAlertWordsSet).join(', ');
+          statMemoryBadgeEl.title = `Bắt gặp ${memCount} từ đang ôn / hay quên trong bài này: ${listStr}`;
+          statMemoryBadgeEl.onclick = () => {
+            showToast(`🟣 Bài này có ${memCount} từ Hay quên / Đang ôn: ${listStr}`);
+          };
+          statMemoryBadgeEl.style.cursor = 'pointer';
+        }
+      }
 
       updateReadingGlossToggleUI();
       updateReadingUnderlinesToggleUI();
@@ -11160,6 +11625,32 @@ ${chunkText}
       drawerMeaning.textContent = resolvedMeaning ? `Nghĩa: ${resolvedMeaning}` : 'Chạm vào chữ Hán để tra cứu chi tiết AI';
       btnSpeakDrawerWord.onclick = () => speakChinese(tok.hanzi);
       drawerHanzi.onclick = () => openAiExplainModal(tok.hanzi, resolvedPinyin);
+
+      // Memory Alert Banner (Leech / Wrong / Due today)
+      const drawerMemBanner = document.getElementById('drawerMemoryAlertBanner');
+      if (drawerMemBanner) {
+        const memAlert = getReadingTokenMemoryAlert(tok.hanzi);
+        if (memAlert) {
+          drawerMemBanner.innerHTML = memAlert.bannerText;
+          drawerMemBanner.style.display = 'block';
+        } else {
+          drawerMemBanner.style.display = 'none';
+          drawerMemBanner.innerHTML = '';
+        }
+      }
+
+      // Reset & wire Quick Upgrade HSK 7-9 inside Reading Drawer
+      const drawerUpgradeBox = document.getElementById('drawerUpgradeContainer');
+      if (drawerUpgradeBox) {
+        drawerUpgradeBox.style.display = 'none';
+        drawerUpgradeBox.innerHTML = '';
+      }
+      const btnDrawerUpgrade = document.getElementById('btnDrawerQuickUpgrade');
+      if (btnDrawerUpgrade) {
+        btnDrawerUpgrade.onclick = () => {
+          handleTriggerQuickUpgrade(tok.hanzi, resolvedPinyin, resolvedMeaning, 'drawerUpgradeContainer', 'btnDrawerQuickUpgrade');
+        };
+      }
 
       updateDrawerButtonState(isSelected);
 
@@ -12901,6 +13392,7 @@ Yêu cầu quan trọng:
           document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
           tab.classList.add('active');
           activeTab = tab.getAttribute('data-tab');
+          if (typeof reviewPinnedSet !== 'undefined' && reviewPinnedSet) reviewPinnedSet.clear();
           const filterContainer = document.getElementById('filterDropdownContainer');
           if (filterContainer) filterContainer.classList.remove('open');
           updateFilterDropdownLabel();
@@ -12918,12 +13410,31 @@ Yêu cầu quan trọng:
         renderVocabList(true);
       });
 
-      // Swap Columns Toggle
+      // Swap Columns Toggle (3 modes: hanzi -> vi -> listen -> hanzi)
       btnSwapColumns.addEventListener('click', () => {
-        hanziInCol1 = !hanziInCol1;
-        btnSwapColumns.classList.toggle('active', !hanziInCol1);
-        swapLabel.textContent = hanziInCol1 ? 'cột 1: chữ Hán' : 'cột 1: tiếng Việt';
-        showToast(hanziInCol1 ? '⇄ Cột 1: Chữ Hán' : '⇄ Cột 1: Tiếng Việt');
+        if (col1Mode === 'hanzi') col1Mode = 'vi';
+        else if (col1Mode === 'vi') col1Mode = 'listen';
+        else col1Mode = 'hanzi';
+
+        hanziInCol1 = (col1Mode !== 'vi');
+        btnSwapColumns.classList.toggle('active', col1Mode !== 'hanzi');
+        const swapIconEl = document.getElementById('swapIcon');
+        if (col1Mode === 'hanzi') {
+          if (swapIconEl) swapIconEl.textContent = '⇄';
+          swapLabel.textContent = 'cột 1: chữ Hán';
+          showToast('⇄ Cột 1: Chữ Hán');
+        } else if (col1Mode === 'vi') {
+          if (swapIconEl) swapIconEl.textContent = '⇄';
+          swapLabel.textContent = 'cột 1: tiếng Việt';
+          showToast('⇄ Cột 1: Tiếng Việt');
+        } else {
+          if (swapIconEl) swapIconEl.textContent = '🎧';
+          swapLabel.textContent = 'cột 1: chỉ nghe 🔊';
+          groupWordsState.forEach(v => {
+            if (!getWordStatus(v.hanzi)) v.revealed = false;
+          });
+          showToast('🎧 Cột 1: Chỉ Nghe 🔊 (Ẩn chữ Hán)');
+        }
         renderVocabList(true);
       });
 
@@ -12956,18 +13467,45 @@ Yêu cầu quan trọng:
         });
       }
 
-      // Reset Current Group Progress
+      // Reset Currently Visible Words Progress
       btnReset.addEventListener('click', () => {
-        clearVocabSearch(false);
-        const groupWords = getGroupWordsRaw();
-        groupWords.forEach(v => {
-          setWordStatus(v.hanzi, null);
+        const visibleWords = groupWordsState.filter(item => {
+          if (currentSearchQuery) return true;
+          const status = getWordStatus(item.hanzi);
+          if (activeTab === 'new') return status === null;
+          if (activeTab === 'review') return status === 'wrong' || reviewPinnedSet.has(item.hanzi);
+          return true;
         });
-        resetShuffleState();
+
+        if (visibleWords.length === 0) {
+          showToast('Không có từ nào đang hiển thị để đặt lại!');
+          return;
+        }
+
+        const isReviewTab = !currentSearchQuery && activeTab === 'review';
+        if (isReviewTab) {
+          visibleWords.forEach(v => reviewPinnedSet.add(v.hanzi));
+        }
+
+        const visibleSet = new Set(visibleWords.map(v => v.hanzi));
+        visibleWords.forEach(v => {
+          setWordStatus(v.hanzi, null);
+          v.revealed = false;
+        });
+
+        if (shuffledGroupWords && Array.isArray(shuffledGroupWords)) {
+          shuffledGroupWords.forEach(v => {
+            if (visibleSet.has(v.hanzi)) v.revealed = false;
+          });
+        }
+
         updateGroupWordsState();
+        groupWordsState.forEach(v => {
+          if (visibleSet.has(v.hanzi)) v.revealed = false;
+        });
         renderGroupDropdown();
-        renderVocabList();
-        showToast('Đã đặt lại tiến độ nhóm hiện tại!');
+        renderVocabList(true);
+        showToast(`🔄 Đã đặt lại tick của ${visibleWords.length} từ đang hiển thị!`);
       });
 
       // Submit / Restart Group
