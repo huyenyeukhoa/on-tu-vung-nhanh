@@ -5720,6 +5720,13 @@
       const q = rawQuery.trim().toLowerCase();
       if (!q) return [];
       const qNormalized = q.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ü/g, 'v');
+      const qNoSpace = qNormalized.replace(/\s+/g, '');
+      const tokens = rawQuery.split(/[,，;；\s\n\t]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
+
+      // Ensure dictionary data is initialized
+      if ((!hsk6List || hsk6List.length === 0) && typeof initDictionaryData === 'function') {
+        initDictionaryData();
+      }
 
       const seenHanzi = new Set();
       const pool = [];
@@ -5778,7 +5785,6 @@
       }
 
       const results = [];
-      const qNoSpace = qNormalized.replace(/\s+/g, '');
 
       for (const item of pool) {
         const h = item.hanzi.toLowerCase();
@@ -5790,6 +5796,7 @@
         const upH = (item.upgradedHanzi || '').toLowerCase();
 
         let score = 0;
+        // Exact / prefix / substring match for full query
         if (h === q || upH === q) {
           score = 100; // Exact Hanzi
         } else if (h.startsWith(q) || upH.startsWith(q)) {
@@ -5804,6 +5811,29 @@
           score = 30;  // Pinyin contains
         } else if (viNorm.includes(qNormalized)) {
           score = 20;  // Vietnamese contains
+        }
+
+        // Token match for multi-term queries (e.g. "夫人，招生", "夫人 招生", "夫人, 招生")
+        if (tokens.length > 1) {
+          for (const tok of tokens) {
+            const tokNorm = tok.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ü/g, 'v');
+            const tokNoSpace = tokNorm.replace(/\s+/g, '');
+            if (h === tok || upH === tok) {
+              score = Math.max(score, 100);
+            } else if (h.startsWith(tok) || upH.startsWith(tok)) {
+              score = Math.max(score, 80);
+            } else if (h.includes(tok) || upH.includes(tok)) {
+              score = Math.max(score, 60);
+            } else if (pyNoSpace === tokNoSpace) {
+              score = Math.max(score, 50);
+            } else if (pyNorm.startsWith(tokNorm) || pyNoSpace.startsWith(tokNoSpace)) {
+              score = Math.max(score, 40);
+            } else if (pyNorm.includes(tokNorm) || pyNoSpace.includes(tokNoSpace)) {
+              score = Math.max(score, 30);
+            } else if (viNorm.includes(tokNorm)) {
+              score = Math.max(score, 20);
+            }
+          }
         }
 
         if (score > 0) {
@@ -7694,6 +7724,7 @@ Lưu ý:
       }
 
       const filteredData = groupWordsState.filter(item => {
+        if (currentSearchQuery) return true; // Khi tìm kiếm từ, luôn hiển thị toàn bộ kết quả tìm được, không bị tab 学新/复习 chặn
         const status = getWordStatus(item.hanzi);
         if (activeTab === 'new') return status === null;
         if (activeTab === 'review') return status === 'wrong';
@@ -7861,7 +7892,7 @@ Lưu ý:
       const safeSelector = CSS && CSS.escape ? CSS.escape(hanzi) : hanzi.replace(/"/g, '\\"');
       const targetRow = vocabListEl.querySelector(`.vocab-item[data-hanzi="${safeSelector}"]`);
 
-      const belongsInTab = (activeTab === 'all') ||
+      const belongsInTab = Boolean(currentSearchQuery) || (activeTab === 'all') ||
                            (activeTab === 'new' && updatedStatus === null) ||
                            (activeTab === 'review' && updatedStatus === 'wrong');
 
@@ -10859,6 +10890,16 @@ ${chunkText}
           const val = e.target.value;
           if (val && val.length > 0) {
             if (btnVocabSearchClear) btnVocabSearchClear.classList.add('visible');
+            if (activeTab !== 'all') {
+              activeTab = 'all';
+              saveCurrentState();
+              document.querySelectorAll('.tab-item').forEach(t => {
+                t.classList.toggle('active', t.getAttribute('data-tab') === 'all');
+              });
+              if (typeof updateFilterDropdownLabel === 'function') {
+                updateFilterDropdownLabel();
+              }
+            }
           } else {
             if (btnVocabSearchClear) btnVocabSearchClear.classList.remove('visible');
           }
@@ -10870,6 +10911,22 @@ ${chunkText}
             renderGroupDropdown();
             renderVocabList();
           }, 100);
+        });
+
+        vocabSearchInput.addEventListener('focus', () => {
+          if (vocabSearchInput.value && vocabSearchInput.value.trim().length > 0) {
+            if (activeTab !== 'all') {
+              activeTab = 'all';
+              saveCurrentState();
+              document.querySelectorAll('.tab-item').forEach(t => {
+                t.classList.toggle('active', t.getAttribute('data-tab') === 'all');
+              });
+              if (typeof updateFilterDropdownLabel === 'function') {
+                updateFilterDropdownLabel();
+              }
+              renderVocabList();
+            }
+          }
         });
 
         vocabSearchInput.addEventListener('keydown', (e) => {
