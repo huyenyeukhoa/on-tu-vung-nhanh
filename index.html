@@ -459,6 +459,110 @@
       gap: 3px;
     }
 
+    /* Compact Search Box on Far Right of Study Bar */
+    .compact-search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+      height: 34px;
+      flex: 0 0 76px;
+      min-width: 62px;
+      max-width: 115px;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1.5px solid rgba(226, 216, 239, 0.95);
+      border-radius: 10px;
+      padding: 0 18px 0 22px;
+      box-shadow: 0 1.5px 5px rgba(135, 114, 168, 0.10);
+      transition: flex 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+
+    .compact-search-box:focus-within {
+      border-color: #8772a8;
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(135, 114, 168, 0.22);
+      flex: 0 0 98px;
+    }
+
+    .compact-search-icon {
+      position: absolute;
+      left: 6px;
+      font-size: 11px;
+      color: #8772a8;
+      pointer-events: none;
+      opacity: 0.85;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .compact-search-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: var(--font-mali);
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #374151;
+      padding: 0;
+      margin: 0;
+      min-width: 0;
+    }
+
+    .compact-search-input::placeholder {
+      color: #a38ebe;
+      font-weight: 500;
+      font-size: 10.5px;
+    }
+
+    .compact-search-clear {
+      position: absolute;
+      right: 4px;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      border: none;
+      background: #e2d8ef;
+      color: #5c4b79;
+      font-size: 9px;
+      font-weight: 700;
+      line-height: 1;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    .compact-search-clear:active {
+      transform: scale(0.9);
+      background: #d4c5e8;
+    }
+
+    .compact-search-clear.visible {
+      display: flex;
+    }
+
+    .search-level-badge {
+      display: inline-block;
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 6px;
+      background: #f3eef9;
+      color: #766299;
+      border: 1px solid #d4c5e8;
+      margin-left: 6px;
+      vertical-align: middle;
+      line-height: 1.3;
+      white-space: nowrap;
+    }
+
     /* Level Selector Tabs */
     .level-tabs {
       display: flex;
@@ -2878,13 +2982,11 @@
 
       <!-- 2. Group Navigation Bar -->
       <div class="group-bar compact-group-bar" id="groupBar">
-        <button class="group-nav-btn" id="btnPrevGroup" title="Nhóm trước">‹</button>
         <div class="custom-group-select-btn" id="btnCustomGroupSelect" title="Chọn nhóm ôn tập">
           <span id="customGroupSelectText" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1 1 auto;">Nhóm 1 (1 - 100 từ)</span>
           <span class="select-arrow" style="font-size: 9px; margin-left: 3px;">▼</span>
         </div>
         <select class="group-select" id="selectGroup" style="display:none;"></select>
-        <button class="group-nav-btn" id="btnNextGroup" title="Nhóm sau">›</button>
       </div>
 
       <!-- 3. Category Filter Dropdown -->
@@ -2909,6 +3011,13 @@
             <span id="countTabReview" style="display:none;">0</span>
           </div>
         </div>
+      </div>
+
+      <!-- 4. Compact Vocabulary Search Box (Far Right) -->
+      <div class="compact-search-box" id="vocabSearchContainer" title="Tìm nhanh từ vựng trong toàn bộ kho dữ liệu">
+        <span class="compact-search-icon">🔍</span>
+        <input type="text" class="compact-search-input" id="vocabSearchInput" placeholder="Tìm Hán tự..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <button type="button" class="compact-search-clear" id="btnVocabSearchClear" title="Xóa tìm kiếm">✕</button>
       </div>
     </div>
 
@@ -3576,6 +3685,7 @@
     let isPanelCollapsed = false;
     let xiaoxiaoVoice = null;
     let currentAiWord = null;
+    let currentSearchQuery = '';
 
     // Default Initial Sample Upgrade Words (Supports BOTH Form 1: 2-syllable & Form 2: 4-syllable idiom)
     const defaultUpgradeWords = [
@@ -3817,6 +3927,9 @@
     const selectGroupEl = document.getElementById('selectGroup');
     const btnPrevGroup = document.getElementById('btnPrevGroup');
     const btnNextGroup = document.getElementById('btnNextGroup');
+    const vocabSearchContainer = document.getElementById('vocabSearchContainer');
+    const vocabSearchInput = document.getElementById('vocabSearchInput');
+    const btnVocabSearchClear = document.getElementById('btnVocabSearchClear');
     const appHeaderTitle = document.getElementById('appHeaderTitle');
 
     const btnTogglePinyin = document.getElementById('btnTogglePinyin');
@@ -4327,6 +4440,7 @@
     }
 
     function srsGoToDue(mode) {
+      clearVocabSearch(false);
       dueSubMode = mode === 'leech' ? 'leech' : 'due';
       currentLevel = 'due';
       currentGroupIndex = 0;
@@ -5226,6 +5340,7 @@
           `;
 
           allDiv.addEventListener('click', () => {
+            clearVocabSearch(false);
             currentCustomGroupId = 'all_custom_groups';
             currentGroupIndex = 0;
             resetShuffleState();
@@ -5289,6 +5404,7 @@
             });
 
             itemDiv.addEventListener('click', () => {
+              clearVocabSearch(false);
               currentCustomGroupId = grp.id;
               currentGroupIndex = 0;
               resetShuffleState();
@@ -5365,6 +5481,7 @@
               <span class="group-picker-badge ${done ? 'completed' : 'in-progress'}">${done ? '🎉 ' : ''}${doneCount}/${slice.length} từ</span>
             `;
             itemDiv.addEventListener('click', () => {
+              clearVocabSearch(false);
               dueSubMode = 'due';
               currentGroupIndex = i;
               resetShuffleState();
@@ -5395,6 +5512,7 @@
             <span class="group-picker-badge in-progress">${leeches.length} từ</span>
           `;
           leechDiv.addEventListener('click', () => {
+            clearVocabSearch(false);
             dueSubMode = 'leech';
             currentGroupIndex = 0;
             resetShuffleState();
@@ -5518,6 +5636,7 @@
             `;
 
             itemDiv.addEventListener('click', () => {
+              clearVocabSearch(false);
               currentGroupIndex = i;
               if (selectGroupEl) selectGroupEl.value = i;
               resetShuffleState();
@@ -5534,11 +5653,20 @@
         }
       }
 
-      // Update Header Title
-      if (currentLevel === 'hsk6') appHeaderTitle.textContent = `HSK 6`;
-      else if (currentLevel === 'hsk79') appHeaderTitle.textContent = `HSK 7-9`;
-      else if (currentLevel === 'upgrade') appHeaderTitle.textContent = `✨ Nâng cấp`;
-      else appHeaderTitle.textContent = `📁 Tự tạo`;
+      // Update Header Title & Group Label Status
+      if (currentSearchQuery) {
+        const customTextEl = document.getElementById('customGroupSelectText');
+        if (customTextEl) {
+          customTextEl.innerHTML = `🔍 Tìm: "${escapeHtml(currentSearchQuery)}" (${groupWordsState.length} từ)`;
+        }
+        if (appHeaderTitle) appHeaderTitle.textContent = `🔍 Tìm kiếm`;
+      } else {
+        if (currentLevel === 'hsk6') appHeaderTitle.textContent = `HSK 6`;
+        else if (currentLevel === 'hsk79') appHeaderTitle.textContent = `HSK 7-9`;
+        else if (currentLevel === 'upgrade') appHeaderTitle.textContent = `✨ Nâng cấp`;
+        else if (currentLevel === 'due') appHeaderTitle.textContent = dueSubMode === 'leech' ? '😵 Hay quên' : '🔔 Ôn hôm nay';
+        else appHeaderTitle.textContent = `📁 Tự tạo`;
+      }
     }
 
     // Shuffle State & Logic
@@ -5588,6 +5716,136 @@
       renderVocabList();
     }
 
+    // HTML Escape Helper
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Clear Vocabulary Search Helper
+    function clearVocabSearch(shouldRerender = false) {
+      const hadQuery = Boolean(currentSearchQuery || (vocabSearchInput && vocabSearchInput.value));
+      currentSearchQuery = '';
+      if (vocabSearchInput) vocabSearchInput.value = '';
+      if (btnVocabSearchClear) btnVocabSearchClear.classList.remove('visible');
+      if (hadQuery && shouldRerender) {
+        updateGroupWordsState();
+        renderGroupDropdown();
+        renderVocabList();
+      }
+    }
+
+    // Global Vocabulary Search Across All Datasets (HSK 7-9, HSK 6, Custom Groups, Upgrade)
+    function searchAllDataWords(rawQuery) {
+      if (!rawQuery) return [];
+      const q = rawQuery.trim().toLowerCase();
+      if (!q) return [];
+      const qNormalized = q.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ü/g, 'v');
+
+      const seenHanzi = new Set();
+      const pool = [];
+
+      const addItems = (items, defaultLevel, defaultLabel) => {
+        if (!items || !Array.isArray(items)) return;
+        for (const it of items) {
+          if (!it) continue;
+          const hanzi = it.hanzi || it.word || it.text || it.chinese || '';
+          if (!hanzi || seenHanzi.has(hanzi)) continue;
+          seenHanzi.add(hanzi);
+          pool.push({
+            id: it.id || `search_${hanzi}`,
+            hanzi: hanzi,
+            pinyin: it.pinyin || '',
+            pos: it.pos || '',
+            vietnamese: it.vietnamese || it.vi || it.meaning || '',
+            level: it.level || defaultLevel,
+            levelLabel: it.level === 'hsk6' ? 'HSK 6' :
+                        it.level === 'hsk79' ? 'HSK 7-9' :
+                        it.level === 'upgrade' ? 'Nâng cấp' :
+                        defaultLabel,
+            upgrade1: it.upgrade1,
+            upgrade2: it.upgrade2,
+            upgradedHanzi: it.upgradedHanzi,
+            upgradedPinyin: it.upgradedPinyin,
+            upgradedVi: it.upgradedVi,
+            upgradedPos: it.upgradedPos,
+            status: getWordStatus(hanzi),
+            revealed: false
+          });
+        }
+      };
+
+      // 1. Current level words prioritized first
+      if (currentLevel === 'hsk6') {
+        addItems(hsk6List, 'hsk6', 'HSK 6');
+        addItems(hsk79List, 'hsk79', 'HSK 7-9');
+      } else {
+        addItems(hsk79List, 'hsk79', 'HSK 7-9');
+        addItems(hsk6List, 'hsk6', 'HSK 6');
+      }
+
+      // 2. Custom groups words
+      if (Array.isArray(customGroups)) {
+        customGroups.forEach(g => {
+          if (g && Array.isArray(g.words)) {
+            addItems(g.words, 'custom', g.name || 'Tự tạo');
+          }
+        });
+      }
+
+      // 3. Upgrade words
+      if (Array.isArray(upgradeList)) {
+        addItems(upgradeList, 'upgrade', 'Nâng cấp');
+      }
+
+      const results = [];
+      const qNoSpace = qNormalized.replace(/\s+/g, '');
+
+      for (const item of pool) {
+        const h = item.hanzi.toLowerCase();
+        const py = (item.pinyin || '').toLowerCase();
+        const pyNorm = py.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ü/g, 'v');
+        const pyNoSpace = pyNorm.replace(/\s+/g, '');
+        const vi = (item.vietnamese || '').toLowerCase();
+        const viNorm = vi.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const upH = (item.upgradedHanzi || '').toLowerCase();
+
+        let score = 0;
+        if (h === q || upH === q) {
+          score = 100; // Exact Hanzi
+        } else if (h.startsWith(q) || upH.startsWith(q)) {
+          score = 80;  // Starts with Hanzi
+        } else if (h.includes(q) || upH.includes(q)) {
+          score = 60;  // Contains Hanzi
+        } else if (pyNoSpace === qNoSpace) {
+          score = 50;  // Exact Pinyin match
+        } else if (pyNorm.startsWith(qNormalized) || pyNoSpace.startsWith(qNoSpace)) {
+          score = 40;  // Pinyin starts with
+        } else if (pyNorm.includes(qNormalized) || pyNoSpace.includes(qNoSpace)) {
+          score = 30;  // Pinyin contains
+        } else if (viNorm.includes(qNormalized)) {
+          score = 20;  // Vietnamese contains
+        }
+
+        if (score > 0) {
+          results.push({ item, score });
+        }
+      }
+
+      results.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return a.item.hanzi.length - b.item.hanzi.length; // shorter word first
+      });
+
+      // Limit to top 100 results for silky fast 60fps rendering
+      return results.slice(0, 100).map(r => r.item);
+    }
+
     function getGroupWordsRaw() {
       const words = getCurrentLevelWords();
       if (currentLevel === 'custom') {
@@ -5616,8 +5874,11 @@
       }));
     }
 
-    // Get 100 Words for Current Group (Supports Shuffled Order)
+    // Get 100 Words for Current Group (Supports Shuffled Order & Search Results)
     function getGroupWords() {
+      if (currentSearchQuery) {
+        return groupWordsState;
+      }
       if (isGroupShuffled && shuffledGroupWords) {
         return shuffledGroupWords.map(item => ({
           ...item,
@@ -7309,11 +7570,14 @@ Lưu ý:
       let col1HTML = '';
       let col2HTML = '';
 
-      if (currentLevel === 'upgrade') {
+      const isUpgradeView = currentLevel === 'upgrade' || (currentSearchQuery && item.level === 'upgrade');
+      const levelBadgeHTML = (currentSearchQuery && item.levelLabel) ? `<span class="search-level-badge">${item.levelLabel}</span>` : '';
+
+      if (isUpgradeView) {
         const basicBlock = `
           ${showPinyin ? `<div class="pinyin-text">${item.pinyin || ''}</div>` : ''}
           <div class="hanzi-text" onclick="handleHanziClick('${safeHanzi}', '${safePinyin}')" title="chạm để xem chi tiết so sánh & ví dụ">
-            ${item.hanzi}
+            ${item.hanzi}${levelBadgeHTML}
           </div>
           <div class="vietnamese-text">${item.vietnamese || ''}</div>
         `;
@@ -7355,11 +7619,11 @@ Lưu ý:
         col1HTML = `<div class="col-main">${basicBlock}</div>`;
         col2HTML = `<div class="col-main">${isCol2Visible ? upgradedBlock : blankBlockUpgrade}</div>`;
       } else {
-        const srsDot = currentLevel !== 'upgrade' ? srsLevelDotHTML(item.hanzi) : '';
+        const srsDot = srsLevelDotHTML(item.hanzi);
         const hanziBlock = `
           ${showPinyin ? `<div class="pinyin-text">${item.pinyin || ''}</div>` : ''}
           <div class="hanzi-text" onclick="handleHanziClick('${safeHanzi}', '${safePinyin}')" title="${tapHanziMode === 'speak' ? 'chạm để nghe phát âm' : 'chạm để tra giải thích AI'}">
-            ${srsDot}${item.hanzi}
+            ${srsDot}${item.hanzi}${levelBadgeHTML}
           </div>
         `;
 
@@ -7414,7 +7678,11 @@ Lưu ý:
     let groupWordsState = [];
 
     function updateGroupWordsState() {
-      groupWordsState = getGroupWords();
+      if (currentSearchQuery) {
+        groupWordsState = searchAllDataWords(currentSearchQuery);
+      } else {
+        groupWordsState = getGroupWords();
+      }
     }
 
     // Scroll restoration & persistence logic
@@ -7460,9 +7728,13 @@ Lưu ý:
 
       if (filteredData.length === 0) {
         let emptyMsg = 'Không có từ nào trong mục này.';
-        if (activeTab === 'new') emptyMsg = '🎉 Bạn đã thuộc tất cả từ trong nhóm này!';
-        if (activeTab === 'review') emptyMsg = '✨ Tuyệt vời! Không có từ nào bị đánh dấu sai trong nhóm này.';
-        if (currentLevel === 'due' && groupWordsState.length === 0) {
+        if (currentSearchQuery) {
+          emptyMsg = `🔍 Không tìm thấy từ nào khớp với "<b>${escapeHtml(currentSearchQuery)}</b>" trong dữ liệu.`;
+        } else if (activeTab === 'new') {
+          emptyMsg = '🎉 Bạn đã thuộc tất cả từ trong nhóm này!';
+        } else if (activeTab === 'review') {
+          emptyMsg = '✨ Tuyệt vời! Không có từ nào bị đánh dấu sai trong nhóm này.';
+        } else if (currentLevel === 'due' && groupWordsState.length === 0) {
           emptyMsg = dueSubMode === 'leech'
             ? '👏 Chưa có từ nào bị quên từ 3 lần trở lên.'
             : '🎉 Hôm nay không có từ nào đến hạn ôn!<br><span style="font-size:12.5px;">Tick từ ở các nhóm HSK / Tự tạo để đưa từ vào lịch ôn.</span>';
@@ -7524,6 +7796,7 @@ Lưu ý:
 
           // Enable long-press confirmation popup to delete word on custom/upgrade level
           addLongPressListener(row, () => {
+            if (currentSearchQuery) return;
             if (currentLevel === 'custom') {
               if (currentCustomGroupId === 'all_custom_groups') {
                 const combined = getCurrentLevelWords();
@@ -7592,7 +7865,7 @@ Lưu ý:
         
         if (autoSpeakOnTick) {
           const item = groupWordsState.find(v => v.hanzi === hanzi);
-          if (item && item.upgradedHanzi && currentLevel === 'upgrade') {
+          if (item && item.upgradedHanzi && (currentLevel === 'upgrade' || item.level === 'upgrade')) {
             speakChinese(item.upgradedHanzi);
           } else {
             speakChinese(hanzi);
@@ -7601,7 +7874,9 @@ Lưu ý:
       }
 
       // Smart review scheduling (upgrade group is self-managed → skipped)
-      if (currentLevel !== 'upgrade') {
+      const markItem = groupWordsState.find(v => v.hanzi === hanzi);
+      const isUpgradeMark = (markItem && markItem.level === 'upgrade') || (!currentSearchQuery && currentLevel === 'upgrade');
+      if (!isUpgradeMark) {
         srsOnTick(hanzi, currentStatus, updatedStatus, currentLevel === 'due' ? 'due' : 'group');
       }
 
@@ -8409,6 +8684,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       // Level Tabs Switch (HSK 6 vs HSK 7-9 vs Custom vs Upgrade vs Due)
       document.querySelectorAll('.level-tab').forEach(tab => {
         tab.addEventListener('click', () => {
+          clearVocabSearch(false);
           document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
           tab.classList.add('active');
           currentLevel = tab.getAttribute('data-level');
@@ -10547,56 +10823,98 @@ ${chunkText}
         renderVocabList();
       });
 
-      // Group Navigation Prev / Next
-      btnPrevGroup.addEventListener('click', () => {
-        if (currentLevel === 'custom') {
-          if (!customGroups || customGroups.length <= 1) return;
-          const curIdx = customGroups.findIndex(g => g.id === currentCustomGroupId);
-          if (curIdx > 0) {
-            currentCustomGroupId = customGroups[curIdx - 1].id;
+      // Group Navigation Prev / Next (Guarded if present in DOM)
+      if (btnPrevGroup) {
+        btnPrevGroup.addEventListener('click', () => {
+          if (currentLevel === 'custom') {
+            if (!customGroups || customGroups.length <= 1) return;
+            const curIdx = customGroups.findIndex(g => g.id === currentCustomGroupId);
+            if (curIdx > 0) {
+              currentCustomGroupId = customGroups[curIdx - 1].id;
+              resetShuffleState();
+              saveCurrentState();
+              updateGroupWordsState();
+              renderGroupDropdown();
+              renderVocabList();
+            }
+            return;
+          }
+          if (currentGroupIndex > 0) {
+            currentGroupIndex--;
             resetShuffleState();
             saveCurrentState();
-            updateGroupWordsState();
             renderGroupDropdown();
+            updateGroupWordsState();
             renderVocabList();
           }
-          return;
-        }
-        if (currentGroupIndex > 0) {
-          currentGroupIndex--;
-          resetShuffleState();
-          saveCurrentState();
-          renderGroupDropdown();
-          updateGroupWordsState();
-          renderVocabList();
-        }
-      });
+        });
+      }
 
-      btnNextGroup.addEventListener('click', () => {
-        if (currentLevel === 'custom') {
-          if (!customGroups || customGroups.length <= 1) return;
-          const curIdx = customGroups.findIndex(g => g.id === currentCustomGroupId);
-          if (curIdx >= 0 && curIdx < customGroups.length - 1) {
-            currentCustomGroupId = customGroups[curIdx + 1].id;
+      if (btnNextGroup) {
+        btnNextGroup.addEventListener('click', () => {
+          if (currentLevel === 'custom') {
+            if (!customGroups || customGroups.length <= 1) return;
+            const curIdx = customGroups.findIndex(g => g.id === currentCustomGroupId);
+            if (curIdx >= 0 && curIdx < customGroups.length - 1) {
+              currentCustomGroupId = customGroups[curIdx + 1].id;
+              resetShuffleState();
+              saveCurrentState();
+              updateGroupWordsState();
+              renderGroupDropdown();
+              renderVocabList();
+            }
+            return;
+          }
+          const words = getCurrentLevelWords();
+          const totalGroups = Math.ceil(words.length / 100);
+          if (currentGroupIndex < totalGroups - 1) {
+            currentGroupIndex++;
             resetShuffleState();
             saveCurrentState();
+            renderGroupDropdown();
+            updateGroupWordsState();
+            renderVocabList();
+          }
+        });
+      }
+
+      // Compact Vocabulary Search Input & Clear Button Listeners
+      if (vocabSearchInput) {
+        let searchDebounceTimer = null;
+        vocabSearchInput.addEventListener('input', (e) => {
+          const val = e.target.value;
+          if (val && val.length > 0) {
+            if (btnVocabSearchClear) btnVocabSearchClear.classList.add('visible');
+          } else {
+            if (btnVocabSearchClear) btnVocabSearchClear.classList.remove('visible');
+          }
+
+          clearTimeout(searchDebounceTimer);
+          searchDebounceTimer = setTimeout(() => {
+            currentSearchQuery = (vocabSearchInput.value || '').trim();
             updateGroupWordsState();
             renderGroupDropdown();
             renderVocabList();
+          }, 100);
+        });
+
+        vocabSearchInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            vocabSearchInput.blur(); // Dismiss virtual keyboard on mobile
+          } else if (e.key === 'Escape') {
+            clearVocabSearch(true);
+            vocabSearchInput.blur();
           }
-          return;
-        }
-        const words = getCurrentLevelWords();
-        const totalGroups = Math.ceil(words.length / 100);
-        if (currentGroupIndex < totalGroups - 1) {
-          currentGroupIndex++;
-          resetShuffleState();
-          saveCurrentState();
-          renderGroupDropdown();
-          updateGroupWordsState();
-          renderVocabList();
-        }
-      });
+        });
+      }
+
+      if (btnVocabSearchClear) {
+        btnVocabSearchClear.addEventListener('click', (e) => {
+          e.stopPropagation();
+          clearVocabSearch(true);
+          if (vocabSearchInput) vocabSearchInput.focus();
+        });
+      }
 
       // Open Library Modal
       btnOpenLibrary.addEventListener('click', () => {
@@ -11505,6 +11823,7 @@ ${chunkText}
 
       // Reset Current Group Progress
       btnReset.addEventListener('click', () => {
+        clearVocabSearch(false);
         const groupWords = getGroupWordsRaw();
         groupWords.forEach(v => {
           setWordStatus(v.hanzi, null);
