@@ -746,85 +746,69 @@
       box-shadow: 0 3px 8px rgba(135, 114, 168, 0.3);
     }
 
-    /* Toolbar Controls (Pinyin, Column Swap, Auto Speech, Tap Mode) */
+    /* Toolbar Controls (Pinyin, Column Swap, Auto Speech, Tap Mode - Compact Single Row) */
     .controls-bar {
-      background: rgba(255, 255, 255, 0.70);
+      background: rgba(255, 255, 255, 0.75);
       backdrop-filter: blur(12px);
-      padding: 8px 12px;
+      -webkit-backdrop-filter: blur(12px);
+      padding: 6px 8px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 6px;
+      gap: 5px;
       border-bottom: 1px solid var(--border-color);
-      font-size: 12px;
-      overflow-x: auto;
+      overflow-x: hidden;
+      box-sizing: border-box;
+      width: 100%;
     }
 
     .control-btn {
-      background: rgba(255, 255, 255, 0.9);
-      border: 1.5px solid #e5e7eb;
-      padding: 4px 8px;
-      border-radius: 14px;
-      font-family: var(--font-mali);
-      font-size: 12px;
-      font-weight: 600;
-      color: #374151;
+      flex: 1 1 0;
+      min-width: 0;
+      height: 35px;
+      padding: 0;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1.5px solid rgba(135, 114, 168, 0.22);
+      border-radius: 10px;
       display: flex;
       align-items: center;
-      gap: 4px;
+      justify-content: center;
       cursor: pointer;
       white-space: nowrap;
-      transition: all 0.15s ease;
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+      color: #4b5563;
+      font-size: 16px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .control-btn span {
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #swapIcon {
+      font-size: 17px;
+      font-weight: 700;
+      color: inherit;
+    }
+
+    .control-btn:active {
+      transform: scale(0.92);
     }
 
     .control-btn.active {
-      border-color: var(--primary-color);
-      background: var(--primary-light);
-      color: var(--primary-color);
-    }
-
-    .switch-container {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-      font-weight: 600;
-      color: #374151;
-      white-space: nowrap;
-      font-size: 12px;
+      border-color: #8772a8;
+      background: linear-gradient(135deg, rgba(163, 142, 190, 0.22) 0%, rgba(135, 114, 168, 0.32) 100%);
+      color: #6b21a8;
+      box-shadow: 0 2px 6px rgba(135, 114, 168, 0.25);
     }
 
     .switch-input {
       display: none;
-    }
-
-    .switch-slider {
-      width: 34px;
-      height: 18px;
-      background-color: #d1d5db;
-      border-radius: 18px;
-      position: relative;
-      transition: 0.3s;
-    }
-
-    .switch-slider::before {
-      content: "";
-      position: absolute;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background-color: white;
-      top: 3px;
-      left: 3px;
-      transition: 0.3s;
-    }
-
-    .switch-input:checked + .switch-slider {
-      background-color: var(--primary-color);
-    }
-
-    .switch-input:checked + .switch-slider::before {
-      transform: translateX(16px);
     }
 
     /* Word List Scroll Container */
@@ -2995,43 +2979,42 @@
       </div>
     </div>
 
-    <!-- Controls Toolbar -->
-    <div class="controls-bar">
-      <button class="control-btn" id="btnShuffleWords" title="Xáo trộn thứ tự từ để ôn tập tránh nhớ vẹt">
+    <!-- Controls Toolbar (Compact Single Row, No Scrolling) -->
+    <div class="controls-bar" id="controlsBar">
+      <button class="control-btn" id="btnShuffleWords" title="Xáo trộn thứ tự từ trong nhóm (🔀)">
         <span id="shuffleIcon">🔀</span>
-        <span id="shuffleLabel">xáo trộn từ</span>
+        <span id="shuffleLabel" style="display:none;">xáo trộn từ</span>
       </button>
 
-      <button class="control-btn" id="btnToggleTapMode">
+      <button class="control-btn" id="btnToggleTapMode" title="Chạm chữ: Phát âm (🔊) / Tra AI (🤖)">
         <span id="tapModeIcon">🔊</span>
-        <span id="tapModeLabel">chạm chữ: phát âm</span>
+        <span id="tapModeLabel" style="display:none;">chạm chữ: phát âm</span>
       </button>
 
-      <button class="control-btn" id="btnTogglePinyin">
+      <button class="control-btn" id="btnTogglePinyin" title="Hiện / Ẩn Pinyin (👁)">
         <span id="pinyinIcon">👁</span>
-        <span id="pinyinLabel">pinyin: ẩn</span>
+        <span id="pinyinLabel" style="display:none;">pinyin: ẩn</span>
       </button>
 
-      <button class="control-btn" id="btnSwapColumns">
-        <span>⇄</span>
-        <span id="swapLabel">cột 1: chữ Hán</span>
+      <button class="control-btn" id="btnSwapColumns" title="Đổi vị trí 2 cột: Hán ⇄ Việt">
+        <span id="swapIcon">⇄</span>
+        <span id="swapLabel" style="display:none;">cột 1: chữ Hán</span>
       </button>
 
-      <button class="control-btn" id="btnToggleAlwaysShow">
+      <button class="control-btn" id="btnToggleAlwaysShow" title="Cột 2: Khóa tick mới hiện (🔒) / Luôn hiện (🔓)">
         <span id="alwaysShowIcon">🔒</span>
-        <span id="alwaysShowLabel">cột 2: tick mới hiện</span>
+        <span id="alwaysShowLabel" style="display:none;">cột 2: tick mới hiện</span>
       </button>
 
-      <button class="control-btn" id="btnPreloadAiGroup" title="Tải ngầm dữ liệu AI cho cả nhóm để chạm mở popup tức thì không chờ đợi">
+      <button class="control-btn" id="btnPreloadAiGroup" title="Tải trước dữ liệu AI cho cả nhóm (⚡)">
         <span id="preloadAiIcon">⚡</span>
-        <span id="preloadAiLabel">nạp AI nhóm</span>
+        <span id="preloadAiLabel" style="display:none;">nạp AI nhóm</span>
       </button>
 
-      <label class="switch-container" title="tự động đọc giọng Xiaoxiao khi tick xanh hoặc tick đỏ">
-        <span>đọc khi tick</span>
-        <input type="checkbox" id="switchAutoSpeak" class="switch-input" checked>
-        <span class="switch-slider"></span>
-      </label>
+      <button class="control-btn active" id="btnToggleAutoSpeak" title="Tự động phát âm khi tick đúng/sai (🗣️)">
+        <span id="autoSpeakIcon">🗣️</span>
+        <input type="checkbox" id="switchAutoSpeak" class="switch-input" checked style="display:none;">
+      </button>
     </div>
   </div>
 
@@ -11827,6 +11810,7 @@ ${chunkText}
         showPinyin = !showPinyin;
         btnTogglePinyin.classList.toggle('active', showPinyin);
         pinyinLabel.textContent = showPinyin ? 'pinyin: hiện' : 'pinyin: ẩn';
+        showToast(showPinyin ? '👁 Pinyin: HIỆN' : '👁 Pinyin: ẨN');
         renderVocabList(true);
       });
 
@@ -11835,6 +11819,7 @@ ${chunkText}
         hanziInCol1 = !hanziInCol1;
         btnSwapColumns.classList.toggle('active', !hanziInCol1);
         swapLabel.textContent = hanziInCol1 ? 'cột 1: chữ Hán' : 'cột 1: tiếng Việt';
+        showToast(hanziInCol1 ? '⇄ Cột 1: Chữ Hán' : '⇄ Cột 1: Tiếng Việt');
         renderVocabList(true);
       });
 
@@ -11843,14 +11828,29 @@ ${chunkText}
         alwaysShowCol2 = !alwaysShowCol2;
         btnToggleAlwaysShow.classList.toggle('active', alwaysShowCol2);
         alwaysShowLabel.textContent = alwaysShowCol2 ? 'cột 2: hiện tất cả' : 'cột 2: tick mới hiện';
-        alwaysShowIcon.textContent = alwaysShowIcon ? '🔓' : '🔒';
+        if (alwaysShowIcon) alwaysShowIcon.textContent = alwaysShowCol2 ? '🔓' : '🔒';
+        showToast(alwaysShowCol2 ? '🔓 Cột 2: LUÔN HIỆN' : '🔒 Cột 2: TICK MỚI HIỆN');
         renderVocabList(true);
       });
 
-      // Auto Speak Switch
-      switchAutoSpeak.addEventListener('change', (e) => {
-        autoSpeakOnTick = e.target.checked;
-      });
+      // Auto Speak on Tick Button & Switch
+      const btnToggleAutoSpeak = document.getElementById('btnToggleAutoSpeak');
+      if (btnToggleAutoSpeak) {
+        btnToggleAutoSpeak.classList.toggle('active', autoSpeakOnTick);
+        btnToggleAutoSpeak.addEventListener('click', () => {
+          autoSpeakOnTick = !autoSpeakOnTick;
+          btnToggleAutoSpeak.classList.toggle('active', autoSpeakOnTick);
+          if (switchAutoSpeak) switchAutoSpeak.checked = autoSpeakOnTick;
+          showToast(autoSpeakOnTick ? '🗣️ Tự đọc khi tick: BẬT' : '🗣️ Tự đọc khi tick: TẮT');
+        });
+      }
+
+      if (switchAutoSpeak) {
+        switchAutoSpeak.addEventListener('change', (e) => {
+          autoSpeakOnTick = e.target.checked;
+          if (btnToggleAutoSpeak) btnToggleAutoSpeak.classList.toggle('active', autoSpeakOnTick);
+        });
+      }
 
       // Reset Current Group Progress
       btnReset.addEventListener('click', () => {
@@ -12498,6 +12498,21 @@ ${chunkText}
       initCompactStudyBarDropdowns();
       updateLevelDropdownLabel();
       updateFilterDropdownLabel();
+
+      // Restore toolbar controls UI state
+      const btnToggleAutoSpeak = document.getElementById('btnToggleAutoSpeak');
+      if (btnToggleAutoSpeak) btnToggleAutoSpeak.classList.toggle('active', autoSpeakOnTick);
+      if (btnTogglePinyin) btnTogglePinyin.classList.toggle('active', showPinyin);
+      if (btnSwapColumns) btnSwapColumns.classList.toggle('active', !hanziInCol1);
+      if (btnToggleAlwaysShow) {
+        btnToggleAlwaysShow.classList.toggle('active', alwaysShowCol2);
+        if (alwaysShowIcon) alwaysShowIcon.textContent = alwaysShowCol2 ? '🔓' : '🔒';
+      }
+      if (btnToggleTapMode) {
+        btnToggleTapMode.classList.toggle('active', tapHanziMode === 'ai');
+        if (tapModeIcon) tapModeIcon.textContent = tapHanziMode === 'speak' ? '🔊' : '🤖';
+      }
+      if (btnShuffleWords) btnShuffleWords.classList.toggle('active', isGroupShuffled);
 
       initAiStore();
       migrateStoredDataToSimplified(false);
