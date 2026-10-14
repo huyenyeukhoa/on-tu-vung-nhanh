@@ -3277,7 +3277,7 @@
 
       <!-- Loading View -->
       <div class="ai-story-body" id="aiStoryLoadingView" style="display: none; text-align: center; padding: 14px 8px;">
-        <img src="./story_loading.gif" alt="Đang sáng tác..." style="width: 210px; max-width: 92%; height: auto; object-fit: contain; display: inline-block; border-radius: 16px;" />
+        <img id="aiStoryLoadingGif" src="./story_loading.gif?v=144" alt="Đang sáng tác..." style="width: 210px; max-width: 92%; height: auto; object-fit: contain; display: inline-block; border-radius: 16px;" />
       </div>
     </div>
   </div>
@@ -9504,6 +9504,7 @@ ${chunkText}
               },
               body: JSON.stringify({
                 model: 'google/gemini-2.5-flash',
+                reasoning: { effort: 'low' },
                 messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
               })
             });
@@ -9553,14 +9554,24 @@ ${chunkText}
         throw new Error('Không thể phân tích dữ liệu bài đọc.');
       }
 
-      // Target word isolation safety net:
-      // Ensure target words appearing inside compound tokens are cleanly separated with full dictionary metadata
-      if (targetWordsHanzi.length > 0 && allParagraphs.length > 0) {
+      const isolated = isolateTargetWordsInParagraphs(allParagraphs, targetWords);
+      return { paragraphs: isolated.paragraphs, tokens: isolated.tokens, title: aiAutoTitle };
+    }
+
+    function isolateTargetWordsInParagraphs(allParagraphs, targetWords = []) {
+      const targetWordsHanzi = (targetWords || []).map(w => (typeof w === 'string' ? w : (w && w.hanzi))).filter(Boolean);
+      if (targetWordsHanzi.length > 0 && Array.isArray(allParagraphs) && allParagraphs.length > 0) {
         targetWordsHanzi.forEach(tHanzi => {
           allParagraphs.forEach(para => {
             if (!Array.isArray(para.tokens)) return;
             const newTokens = [];
             para.tokens.forEach(tok => {
+              if (!tok || !tok.hanzi) return;
+              // Strip accidental quotes wrapping a target word
+              if (tok.hanzi.length > tHanzi.length && tok.hanzi.includes(tHanzi)) {
+                const esc = escapeRegex(tHanzi);
+                tok.hanzi = tok.hanzi.replace(new RegExp(`^[“"「『](${esc})[”"」』]$`), '$1');
+              }
               if (tok.isVocab && tok.hanzi && tok.hanzi !== tHanzi && tok.hanzi.includes(tHanzi)) {
                 const parts = tok.hanzi.split(tHanzi);
                 parts.forEach((part, pIdx) => {
@@ -9599,14 +9610,13 @@ ${chunkText}
             para.tokens = newTokens;
           });
         });
-
-        allTokens = [];
-        allParagraphs.forEach(p => {
-          if (Array.isArray(p.tokens)) allTokens.push(...p.tokens);
-        });
       }
 
-      return { paragraphs: allParagraphs, tokens: allTokens, title: aiAutoTitle };
+      const allTokens = [];
+      (allParagraphs || []).forEach(p => {
+        if (Array.isArray(p.tokens)) allTokens.push(...p.tokens);
+      });
+      return { paragraphs: allParagraphs || [], tokens: allTokens };
     }
 
     // AI Tokenize Chinese Reading Passage via Gemini 2.5 Flash with Chunking & Progress %
@@ -11480,6 +11490,9 @@ ${chunkText}
       renderStoryChips();
     }
 
+    let isGeneratingAiStory = false;
+    let aiStoryAbortController = null;
+
     function showStoryView(viewName) {
       const modal = document.getElementById('aiStoryModal');
       const card = modal ? modal.querySelector('.ai-story-modal-card') : null;
@@ -11494,6 +11507,10 @@ ${chunkText}
         if (card) card.classList.add('transparent-loading');
         if (modal) modal.classList.add('loading-overlay-transparent');
         if (header) header.style.display = 'none';
+        const gifEl = document.getElementById('aiStoryLoadingGif');
+        if (gifEl) {
+          gifEl.src = './story_loading.gif?v=144';
+        }
       } else {
         if (card) card.classList.remove('transparent-loading');
         if (modal) modal.classList.remove('loading-overlay-transparent');
@@ -11534,13 +11551,28 @@ ${chunkText}
 
       try {
         const obj = safeParseJSON(cleaned);
-        if (obj && (obj.content || obj.story)) {
-          return {
-            title: (obj.title || 'Mẩu chuyện ngắn').trim(),
-            titleVi: (obj.titleVi || '').trim(),
-            content: (obj.content || obj.story || '').trim(),
-            translation: (obj.translation || obj.vietnamese || '').trim()
-          };
+        if (obj && typeof obj === 'object') {
+          let paragraphs = Array.isArray(obj.paragraphs) && obj.paragraphs.length > 0 ? obj.paragraphs : null;
+          if (!paragraphs && Array.isArray(obj.tokens) && obj.tokens.length > 0) {
+            paragraphs = [{ vietnamese: (obj.translation || obj.vietnamese || '').trim(), tokens: obj.tokens }];
+          }
+          let content = (obj.content || obj.story || '').trim();
+          if (!content && paragraphs) {
+            content = paragraphs.map(p => (p.tokens || []).map(t => t.hanzi || '').join('')).join('\n').trim();
+          }
+          let translation = (obj.translation || obj.vietnamese || '').trim();
+          if (!translation && paragraphs) {
+            translation = paragraphs.map(p => (p.vietnamese || '').trim()).filter(Boolean).join(' ');
+          }
+          if (content || paragraphs) {
+            return {
+              title: (obj.title || 'Mẩu chuyện ngắn').trim(),
+              titleVi: (obj.titleVi || '').trim(),
+              content: toSimplified(content),
+              translation,
+              paragraphs
+            };
+          }
         }
       } catch (e1) {}
 
@@ -11559,7 +11591,8 @@ ${chunkText}
           title: getField('title') || 'Mẩu chuyện ngắn',
           titleVi: getField('titleVi') || '',
           content: toSimplified(content),
-          translation: getField('translation') || getField('vietnamese') || ''
+          translation: getField('translation') || getField('vietnamese') || '',
+          paragraphs: null
         };
       }
 
@@ -11567,6 +11600,8 @@ ${chunkText}
     }
 
     async function generateAiStory() {
+      if (isGeneratingAiStory) return;
+
       const apiKey = localStorage.getItem('openrouter_api_key');
       if (!apiKey) {
         const keyModal = document.getElementById('apiKeyModal');
@@ -11580,6 +11615,15 @@ ${chunkText}
         return;
       }
 
+      isGeneratingAiStory = true;
+      if (aiStoryAbortController) {
+        try { aiStoryAbortController.abort(); } catch (e) {}
+      }
+      aiStoryAbortController = new AbortController();
+      const timeoutId = setTimeout(() => {
+        if (aiStoryAbortController) aiStoryAbortController.abort();
+      }, 35000);
+
       const modal = document.getElementById('aiStoryModal');
       if (modal) modal.classList.add('active');
       showStoryView('loading');
@@ -11591,29 +11635,43 @@ ${chunkText}
         story: 'mẩu chuyện kịch tính, bất ngờ, cuốn hút người đọc'
       };
       const styleDesc = styleDescriptions[aiStoryCurrentStyle] || styleDescriptions.daily;
+      const targetHanziList = aiStorySelectedWords.map(w => w.hanzi);
       const wordListPrompt = aiStorySelectedWords
         .map(w => `- ${w.hanzi} (${w.pinyin || ''}): ${w.vietnamese || ''}`)
         .join('\n');
 
-      const storyPrompt = `Bạn là tác giả viết truyện tiếng Trung HSK cao cấp. Hãy viết một đoạn văn ngắn (khoảng 120 - 150 chữ Hán) theo phong cách: ${styleDesc}.
+      const storyPrompt = `Bạn là tác giả viết truyện tiếng Trung HSK cao cấp và chuyên gia phân tích từ vựng. Hãy viết một đoạn văn ngắn (khoảng 120 - 150 chữ Hán) theo phong cách: ${styleDesc}.
 BẮT BUỘC lồng ghép tự nhiên, chuẩn ngữ pháp HSK 6-9 TẤT CẢ các từ vựng mục tiêu sau đây vào mạch văn:
 ${wordListPrompt}
 
 Yêu cầu quan trọng:
-1. Độ dài đoạn văn chữ Hán: khoảng 120 - 150 chữ Hán (chữ Hán giản thể chuẩn), mạch truyện cuốn hút, tự nhiên, giúp não bộ nhớ sâu từ vựng qua tình huống.
-2. Giữ nguyên mặt chữ của các từ mục tiêu (${aiStorySelectedWords.map(w => w.hanzi).join(', ')}) trong bài. TUYỆT ĐỐI KHÔNG đặt dấu ngoặc kép (“ ”, " ", 「 」) bao quanh các từ mục tiêu.
-3. Không dùng dấu ngoặc kép thẳng " bên trong nội dung chuỗi JSON.
-4. Trả về đúng JSON thuần túy (không bọc markdown):
+1. Độ dài đoạn văn: khoảng 120 - 150 chữ Hán giản thể chuẩn, mạch truyện cuốn hút, tự nhiên.
+2. Giữ nguyên mặt chữ của các từ mục tiêu (${targetHanziList.join(', ')}) và BẮT BUỘC tách mỗi từ mục tiêu thành 1 token độc lập trong mảng tokens (TUYỆT ĐỐI KHÔNG đặt dấu ngoặc kép “ ” hay 「 」 bao quanh từ mục tiêu).
+3. QUY TẮC TÁCH TOKEN TRONG MẢNG "tokens":
+   - TÁCH RIÊNG đối với tổ hợp tự do (nghĩa cộng gộp 1 + 1 = 2): ví dụ tách "感到" + "害怕" (không gộp "感到害怕"), tách "产生" + "共鸣", tách "非常" + "感兴趣".
+   - GỘP TRỌN CẢ CỤM đối với cụm quán dụng, động từ ly hợp có chèn thành phần, thành ngữ 4 chữ & cấu trúc cố định (phải nhìn cả cụm mới hiểu đúng nghĩa): ví dụ "刚起了一个头", "头也不回地", "叹了口气", "吃了一惊", "有所触动", "莫名其妙", "怼了回去".
+   - TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết chuẩn thành chữ đơn.
+   - Trợ từ "的" nối định ngữ thông thường tách riêng (isVocab: false). Dấu câu giữ đầy đủ (isVocab: false, pinyin: "", vietnamese: "").
+4. Không dùng dấu ngoặc kép thẳng " bên trong nội dung chuỗi JSON.
+5. Trả về đúng JSON thuần túy (không bọc markdown):
 {
   "title": "Tiêu đề tiếng Trung ngắn gọn (3-6 chữ)",
   "titleVi": "Tiêu đề tiếng Việt tương ứng",
-  "content": "Nội dung đoạn văn chữ Hán 120-150 chữ...",
-  "translation": "Bản dịch tiếng Việt mượt mà, sát nghĩa của toàn bộ đoạn văn..."
+  "paragraphs": [
+    {
+      "vietnamese": "Bản dịch tiếng Việt mượt mà, sát nghĩa của toàn bộ đoạn văn...",
+      "tokens": [
+        { "hanzi": "Từ/cụm Hán", "pinyin": "pinyin chuẩn", "vietnamese": "nghĩa sát của từ/cụm đó", "isVocab": true },
+        { "hanzi": "，", "pinyin": "", "vietnamese": "", "isVocab": false }
+      ]
+    }
+  ]
 }`;
 
       try {
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
+          signal: aiStoryAbortController.signal,
           headers: {
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
@@ -11622,6 +11680,7 @@ Yêu cầu quan trọng:
           },
           body: JSON.stringify({
             model: 'google/gemini-2.5-flash',
+            reasoning: { effort: 'low' },
             messages: [
               { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
               { role: 'user', content: storyPrompt }
@@ -11638,24 +11697,31 @@ Yêu cầu quan trọng:
         const rawContent = data.choices?.[0]?.message?.content || '';
         const parsedStory = parseAiStoryResponse(rawContent);
 
-        if (!parsedStory || !parsedStory.content) {
+        if (!parsedStory || (!parsedStory.content && !parsedStory.paragraphs)) {
           throw new Error('AI không trả về đúng định dạng bài đọc. Vui lòng thử lại!');
         }
 
-        // Strip any quotes wrapping target words so tokenization is 100% clean
-        aiStorySelectedWords.forEach(w => {
-          if (w && w.hanzi) {
-            const esc = escapeRegex(w.hanzi);
-            parsedStory.content = parsedStory.content.replace(new RegExp(`[“"「『]${esc}[”"」』]`, 'g'), w.hanzi);
-          }
-        });
+        // Strip any quotes wrapping target words in raw content
+        if (parsedStory.content) {
+          aiStorySelectedWords.forEach(w => {
+            if (w && w.hanzi) {
+              const esc = escapeRegex(w.hanzi);
+              parsedStory.content = parsedStory.content.replace(new RegExp(`[“"「『]${esc}[”"」』]`, 'g'), w.hanzi);
+            }
+          });
+        }
 
-        // Tokenize using the exact same AI phrase-chunking engine as normal Reading Articles
-        const parsedPassage = await parsePassageChunksWithAi(parsedStory.content, apiKey, {
-          targetWords: aiStorySelectedWords,
-          customTitle: parsedStory.title
-        });
+        let parsedPassage;
+        if (Array.isArray(parsedStory.paragraphs) && parsedStory.paragraphs.length > 0) {
+          parsedPassage = isolateTargetWordsInParagraphs(parsedStory.paragraphs, aiStorySelectedWords);
+        } else {
+          parsedPassage = await parsePassageChunksWithAi(parsedStory.content, apiKey, {
+            targetWords: aiStorySelectedWords,
+            customTitle: parsedStory.title
+          });
+        }
 
+        const finalRawContent = parsedStory.content || parsedPassage.tokens.map(t => t.hanzi || '').join('');
         const newArticleId = 'ai_story_' + Date.now();
         const articleTitle = parsedStory.title
           ? `✨ ${parsedStory.title}${parsedStory.titleVi ? ` (${parsedStory.titleVi})` : ''}`
@@ -11665,8 +11731,8 @@ Yêu cầu quan trọng:
           id: newArticleId,
           title: articleTitle,
           titleVi: parsedStory.titleVi || '',
-          rawText: parsedStory.content,
-          content: parsedStory.content,
+          rawText: finalRawContent,
+          content: finalRawContent,
           translation: parsedStory.translation || parsedPassage.paragraphs.map(p => p.vietnamese).filter(Boolean).join(' '),
           paragraphs: parsedPassage.paragraphs,
           tokens: parsedPassage.tokens,
@@ -11708,12 +11774,18 @@ Yêu cầu quan trọng:
         showToast('🎉 Đã tạo bài đọc và lưu vào kho Luyện đọc!');
       } catch (err) {
         console.error('generateAiStory error:', err);
-        showToast(`❌ Lỗi tạo bài đọc: ${err.message}`);
+        const msg = err && err.name === 'AbortError' ? 'Quá thời gian chờ AI, vui lòng thử lại!' : (err.message || 'Lỗi kết nối AI');
+        showToast(`❌ ${msg}`);
         showStoryView('setup');
+      } finally {
+        clearTimeout(timeoutId);
+        isGeneratingAiStory = false;
+        aiStoryAbortController = null;
       }
     }
 
     function generateNextAiStoryInSeries() {
+      if (isGeneratingAiStory) return;
       if (!aiStoryCurrentPool || aiStoryCurrentPool.length === 0) {
         aiStoryCurrentPool = getAvailableStoryWords(window.aiStorySourceMode || 'auto');
       }
