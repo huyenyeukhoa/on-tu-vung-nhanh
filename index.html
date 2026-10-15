@@ -11075,7 +11075,7 @@ ${chunkText}
         const tinyAudioBtnHTML = `<button class="tiny-para-audio-btn" data-pidx="${pIdx}" id="btnParaAudio_${pIdx}" title="Chạm: Đọc riêng đoạn này | Giữ 0.5s: Đọc tiếp từ đoạn này đến hết">${purpleSpeakerSVG}</button>`;
 
         if (isToggledVi) {
-          const viText = para.vietnamese || 'Đoạn này chưa có bản dịch.';
+          const viText = para.vietnamese || (paragraphs.length === 1 && art.translation ? art.translation : 'Đoạn này chưa có bản dịch.');
           return `
             <div style="margin-bottom: 14px; line-height: 1.6;">
               <div class="reading-para-vi-box" data-pidx="${pIdx}" id="readingParaViBox_${pIdx}" style="display: flex; align-items: flex-start; gap: 8px; background: #f3eef9; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2d8ef; transition: all 0.25s ease;">
@@ -11123,7 +11123,6 @@ ${chunkText}
       let storyFooterHTML = '';
       const isAiStoryArt = art.sourceType === 'ai_story' || String(art.id || '').startsWith('ai_story_');
       if (isAiStoryArt) {
-        const fullViText = art.translation || paragraphs.map(p => p.vietnamese || '').filter(Boolean).join(' ');
         const targetWordsList = art.selectedWords || [];
         const vocabItemsHTML = targetWordsList.map(w => {
           const safeH = String(w.hanzi || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -11145,12 +11144,6 @@ ${chunkText}
 
         storyFooterHTML = `
           <div class="story-reader-footer" style="text-indent: 0;">
-            ${fullViText ? `
-              <div class="story-reader-vocab-card" style="background: #f7f3fb;">
-                <div style="font-size: 12px; font-weight: 700; color: #5c4b79; margin-bottom: 4px;">🇻🇳 Bản dịch tiếng Việt:</div>
-                <div style="font-size: 13px; color: #4b3b66; line-height: 1.55; font-style: italic;">${escapeHtml(fullViText)}</div>
-              </div>
-            ` : ''}
             ${targetWordsList.length > 0 ? `
               <div class="story-reader-vocab-card">
                 <div style="font-size: 12px; font-weight: 700; color: #5c4b79; margin-bottom: 4px;">🎯 Từ vựng mục tiêu trong bài (${targetWordsList.length} từ):</div>
