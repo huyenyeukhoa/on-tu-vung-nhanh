@@ -9764,11 +9764,25 @@ ${chunkText}
     function normalizeAiTokenItem(item) {
       if (!item) return null;
       if (typeof item === 'string') {
-        const parts = item.split('|');
-        const hanzi = toSimplified((parts[0] || '').trim());
+        const parts = item.split('|').map(s => s.trim());
+        let rawH = parts[0] || '';
+        let rawP = parts[1] || '';
+        let rawV = parts[2] || '';
+        if (!/[\u4e00-\u9fff]/.test(rawH)) {
+          if (/[\u4e00-\u9fff]/.test(rawV)) {
+            const tmp = rawH;
+            rawH = rawV;
+            rawV = tmp;
+          } else if (/[\u4e00-\u9fff]/.test(rawP)) {
+            const tmp = rawH;
+            rawH = rawP;
+            rawP = tmp;
+          }
+        }
+        const hanzi = toSimplified(rawH);
         if (!hanzi) return null;
-        const pinyin = (parts[1] || '').trim();
-        const vietnamese = (parts[2] || '').trim();
+        const pinyin = rawP;
+        const vietnamese = rawV;
         const isPunctOrDe = AI_PUNCT_TEST_RE.test(hanzi) || hanzi === '的' || hanzi === '地' || hanzi === '得' || hanzi === '与';
         const fixedMeta = FIXED_COMPOUND_PHRASES[hanzi];
         const meta = (!pinyin || !vietnamese) && !AI_PUNCT_TEST_RE.test(hanzi) ? lookupDictMetaForToken(hanzi) : { pinyin: '', vietnamese: '' };
@@ -11913,10 +11927,10 @@ ${chunkText}
       showStoryView('loading');
 
       const styleDescriptions = {
-        daily: 'mẩu chuyện đời thường gần gũi, dí dỏm, tình huống sinh động dễ nhớ',
-        news: 'bản tin ngắn thời sự - xã hội hiện đại, văn phong báo chí súc tích',
-        work: 'tình huống công sở, phỏng vấn hoặc kinh doanh thực tế',
-        story: 'mẩu chuyện kịch tính, bất ngờ, cuốn hút người đọc'
+        daily: '日常幽默生活故事 (mẩu chuyện đời thường gần gũi, dí dỏm, tình huống sinh động dễ nhớ)',
+        news: '现代社会新闻简讯 (bản tin ngắn thời sự - xã hội hiện đại, văn phong báo chí súc tích)',
+        work: '职场与商务实战情境 (tình huống công sở, phỏng vấn hoặc kinh doanh thực tế)',
+        story: '悬疑反转精彩故事 (mẩu chuyện kịch tính, bất ngờ, cuốn hút người đọc)'
       };
       const styleDesc = styleDescriptions[aiStoryCurrentStyle] || styleDescriptions.daily;
       const targetHanziList = aiStorySelectedWords.map(w => w.hanzi);
@@ -11924,11 +11938,14 @@ ${chunkText}
         .map(w => `- ${w.hanzi} (${w.pinyin || ''}): ${w.vietnamese || ''}`)
         .join('\n');
 
-      const storyPrompt = `Bạn là tác giả viết truyện tiếng Trung HSK cao cấp và chuyên gia ngôn ngữ học Hán ngữ bản xứ. Hãy viết một đoạn văn ngắn (khoảng 120 - 150 chữ Hán) theo phong cách: ${styleDesc}.
-BẮT BUỘC lồng ghép tự nhiên, chuẩn ngữ pháp Hán ngữ hiện đại TẤT CẢ các từ vựng mục tiêu sau đây vào mạch văn:
+      const storyPrompt = `你是一位精通HSK高级词汇教学的中国本土作家与中越双语专家。请用【100%纯正现代简体中文】编写一篇短文（约120 - 150个汉字），风格为：${styleDesc}。
+必须自然、地道地将以下所有目标中文词汇融入这篇纯中文故事中：
 ${wordListPrompt}
 
-Yêu cầu quan trọng:
+【核心铁律 — QUY TẮC SỐNG CÒN】:
+0. 100% CHỮ HÁN GIẢN THỂ CHO BÀI ĐỌC:
+   - Toàn bộ câu chuyện gốc ("content"), tiêu đề ("title") và phần tử đầu tiên của mọi từ trong mảng "tokens" BẮT BUỘC PHẢI LÀ 100% CHỮ HÁN GIẢN THỂ (纯正简体中文汉字)!
+   - 严禁使用越南语编写故事正文或把越南语塞进 tokens 的第一个字段！TUYỆT ĐỐI CẤM viết truyện bằng tiếng Việt rồi chèn vài từ tiếng Trung vào! Mọi câu chữ trong truyện phải viết hoàn toàn bằng tiếng Trung Quốc bản xứ.
 1. Độ dài & Tần suất: Đoạn văn dài khoảng 120 - 150 chữ Hán giản thể, mạch truyện tự nhiên, cuốn hút. Mỗi từ mục tiêu (${targetHanziList.join(', ')}) CHỈ DÙNG ĐÚNG 1 LẦN DUY NHẤT (1 lần đắt giá, tự nhiên nhất), TUYỆT ĐỐI KHÔNG lặp lại cùng một từ mục tiêu 2 lần trong bài đọc ngắn.
 2. QUY TẮC NGỮ PHÁP & DÙNG TỪ MỤC TIÊU ĐỘC LẬP:
    - Nếu từ mục tiêu kết thúc bằng trợ từ trạng ngữ "地" (ví dụ: 和蔼地, 气愤地, 悄悄地, 头也不回地...): BẮT BUỘC phải đặt NGAY TRƯỚC ĐỘNG TỪ hoặc CỤM ĐỘNG TỪ để làm trạng ngữ (Cấu trúc chuẩn: [Từ + 地] + Động từ, ví dụ: "和蔼地笑着", "和蔼地逗着小猫", "和蔼地询问"). TUYỆT ĐỐI CẤM đặt từ có đuôi "地" ở cuối mệnh đề trước dấu câu hoặc làm vị ngữ sau "待人".
@@ -11940,15 +11957,15 @@ Yêu cầu quan trọng:
      + Cụm quán dụng, động từ ly hợp có chèn thành phần, thành ngữ 4 chữ: ví dụ "松了口气|sōng le kǒu qì|thở phào nhẹ nhõm", "叹了口气|tàn le kǒu qì|thở dài một tiếng", "头也不回地|tóu yě bù huí de|không ngoảnh đầu lại", "吃了一惊|chī le yī jīng|giật cả mình".
    - TÁCH RIÊNG đối với tổ hợp động từ + tân ngữ tự do hoặc phó từ + tính từ thông thường: ví dụ tách "感到|gǎn dào|cảm thấy" và "害怕|hài pà|sợ hãi".
    - Giữ nguyên mặt chữ của các từ mục tiêu (${targetHanziList.join(', ')}) thành 1 phần tử độc lập trong mảng tokens (TUYỆT ĐỐI KHÔNG đặt dấu ngoặc kép “ ” hay 「 」 bao quanh từ mục tiêu) và TUYỆT ĐỐI KHÔNG xé lẻ hậu tố đơn ("部", "商", "会", "员", "室") thành chữ đơn.
-   - Mỗi từ/cụm ghi dạng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt". Với dấu câu hoặc trợ từ "的", "地", "得" chỉ cần ghi chính ký tự đó (ví dụ "，" hoặc "的").
+   - Mỗi từ/cụm ghi dạng chuỗi ngắn gọn "汉字|pinyin|nghĩa tiếng Việt" (Cột 1 BẮT BUỘC là Chữ Hán, Cột 2 là Pinyin, Cột 3 là nghĩa tiếng Việt). Với dấu câu hoặc trợ từ "的", "地", "得" chỉ cần ghi chính ký tự đó (ví dụ "，" hoặc "的").
 4. Không dùng dấu ngoặc kép thẳng " bên trong nội dung chuỗi JSON.
-5. Trả về đúng JSON thuần túy (không bọc markdown):
+5. Trả về đúng JSON thuần túy theo đúng thứ tự các trường dưới đây (viết "content" 100% chữ Hán trước, rồi tách "tokens" chữ Hán, cuối cùng mới dịch "vietnamese"):
 {
-  "title": "Tiêu đề tiếng Trung ngắn gọn (3-6 chữ)",
+  "title": "纯中文标题 (3-6个汉字)",
   "titleVi": "Tiêu đề tiếng Việt tương ứng",
+  "content": "在紧急会议上，王经理听到核心零件恢复供应的消息后终于松了口气……（全文100%纯简体中文，约120-150个汉字，严禁出现任何越南语字母）",
   "paragraphs": [
     {
-      "vietnamese": "Bản dịch tiếng Việt mượt mà, sát nghĩa của toàn bộ đoạn văn...",
       "tokens": [
         "在|zài|tại",
         "紧急会议|jǐn jí huì yì|cuộc họp khẩn cấp",
@@ -11957,42 +11974,101 @@ Yêu cầu quan trọng:
         "王经理|wáng jīng lǐ|giám đốc Vương",
         "松了口气|sōng le kǒu qì|thở phào nhẹ nhõm",
         "。"
-      ]
+      ],
+      "vietnamese": "Bản dịch tiếng Việt mượt mà, sát nghĩa của toàn bộ đoạn văn tiếng Trung ở trên..."
     }
   ]
 }`;
 
-      try {
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          signal: aiStoryAbortController.signal,
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': window.location.href,
-            'X-Title': 'HSK Vocab App'
-          },
-          body: JSON.stringify({
-            model: 'deepseek/deepseek-v4.1-flash',
-            reasoning: { enabled: false },
-            messages: [
-              { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
-              { role: 'user', content: storyPrompt }
-            ]
-          })
-        });
+      function sanitizeAndValidateChineseStory(storyObj) {
+        if (!storyObj) return null;
+        if (Array.isArray(storyObj.paragraphs) && storyObj.paragraphs.length > 0) {
+          let totalVocab = 0;
+          let hanziVocab = 0;
+          let latinVocab = 0;
+          storyObj.paragraphs.forEach(p => {
+            (p.tokens || []).forEach(t => {
+              if (t && t.isVocab && t.hanzi) {
+                totalVocab++;
+                if (/[\u4e00-\u9fff]/.test(t.hanzi)) hanziVocab++;
+                if (/[a-zA-ZÀ-ỹ]{2,}/.test(t.hanzi)) latinVocab++;
+              }
+            });
+          });
+          // Reject paragraphs if tokens were written in Vietnamese/Latin instead of Chinese
+          if (totalVocab === 0 || hanziVocab < totalVocab * 0.85 || latinVocab > 0) {
+            storyObj.paragraphs = null;
+          }
+        }
+        if (storyObj.content) {
+          const hanziCount = (storyObj.content.match(/[\u4e00-\u9fff]/g) || []).length;
+          const latinWordCount = (storyObj.content.match(/[a-zA-ZÀ-ỹ]{2,}/g) || []).length;
+          if (hanziCount < 35 || latinWordCount > 2) {
+            storyObj.content = '';
+          }
+        }
+        if (!storyObj.content && Array.isArray(storyObj.paragraphs) && storyObj.paragraphs.length > 0) {
+          storyObj.content = storyObj.paragraphs.map(p => (p.tokens || []).map(t => t.hanzi || '').join('')).join('\n').trim();
+        }
+        // Clean title if AI accidentally wrote Vietnamese in title
+        if (storyObj.title && !/[\u4e00-\u9fff]/.test(storyObj.title) && storyObj.titleVi && /[\u4e00-\u9fff]/.test(storyObj.titleVi)) {
+          const tmpTitle = storyObj.title;
+          storyObj.title = storyObj.titleVi;
+          storyObj.titleVi = tmpTitle;
+        }
+        if (!storyObj.content && (!storyObj.paragraphs || storyObj.paragraphs.length === 0)) {
+          return null;
+        }
+        return storyObj;
+      }
 
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error?.message || `Lỗi HTTP ${response.status}`);
+      try {
+        const storyModelsToTry = ['deepseek/deepseek-v4.1-flash', 'google/gemini-2.5-flash'];
+        let parsedStory = null;
+        let lastErr = null;
+
+        for (let mIdx = 0; mIdx < storyModelsToTry.length && !parsedStory; mIdx++) {
+          const currentModel = storyModelsToTry[mIdx];
+          try {
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+              method: 'POST',
+              signal: aiStoryAbortController.signal,
+              headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': window.location.href,
+                'X-Title': 'HSK Vocab App'
+              },
+              body: JSON.stringify({
+                model: currentModel,
+                reasoning: currentModel.includes('deepseek') ? { enabled: false } : { max_tokens: 0 },
+                messages: [
+                  {
+                    role: 'system',
+                    content: SIMPLIFIED_ONLY_SYSTEM_MSG + ' 特别注意：编写故事时，故事正文(content)和分词数组(tokens)中的词语必须100%为纯简体中文汉字，绝对禁止用越南语写故事正文！'
+                  },
+                  { role: 'user', content: storyPrompt }
+                ]
+              })
+            });
+
+            if (!response.ok) {
+              const errData = await response.json().catch(() => ({}));
+              throw new Error(errData.error?.message || `Lỗi HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            const rawContent = data.choices?.[0]?.message?.content || '';
+            parsedStory = sanitizeAndValidateChineseStory(parseAiStoryResponse(rawContent));
+          } catch (attemptErr) {
+            lastErr = attemptErr;
+            if (attemptErr && attemptErr.name === 'AbortError') throw attemptErr;
+            console.warn(`AI Story model ${currentModel} attempt failed:`, attemptErr);
+          }
         }
 
-        const data = await response.json();
-        const rawContent = data.choices?.[0]?.message?.content || '';
-        const parsedStory = parseAiStoryResponse(rawContent);
-
         if (!parsedStory || (!parsedStory.content && !parsedStory.paragraphs)) {
-          throw new Error('AI không trả về đúng định dạng bài đọc. Vui lòng thử lại!');
+          throw lastErr || new Error('AI không trả về đúng định dạng bài đọc tiếng Trung. Vui lòng thử lại!');
         }
 
         // Strip any quotes wrapping target words in raw content
@@ -12011,8 +12087,7 @@ Yêu cầu quan trọng:
         } else {
           parsedPassage = await parsePassageChunksWithAi(parsedStory.content, apiKey, {
             targetWords: aiStorySelectedWords,
-            customTitle: parsedStory.title,
-            model: 'deepseek/deepseek-v4.1-flash'
+            customTitle: parsedStory.title
           });
         }
 
