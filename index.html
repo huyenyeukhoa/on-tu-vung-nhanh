@@ -1489,7 +1489,7 @@
       display: inline-block;
       position: relative;
       vertical-align: baseline;
-      padding: 1px 0;
+      padding: 1px 1px;
       margin: 0;
       border-radius: 4px;
       cursor: pointer;
@@ -1518,8 +1518,8 @@
     .reading-token:hover {
       background: rgba(135, 114, 168, 0.18);
       border-radius: 4px;
-      padding: 1px 1.5px;
-      margin: 0 1px;
+      padding: 1px 1px;
+      margin: 0;
       line-height: 1.15;
     }
 
@@ -1529,8 +1529,8 @@
       color: #4b3b66 !important;
       font-weight: normal !important;
       border-radius: 4px !important;
-      padding: 1px 1.5px !important;
-      margin: 0 1px !important;
+      padding: 1px 1px !important;
+      margin: 0 !important;
       display: inline-block !important;
       vertical-align: baseline !important;
       position: relative !important;
@@ -1556,6 +1556,8 @@
       background: rgba(135, 114, 168, 0.34) !important;
       color: #3b2859 !important;
       font-weight: normal !important;
+      padding: 1px 2px !important;
+      margin: 0 1.5px !important;
       line-height: 1.15 !important;
     }
 
@@ -9438,11 +9440,11 @@ ${targetRuleText}
    - **A. TÁCH RIÊNG đối với Tổ hợp tự do (Nghĩa cộng gộp 1 + 1 = 2)**:
      + Khi động từ cảm xúc/nhận thức hoặc phó từ ghép với từ vựng độc lập đứng sau mà mỗi từ vẫn giữ nguyên nghĩa từ điển của nó, BẮT BUỘC tách thành từng từ vựng chuẩn (2–4 chữ) để người học bấm tra/lưu đúng từ cần học.
      + Ví dụ tách chuẩn: tách "感到" + "害怕" (KHÔNG gộp thành "感到害怕"), tách "产生" + "共鸣", tách "显得" + "局促不安", tách "非常" + "感兴趣", tách "首次" + "会面".
-   - **B. GỘP TRỌN CẢ CỤM đối với Cụm danh từ cố định, Phòng ban/Chức danh, Cụm quán dụng, Động từ ly hợp & Thành ngữ**:
-     + Các cụm danh từ cố định, thuật ngữ công sở/chuyên môn, phòng ban, chức danh (như "项目评审会", "高层领导", "资源配置", "生产部", "供应商", "备用供应商", "技术负责人", "生产车间", "产品质量", "研发流程", "核心零件", "全体员工", "紧急会议", "王经理") BẮT BUỘC gộp trọn thành 1 token duy nhất kèm nghĩa tiếng Việt hoàn chỉnh, KHÔNG tách lẻ khiến người đọc phải tự ghép nghĩa!
-     + Các cụm quán dụng, động từ ly hợp bị chèn giữa, thành ngữ 4 chữ (như "刚起了一个头", "头也不回地", "叹了口气", "松了口气", "捏了一把汗", "吃了一惊", "有所触动", "莫名其妙", "一落千丈", "硬生生", "怼了回去") BẮT BUỘC gom trọn thành 1 token!
-   - **C. TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết hoặc tách hậu tố đơn ("部", "商", "会", "员", "室") thành chữ đơn**:
-     + Các từ 2 âm tiết chuẩn (như "感到", "害怕", "触动", "故事", "气愤") và từ có hậu tố ("生产部", "供应商", "评审会") luôn giữ nguyên cả từ, tuyệt đối không cắt vụn thành 1 chữ đơn ("部", "商", "会", "所", "起").
+   - **B. GỘP TRỌN CẢ CỤM đối với Cụm danh từ cố định, Phòng ban/Chức danh, Cụm quán dụng, Động từ ly hợp, Cử chỉ/Biểu cảm & Thành ngữ**:
+     + Các cụm danh từ cố định, thuật ngữ công sở/chuyên môn, phòng ban, chức danh (như "项目评审会", "高层领导", "资源配置", "生产部", "供应商", "备用供应商", "技术负责人", "生产车间", "产品质量", "研发流程", "核心零件", "全体员工", "紧急会议", "王经理", "李总监", "邻居们", "同事们") BẮT BUỘC gộp trọn thành 1 token duy nhất kèm nghĩa tiếng Việt hoàn chỉnh, KHÔNG tách lẻ khiến người đọc phải tự ghép nghĩa!
+     + Các cụm quán dụng, động từ ly hợp, cụm cử chỉ/biểu cảm/lời nói, thành ngữ 4 chữ (như "皱起眉头", "皱着眉头", "点了点头", "摇了摇头", "松了口气", "叹了口气", "笑着说", "接着说", "小声说", "刚起了一个头", "头也不回地", "捏了一把汗", "吃了一惊", "有所触动", "莫名其妙", "一落千丈", "硬生生", "怼了回去") BẮT BUỘC gom trọn thành 1 token!
+   - **C. TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết hoặc tách hậu tố đơn ("部", "商", "会", "员", "室", "们", "着") thành chữ đơn**:
+     + Các từ 2 âm tiết chuẩn (như "感到", "害怕", "触动", "故事", "气愤") và từ có hậu tố ("生产部", "供应商", "评审会", "邻居们") luôn giữ nguyên cả từ, tuyệt đối không cắt vụn thành 1 chữ đơn ("部", "商", "会", "所", "起", "们", "着").
 
 2) QUY TẮC NGHĨA VIỆT CỦA TOKEN:
    - Trong mảng tokens, trường "vietnamese" BẮT BUỘC dịch ĐÚNG SÁT NGHĨA CỦA CHÍNH TỪ / CỤM TỪ HÁN ĐÓ!
@@ -9627,7 +9629,95 @@ ${chunkText}
       '松了口气': { pinyin: 'sōng le kǒu qì', vietnamese: 'thở phào nhẹ nhõm' },
       '松了一口气': { pinyin: 'sōng le yī kǒu qì', vietnamese: 'thở phào nhẹ nhõm' },
       '叹了口气': { pinyin: 'tàn le kǒu qì', vietnamese: 'thở dài một tiếng' },
-      '叹了一口气': { pinyin: 'tàn le yī kǒu qì', vietnamese: 'thở dài một tiếng' }
+      '叹了一口气': { pinyin: 'tàn le yī kǒu qì', vietnamese: 'thở dài một tiếng' },
+      '笑着说': { pinyin: 'xiào zhe shuō', vietnamese: 'cười nói / vừa cười vừa nói' },
+      '哭着说': { pinyin: 'kū zhe shuō', vietnamese: 'vừa khóc vừa nói' },
+      '接着说': { pinyin: 'jiē zhe shuō', vietnamese: 'nói tiếp' },
+      '抢着说': { pinyin: 'qiǎng zhe shuō', vietnamese: 'tranh nhau nói' },
+      '喊着说': { pinyin: 'hǎn zhe shuō', vietnamese: 'hét lên nói' },
+      '笑着问': { pinyin: 'xiào zhe wèn', vietnamese: 'cười hỏi' },
+      '笑着回答': { pinyin: 'xiào zhe huí dá', vietnamese: 'cười trả lời' },
+      '笑着': { pinyin: 'xiào zhe', vietnamese: 'mỉm cười' },
+      '看着': { pinyin: 'kàn zhe', vietnamese: 'nhìn' },
+      '听着': { pinyin: 'tīng zhe', vietnamese: 'nghe' },
+      '拿着': { pinyin: 'ná zhe', vietnamese: 'cầm' },
+      '带着': { pinyin: 'dài zhe', vietnamese: 'mang theo / dẫn theo' },
+      '坐着': { pinyin: 'zuò zhe', vietnamese: 'đang ngồi' },
+      '站着': { pinyin: 'zhàn zhe', vietnamese: 'đang đứng' },
+      '走着': { pinyin: 'zǒu zhe', vietnamese: 'đang đi' },
+      '忙着': { pinyin: 'máng zhe', vietnamese: 'bận rộn' },
+      '急着': { pinyin: 'jí zhe', vietnamese: 'vội vàng' },
+      '指着': { pinyin: 'zhǐ zhe', vietnamese: 'chỉ vào' },
+      '盯着': { pinyin: 'dīng zhe', vietnamese: 'nhìn chằm chằm' },
+      '等着': { pinyin: 'děng zhe', vietnamese: 'đang đợi' },
+      '坐在': { pinyin: 'zuò zài', vietnamese: 'ngồi ở' },
+      '站在': { pinyin: 'zhàn zài', vietnamese: 'đứng ở' },
+      '住在': { pinyin: 'zhù zài', vietnamese: 'sống ở' },
+      '放在': { pinyin: 'fàng zài', vietnamese: 'đặt ở / để ở' },
+      '留在': { pinyin: 'liú zài', vietnamese: 'ở lại' },
+      '躺在': { pinyin: 'tǎng zài', vietnamese: 'nằm ở' },
+      '挂在': { pinyin: 'guà zài', vietnamese: 'treo ở' },
+      '写在': { pinyin: 'xiě zài', vietnamese: 'viết ở' },
+      '落在': { pinyin: 'luò zài', vietnamese: 'rơi ở' },
+      '走到': { pinyin: 'zǒu dào', vietnamese: 'đi đến' },
+      '来到': { pinyin: 'lái dào', vietnamese: 'đến' },
+      '回到': { pinyin: 'huí dào', vietnamese: 'trở về' },
+      '看到': { pinyin: 'kàn dào', vietnamese: 'nhìn thấy' },
+      '听到': { pinyin: 'tīng dào', vietnamese: 'nghe thấy' },
+      '想到': { pinyin: 'xiǎng dào', vietnamese: 'nghĩ đến' },
+      '找到': { pinyin: 'zhǎo dào', vietnamese: 'tìm thấy' },
+      '拿到': { pinyin: 'ná dào', vietnamese: 'cầm được / nhận được' },
+      '买到': { pinyin: 'mǎi dào', vietnamese: 'mua được' },
+      '遇到': { pinyin: 'yù dào', vietnamese: 'gặp phải' },
+      '交给': { pinyin: 'jiāo gěi', vietnamese: 'giao cho' },
+      '送给': { pinyin: 'sòng gěi', vietnamese: 'tặng cho' },
+      '递给': { pinyin: 'dì gěi', vietnamese: 'đưa cho' },
+      '留给': { pinyin: 'liú gěi', vietnamese: 'để lại cho' },
+      '还给': { pinyin: 'huán gěi', vietnamese: 'trả lại cho' },
+      '邻居们': { pinyin: 'lín jū men', vietnamese: 'những người hàng xóm' },
+      '同事们': { pinyin: 'tóng shì men', vietnamese: 'các đồng nghiệp' },
+      '朋友们': { pinyin: 'péng you men', vietnamese: 'các bạn / bạn bè' },
+      '员工们': { pinyin: 'yuán gōng men', vietnamese: 'các nhân viên' },
+      '孩子们': { pinyin: 'hái zi men', vietnamese: 'bọn trẻ / các em nhỏ' },
+      '学生们': { pinyin: 'xué shēng men', vietnamese: 'các học sinh / sinh viên' },
+      '老师们': { pinyin: 'lǎo shī men', vietnamese: 'các thầy cô giáo' },
+      '客人们': { pinyin: 'kè rén men', vietnamese: 'các vị khách' },
+      '顾客们': { pinyin: 'gù kè men', vietnamese: 'các khách hàng' },
+      '村民们': { pinyin: 'cūn mín men', vietnamese: 'dân làng' },
+      '居民们': { pinyin: 'jū mín men', vietnamese: 'cư dân / người dân' },
+      '人们': { pinyin: 'rén men', vietnamese: 'mọi người' },
+      '皱起眉头': { pinyin: 'zhòu qǐ méi tóu', vietnamese: 'nhíu mày / cau mày' },
+      '皱着眉头': { pinyin: 'zhòu zhe méi tóu', vietnamese: 'đang nhíu mày / cau mày' },
+      '皱了皱眉': { pinyin: 'zhòu le zhòu méi', vietnamese: 'nhíu mày' },
+      '皱了皱眉头': { pinyin: 'zhòu le zhòu méi tóu', vietnamese: 'nhíu mày' },
+      '眉头紧锁': { pinyin: 'méi tóu jǐn suǒ', vietnamese: 'chau mày suy tư' },
+      '点了点头': { pinyin: 'diǎn le diǎn tóu', vietnamese: 'gật đầu' },
+      '点点头': { pinyin: 'diǎn diǎn tóu', vietnamese: 'gật đầu' },
+      '摇了摇头': { pinyin: 'yáo le yáo tóu', vietnamese: 'lắc đầu' },
+      '摇摇头': { pinyin: 'yáo yáo tóu', vietnamese: 'lắc đầu' },
+      '抬起头': { pinyin: 'tái qǐ tóu', vietnamese: 'ngẩng đầu lên' },
+      '低下头': { pinyin: 'dī xià tóu', vietnamese: 'cúi đầu xuống' },
+      '转过身': { pinyin: 'zhuǎn guò shēn', vietnamese: 'quay người lại' },
+      '转过头': { pinyin: 'zhuǎn guò tóu', vietnamese: 'quay đầu lại' },
+      '回过头': { pinyin: 'huí guò tóu', vietnamese: 'ngoảnh đầu lại' },
+      '回过神来': { pinyin: 'huí guò shén lái', vietnamese: 'hoàn hồn / định thần lại' },
+      '瞪大眼睛': { pinyin: 'dèng dà yǎn jing', vietnamese: 'trợn tròn mắt' },
+      '睁大眼睛': { pinyin: 'zhēng dà yǎn jing', vietnamese: 'mở to mắt' },
+      '眯起眼睛': { pinyin: 'mī qǐ yǎn jing', vietnamese: 'nheo mắt lại' },
+      '耸了耸肩': { pinyin: 'sǒng le sǒng jiān', vietnamese: 'nhún vai' },
+      '挥了挥手': { pinyin: 'huī le huī shǒu', vietnamese: 'vẫy tay' },
+      '摆了摆手': { pinyin: 'bǎi le bǎi shǒu', vietnamese: 'xua tay' },
+      '拍了拍胸口': { pinyin: 'pāi le pāi xiōng kǒu', vietnamese: 'vỗ ngực' },
+      '捏了一把汗': { pinyin: 'niē le yī bǎ hàn', vietnamese: 'toát mồ hôi hột / lo sốt vó' },
+      '擦了擦汗': { pinyin: 'cā le cā hàn', vietnamese: 'lau mồ hôi' },
+      '深吸一口气': { pinyin: 'shēn xī yī kǒu qì', vietnamese: 'hít sâu một hơi' },
+      '倒吸一口凉气': { pinyin: 'dào xī yī kǒu liáng qì', vietnamese: 'hít một hơi lạnh / kinh ngạc' },
+      '小声说': { pinyin: 'xiǎo shēng shuō', vietnamese: 'nói nhỏ / thì thầm' },
+      '大声说': { pinyin: 'dà shēng shuō', vietnamese: 'nói lớn' },
+      '轻声说': { pinyin: 'qīng shēng shuō', vietnamese: 'nhẹ giọng nói' },
+      '李总监': { pinyin: 'lǐ zǒng jiān', vietnamese: 'giám đốc Lý' },
+      '王总监': { pinyin: 'wáng zǒng jiān', vietnamese: 'giám đốc Vương' },
+      '张总监': { pinyin: 'zhāng zǒng jiān', vietnamese: 'giám đốc Trương' }
     };
 
     const CHINESE_SURNAMES_MAP = {
@@ -9655,10 +9745,35 @@ ${chunkText}
     function mergeFixedCompoundTokensInList(tokens) {
       if (!Array.isArray(tokens) || tokens.length === 0) return tokens;
 
+      // 0. Detach any leading/trailing punctuation accidentally glued to a word token (e.g. "，邻居" -> "，" + "邻居")
+      const unglued = [];
+      const leadPunctRe = /^([，。！？；：、“”‘’（）《》【】…—,.!?;:"'()\[\]\-]+)(.+)$/;
+      const trailPunctRe = /^(.+?)([，。！？；：、“”‘’（）《》【】…—,.!?;:"'()\[\]\-]+)$/;
+      for (let i = 0; i < tokens.length; i++) {
+        let tok = tokens[i];
+        if (!tok || !tok.hanzi) continue;
+        if (!AI_PUNCT_TEST_RE.test(tok.hanzi)) {
+          const mLead = tok.hanzi.match(leadPunctRe);
+          if (mLead && /[\u4e00-\u9fff]/.test(mLead[2])) {
+            unglued.push({ hanzi: mLead[1], pinyin: '', vietnamese: '', isVocab: false });
+            tok = Object.assign({}, tok, { hanzi: mLead[2], isVocab: true });
+          }
+          const mTrail = tok.hanzi.match(trailPunctRe);
+          if (mTrail && /[\u4e00-\u9fff]/.test(mTrail[1])) {
+            const trailP = mTrail[2];
+            tok = Object.assign({}, tok, { hanzi: mTrail[1], isVocab: true });
+            unglued.push(tok);
+            unglued.push({ hanzi: trailP, pinyin: '', vietnamese: '', isVocab: false });
+            continue;
+          }
+        }
+        unglued.push(tok);
+      }
+
       // 1. Pre-normalize broken glued tokens from legacy splits (e.g. "部经理", "经理王", "王宣布", "会上" after "评审")
       const expanded = [];
-      for (let i = 0; i < tokens.length; i++) {
-        const tok = tokens[i];
+      for (let i = 0; i < unglued.length; i++) {
+        const tok = unglued[i];
         if (!tok || !tok.hanzi) continue;
         const prevH = expanded.length > 0 ? expanded[expanded.length - 1].hanzi : '';
         if (tok.hanzi === '部经理') {
@@ -9735,12 +9850,136 @@ ${chunkText}
           idx++;
         }
       }
-      return merged;
+
+      // 4. Merge remaining general "[Noun] + 们", "[Verb] + 着 + 说/问/道", and "[1-char Verb] + 着" patterns
+      const speechVerbsMap = {
+        '说': { py: 'shuō', vi: 'nói' },
+        '问': { py: 'wèn', vi: 'hỏi' },
+        '道': { py: 'dào', vi: 'nói' },
+        '喊': { py: 'hǎn', vi: 'hét' },
+        '叫': { py: 'jiào', vi: 'gọi / hét' }
+      };
+      const nonVerbSingleChars = new Set([
+        '我', '你', '他', '她', '它', '这', '那', '哪', '谁', '的', '地', '得',
+        '和', '与', '或', '而', '但', '却', '又', '也', '都', '就', '才', '还',
+        '只', '很', '太', '最', '更', '真', '好', '不', '没', '被', '把', '给',
+        '在', '从', '向', '往', '对', '跟', '比', '上', '下', '里', '外', '前', '后'
+      ]);
+      const finalMerged = [];
+      let k = 0;
+      while (k < merged.length) {
+        const cur = merged[k];
+        const nxt = merged[k + 1];
+        const nxt2 = merged[k + 2];
+
+        // Case A: [1-2 char Verb] + "着" + [说/问/道/喊/叫] (3 tokens)
+        if (
+          cur && nxt && nxt2 &&
+          cur.isVocab && nxt.hanzi === '着' && speechVerbsMap[nxt2.hanzi] &&
+          cur.hanzi.length >= 1 && cur.hanzi.length <= 2 && !nonVerbSingleChars.has(cur.hanzi)
+        ) {
+          const combinedH = cur.hanzi + '着' + nxt2.hanzi;
+          const fixed = FIXED_COMPOUND_PHRASES[combinedH];
+          const spInfo = speechVerbsMap[nxt2.hanzi];
+          finalMerged.push({
+            hanzi: combinedH,
+            pinyin: (fixed && fixed.pinyin) || `${cur.pinyin || ''} zhe ${spInfo.py}`.trim(),
+            vietnamese: (fixed && fixed.vietnamese) || (cur.vietnamese ? `vừa ${cur.vietnamese} vừa ${spInfo.vi}` : spInfo.vi),
+            isVocab: true
+          });
+          k += 3;
+          continue;
+        }
+
+        // Case B: [Verb ending with 着] + [说/问/道/喊/叫] (2 tokens, e.g. "笑着" + "说")
+        if (
+          cur && nxt &&
+          cur.isVocab && cur.hanzi.length >= 2 && cur.hanzi.endsWith('着') && speechVerbsMap[nxt.hanzi]
+        ) {
+          const combinedH = cur.hanzi + nxt.hanzi;
+          const fixed = FIXED_COMPOUND_PHRASES[combinedH];
+          const spInfo = speechVerbsMap[nxt.hanzi];
+          finalMerged.push({
+            hanzi: combinedH,
+            pinyin: (fixed && fixed.pinyin) || `${cur.pinyin || ''} ${spInfo.py}`.trim(),
+            vietnamese: (fixed && fixed.vietnamese) || (cur.vietnamese ? `${cur.vietnamese} ${spInfo.vi}` : spInfo.vi),
+            isVocab: true
+          });
+          k += 2;
+          continue;
+        }
+
+        // Case C: [1-3 char Noun/Pronoun] + "们" -> e.g. "邻居" + "们" -> "邻居们"
+        if (
+          cur && nxt &&
+          cur.isVocab && nxt.hanzi === '们' &&
+          cur.hanzi.length >= 1 && cur.hanzi.length <= 3 && !AI_PUNCT_TEST_RE.test(cur.hanzi)
+        ) {
+          const combinedH = cur.hanzi + '们';
+          const fixed = FIXED_COMPOUND_PHRASES[combinedH];
+          const dictMeta = lookupDictMetaForToken(combinedH);
+          finalMerged.push({
+            hanzi: combinedH,
+            pinyin: (fixed && fixed.pinyin) || dictMeta.pinyin || `${cur.pinyin || ''} men`.trim(),
+            vietnamese: (fixed && fixed.vietnamese) || dictMeta.vietnamese || (cur.vietnamese ? `các ${cur.vietnamese}` : 'mọi người'),
+            isVocab: true
+          });
+          k += 2;
+          continue;
+        }
+
+        // Case D: [1-char Verb] + standalone "着" -> e.g. "笑" + "着" -> "笑着"
+        if (
+          cur && nxt &&
+          cur.isVocab && cur.hanzi.length === 1 && !nonVerbSingleChars.has(cur.hanzi) &&
+          nxt.hanzi === '着'
+        ) {
+          const combinedH = cur.hanzi + '着';
+          const fixed = FIXED_COMPOUND_PHRASES[combinedH];
+          const dictMeta = lookupDictMetaForToken(combinedH);
+          finalMerged.push({
+            hanzi: combinedH,
+            pinyin: (fixed && fixed.pinyin) || dictMeta.pinyin || `${cur.pinyin || ''} zhe`.trim(),
+            vietnamese: (fixed && fixed.vietnamese) || dictMeta.vietnamese || cur.vietnamese || '',
+            isVocab: true
+          });
+          k += 2;
+          continue;
+        }
+
+        finalMerged.push(cur);
+        k++;
+      }
+
+      return finalMerged;
     }
 
     function healReadingArticleFixedCompounds(art) {
       if (!art || !Array.isArray(art.paragraphs)) return false;
       let changed = false;
+      const isAiStory = art.sourceType === 'ai_story' || String(art.id || '').startsWith('ai_story_');
+      if (isAiStory && art.paragraphs.length > 1) {
+        const combinedVi = art.paragraphs.map(p => (p && p.vietnamese ? p.vietnamese.trim() : '')).filter(Boolean).join(' ');
+        const combinedToks = [];
+        art.paragraphs.forEach(p => {
+          (p && p.tokens ? p.tokens : []).forEach(t => {
+            if (!t || !t.hanzi) return;
+            if (!t.isVocab && /^\s+$/.test(t.hanzi)) return;
+            if (!t.isVocab && t.hanzi.includes('\n')) {
+              const cleanedP = t.hanzi.replace(/\n+/g, '');
+              if (!cleanedP) return;
+              t.hanzi = cleanedP;
+            }
+            combinedToks.push(t);
+          });
+        });
+        art.paragraphs = [{
+          vietnamese: combinedVi || art.translation || '',
+          tokens: combinedToks
+        }];
+        changed = true;
+      }
+
       const allTokens = [];
       art.paragraphs.forEach(p => {
         if (!Array.isArray(p.tokens)) return;
@@ -9750,8 +9989,11 @@ ${chunkText}
         if (beforeSig !== afterSig) changed = true;
         allTokens.push(...p.tokens);
       });
+      if (!Array.isArray(art.tokens) || art.tokens.length !== allTokens.length) {
+        changed = true;
+      }
+      art.tokens = allTokens;
       if (changed) {
-        art.tokens = allTokens;
         const fullText = allTokens.map(t => (t && t.hanzi) || '').join('');
         if (fullText) {
           art.rawText = fullText;
@@ -9809,7 +10051,7 @@ ${chunkText}
       return null;
     }
 
-    function isolateTargetWordsInParagraphs(allParagraphs, targetWords = []) {
+    function isolateTargetWordsInParagraphs(allParagraphs, targetWords = [], options = {}) {
       const targetWordsHanzi = (targetWords || []).map(w => (typeof w === 'string' ? w : (w && w.hanzi))).filter(Boolean);
       if (Array.isArray(allParagraphs)) {
         allParagraphs.forEach(para => {
@@ -9817,6 +10059,26 @@ ${chunkText}
             para.tokens = para.tokens.map(normalizeAiTokenItem).filter(Boolean);
           }
         });
+      }
+      if (options && options.singleParagraph && Array.isArray(allParagraphs) && allParagraphs.length > 1) {
+        const combinedVi = allParagraphs.map(p => (p && p.vietnamese ? p.vietnamese.trim() : '')).filter(Boolean).join(' ');
+        const combinedToks = [];
+        allParagraphs.forEach(p => {
+          (p && p.tokens ? p.tokens : []).forEach(t => {
+            if (!t || !t.hanzi) return;
+            if (!t.isVocab && /^\s+$/.test(t.hanzi)) return;
+            if (!t.isVocab && t.hanzi.includes('\n')) {
+              const cleanedP = t.hanzi.replace(/\n+/g, '');
+              if (!cleanedP) return;
+              t.hanzi = cleanedP;
+            }
+            combinedToks.push(t);
+          });
+        });
+        allParagraphs = [{
+          vietnamese: combinedVi,
+          tokens: combinedToks
+        }];
       }
       if (targetWordsHanzi.length > 0 && Array.isArray(allParagraphs) && allParagraphs.length > 0) {
         targetWordsHanzi.forEach(tHanzi => {
@@ -11076,6 +11338,14 @@ ${chunkText}
         }
       });
 
+      const syncedFlatTokens = [];
+      paragraphs.forEach(p => {
+        (p.tokens || []).forEach(t => {
+          if (t) syncedFlatTokens.push(t);
+        });
+      });
+      art.tokens = syncedFlatTokens;
+
       let overallTokenIdx = 0;
 
       const paragraphsHTML = paragraphs.map((para, pIdx) => {
@@ -11089,6 +11359,7 @@ ${chunkText}
         const tinyAudioBtnHTML = `<button class="tiny-para-audio-btn" data-pidx="${pIdx}" id="btnParaAudio_${pIdx}" title="Chạm: Đọc riêng đoạn này | Giữ 0.5s: Đọc tiếp từ đoạn này đến hết">${purpleSpeakerSVG}</button>`;
 
         if (isToggledVi) {
+          overallTokenIdx += (para.tokens || []).length;
           const viText = para.vietnamese || (paragraphs.length === 1 && art.translation ? art.translation : 'Đoạn này chưa có bản dịch.');
           return `
             <div style="margin-bottom: 14px; line-height: 1.6;">
@@ -11942,36 +12213,76 @@ ${chunkText}
 必须自然、地道地将以下所有目标中文词汇融入这篇纯中文故事中：
 ${wordListPrompt}
 
-【核心铁律 — QUY TẮC SỐNG CÒN】:
-0. 100% CHỮ HÁN GIẢN THỂ CHO BÀI ĐỌC:
-   - Toàn bộ câu chuyện gốc ("content"), tiêu đề ("title") và phần tử đầu tiên của mọi từ trong mảng "tokens" BẮT BUỘC PHẢI LÀ 100% CHỮ HÁN GIẢN THỂ (纯正简体中文汉字)!
-   - 严禁使用越南语编写故事正文或把越南语塞进 tokens 的第一个字段！TUYỆT ĐỐI CẤM viết truyện bằng tiếng Việt rồi chèn vài từ tiếng Trung vào! Mọi câu chữ trong truyện phải viết hoàn toàn bằng tiếng Trung Quốc bản xứ.
-1. Độ dài & Tần suất: Đoạn văn dài khoảng 120 - 150 chữ Hán giản thể, mạch truyện tự nhiên, cuốn hút. Mỗi từ mục tiêu (${targetHanziList.join(', ')}) CHỈ DÙNG ĐÚNG 1 LẦN DUY NHẤT (1 lần đắt giá, tự nhiên nhất), TUYỆT ĐỐI KHÔNG lặp lại cùng một từ mục tiêu 2 lần trong bài đọc ngắn.
-2. QUY TẮC NGỮ PHÁP & DÙNG TỪ MỤC TIÊU ĐỘC LẬP:
-   - Nếu từ mục tiêu kết thúc bằng trợ từ trạng ngữ "地" (ví dụ: 和蔼地, 气愤地, 悄悄地, 头也不回地...): BẮT BUỘC phải đặt NGAY TRƯỚC ĐỘNG TỪ hoặc CỤM ĐỘNG TỪ để làm trạng ngữ (Cấu trúc chuẩn: [Từ + 地] + Động từ, ví dụ: "和蔼地笑着", "和蔼地逗着小猫", "和蔼地询问"). TUYỆT ĐỐI CẤM đặt từ có đuôi "地" ở cuối mệnh đề trước dấu câu hoặc làm vị ngữ sau "待人".
+【PHẦN I — QUY TẮC SÁNG TÁC TRUYỆN TIẾNG TRUNG】:
+1. 100% CHỮ HÁN GIẢN THỂ & VIẾT LIỀN 1 ĐOẠN VĂN DUY NHẤT:
+   - Toàn bộ câu chuyện gốc ("content"), tiêu đề ("title") và phần tử đầu tiên của mọi từ trong mảng "tokens" BẮT BUỘC PHẢI LÀ 100% CHỮ HÁN GIẢN THỂ (纯正简体中文汉字)! 严禁使用越南语编写故事正文或把越南语塞进 tokens 的第一个字段！
+   - Toàn bộ bài đọc ngắn (~120 - 150 chữ Hán) BẮT BUỘC viết liền mạch thành **1 ĐOẠN VĂN DUY NHẤT** (không xuống dòng \\n, mảng "paragraphs" CHỈ CÓ ĐÚNG 1 PHẦN TỬ DUY NHẤT, TUYỆT ĐỐI KHÔNG tách mỗi câu hay mỗi lời thoại thành 1 đoạn riêng gây rối mắt!).
+2. Tần suất & Cách dùng từ mục tiêu độc lập:
+   - Mỗi từ mục tiêu (${targetHanziList.join(', ')}) CHỈ DÙNG ĐÚNG 1 LẦN DUY NHẤT trong bài (【每个目标词汇在全文中只允许出现唯一 1 次，绝对禁止重复使用第 2 次】).
    - Dùng từ mục tiêu (${targetHanziList.join(', ')}) như một TỪ ĐỘC LẬP đúng nghĩa gốc của nó (ví dụ: "生产" dùng độc lập như "恢复生产" / "投入生产", KHÔNG nhét vào "生产部"; "供应" dùng độc lập như "零件供应" / "保障供应", KHÔNG gắn hậu tố thành "供应商"; "评审" dùng độc lập như "严格评审" / "通过评审", KHÔNG nhét vào "项目评审会").
-   - Xưng hô chức danh tiếng Trung BẮT BUỘC viết theo trật tự chuẩn bản xứ: [Họ + Chức danh] (ví dụ: "王经理", "李总监", "张主任") hoặc [Phòng ban + Họ + Chức danh] ("生产部王经理"). TUYỆT ĐỐI CẤM viết ngược kiểu Tây hóa "[Chức danh + Họ 1 chữ]" như "经理王", "部长李"!
-3. QUY TẮC GỘP CỤM CỐ ĐỊNH & TÁCH TOKEN TRONG MẢNG "tokens":
-   - GỘP TRỌN CẢ CỤM thành 1 token duy nhất kèm nghĩa tiếng Việt hoàn chỉnh đối với:
-     + Các cụm danh từ cố định, thuật ngữ chuyên môn/công sở, phòng ban, chức danh (để người đọc chạm 1 lần hiểu ngay, không phải tự dịch ghép từng từ lẻ): ví dụ "项目评审会|xiàng mù píng shěn huì|cuộc họp thẩm định dự án", "高层领导|gāo céng lǐng dǎo|lãnh đạo cấp cao", "资源配置|zī yuán pèi zhì|phân bổ nguồn lực", "生产部|shēng chǎn bù|phòng sản xuất", "供应商|gōng yìng shāng|nhà cung cấp", "备用供应商|bèi yòng gōng yìng shāng|nhà cung cấp dự phòng", "技术负责人|jì shù fù zé rén|người phụ trách kỹ thuật", "生产车间|shēng chǎn chē jiān|phân xưởng sản xuất", "产品质量|chǎn pǐn zhì liàng|chất lượng sản phẩm", "研发流程|yán fā liú chéng|quy trình R&D", "核心零件|hé xīn líng jiàn|linh kiện cốt lõi", "全体员工|quán tǐ yuán gōng|toàn thể nhân viên", "紧急会议|jǐn jí huì yì|cuộc họp khẩn cấp", "王经理|wáng jīng lǐ|giám đốc Vương".
-     + Cụm quán dụng, động từ ly hợp có chèn thành phần, thành ngữ 4 chữ: ví dụ "松了口气|sōng le kǒu qì|thở phào nhẹ nhõm", "叹了口气|tàn le kǒu qì|thở dài một tiếng", "头也不回地|tóu yě bù huí de|không ngoảnh đầu lại", "吃了一惊|chī le yī jīng|giật cả mình".
-   - TÁCH RIÊNG đối với tổ hợp động từ + tân ngữ tự do hoặc phó từ + tính từ thông thường: ví dụ tách "感到|gǎn dào|cảm thấy" và "害怕|hài pà|sợ hãi".
-   - Giữ nguyên mặt chữ của các từ mục tiêu (${targetHanziList.join(', ')}) thành 1 phần tử độc lập trong mảng tokens (TUYỆT ĐỐI KHÔNG đặt dấu ngoặc kép “ ” hay 「 」 bao quanh từ mục tiêu) và TUYỆT ĐỐI KHÔNG xé lẻ hậu tố đơn ("部", "商", "会", "员", "室") thành chữ đơn.
-   - Mỗi từ/cụm ghi dạng chuỗi ngắn gọn "汉字|pinyin|nghĩa tiếng Việt" (Cột 1 BẮT BUỘC là Chữ Hán, Cột 2 là Pinyin, Cột 3 là nghĩa tiếng Việt). Với dấu câu hoặc trợ từ "的", "地", "得" chỉ cần ghi chính ký tự đó (ví dụ "，" hoặc "的").
-4. Không dùng dấu ngoặc kép thẳng " bên trong nội dung chuỗi JSON.
-5. Trả về đúng JSON thuần túy theo đúng thứ tự các trường dưới đây (viết "content" 100% chữ Hán trước, rồi tách "tokens" chữ Hán, cuối cùng mới dịch "vietnamese"):
+   - Nếu từ mục tiêu kết thúc bằng trợ từ trạng ngữ "地" (ví dụ: 和蔼地, 气愤地, 悄悄地, 头也不回地...): BẮT BUỘC đặt NGAY TRƯỚC ĐỘNG TỪ hoặc CỤM ĐỘNG TỪ để làm trạng ngữ.
+   - Xưng hô chức danh tiếng Trung BẮT BUỘC viết theo trật tự chuẩn bản xứ: [Họ + Chức danh] (ví dụ: "王经理", "李总监", "张主任") hoặc [Phòng ban + Họ + Chức danh] ("生产部王经理"). TUYỆT ĐỐI CẤM viết ngược "[Chức danh + Họ 1 chữ]" như "经理王"!
+
+【PHẦN II — QUY TẮC TÁCH TỪ & GỘP CỤM TRONG MẢNG "tokens" (ÁP DỤNG Y HỆT CHUẨN TÁCH TỪ BÀI ĐỌC)】:
+0) TÁCH RIÊNG CÁC TỪ VỰNG MỤC TIÊU (${targetHanziList.join(', ')}):
+   - Khi gặp bất kỳ từ nào trong danh sách (${targetHanziList.join(', ')}), BẮT BUỘC giữ nguyên từ đó thành 1 token độc lập đúng mặt chữ (đầy đủ pinyin và vietnamese, TUYỆT ĐỐI KHÔNG đặt dấu ngoặc kép “ ” hay 「 」 bao quanh từ mục tiêu).
+
+1) QUY TẮC VÀNG PHÂN BIỆT "TỪ ĐỘC LẬP (TÁCH)" VÀ "CỤM QUÁN DỤNG / LY HỢP (GỘP)" (CỰC KỲ QUAN TRỌNG):
+   - **A. TÁCH RIÊNG đối với Tổ hợp tự do (Nghĩa cộng gộp 1 + 1 = 2)**:
+     + Khi động từ cảm xúc/nhận thức hoặc phó từ ghép với từ vựng độc lập đứng sau mà mỗi từ vẫn giữ nguyên nghĩa từ điển của nó, BẮT BUỘC tách thành từng từ vựng chuẩn (2–4 chữ) để người học bấm tra/lưu đúng từ cần học.
+     + Ví dụ tách chuẩn: tách "感到" + "害怕" (KHÔNG gộp thành "感到害怕"), tách "产生" + "共鸣", tách "显得" + "局促不安", tách "非常" + "感兴趣", tách "首次" + "会面".
+   - **B. GỘP TRỌN CẢ CỤM đối với Cụm danh từ cố định, Phòng ban/Chức danh, Cụm quán dụng, Động từ ly hợp, Cử chỉ/Biểu cảm & Thành ngữ**:
+     + Các cụm danh từ cố định, thuật ngữ công sở/chuyên môn, phòng ban, chức danh (như "项目评审会", "高层领导", "资源配置", "生产部", "供应商", "备用供应商", "技术负责人", "生产车间", "产品质量", "研发流程", "核心零件", "全体员工", "紧急会议", "王经理", "李总监", "邻居们", "同事们") BẮT BUỘC gộp trọn thành 1 token duy nhất kèm nghĩa tiếng Việt hoàn chỉnh, KHÔNG tách lẻ khiến người đọc phải tự ghép nghĩa!
+     + Các cụm quán dụng, động từ ly hợp, cụm cử chỉ/biểu cảm/lời nói, thành ngữ 4 chữ (như "皱起眉头", "皱着眉头", "点了点头", "摇了摇头", "松了口气", "叹了口气", "笑着说", "接着说", "小声说", "刚起了一个头", "头也不回地", "捏了一把汗", "吃了一惊", "有所触动", "莫名其妙", "一落千丈", "硬生生", "怼了回去") BẮT BUỘC gom trọn thành 1 token! (TUYỆT ĐỐI KHÔNG tách "皱起眉头" thành "皱起" + "眉头", KHÔNG tách "笑着说" thành "笑" + "着" + "说"!).
+   - **C. TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết hoặc tách hậu tố đơn ("部", "商", "会", "员", "室", "们", "着") thành chữ đơn**:
+     + Các từ 2 âm tiết chuẩn (như "感到", "害怕", "触动", "故事", "气愤") và từ có hậu tố ("生产部", "供应商", "评审会", "邻居们") luôn giữ nguyên cả từ, tuyệt đối không cắt vụn thành 1 chữ đơn ("部", "商", "会", "所", "起", "们", "着").
+
+2) QUY TẮC NGHĨA VIỆT CỦA TOKEN:
+   - Trong mảng tokens, trường "vietnamese" BẮT BUỘC dịch ĐÚNG SÁT NGHĨA CỦA CHÍNH TỪ / CỤM TỪ HÁN ĐÓ!
+   - Tuyệt đối không thêm các từ ngữ cảnh ở xa ngoài phạm vi token đó vào nghĩa tiếng Việt.
+   - **Ví dụ**:
+     - Token "感到" ➔ vietnamese: "cảm thấy" | Token "害怕" ➔ vietnamese: "sợ hãi"
+     - Token "皱起眉头" ➔ vietnamese: "nhíu mày / cau mày"
+     - Token "笑着说" ➔ vietnamese: "cười nói"
+     - Token "刚起了一个头" ➔ vietnamese: "vừa mới mở đầu" (dịch chuẩn nghĩa bóng cả cụm ly hợp)
+     - Token "头也不回地" ➔ vietnamese: "không ngoảnh đầu lại"
+
+3) QUY TẮC VỀ TRỢ TỪ "的", "地" VÀ LIÊN TỪ "与":
+   - Trợ từ "的" nối định ngữ và danh từ thông thường (như "半年以来" + "的" + "首次" + "会面", hoặc "大小姐" + "的" + "故事"), hãy tách chữ "的" thành 1 token riêng.
+   - Trợ từ "地" đứng sau tính từ 2 âm tiết thông thường (như "和蔼" + "地", "气愤" + "地", "高兴" + "地"), hãy tách chữ "地" thành 1 token riêng để người học lưu được từ gốc chuẩn ("和蔼", "气愤"). Chỉ gộp "地" khi thuộc cụm quán dụng/thành ngữ cố định (như "头也不回地").
+   - KHÔNG ghép liên từ "与" vào đầu từ B trong "A 与 B" (Ví dụ: tách "大小姐", "与", "佐野").
+
+4) TỰ ĐỘNG SỬA LỖI GRAMMAR "地" / "的":
+   - Trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (như "头也不回地走了", "气愤地说着", "高兴地笑"), bắt buộc dùng chữ "地" đúng chuẩn ngữ pháp!
+
+5) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU:
+   - Sử dụng dấu câu tiếng Trung chuẩn (，, 。, ！, ？, ：“”, 《》). Giữ lại đầy đủ mọi dấu câu trong mảng tokens.
+   - Không dùng dấu ngoặc kép thẳng " bên trong chuỗi JSON.
+
+Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown). Mảng "paragraphs" CHỈ CÓ ĐÚNG 1 PHẦN TỬ DUY NHẤT. Mỗi phần tử trong mảng "tokens" dùng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt" (với dấu câu hoặc trợ từ "的", "地" chỉ cần ghi chính ký tự đó, ví dụ "，", "的", "地"):
 {
   "title": "纯中文标题 (3-6个汉字)",
   "titleVi": "Tiêu đề tiếng Việt tương ứng",
-  "content": "在紧急会议上，王经理听到核心零件恢复供应的消息后终于松了口气……（全文100%纯简体中文，约120-150个汉字，严禁出现任何越南语字母）",
+  "content": "项目评审会上，生产部王经理皱起眉头……（全文100%纯简体中文，连成唯一1个自然段，不换行，约120-150个汉字）",
   "paragraphs": [
     {
       "tokens": [
-        "在|zài|tại",
-        "紧急会议|jǐn jí huì yì|cuộc họp khẩn cấp",
+        "项目评审会|xiàng mù píng shěn huì|cuộc họp thẩm định dự án",
         "上|shàng|trên / trong",
         "，",
+        "生产部|shēng chǎn bù|phòng sản xuất",
         "王经理|wáng jīng lǐ|giám đốc Vương",
+        "皱起眉头|zhòu qǐ méi tóu|nhíu mày",
+        "，",
+        "然后|rán hòu|sau đó",
+        "笑着说|xiào zhe shuō|cười nói",
+        "问题|wèn tí|vấn đề",
+        "已经|yǐ jīng|đã",
+        "解决|jiě jué|giải quyết",
+        "了|le|rồi",
+        "，",
+        "大家|dà jiā|mọi người",
+        "终于|zhōng yú|cuối cùng",
         "松了口气|sōng le kǒu qì|thở phào nhẹ nhõm",
         "。"
       ],
@@ -12005,10 +12316,12 @@ ${wordListPrompt}
           const latinWordCount = (storyObj.content.match(/[a-zA-ZÀ-ỹ]{2,}/g) || []).length;
           if (hanziCount < 35 || latinWordCount > 2) {
             storyObj.content = '';
+          } else {
+            storyObj.content = storyObj.content.replace(/\r?\n+/g, '').trim();
           }
         }
         if (!storyObj.content && Array.isArray(storyObj.paragraphs) && storyObj.paragraphs.length > 0) {
-          storyObj.content = storyObj.paragraphs.map(p => (p.tokens || []).map(t => t.hanzi || '').join('')).join('\n').trim();
+          storyObj.content = storyObj.paragraphs.map(p => (p.tokens || []).map(t => t.hanzi || '').join('')).join('').replace(/\r?\n+/g, '').trim();
         }
         // Clean title if AI accidentally wrote Vietnamese in title
         if (storyObj.title && !/[\u4e00-\u9fff]/.test(storyObj.title) && storyObj.titleVi && /[\u4e00-\u9fff]/.test(storyObj.titleVi)) {
@@ -12045,7 +12358,7 @@ ${wordListPrompt}
                 messages: [
                   {
                     role: 'system',
-                    content: SIMPLIFIED_ONLY_SYSTEM_MSG + ' 特别注意：编写故事时，故事正文(content)和分词数组(tokens)中的词语必须100%为纯简体中文汉字，绝对禁止用越南语写故事正文！'
+                    content: SIMPLIFIED_ONLY_SYSTEM_MSG + ' 特别注意：编写故事时，故事正文(content)和分词数组(tokens)中的词语必须100%为纯简体中文汉字，连成唯一1个自然段，绝对禁止用越南语写故事正文！'
                   },
                   { role: 'user', content: storyPrompt }
                 ]
@@ -12083,12 +12396,13 @@ ${wordListPrompt}
 
         let parsedPassage;
         if (Array.isArray(parsedStory.paragraphs) && parsedStory.paragraphs.length > 0) {
-          parsedPassage = isolateTargetWordsInParagraphs(parsedStory.paragraphs, aiStorySelectedWords);
+          parsedPassage = isolateTargetWordsInParagraphs(parsedStory.paragraphs, aiStorySelectedWords, { singleParagraph: true });
         } else {
-          parsedPassage = await parsePassageChunksWithAi(parsedStory.content, apiKey, {
+          const chunkParsed = await parsePassageChunksWithAi(parsedStory.content, apiKey, {
             targetWords: aiStorySelectedWords,
             customTitle: parsedStory.title
           });
+          parsedPassage = isolateTargetWordsInParagraphs(chunkParsed.paragraphs, aiStorySelectedWords, { singleParagraph: true });
         }
 
         const finalRawContent = parsedStory.content || parsedPassage.tokens.map(t => t.hanzi || '').join('');
