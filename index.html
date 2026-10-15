@@ -461,6 +461,11 @@
       flex: 0 0 98px;
     }
 
+    .compact-study-row.no-group-btn .compact-search-box {
+      flex: 1 1 auto;
+      max-width: none;
+    }
+
     .compact-search-icon {
       position: absolute;
       left: 6px;
@@ -5453,6 +5458,15 @@
     function renderGroupDropdown() {
       const selectGroupEl = document.getElementById('selectGroup');
       const listContainer = document.getElementById('groupPickerListContainer');
+      const btnCustomGroupSelect = document.getElementById('btnCustomGroupSelect');
+      const studyRow = btnCustomGroupSelect ? btnCustomGroupSelect.closest('.compact-study-row') : null;
+      const hideGroupBtn = currentLevel === 'due' && !currentSearchQuery;
+      if (btnCustomGroupSelect) {
+        btnCustomGroupSelect.style.display = hideGroupBtn ? 'none' : '';
+      }
+      if (studyRow) {
+        studyRow.classList.toggle('no-group-btn', hideGroupBtn);
+      }
       if (listContainer) listContainer.innerHTML = '';
       if (selectGroupEl) selectGroupEl.innerHTML = '';
 
@@ -6083,7 +6097,7 @@
 
     function getGroupWordsRaw() {
       const words = getCurrentLevelWords();
-      if (currentLevel === 'custom') {
+      if (currentLevel === 'custom' || currentLevel === 'due') {
         return words.map(item => {
           const hanzi = item.hanzi || item.word || item.text || item.chinese || '';
           return {
@@ -9424,11 +9438,11 @@ ${targetRuleText}
    - **A. TÁCH RIÊNG đối với Tổ hợp tự do (Nghĩa cộng gộp 1 + 1 = 2)**:
      + Khi động từ cảm xúc/nhận thức hoặc phó từ ghép với từ vựng độc lập đứng sau mà mỗi từ vẫn giữ nguyên nghĩa từ điển của nó, BẮT BUỘC tách thành từng từ vựng chuẩn (2–4 chữ) để người học bấm tra/lưu đúng từ cần học.
      + Ví dụ tách chuẩn: tách "感到" + "害怕" (KHÔNG gộp thành "感到害怕"), tách "产生" + "共鸣", tách "显得" + "局促不安", tách "非常" + "感兴趣", tách "首次" + "会面".
-   - **B. GỘP TRỌN CẢ CỤM đối với Cụm quán dụng, Động từ ly hợp bị chèn giữa, Thành ngữ & Cấu trúc cố định (Phải nhìn cả cụm mới hiểu đúng nghĩa)**:
-     + Nếu tách lẻ mà bị biến thành nghĩa đen ngô nghê hoặc mất nghĩa bóng/nghĩa cấu trúc, BẮT BUỘC gom trọn thành 1 token!
-     + Ví dụ bắt buộc gom cả cụm: "刚起了一个头" (vừa mới mở đầu / cất lời), "头也不回地" / "一头也不转" (không ngoảnh đầu lại), "叹了口气" (thở dài một tiếng), "捏了一把汗" (lo sốt vó / toát mồ hôi hột), "吃了一惊" (giật cả mình), "有所触动" (có chút xúc động), "莫名其妙" (vô duyên vô cớ), "一落千丈" (tuột dốc không phanh), "硬生生" (cứng rắn / sống sượng), "怼了回去" (bật lại / cãi lại).
-   - **C. TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết thành chữ đơn**:
-     + Các từ 2 âm tiết chuẩn (như "感到", "害怕", "触动", "故事", "气愤") luôn giữ nguyên 2 chữ, tuyệt đối không cắt vụn thành 1 chữ đơn ("所", "起", "感", "害", "怕").
+   - **B. GỘP TRỌN CẢ CỤM đối với Cụm danh từ cố định, Phòng ban/Chức danh, Cụm quán dụng, Động từ ly hợp & Thành ngữ**:
+     + Các cụm danh từ cố định, thuật ngữ công sở/chuyên môn, phòng ban, chức danh (như "项目评审会", "高层领导", "资源配置", "生产部", "供应商", "备用供应商", "技术负责人", "生产车间", "产品质量", "研发流程", "核心零件", "全体员工", "紧急会议", "王经理") BẮT BUỘC gộp trọn thành 1 token duy nhất kèm nghĩa tiếng Việt hoàn chỉnh, KHÔNG tách lẻ khiến người đọc phải tự ghép nghĩa!
+     + Các cụm quán dụng, động từ ly hợp bị chèn giữa, thành ngữ 4 chữ (như "刚起了一个头", "头也不回地", "叹了口气", "松了口气", "捏了一把汗", "吃了一惊", "有所触动", "莫名其妙", "一落千丈", "硬生生", "怼了回去") BẮT BUỘC gom trọn thành 1 token!
+   - **C. TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết hoặc tách hậu tố đơn ("部", "商", "会", "员", "室") thành chữ đơn**:
+     + Các từ 2 âm tiết chuẩn (như "感到", "害怕", "触动", "故事", "气愤") và từ có hậu tố ("生产部", "供应商", "评审会") luôn giữ nguyên cả từ, tuyệt đối không cắt vụn thành 1 chữ đơn ("部", "商", "会", "所", "起").
 
 2) QUY TẮC NGHĨA VIỆT CỦA TOKEN:
    - Trong mảng tokens, trường "vietnamese" BẮT BUỘC dịch ĐÚNG SÁT NGHĨA CỦA CHÍNH TỪ / CỤM TỪ HÁN ĐÓ!
@@ -9506,8 +9520,8 @@ ${chunkText}
                 'X-Title': 'HSK Vocab App'
               },
               body: JSON.stringify({
-                model: 'google/gemini-2.5-flash',
-                reasoning: { max_tokens: 0 },
+                model: options.model || 'google/gemini-2.5-flash',
+                reasoning: options.model && options.model.includes('deepseek') ? { enabled: false } : { max_tokens: 0 },
                 messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
               })
             });
@@ -9519,7 +9533,7 @@ ${chunkText}
 
             const data = await response.json();
             let content = data.choices?.[0]?.message?.content || '{}';
-            content = content.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
+            content = content.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
 
             let parsedJSON = safeParseJSON(content);
             if (parsedJSON && typeof parsedJSON === 'object') {
@@ -9563,6 +9577,190 @@ ${chunkText}
     }
 
     const AI_PUNCT_TEST_RE = /^[，。！？；：、“”‘’（）《》【】…—,.!?;:"'()\[\]\-\s]+$/;
+    const FIXED_COMPOUND_PHRASES = {
+      '项目评审会': { pinyin: 'xiàng mù píng shěn huì', vietnamese: 'cuộc họp thẩm định dự án' },
+      '评审会': { pinyin: 'píng shěn huì', vietnamese: 'cuộc họp thẩm định' },
+      '高层领导': { pinyin: 'gāo céng lǐng dǎo', vietnamese: 'lãnh đạo cấp cao' },
+      '资源配置': { pinyin: 'zī yuán pèi zhì', vietnamese: 'phân bổ nguồn lực' },
+      '备用供应商': { pinyin: 'bèi yòng gōng yìng shāng', vietnamese: 'nhà cung cấp dự phòng' },
+      '新供应商': { pinyin: 'xīn gōng yìng shāng', vietnamese: 'nhà cung cấp mới' },
+      '供应商': { pinyin: 'gōng yìng shāng', vietnamese: 'nhà cung cấp' },
+      '生产部': { pinyin: 'shēng chǎn bù', vietnamese: 'phòng sản xuất' },
+      '研发部': { pinyin: 'yán fā bù', vietnamese: 'phòng nghiên cứu & phát triển (R&D)' },
+      '市场部': { pinyin: 'shì chǎng bù', vietnamese: 'phòng thị trường' },
+      '人事部': { pinyin: 'rén shì bù', vietnamese: 'phòng nhân sự' },
+      '财务部': { pinyin: 'cái wù bù', vietnamese: 'phòng tài vụ' },
+      '技术部': { pinyin: 'jì shù bù', vietnamese: 'phòng kỹ thuật' },
+      '销售部': { pinyin: 'xiāo shòu bù', vietnamese: 'phòng kinh doanh' },
+      '采购部': { pinyin: 'cǎi gòu bù', vietnamese: 'phòng thu mua' },
+      '公关部': { pinyin: 'gōng guān bù', vietnamese: 'phòng quan hệ công chúng' },
+      '技术负责人': { pinyin: 'jì shù fù zé rén', vietnamese: 'người phụ trách kỹ thuật' },
+      '项目负责人': { pinyin: 'xiàng mù fù zé rén', vietnamese: 'người phụ trách dự án' },
+      '负责人': { pinyin: 'fù zé rén', vietnamese: 'người phụ trách' },
+      '生产车间': { pinyin: 'shēng chǎn chē jiān', vietnamese: 'phân xưởng sản xuất' },
+      '产品质量': { pinyin: 'chǎn pǐn zhì liàng', vietnamese: 'chất lượng sản phẩm' },
+      '研发流程': { pinyin: 'yán fā liú chéng', vietnamese: 'quy trình nghiên cứu & phát triển' },
+      '核心零件': { pinyin: 'hé xīn líng jiàn', vietnamese: 'linh kiện cốt lõi' },
+      '全体员工': { pinyin: 'quán tǐ yuán gōng', vietnamese: 'toàn thể nhân viên' },
+      '紧急会议': { pinyin: 'jǐn jí huì yì', vietnamese: 'cuộc họp khẩn cấp' },
+      'B计划': { pinyin: 'B jì huà', vietnamese: 'kế hoạch B' },
+      '王经理': { pinyin: 'wáng jīng lǐ', vietnamese: 'giám đốc Vương' },
+      '李经理': { pinyin: 'lǐ jīng lǐ', vietnamese: 'giám đốc Lý' },
+      '张经理': { pinyin: 'zhāng jīng lǐ', vietnamese: 'giám đốc Trương' },
+      '陈经理': { pinyin: 'chén jīng lǐ', vietnamese: 'giám đốc Trần' },
+      '刘经理': { pinyin: 'liú jīng lǐ', vietnamese: 'giám đốc Lưu' },
+      '赵经理': { pinyin: 'zhào jīng lǐ', vietnamese: 'giám đốc Triệu' },
+      '部门经理': { pinyin: 'bù mén jīng lǐ', vietnamese: 'giám đốc bộ phận' },
+      '总经理': { pinyin: 'zǒng jīng lǐ', vietnamese: 'tổng giám đốc' },
+      '生产线': { pinyin: 'shēng chǎn xiàn', vietnamese: 'dây chuyền sản xuất' },
+      '供应链': { pinyin: 'gōng yìng liàn', vietnamese: 'chuỗi cung ứng' },
+      '产业链': { pinyin: 'chǎn yè liàn', vietnamese: 'chuỗi ngành' },
+      '解决方案': { pinyin: 'jiě jué fāng àn', vietnamese: 'giải pháp / phương án giải quyết' },
+      '合作伙伴': { pinyin: 'hé zuò huǒ bàn', vietnamese: 'đối tác hợp tác' },
+      '合作方': { pinyin: 'hé zuò fāng', vietnamese: 'bên đối tác' },
+      '竞争对手': { pinyin: 'jìng zhēng duì shǒu', vietnamese: 'đối thủ cạnh tranh' },
+      '市场份额': { pinyin: 'shì chǎng fèn é', vietnamese: 'thị phần' },
+      '新闻发布会': { pinyin: 'xīn wén fā bù huì', vietnamese: 'buổi họp báo' },
+      '发布会': { pinyin: 'fā bù huì', vietnamese: 'buổi họp báo / lễ ra mắt' },
+      '研讨会': { pinyin: 'yán tǎo huì', vietnamese: 'hội thảo chuyên đề' },
+      '董事会': { pinyin: 'dǒng shì huì', vietnamese: 'hội đồng quản trị' },
+      '松了口气': { pinyin: 'sōng le kǒu qì', vietnamese: 'thở phào nhẹ nhõm' },
+      '松了一口气': { pinyin: 'sōng le yī kǒu qì', vietnamese: 'thở phào nhẹ nhõm' },
+      '叹了口气': { pinyin: 'tàn le kǒu qì', vietnamese: 'thở dài một tiếng' },
+      '叹了一口气': { pinyin: 'tàn le yī kǒu qì', vietnamese: 'thở dài một tiếng' }
+    };
+
+    const CHINESE_SURNAMES_MAP = {
+      '王': { py: 'wáng', vi: 'Vương' },
+      '李': { py: 'lǐ', vi: 'Lý' },
+      '张': { py: 'zhāng', vi: 'Trương' },
+      '刘': { py: 'liú', vi: 'Lưu' },
+      '陈': { py: 'chén', vi: 'Trần' },
+      '杨': { py: 'yáng', vi: 'Dương' },
+      '赵': { py: 'zhào', vi: 'Triệu' },
+      '黄': { py: 'huáng', vi: 'Hoàng' },
+      '周': { py: 'zhōu', vi: 'Chu' },
+      '吴': { py: 'wú', vi: 'Ngô' },
+      '林': { py: 'lín', vi: 'Lâm' }
+    };
+    const CHINESE_TITLES_MAP = {
+      '经理': { py: 'jīng lǐ', vi: 'giám đốc' },
+      '总监': { py: 'zǒng jiān', vi: 'giám đốc' },
+      '部长': { py: 'bù zhǎng', vi: 'trưởng phòng' },
+      '主任': { py: 'zhǔ rèn', vi: 'chủ nhiệm' },
+      '主管': { py: 'zhǔ guǎn', vi: 'quản lý' },
+      '组长': { py: 'zǔ zhǎng', vi: 'tổ trưởng' }
+    };
+
+    function mergeFixedCompoundTokensInList(tokens) {
+      if (!Array.isArray(tokens) || tokens.length === 0) return tokens;
+
+      // 1. Pre-normalize broken glued tokens from legacy splits (e.g. "部经理", "经理王", "王宣布", "会上" after "评审")
+      const expanded = [];
+      for (let i = 0; i < tokens.length; i++) {
+        const tok = tokens[i];
+        if (!tok || !tok.hanzi) continue;
+        const prevH = expanded.length > 0 ? expanded[expanded.length - 1].hanzi : '';
+        if (tok.hanzi === '部经理') {
+          expanded.push({ hanzi: '部', pinyin: 'bù', vietnamese: 'bộ phận / phòng', isVocab: true });
+          expanded.push({ hanzi: '经理', pinyin: 'jīng lǐ', vietnamese: 'giám đốc / quản lý', isVocab: true });
+        } else if (tok.hanzi === '经理王') {
+          expanded.push({ hanzi: '王经理', pinyin: 'wáng jīng lǐ', vietnamese: 'giám đốc Vương', isVocab: true });
+        } else if (tok.hanzi === '王宣布' && (prevH === '经理' || prevH.endsWith('经理'))) {
+          expanded.push({ hanzi: '王', pinyin: 'wáng', vietnamese: 'Vương', isVocab: true });
+          expanded.push({ hanzi: '宣布', pinyin: 'xuān bù', vietnamese: 'tuyên bố', isVocab: true });
+        } else if (tok.hanzi === '会上' && (prevH === '评审' || prevH === '项目评审')) {
+          expanded.push({ hanzi: '会', pinyin: 'huì', vietnamese: 'cuộc họp', isVocab: true });
+          expanded.push({ hanzi: '上', pinyin: 'shàng', vietnamese: 'trên / trong', isVocab: true });
+        } else if (tok.hanzi === '项目评审会上') {
+          expanded.push({ hanzi: '项目评审会', pinyin: 'xiàng mù píng shěn huì', vietnamese: 'cuộc họp thẩm định dự án', isVocab: true });
+          expanded.push({ hanzi: '上', pinyin: 'shàng', vietnamese: 'trên / trong', isVocab: true });
+        } else {
+          expanded.push(tok);
+        }
+      }
+
+      // 2. Fix inverted "[Title] + [1-char Surname]" -> "[Surname][Title]" (e.g. "经理" + "王" -> "王经理")
+      const titleFixed = [];
+      for (let i = 0; i < expanded.length; i++) {
+        const cur = expanded[i];
+        const nxt = expanded[i + 1];
+        if (cur && nxt && CHINESE_TITLES_MAP[cur.hanzi] && CHINESE_SURNAMES_MAP[nxt.hanzi]) {
+          const sInfo = CHINESE_SURNAMES_MAP[nxt.hanzi];
+          const tInfo = CHINESE_TITLES_MAP[cur.hanzi];
+          titleFixed.push({
+            hanzi: nxt.hanzi + cur.hanzi,
+            pinyin: `${sInfo.py} ${tInfo.py}`,
+            vietnamese: `${tInfo.vi} ${sInfo.vi}`,
+            isVocab: true
+          });
+          i++; // skip nxt
+        } else {
+          titleFixed.push(cur);
+        }
+      }
+
+      // 3. Greedy sliding window (length 4 down to 2) to merge FIXED_COMPOUND_PHRASES
+      const merged = [];
+      let idx = 0;
+      while (idx < titleFixed.length) {
+        let matched = null;
+        let matchLen = 0;
+        for (let len = Math.min(4, titleFixed.length - idx); len >= 2; len--) {
+          const slice = titleFixed.slice(idx, idx + len);
+          if (slice.some(t => !t || !t.hanzi || AI_PUNCT_TEST_RE.test(t.hanzi))) continue;
+          const combined = slice.map(t => t.hanzi).join('');
+          if (FIXED_COMPOUND_PHRASES[combined]) {
+            matched = {
+              hanzi: combined,
+              pinyin: FIXED_COMPOUND_PHRASES[combined].pinyin,
+              vietnamese: FIXED_COMPOUND_PHRASES[combined].vietnamese,
+              isVocab: true
+            };
+            matchLen = len;
+            break;
+          }
+        }
+        if (matched) {
+          merged.push(matched);
+          idx += matchLen;
+        } else {
+          const tok = titleFixed[idx];
+          if (tok && FIXED_COMPOUND_PHRASES[tok.hanzi]) {
+            tok.pinyin = FIXED_COMPOUND_PHRASES[tok.hanzi].pinyin;
+            tok.vietnamese = FIXED_COMPOUND_PHRASES[tok.hanzi].vietnamese;
+            tok.isVocab = true;
+          }
+          merged.push(tok);
+          idx++;
+        }
+      }
+      return merged;
+    }
+
+    function healReadingArticleFixedCompounds(art) {
+      if (!art || !Array.isArray(art.paragraphs)) return false;
+      let changed = false;
+      const allTokens = [];
+      art.paragraphs.forEach(p => {
+        if (!Array.isArray(p.tokens)) return;
+        const beforeSig = p.tokens.map(t => (t && t.hanzi) || '').join('|');
+        p.tokens = mergeFixedCompoundTokensInList(p.tokens);
+        const afterSig = p.tokens.map(t => (t && t.hanzi) || '').join('|');
+        if (beforeSig !== afterSig) changed = true;
+        allTokens.push(...p.tokens);
+      });
+      if (changed) {
+        art.tokens = allTokens;
+        const fullText = allTokens.map(t => (t && t.hanzi) || '').join('');
+        if (fullText) {
+          art.rawText = fullText;
+          art.content = fullText;
+        }
+      }
+      return changed;
+    }
+
     function normalizeAiTokenItem(item) {
       if (!item) return null;
       if (typeof item === 'string') {
@@ -9572,11 +9770,12 @@ ${chunkText}
         const pinyin = (parts[1] || '').trim();
         const vietnamese = (parts[2] || '').trim();
         const isPunctOrDe = AI_PUNCT_TEST_RE.test(hanzi) || hanzi === '的' || hanzi === '地' || hanzi === '得' || hanzi === '与';
+        const fixedMeta = FIXED_COMPOUND_PHRASES[hanzi];
         const meta = (!pinyin || !vietnamese) && !AI_PUNCT_TEST_RE.test(hanzi) ? lookupDictMetaForToken(hanzi) : { pinyin: '', vietnamese: '' };
         return {
           hanzi,
-          pinyin: pinyin || meta.pinyin || '',
-          vietnamese: vietnamese || meta.vietnamese || '',
+          pinyin: pinyin || (fixedMeta && fixedMeta.pinyin) || meta.pinyin || '',
+          vietnamese: vietnamese || (fixedMeta && fixedMeta.vietnamese) || meta.vietnamese || '',
           isVocab: !isPunctOrDe
         };
       }
@@ -9584,11 +9783,12 @@ ${chunkText}
         const hanzi = toSimplified(String(item.hanzi).trim());
         if (!hanzi) return null;
         const isPunctOrDe = AI_PUNCT_TEST_RE.test(hanzi) || hanzi === '的' || hanzi === '地' || hanzi === '得' || hanzi === '与';
+        const fixedMeta = FIXED_COMPOUND_PHRASES[hanzi];
         const meta = (!item.pinyin || !item.vietnamese) && !AI_PUNCT_TEST_RE.test(hanzi) ? lookupDictMetaForToken(hanzi) : { pinyin: '', vietnamese: '' };
         return {
           hanzi,
-          pinyin: item.pinyin || meta.pinyin || '',
-          vietnamese: item.vietnamese || meta.vietnamese || '',
+          pinyin: item.pinyin || (fixedMeta && fixedMeta.pinyin) || meta.pinyin || '',
+          vietnamese: item.vietnamese || (fixedMeta && fixedMeta.vietnamese) || meta.vietnamese || '',
           isVocab: typeof item.isVocab === 'boolean' ? item.isVocab : !isPunctOrDe
         };
       }
@@ -9616,8 +9816,15 @@ ${chunkText}
                 const esc = escapeRegex(tHanzi);
                 tok.hanzi = tok.hanzi.replace(new RegExp(`^[“"「『](${esc})[”"」』]$`), '$1');
               }
-              if (tok.isVocab && tok.hanzi && tok.hanzi !== tHanzi && tok.hanzi.includes(tHanzi)) {
-                const parts = tok.hanzi.split(tHanzi);
+              const parts = (tok.isVocab && tok.hanzi && tok.hanzi !== tHanzi && tok.hanzi.includes(tHanzi))
+                ? tok.hanzi.split(tHanzi)
+                : null;
+              // Do NOT split fixed compound nouns or any compound where splitting leaves a 1-character prefix/suffix (e.g. 生产部, 供应商, 备用供应商, 项目评审会)
+              const shouldKeepCompoundIntact = !parts
+                || Boolean(FIXED_COMPOUND_PHRASES[tok.hanzi])
+                || parts.some(p => p && p.length === 1);
+
+              if (!shouldKeepCompoundIntact && parts) {
                 parts.forEach((part, pIdx) => {
                   if (part) {
                     const meta = lookupDictMetaForToken(part);
@@ -9658,7 +9865,10 @@ ${chunkText}
 
       const allTokens = [];
       (allParagraphs || []).forEach(p => {
-        if (Array.isArray(p.tokens)) allTokens.push(...p.tokens);
+        if (Array.isArray(p.tokens)) {
+          p.tokens = mergeFixedCompoundTokensInList(p.tokens);
+          allTokens.push(...p.tokens);
+        }
       });
       return { paragraphs: allParagraphs || [], tokens: allTokens };
     }
@@ -10691,6 +10901,10 @@ ${chunkText}
         }
       }
 
+      if (typeof healReadingArticleFixedCompounds === 'function' && healReadingArticleFixedCompounds(art)) {
+        saveReadingArticlesToStorage();
+      }
+
       populateReadingArticleViewSelect(articleId);
       renderReadingPassageContent(art);
 
@@ -10775,6 +10989,9 @@ ${chunkText}
       const customGroupWordMap = new Map((customGroup && customGroup.words ? customGroup.words : []).map(w => [w.hanzi, w.vietnamese || '']));
 
       function resolveTokenMeaning(tok) {
+        if (FIXED_COMPOUND_PHRASES[tok.hanzi] && FIXED_COMPOUND_PHRASES[tok.hanzi].vietnamese) {
+          return FIXED_COMPOUND_PHRASES[tok.hanzi].vietnamese;
+        }
         if (selectedMeaningMap.has(tok.hanzi) && selectedMeaningMap.get(tok.hanzi)) {
           return selectedMeaningMap.get(tok.hanzi);
         }
@@ -10826,6 +11043,25 @@ ${chunkText}
         if (currentP.tokens.length > 0) paragraphs.push(currentP);
       }
 
+      const allPassageHanziSet = new Set();
+      paragraphs.forEach(p => {
+        (p.tokens || []).forEach(t => {
+          if (t && t.isVocab && t.hanzi) allPassageHanziSet.add(t.hanzi);
+        });
+      });
+      const fallbackCompoundSelectedSet = new Set();
+      selectedMap.forEach(sw => {
+        if (sw && sw.length >= 2 && !allPassageHanziSet.has(sw)) {
+          paragraphs.forEach(p => {
+            (p.tokens || []).forEach(t => {
+              if (t && t.isVocab && t.hanzi && t.hanzi.includes(sw)) {
+                fallbackCompoundSelectedSet.add(t.hanzi);
+              }
+            });
+          });
+        }
+      });
+
       let overallTokenIdx = 0;
 
       const paragraphsHTML = paragraphs.map((para, pIdx) => {
@@ -10858,7 +11094,7 @@ ${chunkText}
               return `<span class="reading-punct">${formattedPunct}</span>`;
             }
 
-            const isSelected = selectedMap.has(tok.hanzi);
+            const isSelected = selectedMap.has(tok.hanzi) || fallbackCompoundSelectedSet.has(tok.hanzi);
             const selectedClass = isSelected ? 'selected' : '';
             const segs = segmentTokenForHsk(tok.hanzi);
             const hskWords = segs.filter(s => s.level).map(s => `${s.text}: ${s.level === 'hsk6' ? 'HSK 6' : 'HSK 7-9'}`);
@@ -11141,14 +11377,17 @@ ${chunkText}
       const customGroup = customGroups.find(g => g.id === 'custom_' + art.id);
       const cgWord = customGroup && customGroup.words ? customGroup.words.find(w => w.hanzi === tok.hanzi) : null;
 
-      const resolvedMeaning = (selWord && (selWord.vietnamese || selWord.meaning))
+      const fixedCompound = FIXED_COMPOUND_PHRASES[tok.hanzi];
+      const resolvedMeaning = (fixedCompound && fixedCompound.vietnamese)
+        || (selWord && (selWord.vietnamese || selWord.meaning))
         || tok.vietnamese
         || (cgWord && (cgWord.vietnamese || cgWord.meaning))
         || (lw && (lw.vietnamese || lw.vi || lw.meaning))
         || (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].vietnamese)
         || '';
 
-      const resolvedPinyin = tok.pinyin
+      const resolvedPinyin = (fixedCompound && fixedCompound.pinyin)
+        || tok.pinyin
         || (selWord && selWord.pinyin)
         || (cgWord && cgWord.pinyin)
         || (lw && lw.pinyin)
@@ -11588,6 +11827,7 @@ ${chunkText}
       if (!rawText || typeof rawText !== 'string') return null;
 
       let cleaned = rawText
+        .replace(/<think>[\s\S]*?<\/think>/gi, '')
         .replace(/^```json\s*/i, '')
         .replace(/```json/gi, '')
         .replace(/```/g, '')
@@ -11691,20 +11931,22 @@ ${chunkText}
         .map(w => `- ${w.hanzi} (${w.pinyin || ''}): ${w.vietnamese || ''}`)
         .join('\n');
 
-      const storyPrompt = `Bạn là tác giả viết truyện tiếng Trung HSK cao cấp và chuyên gia ngôn ngữ học Hán ngữ. Hãy viết một đoạn văn ngắn (khoảng 120 - 150 chữ Hán) theo phong cách: ${styleDesc}.
+      const storyPrompt = `Bạn là tác giả viết truyện tiếng Trung HSK cao cấp và chuyên gia ngôn ngữ học Hán ngữ bản xứ. Hãy viết một đoạn văn ngắn (khoảng 120 - 150 chữ Hán) theo phong cách: ${styleDesc}.
 BẮT BUỘC lồng ghép tự nhiên, chuẩn ngữ pháp Hán ngữ hiện đại TẤT CẢ các từ vựng mục tiêu sau đây vào mạch văn:
 ${wordListPrompt}
 
 Yêu cầu quan trọng:
 1. Độ dài & Tần suất: Đoạn văn dài khoảng 120 - 150 chữ Hán giản thể, mạch truyện tự nhiên, cuốn hút. Mỗi từ mục tiêu (${targetHanziList.join(', ')}) CHỈ DÙNG ĐÚNG 1 LẦN DUY NHẤT (1 lần đắt giá, tự nhiên nhất), TUYỆT ĐỐI KHÔNG lặp lại cùng một từ mục tiêu 2 lần trong bài đọc ngắn.
-2. QUY TẮC NGỮ PHÁP TIẾNG TRUNG BẮT BUỘC CHO TỪ MỤC TIÊU:
-   - Nếu từ mục tiêu kết thúc bằng trợ từ trạng ngữ "地" (ví dụ: 和蔼地, 气愤地, 悄悄地, 头也不回地...): BẮT BUỘC phải đặt NGAY TRƯỚC ĐỘNG TỪ hoặc CỤM ĐỘNG TỪ để làm trạng ngữ (Cấu trúc chuẩn: [Từ + 地] + Động từ, ví dụ: "和蔼地笑着", "和蔼地逗着小猫", "和蔼地询问"). TUYỆT ĐỐI CẤM đặt từ có đuôi "地" ở cuối mệnh đề trước dấu câu hoặc làm vị ngữ sau "待人" (ví dụ viết "待人和蔼地，" là SAI NGỮ PHÁP NGHIÊM TRỌNG!).
-   - Đặt mỗi từ mục tiêu đúng từ loại và chức năng câu chuẩn xác (danh từ làm chủ/tân/định ngữ; động từ làm vị ngữ kèm tân ngữ phù hợp; phó từ đứng trước động/tính từ; thành ngữ đặt đúng ngữ cảnh).
-   - Giữ nguyên mặt chữ của các từ mục tiêu (${targetHanziList.join(', ')}) và BẮT BUỘC tách mỗi từ mục tiêu thành 1 phần tử độc lập trong mảng tokens (TUYỆT ĐỐI KHÔNG đặt dấu ngoặc kép “ ” hay 「 」 bao quanh từ mục tiêu).
-3. QUY TẮC TÁCH TOKEN TRONG MẢNG "tokens":
-   - TÁCH RIÊNG đối với tổ hợp tự do (nghĩa cộng gộp 1 + 1 = 2): ví dụ tách "感到|gǎn dào|cảm thấy" và "害怕|hài pà|sợ hãi" (không gộp "感到害怕"), tách "产生|chǎn shēng|nảy sinh" và "共鸣|gòng míng|sự đồng cảm". Với tính từ 2 âm tiết thông thường + "地" (nếu không phải từ mục tiêu có sẵn "地"), tách riêng tính từ và trợ từ "地".
-   - GỘP TRỌN CẢ CỤM đối với cụm quán dụng, động từ ly hợp có chèn thành phần, thành ngữ 4 chữ & cấu trúc cố định (phải nhìn cả cụm mới hiểu đúng nghĩa): ví dụ "刚起了一个头|gāng qǐ le yī gè tóu|vừa mới mở đầu", "头也不回地|tóu yě bù huí de|không ngoảnh đầu lại", "叹了口气|tàn le kǒu qì|thở dài một tiếng", "吃了一惊|chī le yī jīng|giật cả mình", "有所触动|yǒu suǒ chù dòng|có chút xúc động".
-   - TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết chuẩn thành chữ đơn.
+2. QUY TẮC NGỮ PHÁP & DÙNG TỪ MỤC TIÊU ĐỘC LẬP:
+   - Nếu từ mục tiêu kết thúc bằng trợ từ trạng ngữ "地" (ví dụ: 和蔼地, 气愤地, 悄悄地, 头也不回地...): BẮT BUỘC phải đặt NGAY TRƯỚC ĐỘNG TỪ hoặc CỤM ĐỘNG TỪ để làm trạng ngữ (Cấu trúc chuẩn: [Từ + 地] + Động từ, ví dụ: "和蔼地笑着", "和蔼地逗着小猫", "和蔼地询问"). TUYỆT ĐỐI CẤM đặt từ có đuôi "地" ở cuối mệnh đề trước dấu câu hoặc làm vị ngữ sau "待人".
+   - Dùng từ mục tiêu (${targetHanziList.join(', ')}) như một TỪ ĐỘC LẬP đúng nghĩa gốc của nó (ví dụ: "生产" dùng độc lập như "恢复生产" / "投入生产", KHÔNG nhét vào "生产部"; "供应" dùng độc lập như "零件供应" / "保障供应", KHÔNG gắn hậu tố thành "供应商"; "评审" dùng độc lập như "严格评审" / "通过评审", KHÔNG nhét vào "项目评审会").
+   - Xưng hô chức danh tiếng Trung BẮT BUỘC viết theo trật tự chuẩn bản xứ: [Họ + Chức danh] (ví dụ: "王经理", "李总监", "张主任") hoặc [Phòng ban + Họ + Chức danh] ("生产部王经理"). TUYỆT ĐỐI CẤM viết ngược kiểu Tây hóa "[Chức danh + Họ 1 chữ]" như "经理王", "部长李"!
+3. QUY TẮC GỘP CỤM CỐ ĐỊNH & TÁCH TOKEN TRONG MẢNG "tokens":
+   - GỘP TRỌN CẢ CỤM thành 1 token duy nhất kèm nghĩa tiếng Việt hoàn chỉnh đối với:
+     + Các cụm danh từ cố định, thuật ngữ chuyên môn/công sở, phòng ban, chức danh (để người đọc chạm 1 lần hiểu ngay, không phải tự dịch ghép từng từ lẻ): ví dụ "项目评审会|xiàng mù píng shěn huì|cuộc họp thẩm định dự án", "高层领导|gāo céng lǐng dǎo|lãnh đạo cấp cao", "资源配置|zī yuán pèi zhì|phân bổ nguồn lực", "生产部|shēng chǎn bù|phòng sản xuất", "供应商|gōng yìng shāng|nhà cung cấp", "备用供应商|bèi yòng gōng yìng shāng|nhà cung cấp dự phòng", "技术负责人|jì shù fù zé rén|người phụ trách kỹ thuật", "生产车间|shēng chǎn chē jiān|phân xưởng sản xuất", "产品质量|chǎn pǐn zhì liàng|chất lượng sản phẩm", "研发流程|yán fā liú chéng|quy trình R&D", "核心零件|hé xīn líng jiàn|linh kiện cốt lõi", "全体员工|quán tǐ yuán gōng|toàn thể nhân viên", "紧急会议|jǐn jí huì yì|cuộc họp khẩn cấp", "王经理|wáng jīng lǐ|giám đốc Vương".
+     + Cụm quán dụng, động từ ly hợp có chèn thành phần, thành ngữ 4 chữ: ví dụ "松了口气|sōng le kǒu qì|thở phào nhẹ nhõm", "叹了口气|tàn le kǒu qì|thở dài một tiếng", "头也不回地|tóu yě bù huí de|không ngoảnh đầu lại", "吃了一惊|chī le yī jīng|giật cả mình".
+   - TÁCH RIÊNG đối với tổ hợp động từ + tân ngữ tự do hoặc phó từ + tính từ thông thường: ví dụ tách "感到|gǎn dào|cảm thấy" và "害怕|hài pà|sợ hãi".
+   - Giữ nguyên mặt chữ của các từ mục tiêu (${targetHanziList.join(', ')}) thành 1 phần tử độc lập trong mảng tokens (TUYỆT ĐỐI KHÔNG đặt dấu ngoặc kép “ ” hay 「 」 bao quanh từ mục tiêu) và TUYỆT ĐỐI KHÔNG xé lẻ hậu tố đơn ("部", "商", "会", "员", "室") thành chữ đơn.
    - Mỗi từ/cụm ghi dạng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt". Với dấu câu hoặc trợ từ "的", "地", "得" chỉ cần ghi chính ký tự đó (ví dụ "，" hoặc "的").
 4. Không dùng dấu ngoặc kép thẳng " bên trong nội dung chuỗi JSON.
 5. Trả về đúng JSON thuần túy (không bọc markdown):
@@ -11715,11 +11957,12 @@ Yêu cầu quan trọng:
     {
       "vietnamese": "Bản dịch tiếng Việt mượt mà, sát nghĩa của toàn bộ đoạn văn...",
       "tokens": [
-        "看着|kàn zhe|nhìn thấy",
-        "他|tā|anh ấy",
+        "在|zài|tại",
+        "紧急会议|jǐn jí huì yì|cuộc họp khẩn cấp",
+        "上|shàng|trên / trong",
         "，",
-        "我|wǒ|tôi",
-        "叹了口气|tàn le kǒu qì|thở dài một tiếng",
+        "王经理|wáng jīng lǐ|giám đốc Vương",
+        "松了口气|sōng le kǒu qì|thở phào nhẹ nhõm",
         "。"
       ]
     }
@@ -11737,8 +11980,8 @@ Yêu cầu quan trọng:
             'X-Title': 'HSK Vocab App'
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            reasoning: { max_tokens: 0 },
+            model: 'deepseek/deepseek-v4.1-flash',
+            reasoning: { enabled: false },
             messages: [
               { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
               { role: 'user', content: storyPrompt }
@@ -11775,7 +12018,8 @@ Yêu cầu quan trọng:
         } else {
           parsedPassage = await parsePassageChunksWithAi(parsedStory.content, apiKey, {
             targetWords: aiStorySelectedWords,
-            customTitle: parsedStory.title
+            customTitle: parsedStory.title,
+            model: 'deepseek/deepseek-v4.1-flash'
           });
         }
 
