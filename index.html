@@ -3458,7 +3458,10 @@
   <div class="modal-overlay" id="apiKeyModal">
     <div class="modal-card st-modal" style="max-width: 420px; padding: 18px 14px;">
       <div class="modal-header">
-        <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color);">⚙️ Cài đặt &amp; Sao lưu</div>
+        <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color); display: inline-flex; align-items: center; gap: 7px;">
+          <span>⚙️ Cài đặt &amp; Sao lưu</span>
+          <span id="appVersionBadge" style="font-size: 11.5px; font-weight: 700; color: #766299; background: #f3eef9; border: 1px solid #dfd3ef; padding: 1.5px 7px; border-radius: 999px; line-height: 1.3;">v154</span>
+        </div>
         <button class="modal-close-btn" id="btnCloseApiKeyModal">✕</button>
       </div>
       <div class="modal-body" style="padding: 8px 2px 2px 2px;">
@@ -4076,6 +4079,22 @@
     let readingArticles = safeGetJSON('hsk_reading_articles', []);
     if (!Array.isArray(readingArticles)) readingArticles = [];
     let activeReadingArticleId = null;
+    let unsavedAiStoryArticle = null;
+
+    function findReadingArticleById(articleId) {
+      if (!articleId) return null;
+      const found = (readingArticles || []).find(a => String(a.id) === String(articleId));
+      if (found) return found;
+      if (unsavedAiStoryArticle && String(unsavedAiStoryArticle.id) === String(articleId)) {
+        return unsavedAiStoryArticle;
+      }
+      return null;
+    }
+
+    function isReadingArticleSaved(articleId) {
+      if (!articleId) return false;
+      return (readingArticles || []).some(a => String(a.id) === String(articleId));
+    }
 
     let deletedReadingArticleIds = safeGetJSON('hsk_deleted_article_ids', []);
     if (!Array.isArray(deletedReadingArticleIds)) deletedReadingArticleIds = [];
@@ -10235,18 +10254,23 @@ ${chunkText}
     function renderArticlePickerList() {
       const listContainer = document.getElementById('articlePickerListContainer');
       const customTextEl = document.getElementById('customArticleSelectText');
-      
+      const currentUnsaved = (unsavedAiStoryArticle && String(unsavedAiStoryArticle.id) === String(activeReadingArticleId))
+        ? unsavedAiStoryArticle
+        : null;
+
       if (!readingArticles || readingArticles.length === 0) {
-        if (customTextEl) customTextEl.textContent = '📖 Chưa có bài đọc';
+        if (customTextEl) {
+          customTextEl.textContent = currentUnsaved ? `📖 ${currentUnsaved.title}` : '📖 Chưa có bài đọc';
+        }
         if (listContainer) listContainer.innerHTML = '<div style="padding: 30px 15px; text-align: center; color: #9ca3af; font-size: 13.5px;">Chưa có bài đọc nào được lưu.</div>';
         return;
       }
 
-      const activeArt = readingArticles.find(a => a.id === activeReadingArticleId) || readingArticles[0];
+      const activeArt = currentUnsaved || readingArticles.find(a => a.id === activeReadingArticleId) || readingArticles[0];
       const curIdx = readingArticles.findIndex(a => a.id === activeArt.id);
 
       if (customTextEl) {
-        customTextEl.textContent = `📖 ${curIdx + 1}. ${activeArt.title}`;
+        customTextEl.textContent = curIdx >= 0 ? `📖 ${curIdx + 1}. ${activeArt.title}` : `📖 ${activeArt.title}`;
       }
 
       if (listContainer) {
@@ -10294,7 +10318,7 @@ ${chunkText}
 
     function toggleParagraphTranslation(pIdx) {
       activeParagraphToggles[pIdx] = !activeParagraphToggles[pIdx];
-      const art = readingArticles.find(a => a.id === activeReadingArticleId);
+      const art = findReadingArticleById(activeReadingArticleId);
       if (art) renderReadingPassageContent(art);
     }
     window.toggleParagraphTranslation = toggleParagraphTranslation;
@@ -10364,12 +10388,14 @@ ${chunkText}
       qwenAudioCache[key] = base64Url;
 
       // 2. Attach to Reading Article object
-      const art = (readingArticles || []).find(a => String(a.id) === key);
+      const art = findReadingArticleById(key);
       if (art) {
         art.audioUrl = base64Url;
-        try {
-          saveReadingArticlesToStorage();
-        } catch(e) {}
+        if (isReadingArticleSaved(key)) {
+          try {
+            saveReadingArticlesToStorage();
+          } catch(e) {}
+        }
       }
 
       // 3. Save to IndexedDB (Stores Base64 string cleanly in Safari, Chrome & Firefox)
@@ -10415,7 +10441,7 @@ ${chunkText}
       }
 
       // 2. Check Reading Article object
-      const art = (readingArticles || []).find(a => String(a.id) === key);
+      const art = findReadingArticleById(key);
       if (art && art.audioUrl) {
         qwenAudioCache[key] = art.audioUrl;
         return art.audioUrl;
@@ -10610,7 +10636,7 @@ ${chunkText}
         showToast('Không tìm thấy bài đọc!');
         return;
       }
-      const art = readingArticles.find(a => String(a.id) === String(activeReadingArticleId)) || readingArticles[0];
+      const art = findReadingArticleById(activeReadingArticleId) || readingArticles[0];
       if (!art) {
         showToast('Không tìm thấy nội dung bài đọc!');
         return;
@@ -10727,7 +10753,7 @@ ${chunkText}
               if (base64Audio) {
                 const audioUrl = `data:audio/mp3;base64,${base64Audio}`;
                 await saveQwenAudioPersistent(art.id, audioUrl);
-                if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+                if (isReadingArticleSaved(art.id) && typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
                 playQwenAudioUrl(audioUrl);
                 return;
               }
@@ -10736,7 +10762,7 @@ ${chunkText}
             const blob = await response.blob();
             await saveQwenAudioPersistent(art.id, blob);
             const playUrl = await getQwenAudioPersistent(art.id);
-            if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+            if (isReadingArticleSaved(art.id) && typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
             playQwenAudioUrl(playUrl || URL.createObjectURL(blob));
             return;
           }
@@ -10761,12 +10787,12 @@ ${chunkText}
       };
 
       qwenAudioPlayer.onerror = () => {
-        const art = readingArticles.find(a => a.id === activeReadingArticleId);
+        const art = findReadingArticleById(activeReadingArticleId);
         if (art) playWebSpeechMaleFallback(art.content);
       };
 
       qwenAudioPlayer.play().catch(e => {
-        const art = readingArticles.find(a => a.id === activeReadingArticleId);
+        const art = findReadingArticleById(activeReadingArticleId);
         if (art) playWebSpeechMaleFallback(art.content);
       });
     }
@@ -10836,7 +10862,7 @@ ${chunkText}
     }
 
     function playParagraphSpeech(pIdx, mode = 'single') {
-      const art = readingArticles.find(a => String(a.id) === String(activeReadingArticleId)) || readingArticles[0];
+      const art = findReadingArticleById(activeReadingArticleId) || readingArticles[0];
       if (!art) return;
 
       // If already playing this paragraph, tapping again pauses/stops
@@ -11141,7 +11167,7 @@ ${chunkText}
 
     // Open Interactive Reading Passage Viewer
     function openReadingViewModal(articleId) {
-      const art = readingArticles.find(a => a.id === articleId);
+      const art = findReadingArticleById(articleId);
       if (!art) {
         showToast('Không tìm thấy bài đọc!');
         return;
@@ -11178,7 +11204,7 @@ ${chunkText}
       }
 
       if (typeof healReadingArticleFixedCompounds === 'function' && healReadingArticleFixedCompounds(art)) {
-        saveReadingArticlesToStorage();
+        if (isReadingArticleSaved(art.id)) saveReadingArticlesToStorage();
       }
 
       populateReadingArticleViewSelect(articleId);
@@ -11214,7 +11240,7 @@ ${chunkText}
             art.content = rawClean;
             art.paragraphs = res.paragraphs;
             art.tokens = res.tokens;
-            saveReadingArticlesToStorage();
+            if (isReadingArticleSaved(art.id)) saveReadingArticlesToStorage();
             if (activeReadingArticleId === art.id) {
               renderReadingPassageContent(art);
               showToast('✅ Đã gom cụm từ hoàn chỉnh!');
@@ -11259,8 +11285,9 @@ ${chunkText}
     function renderReadingPassageContent(art) {
       if (!readingPassageContainer) return;
 
-      const selectedMap = new Set((art.selectedWords || []).map(w => w.hanzi));
-      const selectedMeaningMap = new Map((art.selectedWords || []).map(w => [w.hanzi, w.vietnamese || '']));
+      const combinedHighlightWords = [...(art.targetWords || []), ...(art.selectedWords || [])];
+      const selectedMap = new Set(combinedHighlightWords.map(w => w.hanzi));
+      const selectedMeaningMap = new Map(combinedHighlightWords.map(w => [w.hanzi, w.vietnamese || w.meaning || '']));
       const customGroup = customGroups.find(g => g.id === 'custom_' + art.id);
       const customGroupWordMap = new Map((customGroup && customGroup.words ? customGroup.words : []).map(w => [w.hanzi, w.vietnamese || '']));
 
@@ -11408,7 +11435,8 @@ ${chunkText}
       let storyFooterHTML = '';
       const isAiStoryArt = art.sourceType === 'ai_story' || String(art.id || '').startsWith('ai_story_');
       if (isAiStoryArt) {
-        const targetWordsList = art.selectedWords || [];
+        const targetWordsList = (art.targetWords && art.targetWords.length > 0) ? art.targetWords : (art.selectedWords || []);
+        const isAlreadySaved = isReadingArticleSaved(art.id);
         const vocabItemsHTML = targetWordsList.map(w => {
           const safeH = String(w.hanzi || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
           const safeP = String(w.pinyin || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -11436,11 +11464,14 @@ ${chunkText}
               </div>
             ` : ''}
             <div style="display: flex; gap: 7px; margin-top: 8px;">
-              <button type="button" class="ai-story-act-btn reader" style="flex: 1.3; padding: 9.5px 10px; font-size: 12.5px;" onclick="generateNextAiStoryInSeries()">
-                ⏭️ Tạo bài tiếp theo (5 từ tiếp)
+              <button type="button" class="ai-story-act-btn reader" style="flex: 1.1; padding: 9.5px 8px; font-size: 12.5px;" onclick="generateNextAiStoryInSeries()">
+                Tạo bài tiếp
               </button>
-              <button type="button" class="ai-story-act-btn" style="flex: 1; padding: 9.5px 10px; font-size: 12px; background: #f4f0fa; color: #766299; border: 1.2px solid #dfd5ec;" onclick="openAiStoryModal(window.aiStorySourceMode || 'auto', true)">
-                🎲 Đổi / Chọn từ
+              <button type="button" class="ai-story-act-btn" style="flex: 0.95; padding: 9.5px 8px; font-size: 12.5px; background: #f4f0fa; color: #766299; border: 1.2px solid #dfd5ec;" onclick="openAiStoryModal(window.aiStorySourceMode || 'auto', true)">
+                Đổi từ
+              </button>
+              <button type="button" id="btnSaveAiStoryArticle" class="ai-story-act-btn" style="flex: 0.95; padding: 9.5px 8px; font-size: 12.5px; background: ${isAlreadySaved ? '#eef7f0' : '#f4f0fa'}; color: ${isAlreadySaved ? '#3d6b46' : '#766299'}; border: 1.2px solid ${isAlreadySaved ? '#cce5d4' : '#dfd5ec'}; ${isAlreadySaved ? 'opacity: 0.75; cursor: default;' : ''}" onclick="saveCurrentAiStoryArticle('${art.id}')" ${isAlreadySaved ? 'disabled' : ''}>
+                ${isAlreadySaved ? 'Đã lưu' : 'Lưu bài'}
               </button>
             </div>
           </div>
@@ -11592,8 +11623,8 @@ ${chunkText}
     }
 
     function toggleReadingReview() {
-      const art = readingArticles.find(a => a.id === activeReadingArticleId);
-      const selectedCount = art && art.selectedWords ? art.selectedWords.length : 0;
+      const art = findReadingArticleById(activeReadingArticleId);
+      const highlightCount = new Set([...(art && art.targetWords || []), ...(art && art.selectedWords || [])].map(w => w.hanzi)).size;
 
       isReadingReviewModeActive = !isReadingReviewModeActive;
       updateReadingReviewToggleUI();
@@ -11604,10 +11635,10 @@ ${chunkText}
           el.classList.remove('revealed');
         });
 
-        if (selectedCount === 0) {
+        if (highlightCount === 0) {
           showToast('💡 Bài này chưa có từ nào được lưu. Hãy chạm vào từ vựng bất kỳ và chọn "Thêm vào list ôn tập" để làm mờ nhé!');
         } else {
-          showToast(`🎯 Chế độ ôn bài: Đã làm mờ ${selectedCount} từ đã lưu. Chạm vào chữ mờ để hiện chữ Hán!`);
+          showToast(`🎯 Chế độ ôn bài: Đã làm mờ ${highlightCount} từ. Chạm vào chữ mờ để hiện chữ Hán!`);
         }
       } else {
         document.querySelectorAll('#readingPassageContainer .reading-token.revealed').forEach(el => {
@@ -11619,7 +11650,7 @@ ${chunkText}
 
     // Token clicked inside Interactive Reader
     function handleReadingTokenClick(articleId, tokenIndex, event) {
-      const art = readingArticles.find(a => a.id === articleId);
+      const art = findReadingArticleById(articleId);
       if (!art || !art.tokens || !art.tokens[tokenIndex]) return;
 
       const tok = art.tokens[tokenIndex];
@@ -11629,9 +11660,10 @@ ${chunkText}
         ? event.currentTarget
         : document.querySelector(`#readingPassageContainer .reading-token[data-index="${tokenIndex}"]`);
       const isSelected = (art.selectedWords || []).some(w => w.hanzi === tok.hanzi);
+      const isTargetWord = (art.targetWords || []).some(w => w.hanzi === tok.hanzi);
 
-      // In Review Mode: first tap on a blurred saved word un-blurs (reveals) the Hanzi!
-      if (isReadingReviewModeActive && isSelected && targetEl) {
+      // In Review Mode: first tap on a blurred saved/target word un-blurs (reveals) the Hanzi!
+      if (isReadingReviewModeActive && (isSelected || isTargetWord) && targetEl) {
         if (!targetEl.classList.contains('revealed')) {
           targetEl.classList.add('revealed');
           if (autoSpeakOnTick && tok.hanzi) {
@@ -11651,7 +11683,8 @@ ${chunkText}
 
       const lookup = srsGetLookup();
       const lw = lookup.get(tok.hanzi);
-      const selWord = (art.selectedWords || []).find(w => w.hanzi === tok.hanzi);
+      const selWord = (art.selectedWords || []).find(w => w.hanzi === tok.hanzi)
+        || (art.targetWords || []).find(w => w.hanzi === tok.hanzi);
       const customGroup = customGroups.find(g => g.id === 'custom_' + art.id);
       const cgWord = customGroup && customGroup.words ? customGroup.words.find(w => w.hanzi === tok.hanzi) : null;
 
@@ -11671,6 +11704,9 @@ ${chunkText}
         || (lw && lw.pinyin)
         || (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].pinyin)
         || '';
+
+      if (!tok.pinyin && resolvedPinyin) tok.pinyin = resolvedPinyin;
+      if (!tok.vietnamese && resolvedMeaning) tok.vietnamese = resolvedMeaning;
 
       drawerHanzi.textContent = tok.hanzi;
       drawerPinyin.textContent = resolvedPinyin;
@@ -11702,67 +11738,80 @@ ${chunkText}
       }
     }
 
-    // Toggle word in reading article review list & sync to customGroup
+    // Toggle word in reading article review list & sync to customGroup (Nhóm tự tạo)
     function toggleWordInReadingArticle(articleId, tok) {
-      const art = readingArticles.find(a => a.id === articleId);
+      const art = findReadingArticleById(articleId);
       if (!art) return;
 
       if (!art.selectedWords) art.selectedWords = [];
       const idx = art.selectedWords.findIndex(w => w.hanzi === tok.hanzi);
+      const isSavedArt = isReadingArticleSaved(articleId);
+      const cleanTitle = String(art.title || 'Bài đọc').replace(/^✨\s*/, '');
 
       let customGroup = customGroups.find(g => g.id === 'custom_' + articleId);
-      if (!customGroup) {
-        customGroup = { id: 'custom_' + articleId, name: `📖 ${art.title}`, words: [] };
-        customGroups.push(customGroup);
-      }
 
       if (idx >= 0) {
         art.selectedWords.splice(idx, 1);
-        if (customGroup.words) {
+        if (customGroup && customGroup.words) {
           customGroup.words = customGroup.words.filter(w => w.hanzi !== tok.hanzi);
+          if (customGroup.words.length === 0 && !isSavedArt) {
+            customGroups = customGroups.filter(g => g.id !== 'custom_' + articleId);
+          }
         }
-        showToast(`🗑️ Đã bỏ "${tok.hanzi}" khỏi list ôn!`);
+        showToast(`🗑️ Đã bỏ "${tok.hanzi}" khỏi list nhóm tự tạo!`);
         updateDrawerButtonState(false);
       } else {
+        const meta = lookupDictMetaForToken(tok.hanzi);
         const wordObj = {
           hanzi: tok.hanzi,
-          pinyin: tok.pinyin,
+          pinyin: tok.pinyin || meta.pinyin || '',
           pos: 'từ vựng',
-          vietnamese: tok.vietnamese
+          vietnamese: tok.vietnamese || meta.vietnamese || ''
         };
         art.selectedWords.push(wordObj);
+        if (!customGroup) {
+          customGroup = { id: 'custom_' + articleId, name: `📖 ${cleanTitle}`, words: [] };
+          customGroups.push(customGroup);
+        }
         if (!customGroup.words) customGroup.words = [];
         if (!customGroup.words.some(w => w.hanzi === tok.hanzi)) {
           customGroup.words.push(wordObj);
         }
-        showToast(`➕ Đã thêm "${tok.hanzi}" vào list ôn!`);
+        showToast(`➕ Đã lưu "${tok.hanzi}" vào Nhóm tự tạo!`);
         updateDrawerButtonState(true);
       }
 
-      saveReadingArticlesToStorage();
+      if (isSavedArt) {
+        saveReadingArticlesToStorage();
+      }
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+      if (typeof updateCustomLevelTabCount === 'function') updateCustomLevelTabCount();
+      if (typeof renderCustomGroupSelect === 'function') renderCustomGroupSelect();
       if (typeof saveToCloud === 'function') {
         saveToCloud(false);
       }
 
+      const isStillTarget = (art.targetWords || []).some(w => w.hanzi === tok.hanzi);
       // Update DOM token elements directly without re-rendering entire innerHTML (prevents screen flashing)
       document.querySelectorAll('#readingPassageContainer .reading-token').forEach(el => {
         if (el.getAttribute('data-hanzi') === tok.hanzi || el.dataset.hanzi === tok.hanzi) {
-          el.classList.toggle('selected', idx < 0);
+          el.classList.toggle('selected', idx < 0 || isStillTarget);
         }
       });
     }
 
     // Bulk Add All Vocab Tokens in Reading Passage
     function selectAllReadingTokens(articleId) {
-      const art = readingArticles.find(a => a.id === articleId);
+      const art = findReadingArticleById(articleId);
       if (!art || !art.tokens) return;
 
       if (!art.selectedWords) art.selectedWords = [];
+      const isSavedArt = isReadingArticleSaved(articleId);
+      const cleanTitle = String(art.title || 'Bài đọc').replace(/^✨\s*/, '');
 
       let customGroup = customGroups.find(g => g.id === 'custom_' + articleId);
       if (!customGroup) {
-        customGroup = { id: 'custom_' + articleId, name: `📖 ${art.title}`, words: [] };
+        customGroup = { id: 'custom_' + articleId, name: `📖 ${cleanTitle}`, words: [] };
         customGroups.push(customGroup);
       }
       if (!customGroup.words) customGroup.words = [];
@@ -11771,27 +11820,39 @@ ${chunkText}
       art.tokens.forEach(tok => {
         if (tok.isVocab && tok.hanzi) {
           if (!art.selectedWords.some(w => w.hanzi === tok.hanzi)) {
-            const wordObj = { hanzi: tok.hanzi, pinyin: tok.pinyin, pos: 'từ vựng', vietnamese: tok.vietnamese };
+            const meta = lookupDictMetaForToken(tok.hanzi);
+            const wordObj = {
+              hanzi: tok.hanzi,
+              pinyin: tok.pinyin || meta.pinyin || '',
+              pos: 'từ vựng',
+              vietnamese: tok.vietnamese || meta.vietnamese || ''
+            };
             art.selectedWords.push(wordObj);
-            customGroup.words.push(wordObj);
+            if (!customGroup.words.some(w => w.hanzi === tok.hanzi)) {
+              customGroup.words.push(wordObj);
+            }
             addedCount++;
           }
         }
       });
 
-      saveReadingArticlesToStorage();
+      if (isSavedArt) {
+        saveReadingArticlesToStorage();
+      }
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+      if (typeof updateCustomLevelTabCount === 'function') updateCustomLevelTabCount();
+      if (typeof renderCustomGroupSelect === 'function') renderCustomGroupSelect();
       if (typeof saveToCloud === 'function') {
         saveToCloud(false);
       }
 
       renderReadingPassageContent(art);
-      showToast(`⚡ Đã thêm ${addedCount} từ vựng vào list ôn!`);
+      showToast(`⚡ Đã lưu ${addedCount} từ vựng vào Nhóm tự tạo!`);
     }
 
     // Jump from Reading View directly to 2-Column Study View
     function openStudyGroupFromReading(articleId) {
-      const art = readingArticles.find(a => a.id === articleId);
+      const art = findReadingArticleById(articleId);
       if (!art) return;
 
       const customGroupId = 'custom_' + articleId;
@@ -11803,7 +11864,9 @@ ${chunkText}
         group.name = `📖 ${art.title}`;
         art.selectedWords = [...(group.words || [])];
       }
-      saveReadingArticlesToStorage();
+      if (isReadingArticleSaved(articleId)) {
+        saveReadingArticlesToStorage();
+      }
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
       if (typeof saveToCloud === 'function') {
         saveToCloud(false);
@@ -12420,42 +12483,25 @@ ${wordListPrompt}
           translation: parsedStory.translation || parsedPassage.paragraphs.map(p => p.vietnamese).filter(Boolean).join(' '),
           paragraphs: parsedPassage.paragraphs,
           tokens: parsedPassage.tokens,
-          selectedWords: aiStorySelectedWords.map(w => ({
+          targetWords: aiStorySelectedWords.map(w => ({
             hanzi: w.hanzi,
             pinyin: w.pinyin || '',
             pos: w.pos || '',
             meaning: w.vietnamese || '',
             vietnamese: w.vietnamese || ''
           })),
+          selectedWords: [],
           sourceType: 'ai_story',
           createdAt: new Date().toLocaleDateString('vi-VN')
         };
 
-        readingArticles.unshift(articleObj);
-        saveReadingArticlesToStorage();
-        if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
-
-        // Sync custom group for 2-column vocabulary study mode
-        const customGroupId = 'custom_' + newArticleId;
-        if (!customGroups.some(g => g.id === customGroupId)) {
-          customGroups.push({
-            id: customGroupId,
-            name: `📖 ${parsedStory.title || 'Mẩu chuyện nhớ từ'}`,
-            words: aiStorySelectedWords.map(w => ({
-              hanzi: w.hanzi,
-              pinyin: w.pinyin || '',
-              vietnamese: w.vietnamese || '',
-              pos: w.pos || ''
-            }))
-          });
-          localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-        }
+        unsavedAiStoryArticle = articleObj;
 
         if (modal) modal.classList.remove('active');
         showStoryView('setup');
 
         openReadingViewModal(newArticleId);
-        showToast('🎉 Đã tạo bài đọc và lưu vào kho Luyện đọc!');
+        showToast('🎉 Đã tạo bài đọc! Bấm "Lưu bài" ở cuối bài nếu muốn lưu lại.');
       } catch (err) {
         console.error('generateAiStory error:', err);
         const msg = err && err.name === 'AbortError' ? 'Quá thời gian chờ AI, vui lòng thử lại!' : (err.message || 'Lỗi kết nối AI');
@@ -12467,6 +12513,61 @@ ${wordListPrompt}
         aiStoryAbortController = null;
       }
     }
+
+    function saveCurrentAiStoryArticle(articleId) {
+      const art = findReadingArticleById(articleId || activeReadingArticleId);
+      if (!art) return;
+      if (isReadingArticleSaved(art.id)) {
+        showToast('📌 Bài đọc này đã được lưu rồi!');
+        return;
+      }
+
+      readingArticles.unshift(art);
+      if (unsavedAiStoryArticle && String(unsavedAiStoryArticle.id) === String(art.id)) {
+        unsavedAiStoryArticle = null;
+      }
+      saveReadingArticlesToStorage();
+
+      const customGroupId = 'custom_' + art.id;
+      const cleanTitle = String(art.title || 'Mẩu chuyện nhớ từ').replace(/^✨\s*/, '');
+      const wordsList = (art.selectedWords || []).map(w => ({
+        hanzi: w.hanzi,
+        pinyin: w.pinyin || '',
+        vietnamese: w.vietnamese || w.meaning || '',
+        pos: w.pos || ''
+      }));
+      if (wordsList.length > 0) {
+        let group = customGroups.find(g => g.id === customGroupId);
+        if (!group) {
+          customGroups.push({
+            id: customGroupId,
+            name: `📖 ${cleanTitle}`,
+            words: wordsList
+          });
+        } else {
+          group.words = wordsList;
+        }
+        localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+        if (typeof updateCustomLevelTabCount === 'function') updateCustomLevelTabCount();
+        if (typeof renderCustomGroupSelect === 'function') renderCustomGroupSelect();
+      }
+      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+      if (typeof renderSavedReadingArticles === 'function') renderSavedReadingArticles();
+      populateReadingArticleViewSelect(art.id);
+
+      const btnSave = document.getElementById('btnSaveAiStoryArticle');
+      if (btnSave) {
+        btnSave.textContent = 'Đã lưu';
+        btnSave.disabled = true;
+        btnSave.style.background = '#eef7f0';
+        btnSave.style.color = '#3d6b46';
+        btnSave.style.borderColor = '#cce5d4';
+        btnSave.style.opacity = '0.75';
+        btnSave.style.cursor = 'default';
+      }
+      showToast('✅ Đã lưu bài đọc vào mục Bài đã lưu!');
+    }
+    window.saveCurrentAiStoryArticle = saveCurrentAiStoryArticle;
 
     function generateNextAiStoryInSeries() {
       if (isGeneratingAiStory) return;
@@ -14266,6 +14367,17 @@ ${wordListPrompt}
     // ==========================================
     // PWA SERVICE WORKER & INSTALL PROMPT LOGIC
     // ==========================================
+    (function syncAppVersionBadge() {
+      fetch('./sw.js', { cache: 'no-store' })
+        .then(r => r.ok ? r.text() : '')
+        .then(txt => {
+          const m = txt && txt.match(/hsk-vocab-cache-(v\d+)/i);
+          const badge = document.getElementById('appVersionBadge');
+          if (m && m[1] && badge) badge.textContent = m[1];
+        })
+        .catch(() => {});
+    })();
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').then(reg => {
