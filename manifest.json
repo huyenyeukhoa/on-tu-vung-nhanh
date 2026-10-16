@@ -1,6 +1,6 @@
 {
-  "name": "Ôn Từ Vựng HSK",
-  "short_name": "Ôn HSK",
+  "name": "Cổ Nguyệt Các",
+  "short_name": "Cổ Nguyệt Các",
   "description": "Ứng dụng ôn luyện từ vựng HSK 6 & HSK 7-9 hiệu quả",
   "start_url": "./index.html",
   "display": "standalone",
