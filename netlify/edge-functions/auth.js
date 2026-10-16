@@ -188,7 +188,14 @@ export default async (request, context) => {
     }
   }
 
-  // 4. Validate authentication cookie
+  // 4. Always allow PWA installation metadata (manifest, icons, service worker)
+  // Chrome & Android WebAPK minting servers fetch manifest.json and icons without session cookies.
+  const isPwaPublicFile = /^\/(manifest\.json|icon-192\.png|icon-512\.png|sw\.js)$/i.test(url.pathname);
+  if (isPwaPublicFile) {
+    return context.next();
+  }
+
+  // 5. Validate authentication cookie
   const cookieHeader = request.headers.get("cookie") || "";
   const cookies = cookieHeader.split(";").map(c => c.trim());
   const isAuthenticated = cookies.includes(`${AUTH_COOKIE_NAME}=${AUTH_COOKIE_VALUE}`);
@@ -198,7 +205,7 @@ export default async (request, context) => {
     return context.next();
   }
 
-  // 5. NOT authenticated:
+  // 6. NOT authenticated:
   // For static files (JS, CSS, JSON, media, etc.): return 403 Forbidden!
   const isAsset = /\.(js|css|json|png|jpg|jpeg|gif|webp|svg|ico|otf|ttf|woff|woff2|mp3|mp4|wav)$/i.test(url.pathname);
   if (isAsset) {
