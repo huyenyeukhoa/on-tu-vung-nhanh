@@ -1424,19 +1424,20 @@
     }
 
     .reading-audio-btn.playing {
-      background: #efe6fb !important;
-      border-color: #dcd0ef !important;
+      background: transparent !important;
+      border-color: transparent !important;
       border-radius: 8px !important;
-      padding: 3px 5px !important;
-      box-shadow: 0 1px 4px rgba(135, 114, 168, 0.18) !important;
+      padding: 0 2px !important;
+      box-shadow: none !important;
       animation: none !important;
     }
 
-    .reading-audio-btn.playing .reading-music-note {
-      animation: dancingMusicNote 2.2s infinite ease-in-out !important;
-      display: inline-block;
-      transform-origin: 50% 85%;
-      filter: drop-shadow(0 1px 2px rgba(106, 82, 142, 0.25));
+    .reading-playing-gif {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+      display: block;
+      pointer-events: none;
     }
 
     .reading-audio-btn.paused {
@@ -3065,6 +3066,22 @@
       transform: translateX(-50%) translateY(0);
     }
 
+    .toast.voice-cat-toast {
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      border-radius: 0 !important;
+      top: 48px;
+    }
+
+    .voice-cat-toast-img {
+      width: 76px;
+      height: 76px;
+      object-fit: contain;
+      display: block;
+      filter: drop-shadow(0 3px 8px rgba(85, 65, 115, 0.22));
+    }
+
     /* Enlarged Loading GIF Container */
     .loading-gif {
       width: 200px;
@@ -3460,7 +3477,7 @@
       <div class="modal-header">
         <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color); display: inline-flex; align-items: center; gap: 7px;">
           <span>⚙️ Cài đặt &amp; Sao lưu</span>
-          <span id="appVersionBadge" style="font-size: 11.5px; font-weight: 700; color: #766299; background: #f3eef9; border: 1px solid #dfd3ef; padding: 1.5px 7px; border-radius: 999px; line-height: 1.3;">v156</span>
+          <span id="appVersionBadge" style="font-size: 11.5px; font-weight: 700; color: #766299; background: #f3eef9; border: 1px solid #dfd3ef; padding: 1.5px 7px; border-radius: 999px; line-height: 1.3;">v157</span>
         </div>
         <button class="modal-close-btn" id="btnCloseApiKeyModal">✕</button>
       </div>
@@ -6184,7 +6201,7 @@
     // Speak Chinese Function (Xiaoxiao Voice)
     function speakChinese(text) {
       if (!text) return;
-      showToast(`🔊 ${text}`);
+      showVoiceCatToast();
       
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -6204,11 +6221,23 @@
       }
     }
 
+    let toastHideTimer = null;
+    function showVoiceCatToast() {
+      if (toastHideTimer) clearTimeout(toastHideTimer);
+      toastEl.innerHTML = `<img src="./cat_listening.png" alt="Đang phát âm" class="voice-cat-toast-img">`;
+      toastEl.classList.add('voice-cat-toast', 'show');
+      toastHideTimer = setTimeout(() => {
+        toastEl.classList.remove('show');
+      }, 1400);
+    }
+
     // Toast Notification
     function showToast(msg) {
+      if (toastHideTimer) clearTimeout(toastHideTimer);
+      toastEl.classList.remove('voice-cat-toast');
       toastEl.textContent = msg;
       toastEl.classList.add('show');
-      setTimeout(() => {
+      toastHideTimer = setTimeout(() => {
         toastEl.classList.remove('show');
       }, 1500);
     }
@@ -11091,7 +11120,7 @@ ${chunkText}
       if (isPlaying && !isPaused) {
         btn.classList.add('playing');
         btn.classList.remove('paused');
-        btn.innerHTML = `<svg class="reading-music-note" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#654d86" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3.2" fill="#8772a8"/><circle cx="18" cy="16" r="3.2" fill="#8772a8"/></svg>`;
+        btn.innerHTML = `<img src="./audio_playing.gif" alt="Đang phát" class="reading-playing-gif">`;
         btn.title = `Đang phát (${speed}x) - Chạm để tạm dừng. Giữ để đổi tốc độ.`;
       } else if (isPaused) {
         btn.classList.remove('playing');
