@@ -3628,14 +3628,22 @@
     </div>
   </footer>
 
-  <!-- AI Explanation Modal (Clean Header) -->
+  <!-- AI Explanation Modal (Flashcard-style Clean Header) -->
   <div class="modal-overlay" id="aiModal" style="z-index: 1150;">
-    <div class="modal-card">
-      <div class="modal-header" style="border:none; padding-bottom:0;">
-        <div></div>
-        <button class="modal-close-btn" id="btnCloseAiModal">✕</button>
+    <div class="modal-card af-modal-card">
+      <div class="modal-header af-header" style="border:none; padding: 0 2px; margin-bottom: 10px;">
+        <div class="af-header-left">
+          <img class="af-mascot" src="./cat_listening.png" alt="Mascot">
+          <span class="af-title" id="aiModalHeaderTitle">Chi tiết từ vựng</span>
+        </div>
+        <div style="display: inline-flex; align-items: center; gap: 7px;">
+          <button type="button" id="btnHeaderToggleCompare" onclick="(function(){const c=document.getElementById('compareInputContainer');const inp=document.getElementById('compareWordInput');if(!c)return;const show=c.style.display==='none'||!c.style.display;c.style.display=show?'block':'none';if(show&&inp)setTimeout(()=>inp.focus(),80);})()" style="background: #f3eef9; border: 1.3px solid #dfd3ef; color: #584575; font-weight: 700; font-size: 11.5px; padding: 4px 10px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mali); white-space: nowrap; transition: all 0.15s;" title="Chạm để nhập chữ Hán cần phân biệt">
+            <span>⚖️ Phân biệt</span>
+          </button>
+          <button class="modal-close-btn" id="btnCloseAiModal">✕</button>
+        </div>
       </div>
-      <div class="modal-body" id="aiModalBody">
+      <div class="modal-body" id="aiModalBody" style="padding: 0;">
         <!-- AI Content Rendered Dynamically -->
       </div>
     </div>
@@ -7590,8 +7598,8 @@ Lưu ý:
       const itemA = words.find(w => w.word === wordA) || words[0] || { word: wordA, pinyin: '', pos: '', meaning: '', example_cn: '', example_pinyin: '', example_vi: '', why_this_word: '' };
       const itemB = words.find(w => w.word === wordB) || words[1] || { word: wordB, pinyin: '', pos: '', meaning: '', example_cn: '', example_pinyin: '', example_vi: '', why_this_word: '' };
 
-      const highlightBaseTag = "color: #ffffff; font-weight: 700; background: #766299; padding: 2px 7px; border-radius: 6px; display: inline-block; box-shadow: 0 1px 4px rgba(118,98,153,0.25); font-family: var(--font-hanzi) !important;";
-      const highlightCompareTag = "color: #ffffff; font-weight: 700; background: #8e5899; padding: 2px 7px; border-radius: 6px; display: inline-block; box-shadow: 0 1px 4px rgba(142,88,153,0.25); font-family: var(--font-hanzi) !important;";
+      const highlightBaseTag = "font-family: var(--font-hanzi) !important; background: #efe8f7; color: #584575; font-weight: 700; padding: 1px 6px; border-radius: 6px; border: 1px solid #d5c5eb;";
+      const highlightCompareTag = "font-family: var(--font-hanzi) !important; background: #e7f1fa; color: #2f5675; font-weight: 700; padding: 1px 6px; border-radius: 6px; border: 1px solid #9ec1e0;";
 
       const exAHighlighted = highlightWordInSentence(itemA.example_cn || '', itemA.word, highlightBaseTag);
       const exBHighlighted = highlightWordInSentence(itemB.example_cn || '', itemB.word, highlightCompareTag);
@@ -8426,6 +8434,9 @@ Lưu ý quan trọng:
       modalCard.classList.remove('transparent-loading');
       aiModal.classList.remove('loading-overlay-transparent');
 
+      const headerTitleEl = document.getElementById('aiModalHeaderTitle');
+      if (headerTitleEl) headerTitleEl.textContent = 'Chi tiết từ vựng';
+
       const isIdiom = isIdiomWord(data);
       let displayPos = '';
       if (isIdiom) {
@@ -8440,33 +8451,35 @@ Lưu ý quan trọng:
       }
 
       const hanziLen = (data.hanzi || '').length;
-      let hanziFontSize = '29px';
+      let hanziFontSize = '31px';
       if (hanziLen >= 5) {
-        hanziFontSize = 'clamp(18px, 4.8vw, 21px)';
+        hanziFontSize = 'clamp(20px, 5.2vw, 24px)';
       } else if (hanziLen === 4) {
-        hanziFontSize = 'clamp(21px, 5.8vw, 25px)';
+        hanziFontSize = 'clamp(24px, 6.2vw, 27px)';
       } else if (hanziLen === 3) {
-        hanziFontSize = 'clamp(25px, 6.8vw, 28px)';
+        hanziFontSize = 'clamp(27px, 7vw, 30px)';
       } else {
-        hanziFontSize = 'clamp(28px, 7.5vw, 31px)';
+        hanziFontSize = 'clamp(30px, 7.8vw, 33px)';
       }
 
-      const highlightTagStyle = "color: #ffffff; font-weight: 700; background: #766299; padding: 2px 7px; border-radius: 6px; display: inline-block; box-shadow: 0 1px 4px rgba(118,98,153,0.25); font-family: var(--font-hanzi) !important;";
+      const highlightTagStyle = "font-family: var(--font-hanzi) !important; background: #efe8f7; color: #584575; font-weight: 700; padding: 1px 6px; border-radius: 6px; border: 1px solid #d5c5eb;";
 
-      let examplesHTML = (data.examples || []).map(ex => {
+      let examplesHTML = (data.examples || []).map((ex, idx) => {
         const cleanHanzi = (ex.hanzi || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
         const cleanPinyin = (ex.pinyin || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
         const cleanVietnamese = (ex.vietnamese || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
-        const escapedHanzi = cleanHanzi.replace(/'/g, "\\'");
+        const escapedHanzi = cleanHanzi.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         const highlightedHanzi = highlightWordInSentence(cleanHanzi, data.hanzi, highlightTagStyle);
 
         return `
-          <div style="padding: 12px; background: #f3eef9; border-radius: 12px; border: 1px solid #e2d8ef;">
-            <div class="example-hanzi" onclick="speakChinese('${escapedHanzi}')" title="chạm để nghe phát âm câu ví dụ" style="font-size: 16.5px; line-height: 1.6; color: #3c2e54;">
-              ${highlightedHanzi}
+          <div class="af-example-zone" onclick="speakChinese('${escapedHanzi}')" title="Chạm để nghe phát âm câu ví dụ">
+            <div class="af-example-head">
+              <span>✿ Câu ví dụ ${idx + 1}</span>
+              <img src="./speaker_flower.png" alt="Nghe" style="width: 19px; height: 19px; object-fit: contain;">
             </div>
-            <div class="example-pinyin" style="font-size: 12.5px; color: #766299; margin-top: 4px;">${cleanPinyin}</div>
-            <div class="example-vietnamese" style="font-size: 13px; color: #4b5563; margin-top: 2px;">${cleanVietnamese}</div>
+            <div class="af-example-hanzi">${highlightedHanzi}</div>
+            ${cleanPinyin ? `<div class="af-example-pinyin">${cleanPinyin}</div>` : ''}
+            ${cleanVietnamese ? `<div class="af-example-vi">${cleanVietnamese}</div>` : ''}
           </div>
         `;
       }).join('');
@@ -8480,92 +8493,64 @@ Lưu ý quan trọng:
         }
       }
 
-      // Pill 2: Hán-Việt reading directly (no label prefix) in soft lavender theme
-      const hanVietBadgeHTML = hanVietUpper ? `
-        <div style="display: inline-flex; align-items: center; background: #f3eef9; border: 1.2px solid #dfd3ef; padding: 2px 9px; border-radius: 8px; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); vertical-align: middle;">
-          <span style="font-size: 11.5px; font-weight: 800; color: #766299; letter-spacing: 0.6px; font-family: var(--font-mali);">${hanVietUpper}</span>
-        </div>
-      ` : '';
-
-      // Pill 4: POS badge / Thành ngữ (từ loại) in matching soft lavender theme
-      const posBadgeHTML = displayPos ? `
-        <div style="display: inline-flex; align-items: center; background: #f3eef9; border: 1.2px solid #dfd3ef; padding: 2px 9px; border-radius: 8px; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); vertical-align: middle;">
-          <span style="font-size: 11.5px; font-weight: 700; color: #766299; font-family: var(--font-mali);">${displayPos}</span>
-        </div>
-      ` : '';
+      const safeHanziAttr = (data.hanzi || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
       aiModalBody.innerHTML = `
-        <!-- Harmonious Word Identity Header Card -->
-        <div class="ai-word-header-card" style="background: linear-gradient(135deg, #f7f3fb 0%, #ffffff 100%); border: 1.5px solid #dfd3ef; border-radius: 16px; padding: 13px 15px; margin-bottom: 12px; box-shadow: 0 3px 12px rgba(118, 98, 153, 0.07);">
-          <!-- Top row: Hanzi + Audio + Compare button (Nowrap guaranteed) -->
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; min-width: 0;">
-              <span style="font-family: var(--font-hanzi); font-size: ${hanziFontSize}; font-weight: 800; color: #2a1b40; line-height: 1.15; letter-spacing: 0.5px; white-space: nowrap !important; word-break: keep-all !important; flex-shrink: 0;">${data.hanzi}</span>
-              <button class="icon-action-btn" onclick="speakChinese('${data.hanzi}')" title="Phát âm từ này giọng Xiaoxiao" style="width: 32px; height: 32px; padding: 0; background: transparent; border: none; box-shadow: none; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s; flex-shrink: 0;"><img src="./speaker_flower.png" alt="Phát âm" style="width: 30px; height: 30px; object-fit: contain; display: block; pointer-events: none;"></button>
+        <div class="af-card" style="padding: 14px 13px;">
+          <!-- Centered Flashcard-style Word Identity Zone -->
+          <div class="af-word-zone" onclick="speakChinese('${safeHanziAttr}')" title="Chạm để nghe phát âm từ này">
+            ${data.pinyin ? `<div class="af-pinyin">${escapeHtml(data.pinyin)}</div>` : ''}
+            <div class="af-hanzi-row">
+              <span class="af-hanzi" style="font-size: ${hanziFontSize};">${escapeHtml(data.hanzi || '')}</span>
+              <img src="./speaker_flower.png" alt="Phát âm" style="width: 28px; height: 28px; object-fit: contain;">
             </div>
-            <button id="btnToggleCompareInput" style="background: #ffffff; border: 1.5px solid #dfd3ef; color: #766299; font-weight: 700; font-size: 11.5px; padding: 4px 10px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 4px rgba(118,98,153,0.08); flex-shrink: 0; font-family: var(--font-mali); transition: all 0.2s;" title="Chạm để nhập chữ Hán cần phân biệt">
-              <span>⚖️ Phân biệt từ</span>
-            </button>
+            <div class="af-badges">
+              ${hanVietUpper ? `<span class="af-badge-hv">${escapeHtml(hanVietUpper)}</span>` : ''}
+              ${displayPos ? `<span class="af-badge-pos">${escapeHtml(displayPos)}</span>` : ''}
+            </div>
+            <div class="af-meaning">${escapeHtml(data.meaning || data.vietnamese || '')}</div>
           </div>
 
-          <!-- Bottom row: Linguistic Metadata (Pinyin, Hán Việt, POS) -->
-          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 7px 10px; margin-top: 9px; padding-top: 9px; border-top: 1px dashed rgba(118, 98, 153, 0.2);">
-            <span style="font-size: 15px; font-weight: 700; color: #6b21a8; font-family: var(--font-mali);">${data.pinyin}</span>
-            ${hanVietBadgeHTML ? `<span style="color: #cbd5e1; font-size: 11px;">•</span>` + hanVietBadgeHTML : ''}
-            ${posBadgeHTML}
+          <div id="compareInputContainer" style="display: none; margin-top: 10px; background: #f8f5fc; border: 1.5px dashed #c4b5fd; padding: 10px 12px; border-radius: 14px; text-align: left;">
+            <div style="font-size: 12px; font-weight: 700; color: #766299; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+              <span>⚖️ Nhập từ Hán để phân biệt với "${escapeHtml(data.hanzi)}":</span>
+              <span style="font-size: 11.5px; color: #9ca3af; cursor: pointer;" onclick="document.getElementById('compareInputContainer').style.display='none'">✕ đóng</span>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <input type="text" id="compareWordInput" placeholder="Ví dụ: 进步" style="flex: 1; padding: 8px 12px; border: 1.5px solid #c4b5fd; border-radius: 10px; font-size: 14px; font-family: var(--font-mali); outline: none;" />
+              <button id="btnSubmitCompare" class="primary-submit-btn" style="padding: 8px 14px; font-size: 13px; border-radius: 10px; font-weight: 700; flex-shrink: 0;" title="Bấm để AI Phân biệt">Phân biệt</button>
+            </div>
           </div>
+
+          <div id="compareResultContainer" style="text-align: left; margin-top: 8px;"></div>
+
+          <div class="af-divider">✿</div>
+
+          <!-- Context & Usage Card -->
+          ${data.context ? `
+          <div class="af-example-zone" style="cursor: default; margin-bottom: 10px;">
+            <div class="af-example-head" style="margin-bottom: 6px;">
+              <span>✿ Ngữ cảnh & cách dùng</span>
+            </div>
+            <div style="line-height: 1.6; font-size: 13px; color: #3c2e54;">${formatContextTextWithPurpleExamples(data.context || '')}</div>
+          </div>
+          ` : ''}
+
+          <!-- Example Sentences (Flashcard style) -->
+          <div id="examplesContainer" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">
+            ${examplesHTML}
+          </div>
+
+          <button class="btn-load-more" id="btnLoadMoreExamples" style="border-radius: 14px; background: #f8f5fc; border: 1.4px dashed #cbbbe5; color: #584575;">
+            <span>✿ Xem thêm ví dụ khác</span>
+          </button>
         </div>
-
-        <div id="compareInputContainer" style="display: none; margin-bottom: 14px; background: #f8f5fc; border: 1.5px dashed #c4b5fd; padding: 10px 12px; border-radius: 14px;">
-          <div style="font-size: 12px; font-weight: 700; color: #766299; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
-            <span>⚖️ Nhập từ Hán để phân biệt với "${data.hanzi}":</span>
-            <span style="font-size: 11.5px; color: #9ca3af; cursor: pointer;" onclick="document.getElementById('compareInputContainer').style.display='none'">✕ đóng</span>
-          </div>
-          <div style="display: flex; gap: 6px;">
-            <input type="text" id="compareWordInput" placeholder="Ví dụ: 进步" style="flex: 1; padding: 8px 12px; border: 1.5px solid #c4b5fd; border-radius: 10px; font-size: 14px; font-family: var(--font-mali); outline: none;" />
-            <button id="btnSubmitCompare" class="primary-submit-btn" style="padding: 8px 16px; font-size: 15px; border-radius: 10px; font-weight: 700; flex-shrink: 0;" title="Bấm để AI Phân biệt">⚡</button>
-          </div>
-        </div>
-
-        <div id="compareResultContainer"></div>
-
-        <div style="background: #f3eef9; padding: 12px 14px; border-radius: 14px; border: 1px solid #e2d8ef; margin-bottom: 14px;">
-          <div style="font-size: 13px; font-weight: 700; color: #766299; margin-bottom: 4px; display:flex; align-items:center; gap:4px;">
-            <span>💡 Ý nghĩa & Ngữ cảnh dùng:</span>
-          </div>
-          <div style="margin-bottom: 4px; font-size: 13px; color: #3c2e54;"><b>Nghĩa:</b> ${data.meaning || ''}</div>
-          <div style="line-height: 1.55; font-size: 13px; color: #3c2e54;">${formatContextTextWithPurpleExamples(data.context || '')}</div>
-        </div>
-
-        <div style="font-size: 13.5px; font-weight: 700; color: #766299; margin-bottom: 8px;">📝 Các câu ví dụ minh họa (${data.examples ? data.examples.length : 3} câu):</div>
-
-        <div id="examplesContainer" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">
-          ${examplesHTML}
-        </div>
-
-        <button class="btn-load-more" id="btnLoadMoreExamples">
-          <span>➕ Xem thêm ví dụ khác</span>
-        </button>
       `;
 
       resetModalScroll(aiModal);
 
-      const btnToggleCompare = document.getElementById('btnToggleCompareInput');
-      const compareContainer = document.getElementById('compareInputContainer');
       const compareInput = document.getElementById('compareWordInput');
       const btnSubmitCompare = document.getElementById('btnSubmitCompare');
-
-      if (btnToggleCompare && compareContainer && compareInput) {
-        btnToggleCompare.addEventListener('click', () => {
-          const isHidden = compareContainer.style.display === 'none' || !compareContainer.style.display;
-          compareContainer.style.display = isHidden ? 'block' : 'none';
-          if (isHidden) {
-            setTimeout(() => {
-              compareInput.focus();
-            }, 80);
-          }
-        });
-      }
 
       const runCompare = () => {
         const targetWord = compareInput.value.trim();
