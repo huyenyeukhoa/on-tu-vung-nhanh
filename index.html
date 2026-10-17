@@ -3264,13 +3264,23 @@
       transition: all 0.25s ease;
     }
     .af-word-zone {
+      position: relative;
       text-align: center;
-      padding: 10px 10px 12px 10px;
+      padding: 12px 10px 12px 10px;
       border-radius: 16px;
       background: linear-gradient(180deg, #faf7fe 0%, #ffffff 100%);
-      border: 1.5px solid transparent;
+      border: 1.5px solid #ede4f7;
       transition: all 0.25s ease;
       cursor: pointer;
+    }
+    .af-corner-speaker {
+      position: absolute;
+      top: 8px;
+      right: 9px;
+      width: 25px;
+      height: 25px;
+      object-fit: contain;
+      pointer-events: none;
     }
     .af-word-zone.active-speaking {
       background: #f3ecfb;
@@ -6803,7 +6813,6 @@
         <div class="af-example-zone ${activePhase === 'example' ? 'active-speaking' : ''}" id="afExampleZone" onclick="speakChinese('${safeExAttr}')" title="Chạm để nghe lại câu ví dụ">
           <div class="af-example-head">
             <span>✿ Câu ví dụ đầu tiên</span>
-            <img src="./speaker_flower.png" alt="Nghe" style="width: 19px; height: 19px; object-fit: contain;">
           </div>
           <div class="af-example-hanzi">${highlightedExHanzi}</div>
           ${cardData.exPinyin ? `<div class="af-example-pinyin">${escapeHtml(cardData.exPinyin)}</div>` : ''}
@@ -6817,13 +6826,15 @@
 
       container.innerHTML = `
         <div class="af-word-zone ${activePhase === 'word' ? 'active-speaking' : ''}" id="afWordZone" onclick="speakChinese('${safeHanziAttr}')" title="Chạm để nghe lại từ vựng">
-          ${cardData.pinyin ? `<div class="af-pinyin">${escapeHtml(cardData.pinyin)}</div>` : ''}
+          <img class="af-corner-speaker" src="./speaker_flower.png" alt="Phát âm">
           <div class="af-hanzi-row">
             <span class="af-hanzi">${escapeHtml(cardData.hanzi)}</span>
-            <img src="./speaker_flower.png" alt="Phát âm" style="width: 28px; height: 28px; object-fit: contain;">
           </div>
           <div class="af-badges">
-            ${cardData.hanViet ? `<span class="af-badge-hv">${escapeHtml(cardData.hanViet)}</span>` : ''}
+            <span style="display: inline-flex; align-items: center; gap: 7px; flex-wrap: nowrap;">
+              ${cardData.pinyin ? `<span class="af-pinyin" style="margin-bottom: 0; font-size: 14.5px;">${escapeHtml(cardData.pinyin)}</span>` : ''}
+              ${cardData.hanViet ? `<span class="af-badge-hv">${escapeHtml(cardData.hanViet)}</span>` : ''}
+            </span>
             ${cardData.pos ? `<span class="af-badge-pos">${escapeHtml(cardData.pos)}</span>` : ''}
           </div>
           <div class="af-meaning">${escapeHtml(cardData.vietnamese)}</div>
@@ -7239,14 +7250,14 @@
           ${topBannerUpgradeHTML}
         </div>
 
-        <div id="compareInputContainer" style="display: none; margin-bottom: 14px; background: #f8f5fc; border: 1.5px dashed #c4b5fd; padding: 10px 12px; border-radius: 14px;">
-          <div style="font-size: 12px; font-weight: 700; color: #766299; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
-            <span>⚖️ Nhập từ Hán để phân biệt với "${data.hanzi}":</span>
-            <span style="font-size: 11.5px; color: #9ca3af; cursor: pointer;" onclick="document.getElementById('compareInputContainer').style.display='none'">✕ đóng</span>
+        <div id="compareInputContainer" style="display: none; margin-bottom: 14px; background: #f8f5fc; border: 1.5px dashed #c4b5fd; padding: 10px 11px; border-radius: 14px; width: 100%; box-sizing: border-box; overflow: hidden;">
+          <div style="font-size: 12px; font-weight: 700; color: #766299; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <span style="min-width: 0; flex: 1;">⚖️ Nhập từ cần phân biệt với "${data.hanzi}":</span>
+            <span style="font-size: 11.5px; color: #9ca3af; cursor: pointer; white-space: nowrap; flex-shrink: 0;" onclick="document.getElementById('compareInputContainer').style.display='none'">✕ đóng</span>
           </div>
-          <div style="display: flex; gap: 6px;">
-            <input type="text" id="compareWordInput" placeholder="Ví dụ: 进步" style="flex: 1; padding: 8px 12px; border: 1.5px solid #c4b5fd; border-radius: 10px; font-size: 14px; font-family: var(--font-mali); outline: none;" />
-            <button id="btnSubmitCompare" class="primary-submit-btn" style="padding: 8px 16px; font-size: 15px; border-radius: 10px; font-weight: 700; flex-shrink: 0;" title="Bấm để AI Phân biệt">⚡</button>
+          <div style="display: flex; align-items: center; gap: 6px; width: 100%;">
+            <input type="text" id="compareWordInput" placeholder="Ví dụ: 进步" style="flex: 1 1 0%; min-width: 0; width: 100%; padding: 8px 11px; border: 1.5px solid #c4b5fd; border-radius: 10px; font-size: 13.5px; font-family: var(--font-mali); outline: none;" />
+            <button id="btnSubmitCompare" class="primary-submit-btn" style="padding: 8px 12px; font-size: 12.5px; border-radius: 10px; font-weight: 700; flex-shrink: 0; white-space: nowrap;" title="Bấm để AI Phân biệt">Phân biệt</button>
           </div>
         </div>
 
@@ -8475,7 +8486,6 @@ Lưu ý quan trọng:
           <div class="af-example-zone" onclick="speakChinese('${escapedHanzi}')" title="Chạm để nghe phát âm câu ví dụ">
             <div class="af-example-head">
               <span>✿ Câu ví dụ ${idx + 1}</span>
-              <img src="./speaker_flower.png" alt="Nghe" style="width: 19px; height: 19px; object-fit: contain;">
             </div>
             <div class="af-example-hanzi">${highlightedHanzi}</div>
             ${cleanPinyin ? `<div class="af-example-pinyin">${cleanPinyin}</div>` : ''}
@@ -8499,26 +8509,28 @@ Lưu ý quan trọng:
         <div class="af-card" style="padding: 14px 13px;">
           <!-- Centered Flashcard-style Word Identity Zone -->
           <div class="af-word-zone" onclick="speakChinese('${safeHanziAttr}')" title="Chạm để nghe phát âm từ này">
-            ${data.pinyin ? `<div class="af-pinyin">${escapeHtml(data.pinyin)}</div>` : ''}
+            <img class="af-corner-speaker" src="./speaker_flower.png" alt="Phát âm">
             <div class="af-hanzi-row">
               <span class="af-hanzi" style="font-size: ${hanziFontSize};">${escapeHtml(data.hanzi || '')}</span>
-              <img src="./speaker_flower.png" alt="Phát âm" style="width: 28px; height: 28px; object-fit: contain;">
             </div>
             <div class="af-badges">
-              ${hanVietUpper ? `<span class="af-badge-hv">${escapeHtml(hanVietUpper)}</span>` : ''}
+              <span style="display: inline-flex; align-items: center; gap: 7px; flex-wrap: nowrap;">
+                ${data.pinyin ? `<span class="af-pinyin" style="margin-bottom: 0; font-size: 14.5px;">${escapeHtml(data.pinyin)}</span>` : ''}
+                ${hanVietUpper ? `<span class="af-badge-hv">${escapeHtml(hanVietUpper)}</span>` : ''}
+              </span>
               ${displayPos ? `<span class="af-badge-pos">${escapeHtml(displayPos)}</span>` : ''}
             </div>
             <div class="af-meaning">${escapeHtml(data.meaning || data.vietnamese || '')}</div>
           </div>
 
-          <div id="compareInputContainer" style="display: none; margin-top: 10px; background: #f8f5fc; border: 1.5px dashed #c4b5fd; padding: 10px 12px; border-radius: 14px; text-align: left;">
-            <div style="font-size: 12px; font-weight: 700; color: #766299; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
-              <span>⚖️ Nhập từ Hán để phân biệt với "${escapeHtml(data.hanzi)}":</span>
-              <span style="font-size: 11.5px; color: #9ca3af; cursor: pointer;" onclick="document.getElementById('compareInputContainer').style.display='none'">✕ đóng</span>
+          <div id="compareInputContainer" style="display: none; margin-top: 10px; background: #f8f5fc; border: 1.5px dashed #c4b5fd; padding: 10px 11px; border-radius: 14px; text-align: left; width: 100%; box-sizing: border-box; overflow: hidden;">
+            <div style="font-size: 12px; font-weight: 700; color: #766299; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <span style="min-width: 0; flex: 1;">⚖️ Nhập từ cần phân biệt với "${escapeHtml(data.hanzi)}":</span>
+              <span style="font-size: 11.5px; color: #9ca3af; cursor: pointer; white-space: nowrap; flex-shrink: 0;" onclick="document.getElementById('compareInputContainer').style.display='none'">✕ đóng</span>
             </div>
-            <div style="display: flex; gap: 6px;">
-              <input type="text" id="compareWordInput" placeholder="Ví dụ: 进步" style="flex: 1; padding: 8px 12px; border: 1.5px solid #c4b5fd; border-radius: 10px; font-size: 14px; font-family: var(--font-mali); outline: none;" />
-              <button id="btnSubmitCompare" class="primary-submit-btn" style="padding: 8px 14px; font-size: 13px; border-radius: 10px; font-weight: 700; flex-shrink: 0;" title="Bấm để AI Phân biệt">Phân biệt</button>
+            <div style="display: flex; align-items: center; gap: 6px; width: 100%;">
+              <input type="text" id="compareWordInput" placeholder="Ví dụ: 进步" style="flex: 1 1 0%; min-width: 0; width: 100%; padding: 8px 11px; border: 1.5px solid #c4b5fd; border-radius: 10px; font-size: 13.5px; font-family: var(--font-mali); outline: none;" />
+              <button id="btnSubmitCompare" class="primary-submit-btn" style="padding: 8px 12px; font-size: 12.5px; border-radius: 10px; font-weight: 700; flex-shrink: 0; white-space: nowrap;" title="Bấm để AI Phân biệt">Phân biệt</button>
             </div>
           </div>
 
