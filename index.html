@@ -3521,13 +3521,14 @@
       <!-- 3. Category Filter Dropdown -->
       <div class="dropdown-container" id="filterDropdownContainer">
         <button class="compact-bar-btn" id="btnFilterDropdown" type="button" title="Lọc từ vựng theo trạng thái học">
-          <span id="filterDropdownLabel">全部 (<span id="countTabAll">0</span>)</span>
+          <span id="filterDropdownLabel">全部 (0)</span>
           <span class="dropdown-chevron">▾</span>
         </button>
         <div class="compact-dropdown-menu dropdown-right" id="filterDropdownMenu">
           <div class="dropdown-menu-item tab-item active" data-tab="all" id="tabAll">
             <span>全部 (Tất cả)</span>
             <span class="dropdown-item-count" id="menuCountAll">(0)</span>
+            <span id="countTabAll" style="display:none;">0</span>
           </div>
           <div class="dropdown-menu-item tab-item" data-tab="new" id="tabNew">
             <span>学新 (Chưa nhớ)</span>
