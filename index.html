@@ -3431,19 +3431,26 @@
       font-family: var(--font-mali);
       font-size: 12.5px;
       font-weight: 700;
+      white-space: nowrap;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+      gap: 5px;
       transition: all 0.15s ease;
       box-shadow: 0 2px 5px rgba(118, 98, 153, 0.07);
+    }
+    .af-ctrl-btn svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+      display: block;
     }
     .af-ctrl-btn:active {
       transform: scale(0.95);
     }
     .af-ctrl-btn.primary {
-      flex: 1.35;
+      flex: 1.2;
       background: linear-gradient(135deg, #9882b8 0%, #766299 100%);
       color: #ffffff;
       border-color: #6c578f;
@@ -3869,10 +3876,10 @@
       </div>
 
       <div class="af-controls">
-        <button type="button" class="af-ctrl-btn" onclick="prevAutoPlayWord()" title="Lùi lại từ trước">⏮ Trước</button>
-        <button type="button" class="af-ctrl-btn primary" id="btnAfPauseResume" onclick="togglePauseAutoPlayList()">⏸ Tạm dừng</button>
-        <button type="button" class="af-ctrl-btn danger" onclick="stopAutoPlayList(true)" title="Dừng hẳn và đóng">⏹ Dừng</button>
-        <button type="button" class="af-ctrl-btn" onclick="nextAutoPlayWord()" title="Qua từ tiếp theo">Tiếp ⏭</button>
+        <button type="button" class="af-ctrl-btn" onclick="prevAutoPlayWord()" title="Lùi lại từ trước"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2.2v12H6zm3.8 6l8.2 6V6z"/></svg><span>Trước</span></button>
+        <button type="button" class="af-ctrl-btn primary" id="btnAfPauseResume" onclick="togglePauseAutoPlayList()"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4.5" height="14" rx="1.8"/><rect x="13.5" y="5" width="4.5" height="14" rx="1.8"/></svg><span>Dừng</span></button>
+        <button type="button" class="af-ctrl-btn danger" onclick="stopAutoPlayList(true)" title="Dừng hẳn và đóng"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2.8"/></svg><span>Thoát</span></button>
+        <button type="button" class="af-ctrl-btn" onclick="nextAutoPlayWord()" title="Qua từ tiếp theo"><span>Tiếp</span><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.2-6L6 6v12zM15.8 6v12H18V6z"/></svg></button>
       </div>
     </div>
   </div>
@@ -6743,13 +6750,13 @@
       }
       if (pauseBtn) {
         if (activePhase === 'done') {
-          pauseBtn.innerHTML = '🔄 Phát lại';
+          pauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span>Phát lại</span>';
           pauseBtn.classList.add('paused');
         } else if (isAutoPlayPaused) {
-          pauseBtn.innerHTML = '▶️ Tiếp tục';
+          pauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg><span>Phát</span>';
           pauseBtn.classList.add('paused');
         } else {
-          pauseBtn.innerHTML = '⏸ Tạm dừng';
+          pauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4.5" height="14" rx="1.8"/><rect x="13.5" y="5" width="4.5" height="14" rx="1.8"/></svg><span>Dừng</span>';
           pauseBtn.classList.remove('paused');
         }
       }
@@ -6758,9 +6765,9 @@
         statusEl.className = 'af-status-bar';
         if (activePhase === 'done') {
           statusEl.classList.add('step-wait');
-          statusEl.innerHTML = '<span>🎉 Đã phát xong toàn bộ danh sách!</span>';
+          statusEl.innerHTML = '<span>💜 Đã phát xong toàn bộ danh sách!</span>';
         } else if (isAutoPlayPaused) {
-          statusEl.innerHTML = '<span>⏸ Đang tạm dừng · bấm Tiếp tục để nghe tiếp</span>';
+          statusEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4.5" height="14" rx="1.8"/><rect x="13.5" y="5" width="4.5" height="14" rx="1.8"/></svg> Đang tạm dừng · bấm Phát để nghe tiếp</span>';
         } else if (activePhase === 'word') {
           statusEl.classList.add('step-word');
           statusEl.innerHTML = '<span>🌸 Đang đọc từ vựng...</span>';
@@ -6769,7 +6776,7 @@
           statusEl.innerHTML = '<span>📖 Đang đọc câu ví dụ đầu tiên...</span>';
         } else if (activePhase === 'wait') {
           statusEl.classList.add('step-wait');
-          statusEl.innerHTML = '<span>⏳ Chờ 2 giây qua từ tiếp theo...</span>';
+          statusEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Chờ 2 giây qua từ tiếp theo...</span>';
         }
       }
 
@@ -6787,7 +6794,7 @@
       const exampleHTML = cardData.exHanzi ? `
         <div class="af-example-zone ${activePhase === 'example' ? 'active-speaking' : ''}" id="afExampleZone" onclick="speakChinese('${safeExAttr}')" title="Chạm để nghe lại câu ví dụ">
           <div class="af-example-head">
-            <span>✨ Câu ví dụ đầu tiên</span>
+            <span>✿ Câu ví dụ đầu tiên</span>
             <img src="./speaker_flower.png" alt="Nghe" style="width: 19px; height: 19px; object-fit: contain;">
           </div>
           <div class="af-example-hanzi">${highlightedExHanzi}</div>
@@ -6796,7 +6803,7 @@
         </div>
       ` : `
         <div class="af-example-zone" style="text-align: center; color: #9ca3af; font-size: 12.5px; padding: 14px 10px;">
-          💡 Chưa có câu ví dụ AI cho từ này (hãy bấm 🎐 Nạp AI nhóm trước để có đủ ví dụ nhé)
+          ✿ Chưa có câu ví dụ AI cho từ này (hãy bấm 🎐 Nạp AI nhóm trước để có đủ ví dụ nhé)
         </div>
       `;
 
