@@ -74,7 +74,13 @@
     /* Enforce HanYiZhengYuan Font for ALL Hanzi / Chinese text elements across the entire app */
     .hanzi-text,
     .example-hanzi,
+    .example-hanzi *,
+    .af-hanzi,
+    .af-hanzi *,
+    .af-example-hanzi,
+    .af-example-hanzi *,
     .library-word-hanzi,
+    .library-word-hanzi *,
     .ai-word-title,
     .ai-word-title span,
     .reading-token,
@@ -6774,7 +6780,7 @@
       if (cardData.exHanzi && cardData.hanzi) {
         const escTarget = escapeHtml(cardData.hanzi);
         highlightedExHanzi = highlightedExHanzi.split(escTarget).join(
-          `<span style="background:#efe8f7; color:#584575; font-weight:700; padding:1px 6px; border-radius:6px; border:1px solid #d5c5eb;">${escTarget}</span>`
+          `<span style="font-family:var(--font-hanzi) !important; background:#efe8f7; color:#584575; font-weight:700; padding:1px 6px; border-radius:6px; border:1px solid #d5c5eb;">${escTarget}</span>`
         );
       }
 
