@@ -101,21 +101,24 @@
       flex-direction: column;
       height: 100vh;
       height: 100dvh;
-      max-width: 540px;
+      width: 100%;
+      max-width: 100%;
       margin: 0 auto;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 0 25px rgba(0,0,0,0.1);
     }
 
-    /* Clear Background Overlay */
+    /* Clear Background Overlay - Fixed full viewport so foldable inner screens (8.12") never lose side background */
     body::before {
       content: "";
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
       background-image: var(--app-bg-image, url('https://i.pinimg.com/736x/b9/e1/63/b9e16339f6bb68de17a3e2f256d9746b.jpg'), url('./bg.jpg'));
       background-size: cover;
       background-position: center;
@@ -134,6 +137,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
       object-fit: cover;
       z-index: 0;
       pointer-events: none;
@@ -1297,12 +1301,59 @@
       flex-direction: column;
     }
 
-    @media (min-width: 641px) {
+    /* Foldable Inner Screen (e.g. OPPO Find N5 8.12" ~600px-960px): Full-screen edge-to-edge with spacious layout */
+    @media (min-width: 580px) and (max-width: 980px) {
+      .app-header {
+        padding: 11px 18px !important;
+      }
+      .top-collapsible-panel {
+        padding: 10px 18px 12px 18px !important;
+      }
+      .vocab-container {
+        padding: 12px 18px calc(52px + env(safe-area-inset-bottom, 0px)) 18px !important;
+      }
+      .vocab-item {
+        padding: 14px 16px !important;
+      }
+      .hanzi-text {
+        font-size: 21.5px;
+      }
+      .vietnamese-text {
+        font-size: 14.5px;
+      }
+      .btn-circle {
+        width: 28px;
+        height: 28px;
+      }
+      #readingViewModal .modal-body {
+        padding: 10px 16px 14px 16px !important;
+      }
+      .reading-passage-box {
+        padding: 18px 22px 85px 22px !important;
+      }
+      #aiModal .modal-card,
+      #readingInputModal .modal-card,
+      #customGroupModal .modal-card,
+      #aiStoryModal .modal-card,
+      #libraryModal .modal-card {
+        max-width: min(680px, 92vw) !important;
+      }
+      .af-modal-card {
+        max-width: 480px !important;
+      }
+    }
+
+    /* Desktop (> 980px): keep full-viewport background, center content nicely */
+    @media (min-width: 981px) {
+      body {
+        max-width: 860px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.12);
+      }
       #readingViewModal {
         padding: 16px !important;
       }
       #readingViewModal .modal-card {
-        max-width: 680px !important;
+        max-width: 820px !important;
         max-height: 94vh !important;
         height: auto !important;
         border-radius: 20px !important;
@@ -1541,9 +1592,9 @@
     }
 
     .reading-token.selected {
-      color: #355e3d !important;
+      color: #584575 !important;
       font-weight: normal !important;
-      background: rgba(104, 159, 118, 0.16) !important;
+      background: #f1ebf8 !important;
       border-radius: 4px !important;
       padding: 1px 2px !important;
       margin: 0 1.5px !important;
@@ -1554,8 +1605,8 @@
     }
 
     .reading-token.selected.active-token {
-      background: rgba(104, 159, 118, 0.30) !important;
-      color: #27472d !important;
+      background: #e3d7f2 !important;
+      color: #43325e !important;
       font-weight: normal !important;
       padding: 1px 2px !important;
       margin: 0 1.5px !important;
@@ -1563,16 +1614,20 @@
     }
 
     /* Reading Review Mode (Chế độ Ôn bài - Làm mờ các từ đã lưu) */
-    #readingPassageContainer.reading-review-mode .reading-token.selected:not(.revealed) {
-      background: rgba(135, 114, 168, 0.14) !important;
+    #readingPassageContainer.reading-review-mode .reading-token.selected:not(.revealed):not(.retry-passed) {
+      background: #f3eef9 !important;
       border-radius: 4px !important;
       cursor: pointer !important;
       padding: 0 1.5px !important;
       margin: 0 1.5px !important;
-      box-shadow: inset 0 0 0 1px rgba(135, 114, 168, 0.32) !important;
+      box-shadow: inset 0 0 0 1px #d6c8eb !important;
       transition: background-color 0.2s ease, box-shadow 0.2s ease !important;
     }
-    #readingPassageContainer.reading-review-mode .reading-token.selected:not(.revealed) .token-text {
+    #readingPassageContainer.reading-review-mode .reading-token.selected.retry-mark:not(.revealed):not(.retry-passed) {
+      background: #fdf0f4 !important;
+      box-shadow: inset 0 0 0 1.2px #dfa2b5 !important;
+    }
+    #readingPassageContainer.reading-review-mode .reading-token.selected:not(.revealed):not(.retry-passed) .token-text {
       filter: blur(5.5px) !important;
       opacity: 0.18 !important;
       user-select: none !important;
@@ -1581,21 +1636,44 @@
       transition: filter 0.22s ease, opacity 0.22s ease !important;
       display: inline-block !important;
     }
-    #readingPassageContainer.reading-review-mode .reading-token.selected.revealed {
-      color: #355e3d !important;
-      background: #e8f4ec !important;
+    #readingPassageContainer.reading-review-mode .reading-token.selected.revealed:not(.retry-passed) {
+      color: #584575 !important;
+      background: #efe8f7 !important;
       border-radius: 4px !important;
       padding: 0 1.5px !important;
       margin: 0 1.5px !important;
-      box-shadow: inset 0 0 0 1.2px rgba(104, 159, 118, 0.52) !important;
+      box-shadow: inset 0 0 0 1.2px #bfaee0 !important;
       animation: popRevealToken 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    #readingPassageContainer.reading-review-mode .reading-token.selected.revealed .token-text {
-      color: #355e3d !important;
+    #readingPassageContainer.reading-review-mode .reading-token.selected.revealed:not(.retry-passed) .token-text {
+      color: #584575 !important;
       filter: none !important;
       opacity: 1 !important;
       transition: filter 0.2s ease, opacity 0.2s ease !important;
       display: inline-block !important;
+    }
+    /* Round 2+ (hoặc từ dò lại) khi chạm mở xem chữ sẽ có màu 奶蓝 (Milky Pastel Blue) */
+    #readingPassageContainer.reading-review-mode.reading-review-round2 .reading-token.selected.revealed:not(.retry-passed),
+    #readingPassageContainer.reading-review-mode .reading-token.selected.revealed.revealed-round2:not(.retry-passed) {
+      color: #2f5675 !important;
+      background: #e7f1fa !important;
+      box-shadow: inset 0 0 0 1.2px #9ec1e0 !important;
+    }
+    #readingPassageContainer.reading-review-mode.reading-review-round2 .reading-token.selected.revealed:not(.retry-passed) .token-text,
+    #readingPassageContainer.reading-review-mode .reading-token.selected.revealed.revealed-round2:not(.retry-passed) .token-text {
+      color: #2f5675 !important;
+    }
+    /* Words already mastered in previous review round: clean normal appearance */
+    #readingPassageContainer.reading-review-mode .reading-token.selected.retry-passed {
+      color: #4b3b66 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 1px 1px !important;
+      margin: 0 !important;
+    }
+    #readingPassageContainer.reading-review-mode .reading-token.selected.retry-passed .token-text {
+      filter: none !important;
+      opacity: 1 !important;
     }
     @keyframes popRevealToken {
       0% { transform: scale(0.92); }
@@ -3090,6 +3168,290 @@
       height: 200px;
       object-fit: contain;
     }
+
+    /* ==========================================
+       CUTE AUTO-PLAY FLASHCARD MODAL
+       ========================================== */
+    .af-modal-card {
+      max-width: 410px !important;
+      padding: 16px 15px 18px 15px !important;
+      border-radius: 26px !important;
+      background: linear-gradient(165deg, #fdfbff 0%, #f6f0fc 55%, #eff7f2 100%) !important;
+      border: 2px solid #e2d4f0 !important;
+      box-shadow: 0 14px 38px rgba(88, 69, 117, 0.24) !important;
+    }
+    .af-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .af-header-left {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+    }
+    .af-mascot {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+    .af-title {
+      font-family: var(--font-mali);
+      font-size: 15.5px;
+      font-weight: 700;
+      color: #584575;
+      white-space: nowrap;
+    }
+    .af-counter-badge {
+      font-family: var(--font-mali);
+      font-size: 12px;
+      font-weight: 700;
+      color: #584575;
+      background: #efe8f7;
+      border: 1.2px solid #d5c5eb;
+      padding: 2.5px 10px;
+      border-radius: 999px;
+    }
+    .af-status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: var(--font-mali);
+      font-size: 12px;
+      font-weight: 700;
+      color: #584575;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px dashed #d5c5eb;
+      padding: 5px 12px;
+      border-radius: 999px;
+      margin-bottom: 11px;
+      transition: all 0.25s ease;
+    }
+    .af-status-bar.step-word {
+      color: #584575;
+      background: #f3ecfb;
+      border-color: #bfaee0;
+    }
+    .af-status-bar.step-example {
+      color: #2f5675;
+      background: #e7f1fa;
+      border-color: #9ec1e0;
+    }
+    .af-status-bar.step-wait {
+      color: #355e3d;
+      background: #e8f4ec;
+      border-color: #a8d5b5;
+    }
+    .af-card {
+      position: relative;
+      background: #ffffff;
+      border: 1.8px solid #e4d8f3;
+      border-radius: 22px;
+      padding: 16px 14px 14px 14px;
+      box-shadow: 0 6px 20px rgba(118, 98, 153, 0.09);
+      overflow: hidden;
+      transition: all 0.25s ease;
+    }
+    .af-word-zone {
+      text-align: center;
+      padding: 10px 10px 12px 10px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #faf7fe 0%, #ffffff 100%);
+      border: 1.5px solid transparent;
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+    .af-word-zone.active-speaking {
+      background: #f3ecfb;
+      border-color: #bfaee0;
+      box-shadow: 0 4px 14px rgba(135, 114, 168, 0.14);
+      transform: translateY(-1px);
+    }
+    .af-pinyin {
+      font-family: var(--font-mali);
+      font-size: 16px;
+      font-weight: 700;
+      color: #68528a;
+      margin-bottom: 3px;
+    }
+    .af-hanzi-row {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 2px 0 6px 0;
+    }
+    .af-hanzi {
+      font-family: var(--font-hanzi);
+      font-size: clamp(32px, 8.5vw, 42px);
+      font-weight: normal;
+      color: #2a1b40;
+      line-height: 1.15;
+    }
+    .af-badges {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 7px;
+    }
+    .af-badge-hv {
+      font-family: var(--font-mali);
+      font-size: 11px;
+      font-weight: 800;
+      color: #584575;
+      background: #f1ebf8;
+      border: 1px solid #d8c9ec;
+      padding: 2px 9px;
+      border-radius: 999px;
+      letter-spacing: 0.4px;
+    }
+    .af-badge-pos {
+      font-family: var(--font-mali);
+      font-size: 11px;
+      font-weight: 700;
+      color: #355e3d;
+      background: #e8f4ec;
+      border: 1px solid #c2e0ca;
+      padding: 2px 9px;
+      border-radius: 999px;
+    }
+    .af-meaning {
+      font-family: var(--font-mali);
+      font-size: 15px;
+      font-weight: 700;
+      color: #374151;
+      line-height: 1.4;
+    }
+    .af-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 10px 0;
+      color: #c5b4df;
+      font-size: 11px;
+      user-select: none;
+    }
+    .af-divider::before,
+    .af-divider::after {
+      content: "";
+      flex: 1;
+      border-bottom: 1.2px dashed #e3d7f2;
+    }
+    .af-example-zone {
+      background: #f8f5fc;
+      border: 1.5px solid #e4d8f3;
+      border-radius: 16px;
+      padding: 11px 13px;
+      text-align: left;
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+    .af-example-zone.active-speaking {
+      background: #e7f1fa;
+      border-color: #9ec1e0;
+      box-shadow: 0 4px 14px rgba(92, 132, 166, 0.16);
+      transform: translateY(-1px);
+    }
+    .af-example-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mali);
+      font-size: 11px;
+      font-weight: 700;
+      color: #766299;
+      margin-bottom: 5px;
+    }
+    .af-example-zone.active-speaking .af-example-head {
+      color: #2f5675;
+    }
+    .af-example-hanzi {
+      font-family: var(--font-hanzi);
+      font-size: 17.5px;
+      line-height: 1.6;
+      color: #2a1b40;
+    }
+    .af-example-pinyin {
+      font-family: var(--font-mali);
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #68528a;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+    .af-example-vi {
+      font-family: var(--font-mali);
+      font-size: 13px;
+      font-weight: 600;
+      color: #4b5563;
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+    .af-wait-bar-track {
+      height: 5px;
+      background: #f1ebf8;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .af-wait-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #bfaee0 0%, #9ec1e0 55%, #95c9a4 100%);
+      border-radius: 999px;
+    }
+    .af-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 7px;
+      margin-top: 13px;
+    }
+    .af-ctrl-btn {
+      flex: 1;
+      padding: 9px 8px;
+      border-radius: 13px;
+      border: 1.4px solid #dfd3ef;
+      background: #ffffff;
+      color: #584575;
+      font-family: var(--font-mali);
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 5px rgba(118, 98, 153, 0.07);
+    }
+    .af-ctrl-btn:active {
+      transform: scale(0.95);
+    }
+    .af-ctrl-btn.primary {
+      flex: 1.35;
+      background: linear-gradient(135deg, #9882b8 0%, #766299 100%);
+      color: #ffffff;
+      border-color: #6c578f;
+      box-shadow: 0 3px 10px rgba(118, 98, 153, 0.25);
+    }
+    .af-ctrl-btn.primary.paused {
+      background: linear-gradient(135deg, #74a682 0%, #568b65 100%);
+      border-color: #4b7c59;
+    }
+    .af-ctrl-btn.danger {
+      background: #fdf0f4;
+      color: #9e4b66;
+      border-color: #e8bfd0;
+    }
   </style>
 </head>
 <body>
@@ -3223,6 +3585,10 @@
       <button class="control-btn active" id="btnToggleAutoSpeak" title="Tự động phát âm khi tick đúng/sai (🎙)">
         <span id="autoSpeakIcon">🎙</span>
         <input type="checkbox" id="switchAutoSpeak" class="switch-input" checked style="display:none;">
+      </button>
+
+      <button class="control-btn" id="btnAutoPlayList" onclick="openAutoPlayFlashcardModal()" title="Phát tự động danh sách đang hiển thị (Flashcard nghe từ + câu ví dụ)">
+        <span style="display: inline-flex; align-items: center; justify-content: center;"><img src="./cat_listening.png" alt="Phát tự động" style="width: 24px; height: 24px; object-fit: contain; display: block; pointer-events: none;"></span>
       </button>
     </div>
   </div>
@@ -3473,13 +3839,44 @@
     </div>
   </div>
 
+  <!-- Cute Auto-Play Flashcard Modal -->
+  <div class="modal-overlay" id="autoPlayFlashcardModal" onclick="if(event.target===this) stopAutoPlayList(true)">
+    <div class="modal-card af-modal-card">
+      <div class="af-header">
+        <div class="af-header-left">
+          <img id="afHeaderMascot" class="af-mascot" src="./audio_playing.gif" alt="Mascot">
+          <span class="af-title">Nghe Flashcard</span>
+        </div>
+        <div style="display: inline-flex; align-items: center; gap: 7px;">
+          <span id="afCounterBadge" class="af-counter-badge">1 / 1</span>
+          <button class="modal-close-btn" type="button" onclick="stopAutoPlayList(true)" title="Đóng và dừng phát">✕</button>
+        </div>
+      </div>
+
+      <div id="afStatusBar" class="af-status-bar step-word">
+        <span>🌸 Đang chuẩn bị phát...</span>
+      </div>
+
+      <div class="af-card" id="afCardContainer">
+        <!-- Rendered dynamically by renderAutoPlayFlashcard() -->
+      </div>
+
+      <div class="af-controls">
+        <button type="button" class="af-ctrl-btn" onclick="prevAutoPlayWord()" title="Lùi lại từ trước">⏮ Trước</button>
+        <button type="button" class="af-ctrl-btn primary" id="btnAfPauseResume" onclick="togglePauseAutoPlayList()">⏸ Tạm dừng</button>
+        <button type="button" class="af-ctrl-btn danger" onclick="stopAutoPlayList(true)" title="Dừng hẳn và đóng">⏹ Dừng</button>
+        <button type="button" class="af-ctrl-btn" onclick="nextAutoPlayWord()" title="Qua từ tiếp theo">Tiếp ⏭</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Settings & Backup Modal -->
   <div class="modal-overlay" id="apiKeyModal">
     <div class="modal-card st-modal" style="max-width: 420px; padding: 18px 14px;">
       <div class="modal-header">
         <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color); display: inline-flex; align-items: center; gap: 7px;">
           <span>⚙️ Cài đặt &amp; Sao lưu</span>
-          <span id="appVersionBadge" style="font-size: 11.5px; font-weight: 700; color: #766299; background: #f3eef9; border: 1px solid #dfd3ef; padding: 1.5px 7px; border-radius: 999px; line-height: 1.3;">v159</span>
+          <span id="appVersionBadge" style="font-size: 11.5px; font-weight: 700; color: #766299; background: #f3eef9; border: 1px solid #dfd3ef; padding: 1.5px 7px; border-radius: 999px; line-height: 1.3;">v160</span>
         </div>
         <button class="modal-close-btn" id="btnCloseApiKeyModal">✕</button>
       </div>
@@ -6222,6 +6619,367 @@
         audioPlayer.play().catch(e => console.log('Audio error:', e));
       }
     }
+
+    // ==========================================
+    // AUTO-PLAY VOCABULARY FLASHCARD ENGINE
+    // ==========================================
+    let autoPlayQueue = [];
+    let autoPlayIndex = 0;
+    let isAutoPlayActive = false;
+    let isAutoPlayPaused = false;
+    let autoPlayTimer = null;
+    let autoPlayStepToken = 0;
+    window._activeAutoPlayUtterance = null;
+
+    function getDisplayedVocabListForAutoPlay() {
+      return (groupWordsState || []).filter(item => {
+        if (!item || !item.hanzi) return false;
+        if (currentSearchQuery) return true;
+        const status = getWordStatus(item.hanzi);
+        if (activeTab === 'new') return status === null;
+        if (activeTab === 'review') return status === 'wrong';
+        return true;
+      });
+    }
+
+    function resolveAutoPlayCardData(item) {
+      const hanzi = (item.hanzi || '').trim();
+      const aiData = (aiCache && aiCache[hanzi]) ? deepToSimplified(aiCache[hanzi]) : null;
+      const pinyin = (aiData && aiData.pinyin) || item.pinyin || '';
+      const hanViet = ((aiData && aiData.hanViet) || getHanViet(hanzi) || '').trim().toUpperCase();
+      let pos = (aiData && aiData.pos) || item.pos || '';
+      if (aiData && typeof isIdiomWord === 'function' && isIdiomWord(aiData)) {
+        pos = `Thành ngữ (${getIdiomRole(aiData)})`;
+      }
+      const vietnamese = (aiData && aiData.vietnamese) || item.vietnamese || '';
+
+      let firstEx = null;
+      if (aiData && Array.isArray(aiData.examples) && aiData.examples.length > 0) {
+        firstEx = aiData.examples[0];
+      } else if (item.upgrade1 && item.upgrade1.example && item.upgrade1.example.hanzi) {
+        firstEx = item.upgrade1.example;
+      } else if (item.basicExample && item.basicExample.hanzi) {
+        firstEx = item.basicExample;
+      } else if (item.upgradedExample && item.upgradedExample.hanzi) {
+        firstEx = item.upgradedExample;
+      }
+
+      let exHanzi = '', exPinyin = '', exVi = '';
+      if (firstEx) {
+        exHanzi = String(firstEx.hanzi || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
+        exPinyin = String(firstEx.pinyin || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
+        exVi = String(firstEx.vietnamese || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
+      }
+
+      return { hanzi, pinyin, hanViet, pos, vietnamese, exHanzi, exPinyin, exVi };
+    }
+
+    function speakTextForAutoPlay(text, onComplete) {
+      const myToken = autoPlayStepToken;
+      let finished = false;
+      let fallbackTimer = null;
+
+      const done = () => {
+        if (finished) return;
+        finished = true;
+        if (fallbackTimer) clearTimeout(fallbackTimer);
+        if (!isAutoPlayActive || isAutoPlayPaused || myToken !== autoPlayStepToken) return;
+        onComplete();
+      };
+
+      const cleanText = String(text || '').trim();
+      if (!cleanText) {
+        done();
+        return;
+      }
+
+      // Safety fallback timeout in case mobile TTS drops onend event
+      const estMs = Math.min(14000, Math.max(2400, cleanText.length * 360 + 900));
+      fallbackTimer = setTimeout(done, estMs);
+
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch (e) {}
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        window._activeAutoPlayUtterance = utterance;
+        utterance.lang = 'zh-CN';
+        utterance.rate = 0.88;
+        utterance.pitch = 1.0;
+        if (xiaoxiaoVoice) utterance.voice = xiaoxiaoVoice;
+        utterance.onend = done;
+        utterance.onerror = done;
+        window.speechSynthesis.speak(utterance);
+      } else {
+        audioPlayer.onended = done;
+        audioPlayer.onerror = done;
+        audioPlayer.src = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(cleanText)}&le=zh`;
+        audioPlayer.play().catch(() => done());
+      }
+    }
+
+    function renderAutoPlayFlashcard(cardData, activePhase) {
+      const container = document.getElementById('afCardContainer');
+      const counterEl = document.getElementById('afCounterBadge');
+      const statusEl = document.getElementById('afStatusBar');
+      const mascotEl = document.getElementById('afHeaderMascot');
+      const pauseBtn = document.getElementById('btnAfPauseResume');
+      if (!container) return;
+
+      if (counterEl) {
+        counterEl.textContent = `${autoPlayIndex + 1} / ${autoPlayQueue.length}`;
+      }
+      if (mascotEl) {
+        mascotEl.src = (isAutoPlayActive && !isAutoPlayPaused && activePhase !== 'done')
+          ? './audio_playing.gif'
+          : './cat_listening.png';
+      }
+      if (pauseBtn) {
+        if (activePhase === 'done') {
+          pauseBtn.innerHTML = '🔄 Phát lại';
+          pauseBtn.classList.add('paused');
+        } else if (isAutoPlayPaused) {
+          pauseBtn.innerHTML = '▶️ Tiếp tục';
+          pauseBtn.classList.add('paused');
+        } else {
+          pauseBtn.innerHTML = '⏸ Tạm dừng';
+          pauseBtn.classList.remove('paused');
+        }
+      }
+
+      if (statusEl) {
+        statusEl.className = 'af-status-bar';
+        if (activePhase === 'done') {
+          statusEl.classList.add('step-wait');
+          statusEl.innerHTML = '<span>🎉 Đã phát xong toàn bộ danh sách!</span>';
+        } else if (isAutoPlayPaused) {
+          statusEl.innerHTML = '<span>⏸ Đang tạm dừng · bấm Tiếp tục để nghe tiếp</span>';
+        } else if (activePhase === 'word') {
+          statusEl.classList.add('step-word');
+          statusEl.innerHTML = '<span>🌸 Đang đọc từ vựng...</span>';
+        } else if (activePhase === 'example') {
+          statusEl.classList.add('step-example');
+          statusEl.innerHTML = '<span>📖 Đang đọc câu ví dụ đầu tiên...</span>';
+        } else if (activePhase === 'wait') {
+          statusEl.classList.add('step-wait');
+          statusEl.innerHTML = '<span>⏳ Chờ 2 giây qua từ tiếp theo...</span>';
+        }
+      }
+
+      const safeHanziAttr = cardData.hanzi.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const safeExAttr = (cardData.exHanzi || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+      let highlightedExHanzi = escapeHtml(cardData.exHanzi || '');
+      if (cardData.exHanzi && cardData.hanzi) {
+        const escTarget = escapeHtml(cardData.hanzi);
+        highlightedExHanzi = highlightedExHanzi.split(escTarget).join(
+          `<span style="background:#efe8f7; color:#584575; font-weight:700; padding:1px 6px; border-radius:6px; border:1px solid #d5c5eb;">${escTarget}</span>`
+        );
+      }
+
+      const exampleHTML = cardData.exHanzi ? `
+        <div class="af-example-zone ${activePhase === 'example' ? 'active-speaking' : ''}" id="afExampleZone" onclick="speakChinese('${safeExAttr}')" title="Chạm để nghe lại câu ví dụ">
+          <div class="af-example-head">
+            <span>✨ Câu ví dụ đầu tiên</span>
+            <img src="./speaker_flower.png" alt="Nghe" style="width: 19px; height: 19px; object-fit: contain;">
+          </div>
+          <div class="af-example-hanzi">${highlightedExHanzi}</div>
+          ${cardData.exPinyin ? `<div class="af-example-pinyin">${escapeHtml(cardData.exPinyin)}</div>` : ''}
+          ${cardData.exVi ? `<div class="af-example-vi">${escapeHtml(cardData.exVi)}</div>` : ''}
+        </div>
+      ` : `
+        <div class="af-example-zone" style="text-align: center; color: #9ca3af; font-size: 12.5px; padding: 14px 10px;">
+          💡 Chưa có câu ví dụ AI cho từ này (hãy bấm 🎐 Nạp AI nhóm trước để có đủ ví dụ nhé)
+        </div>
+      `;
+
+      container.innerHTML = `
+        <div class="af-word-zone ${activePhase === 'word' ? 'active-speaking' : ''}" id="afWordZone" onclick="speakChinese('${safeHanziAttr}')" title="Chạm để nghe lại từ vựng">
+          ${cardData.pinyin ? `<div class="af-pinyin">${escapeHtml(cardData.pinyin)}</div>` : ''}
+          <div class="af-hanzi-row">
+            <span class="af-hanzi">${escapeHtml(cardData.hanzi)}</span>
+            <img src="./speaker_flower.png" alt="Phát âm" style="width: 28px; height: 28px; object-fit: contain;">
+          </div>
+          <div class="af-badges">
+            ${cardData.hanViet ? `<span class="af-badge-hv">${escapeHtml(cardData.hanViet)}</span>` : ''}
+            ${cardData.pos ? `<span class="af-badge-pos">${escapeHtml(cardData.pos)}</span>` : ''}
+          </div>
+          <div class="af-meaning">${escapeHtml(cardData.vietnamese)}</div>
+        </div>
+
+        <div class="af-divider">✿</div>
+
+        ${exampleHTML}
+
+        <div class="af-wait-bar-track">
+          <div class="af-wait-bar-fill" id="afWaitBarFill" style="${activePhase === 'wait' ? 'width: 100%; transition: width 2s linear;' : 'width: 0%; transition: none;'}"></div>
+        </div>
+      `;
+    }
+
+    function runCurrentAutoPlayCard() {
+      if (!isAutoPlayActive || isAutoPlayPaused) return;
+      if (autoPlayTimer) {
+        clearTimeout(autoPlayTimer);
+        autoPlayTimer = null;
+      }
+      if (autoPlayIndex < 0) autoPlayIndex = 0;
+      if (autoPlayIndex >= autoPlayQueue.length) {
+        const lastCard = resolveAutoPlayCardData(autoPlayQueue[autoPlayQueue.length - 1]);
+        renderAutoPlayFlashcard(lastCard, 'done');
+        isAutoPlayPaused = true;
+        return;
+      }
+
+      const myToken = ++autoPlayStepToken;
+      const item = autoPlayQueue[autoPlayIndex];
+      const cardData = resolveAutoPlayCardData(item);
+
+      // Step 1: Speak the vocabulary Hanzi
+      renderAutoPlayFlashcard(cardData, 'word');
+      speakTextForAutoPlay(cardData.hanzi, () => {
+        if (!isAutoPlayActive || isAutoPlayPaused || myToken !== autoPlayStepToken) return;
+
+        const startWait2Seconds = () => {
+          if (!isAutoPlayActive || isAutoPlayPaused || myToken !== autoPlayStepToken) return;
+          renderAutoPlayFlashcard(cardData, 'wait');
+          // Trigger smooth 2s progress bar fill
+          const bar = document.getElementById('afWaitBarFill');
+          if (bar) {
+            bar.style.transition = 'none';
+            bar.style.width = '0%';
+            void bar.offsetWidth;
+            bar.style.transition = 'width 2s linear';
+            bar.style.width = '100%';
+          }
+          autoPlayTimer = setTimeout(() => {
+            if (!isAutoPlayActive || isAutoPlayPaused || myToken !== autoPlayStepToken) return;
+            autoPlayIndex += 1;
+            runCurrentAutoPlayCard();
+          }, 2000);
+        };
+
+        // Step 2: If first example exists, pause 450ms then read the first example sentence
+        if (cardData.exHanzi) {
+          autoPlayTimer = setTimeout(() => {
+            if (!isAutoPlayActive || isAutoPlayPaused || myToken !== autoPlayStepToken) return;
+            renderAutoPlayFlashcard(cardData, 'example');
+            speakTextForAutoPlay(cardData.exHanzi, () => {
+              startWait2Seconds();
+            });
+          }, 450);
+        } else {
+          startWait2Seconds();
+        }
+      });
+    }
+
+    function openAutoPlayFlashcardModal() {
+      const list = getDisplayedVocabListForAutoPlay();
+      if (!list || list.length === 0) {
+        showToast('⚠️ Danh sách đang hiển thị hiện không có từ nào để phát!');
+        return;
+      }
+
+      autoPlayQueue = [...list];
+      autoPlayIndex = 0;
+      isAutoPlayActive = true;
+      isAutoPlayPaused = false;
+      autoPlayStepToken += 1;
+
+      const modal = document.getElementById('autoPlayFlashcardModal');
+      if (modal) modal.classList.add('active');
+      const btn = document.getElementById('btnAutoPlayList');
+      if (btn) btn.classList.add('active');
+
+      runCurrentAutoPlayCard();
+    }
+
+    function togglePauseAutoPlayList() {
+      if (!isAutoPlayActive) return;
+      // If already finished all cards, restart from 0
+      if (autoPlayIndex >= autoPlayQueue.length) {
+        autoPlayIndex = 0;
+        isAutoPlayPaused = false;
+        runCurrentAutoPlayCard();
+        return;
+      }
+
+      isAutoPlayPaused = !isAutoPlayPaused;
+      autoPlayStepToken += 1;
+      if (autoPlayTimer) {
+        clearTimeout(autoPlayTimer);
+        autoPlayTimer = null;
+      }
+      if ('speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+      }
+      if (audioPlayer) {
+        try { audioPlayer.pause(); } catch (e) {}
+      }
+
+      if (isAutoPlayPaused) {
+        const cardData = resolveAutoPlayCardData(autoPlayQueue[autoPlayIndex]);
+        renderAutoPlayFlashcard(cardData, 'paused');
+      } else {
+        runCurrentAutoPlayCard();
+      }
+    }
+
+    function prevAutoPlayWord() {
+      if (!isAutoPlayActive || autoPlayQueue.length === 0) return;
+      autoPlayStepToken += 1;
+      if (autoPlayTimer) {
+        clearTimeout(autoPlayTimer);
+        autoPlayTimer = null;
+      }
+      autoPlayIndex = Math.max(0, autoPlayIndex - 1);
+      isAutoPlayPaused = false;
+      runCurrentAutoPlayCard();
+    }
+
+    function nextAutoPlayWord() {
+      if (!isAutoPlayActive || autoPlayQueue.length === 0) return;
+      autoPlayStepToken += 1;
+      if (autoPlayTimer) {
+        clearTimeout(autoPlayTimer);
+        autoPlayTimer = null;
+      }
+      if (autoPlayIndex < autoPlayQueue.length - 1) {
+        autoPlayIndex += 1;
+        isAutoPlayPaused = false;
+        runCurrentAutoPlayCard();
+      } else {
+        showToast('Đã ở từ cuối cùng trong danh sách!');
+      }
+    }
+
+    function stopAutoPlayList(closeModal = true) {
+      isAutoPlayActive = false;
+      isAutoPlayPaused = false;
+      autoPlayStepToken += 1;
+      if (autoPlayTimer) {
+        clearTimeout(autoPlayTimer);
+        autoPlayTimer = null;
+      }
+      if ('speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+      }
+      if (audioPlayer) {
+        try { audioPlayer.pause(); } catch (e) {}
+      }
+      const btn = document.getElementById('btnAutoPlayList');
+      if (btn) btn.classList.remove('active');
+      if (closeModal) {
+        const modal = document.getElementById('autoPlayFlashcardModal');
+        if (modal) modal.classList.remove('active');
+      }
+    }
+    window.openAutoPlayFlashcardModal = openAutoPlayFlashcardModal;
+    window.togglePauseAutoPlayList = togglePauseAutoPlayList;
+    window.prevAutoPlayWord = prevAutoPlayWord;
+    window.nextAutoPlayWord = nextAutoPlayWord;
+    window.stopAutoPlayList = stopAutoPlayList;
 
     let toastHideTimer = null;
     function showVoiceCatToast() {
@@ -11213,6 +11971,8 @@ ${chunkText}
         stopReadingPassageAudio(true);
         if (isReadingReviewModeActive) {
           isReadingReviewModeActive = false;
+          readingReviewRound = 1;
+          readingReviewRetrySet.clear();
         }
       }
 
@@ -11627,6 +12387,8 @@ ${chunkText}
     }
 
     let isReadingReviewModeActive = false;
+    let readingReviewRound = 1;
+    let readingReviewRetrySet = new Set();
 
     function updateReadingReviewToggleUI() {
       const btn = document.getElementById('btnToggleReadingReview');
@@ -11634,46 +12396,89 @@ ${chunkText}
       const text = document.getElementById('reviewToggleText');
 
       if (isReadingReviewModeActive) {
-        if (container) container.classList.add('reading-review-mode');
+        if (container) {
+          container.classList.add('reading-review-mode');
+          container.classList.toggle('reading-review-round2', readingReviewRound >= 2);
+        }
         if (btn) {
-          btn.style.background = '#766299';
+          const hasRetry = readingReviewRetrySet.size > 0;
+          const isR2 = readingReviewRound >= 2;
+          btn.style.background = hasRetry ? '#9e5870' : (isR2 ? '#5c84a6' : '#766299');
           btn.style.color = '#ffffff';
-          btn.style.border = '1.2px solid #5e438c';
-          btn.title = 'Chế độ ôn bài đang BẬT: Chạm vào chữ mờ để hiện lại chữ Hán. Chạm nút này để tắt.';
+          btn.style.border = hasRetry ? '1.2px solid #824358' : (isR2 ? '1.2px solid #496f8f' : '1.2px solid #5e438c');
+          btn.title = hasRetry
+            ? `Chạm để sang Lượt ${readingReviewRound + 1} (chỉ làm mờ ${readingReviewRetrySet.size} từ chưa thuộc)`
+            : 'Chế độ ôn bài đang BẬT: Chạm lần 1 mở chữ, chạm lần 2 đánh dấu chưa thuộc. Chạm nút này để tắt.';
+        }
+        if (text) {
+          if (readingReviewRetrySet.size > 0) {
+            text.textContent = `Dò lại (${readingReviewRetrySet.size})`;
+          } else if (readingReviewRound > 1) {
+            text.textContent = `Ôn L${readingReviewRound}`;
+          } else {
+            text.textContent = 'Ôn bài';
+          }
         }
       } else {
-        if (container) container.classList.remove('reading-review-mode');
+        if (container) {
+          container.classList.remove('reading-review-mode', 'reading-review-round2');
+        }
         if (btn) {
           btn.style.background = '#f3eef9';
           btn.style.color = '#766299';
           btn.style.border = '1.2px solid #dfd3ef';
           btn.title = 'Chạm để bật chế độ ôn bài (làm mờ các từ đã lưu để tự kiểm tra)';
         }
+        if (text) text.textContent = 'Ôn bài';
       }
-      if (text) text.textContent = 'Ôn bài';
     }
 
     function toggleReadingReview() {
       const art = findReadingArticleById(activeReadingArticleId);
       const highlightCount = new Set([...(art && art.targetWords || []), ...(art && art.selectedWords || [])].map(w => w.hanzi)).size;
 
+      // If review mode is ON and user marked difficult words -> advance to next round with ONLY those words blurred!
+      if (isReadingReviewModeActive && readingReviewRetrySet.size > 0) {
+        const retryWords = new Set(readingReviewRetrySet);
+        const retryCount = retryWords.size;
+        readingReviewRound += 1;
+        readingReviewRetrySet.clear();
+
+        document.querySelectorAll('#readingPassageContainer .reading-token.selected').forEach(el => {
+          const h = el.getAttribute('data-hanzi');
+          el.classList.remove('revealed', 'revealed-round2');
+          if (h && retryWords.has(h)) {
+            el.classList.remove('retry-passed');
+            el.classList.add('retry-mark');
+          } else {
+            el.classList.remove('retry-mark');
+            el.classList.add('retry-passed');
+          }
+        });
+
+        updateReadingReviewToggleUI();
+        showToast(`🎯 Lượt dò ${readingReviewRound}: Chỉ làm mờ ${retryCount} từ chưa thuộc!`);
+        return;
+      }
+
       isReadingReviewModeActive = !isReadingReviewModeActive;
+      readingReviewRound = 1;
+      readingReviewRetrySet.clear();
       updateReadingReviewToggleUI();
 
       if (isReadingReviewModeActive) {
-        // Reset previously revealed words when activating review mode
-        document.querySelectorAll('#readingPassageContainer .reading-token.revealed').forEach(el => {
-          el.classList.remove('revealed');
+        document.querySelectorAll('#readingPassageContainer .reading-token.selected').forEach(el => {
+          el.classList.remove('revealed', 'revealed-round2', 'retry-mark', 'retry-passed');
         });
 
         if (highlightCount === 0) {
           showToast('💡 Bài này chưa có từ nào được lưu. Hãy chạm vào từ vựng bất kỳ và chọn "Thêm vào list ôn tập" để làm mờ nhé!');
         } else {
-          showToast(`🎯 Chế độ ôn bài: Đã làm mờ ${highlightCount} từ. Chạm vào chữ mờ để hiện chữ Hán!`);
+          showToast(`🎯 Chế độ ôn bài: Đã làm mờ ${highlightCount} từ. Chạm lần 1 mở chữ, chạm lần 2 nếu chưa thuộc!`);
         }
       } else {
-        document.querySelectorAll('#readingPassageContainer .reading-token.revealed').forEach(el => {
-          el.classList.remove('revealed');
+        document.querySelectorAll('#readingPassageContainer .reading-token.selected').forEach(el => {
+          el.classList.remove('revealed', 'revealed-round2', 'retry-mark', 'retry-passed');
         });
         showToast('📖 Đã tắt chế độ ôn bài');
       }
@@ -11693,14 +12498,38 @@ ${chunkText}
       const isSelected = (art.selectedWords || []).some(w => w.hanzi === tok.hanzi);
       const isTargetWord = (art.targetWords || []).some(w => w.hanzi === tok.hanzi);
 
-      // In Review Mode: first tap on a blurred saved/target word un-blurs (reveals) the Hanzi!
-      if (isReadingReviewModeActive && (isSelected || isTargetWord) && targetEl) {
+      // In Review Mode:
+      // - 1st tap on a blurred word: reveals the Hanzi in-place.
+      // - 2nd tap on an already-revealed word: re-blurs & marks it into readingReviewRetrySet for the next round!
+      if (isReadingReviewModeActive && (isSelected || isTargetWord) && targetEl && !targetEl.classList.contains('retry-passed')) {
         if (!targetEl.classList.contains('revealed')) {
-          targetEl.classList.add('revealed');
+          const useMilkyBlue = readingReviewRound >= 2 || targetEl.classList.contains('retry-mark');
+          // Reveal all instances of this word that are currently active in this round
+          document.querySelectorAll('#readingPassageContainer .reading-token.selected').forEach(el => {
+            if (el.getAttribute('data-hanzi') === tok.hanzi && !el.classList.contains('retry-passed')) {
+              el.classList.add('revealed');
+              el.classList.toggle('revealed-round2', useMilkyBlue);
+              el.classList.remove('retry-mark');
+            }
+          });
+          readingReviewRetrySet.delete(tok.hanzi);
+          updateReadingReviewToggleUI();
           if (autoSpeakOnTick && tok.hanzi) {
             speakChinese(tok.hanzi);
           }
-          return; // Reveal in-place without opening drawer
+          return;
+        } else {
+          // 2nd tap on revealed word -> mark as "chưa thuộc", re-blur with soft rose border for next round
+          document.querySelectorAll('#readingPassageContainer .reading-token.selected').forEach(el => {
+            if (el.getAttribute('data-hanzi') === tok.hanzi && !el.classList.contains('retry-passed')) {
+              el.classList.remove('revealed', 'revealed-round2');
+              el.classList.add('retry-mark');
+            }
+          });
+          readingReviewRetrySet.add(tok.hanzi);
+          updateReadingReviewToggleUI();
+          showToast(`📌 Đã đánh dấu "${tok.hanzi}" chưa thuộc (${readingReviewRetrySet.size} từ cần dò lại)`);
+          return;
         }
       }
 
@@ -12824,6 +13653,8 @@ ${wordListPrompt}
           stopReadingPassageAudio(true);
           if (isReadingReviewModeActive) {
             isReadingReviewModeActive = false;
+            readingReviewRound = 1;
+            readingReviewRetrySet.clear();
             updateReadingReviewToggleUI();
           }
         });
@@ -12845,6 +13676,8 @@ ${wordListPrompt}
             stopReadingPassageAudio(true);
             if (isReadingReviewModeActive) {
               isReadingReviewModeActive = false;
+              readingReviewRound = 1;
+              readingReviewRetrySet.clear();
               updateReadingReviewToggleUI();
             }
           }
