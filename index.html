@@ -3928,7 +3928,7 @@
       <div class="modal-header">
         <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color); display: inline-flex; align-items: center; gap: 7px;">
           <span>⚙️ Cài đặt &amp; Sao lưu</span>
-          <span id="appVersionBadge" style="font-size: 11.5px; font-weight: 700; color: #766299; background: #f3eef9; border: 1px solid #dfd3ef; padding: 1.5px 7px; border-radius: 999px; line-height: 1.3;">v168</span>
+          <span id="appVersionBadge" style="font-size: 11.5px; font-weight: 700; color: #766299; background: #f3eef9; border: 1px solid #dfd3ef; padding: 1.5px 7px; border-radius: 999px; line-height: 1.3;">v171</span>
         </div>
         <button class="modal-close-btn" id="btnCloseApiKeyModal">✕</button>
       </div>
@@ -6901,8 +6901,8 @@
           </div>
           <div class="af-badges">
             <span style="display: inline-flex; align-items: center; gap: 7px; flex-wrap: nowrap;">
-              ${cardData.pinyin ? `<span class="af-pinyin" style="margin-bottom: 0; font-size: 14.5px;">${escapeHtml(cardData.pinyin)}</span>` : ''}
               ${cardData.hanViet ? `<span class="af-badge-hv">${escapeHtml(cardData.hanViet)}</span>` : ''}
+              ${cardData.pinyin ? `<span class="af-pinyin" style="margin-bottom: 0; font-size: 14.5px;">${escapeHtml(cardData.pinyin)}</span>` : ''}
             </span>
             ${cardData.pos ? `<span class="af-badge-pos">${escapeHtml(cardData.pos)}</span>` : ''}
           </div>
@@ -8601,8 +8601,8 @@ Lưu ý quan trọng:
             </div>
             <div class="af-badges">
               <span style="display: inline-flex; align-items: center; gap: 7px; flex-wrap: nowrap;">
-                ${data.pinyin ? `<span class="af-pinyin" style="margin-bottom: 0; font-size: 14.5px;">${escapeHtml(data.pinyin)}</span>` : ''}
                 ${hanVietUpper ? `<span class="af-badge-hv">${escapeHtml(hanVietUpper)}</span>` : ''}
+                ${data.pinyin ? `<span class="af-pinyin" style="margin-bottom: 0; font-size: 14.5px;">${escapeHtml(data.pinyin)}</span>` : ''}
               </span>
               ${displayPos ? `<span class="af-badge-pos">${escapeHtml(displayPos)}</span>` : ''}
             </div>
