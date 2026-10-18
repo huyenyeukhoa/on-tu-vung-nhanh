@@ -3912,7 +3912,7 @@
       <div class="modal-header">
         <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color); display: inline-flex; align-items: center; gap: 7px;">
           <span>⚙️ Cài đặt &amp; Sao lưu</span>
-          <span id="appVersionBadge" style="font-size: 11.5px; font-weight: 700; color: #766299; background: #f3eef9; border: 1px solid #dfd3ef; padding: 1.5px 7px; border-radius: 999px; line-height: 1.3;">v160</span>
+          <span id="appVersionBadge" style="font-size: 11.5px; font-weight: 700; color: #766299; background: #f3eef9; border: 1px solid #dfd3ef; padding: 1.5px 7px; border-radius: 999px; line-height: 1.3;">v168</span>
         </div>
         <button class="modal-close-btn" id="btnCloseApiKeyModal">✕</button>
       </div>
@@ -4908,8 +4908,14 @@
     function setWordStatus(hanzi, status) {
       if (currentLevel === 'due') {
         srsEnsureDay();
-        if (status === null) delete srsSession.ticks[hanzi];
-        else srsSession.ticks[hanzi] = status;
+        if (status === null) {
+          delete srsSession.ticks[hanzi];
+        } else {
+          srsSession.ticks[hanzi] = status;
+          if (srsSession.undo && srsSession.undo[hanzi]) {
+            srsSession.undo[hanzi].to = status;
+          }
+        }
         saveSrsSession();
         return;
       }
@@ -5107,8 +5113,32 @@
         if (r && r.d <= t && lookup.has(h) && !inQueue.has(h)) fresh.push(h);
       });
       fresh.sort((a, b) => (srsData[a].d - srsData[b].d) || ((srsData[a].l || 0) - (srsData[b].l || 0)));
-      if (fresh.length || existing.length !== srsSession.queue.length) {
+      let sessionChanged = Boolean(fresh.length || existing.length !== srsSession.queue.length);
+      if (sessionChanged) {
         srsSession.queue = existing.concat(fresh);
+      }
+      // Auto-recover session ticks if they were cleared by legacy reset while srsSession.undo / srsData still holds today's ticks
+      srsSession.queue.forEach(h => {
+        if (!srsSession.ticks[h]) {
+          const u = srsSession.undo && srsSession.undo[h];
+          if (u && (u.to === 'correct' || u.to === 'wrong')) {
+            srsSession.ticks[h] = u.to;
+            sessionChanged = true;
+          } else {
+            const r = srsGet(h);
+            if (r) {
+              if (r.w === t) {
+                srsSession.ticks[h] = 'wrong';
+                sessionChanged = true;
+              } else if (r.d > t) {
+                srsSession.ticks[h] = 'correct';
+                sessionChanged = true;
+              }
+            }
+          }
+        }
+      });
+      if (sessionChanged) {
         saveSrsSession();
       }
       return srsSession.queue;
@@ -6461,6 +6491,8 @@
     function resetShuffleState() {
       isGroupShuffled = false;
       shuffledGroupWords = null;
+      if (typeof practiceResetSet !== 'undefined' && practiceResetSet) practiceResetSet.clear();
+      if (typeof reviewPinnedSet !== 'undefined' && reviewPinnedSet) reviewPinnedSet.clear();
       const btn = document.getElementById('btnShuffleWords');
       const icon = document.getElementById('shuffleIcon');
       const label = document.getElementById('shuffleLabel');
@@ -7683,9 +7715,8 @@ Lưu ý:
         },
         body: JSON.stringify({
           model: 'google/gemini-3.8-flash',
-          reasoning: { max_tokens: 0 },
-          messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }],
-          max_tokens: 2000
+          reasoning: { effort: 'low' },
+          messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
         })
       });
 
@@ -7729,7 +7760,7 @@ Lưu ý:
           <div style="font-size: 13.5px; font-weight: 700; color: #5e4b7e; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 2px;">
             <span style="min-width: 0;">⚖️ So sánh: <b style="color: #766299; font-size: 16px;">${itemA.word}</b> <i>vs</i> <b style="color: #8e5899; font-size: 16px;">${itemB.word}</b></span>
             <div style="display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;">
-              <button type="button" onclick="handleDoCompareWords('${safeWordA}', '${safeWordB}', true)" style="background: #f3eef9; border: 1px solid #dfd3ef; color: #6e5991; font-size: 11px; font-weight: 700; border-radius: 999px; cursor: pointer; padding: 2px 8px; font-family: var(--font-mali); white-space: nowrap;" title="Tạo lại phân biệt bằng Gemini 3.8">↻ Tạo lại</button>
+              <button type="button" onclick="handleDoCompareWords('${safeWordA}', '${safeWordB}', true)" style="background: #f3eef9; border: 1px solid #dfd3ef; color: #6e5991; font-size: 13.5px; font-weight: 700; width: 24px; height: 24px; padding: 0; border-radius: 50%; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1;" title="Tạo lại phân biệt AI">↻</button>
               <button onclick="document.getElementById('compareResultContainer').innerHTML=''" style="background: none; border: none; color: #9ca3af; font-size: 15px; cursor: pointer; padding: 2px 6px;" title="Đóng so sánh">✕</button>
             </div>
           </div>
@@ -8298,9 +8329,8 @@ Viết bằng tiếng Việt, đúng chính tả, không dùng chữ phồn th�
           },
           body: JSON.stringify({
             model: 'google/gemini-3.8-flash',
-            reasoning: { max_tokens: 0 },
-            messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }],
-            max_tokens: 600
+            reasoning: { effort: 'low' },
+            messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
         if (!response.ok) return null;
@@ -8374,9 +8404,8 @@ Lưu ý quan trọng:
         },
         body: JSON.stringify({
           model: 'google/gemini-3.8-flash',
-          reasoning: { max_tokens: 0 },
-          messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }],
-          max_tokens: 2500
+          reasoning: { effort: 'low' },
+          messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
         })
       });
 
@@ -8659,9 +8688,9 @@ Lưu ý quan trọng:
           <div class="af-example-zone" style="cursor: default; margin-bottom: 10px;">
             <div class="af-example-head" style="margin-bottom: 6px;">
               <span>✿ Ngữ cảnh & cách dùng</span>
-              <button type="button" id="btnRegenerateAiWord" style="background: #efe8f7; border: 1px solid #d5c5eb; color: #584575; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; cursor: pointer; font-family: var(--font-mali); white-space: nowrap; flex-shrink: 0; text-transform: none; letter-spacing: 0;" title="Tạo lại toàn bộ giải thích bằng Gemini 3.8">↻ Tạo lại AI</button>
+              <button type="button" id="btnRegenerateAiWord" style="background: #efe8f7; border: 1px solid #d5c5eb; color: #584575; font-size: 13.5px; font-weight: 700; width: 24px; height: 24px; padding: 0; border-radius: 50%; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1;" title="Tạo lại giải thích AI">↻</button>
             </div>
-            <div style="line-height: 1.6; font-size: 13px; color: #3c2e54;">${formatContextTextWithPurpleExamples(data.context || 'Bấm "↻ Tạo lại AI" để tải giải thích chi tiết.')}</div>
+            <div style="line-height: 1.6; font-size: 13px; color: #3c2e54;">${formatContextTextWithPurpleExamples(data.context || 'Bấm nút ↻ để tải giải thích chi tiết.')}</div>
           </div>
 
           <!-- Example Sentences (Flashcard style) -->
@@ -8742,7 +8771,7 @@ Lưu ý:
           },
           body: JSON.stringify({
             model: 'google/gemini-3.8-flash',
-            reasoning: { max_tokens: 0 },
+            reasoning: { effort: 'low' },
             messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
@@ -8767,9 +8796,14 @@ Lưu ý:
       }
     }
 
+    // Session-only sets for non-destructive practice reset (↻)
+    const practiceResetSet = new Set();
+    const reviewPinnedSet = new Set();
+
     // Helper function to build row HTML content string
     function buildRowContent(item) {
-      const status = getWordStatus(item.hanzi);
+      const rawStatus = getWordStatus(item.hanzi);
+      const status = practiceResetSet.has(item.hanzi) ? null : rawStatus;
       const isCol2Visible = alwaysShowCol2 || status !== null || item.revealed;
 
       const safeHanzi = (item.hanzi || '').replace(/\\/g, "\\\\").replace(/'/g, "\\\\'");
@@ -8931,8 +8965,8 @@ Lưu ý:
       const filteredData = groupWordsState.filter(item => {
         if (currentSearchQuery) return true; // Khi tìm kiếm từ, luôn hiển thị toàn bộ kết quả tìm được, không bị tab 学新/复习 chặn
         const status = getWordStatus(item.hanzi);
-        if (activeTab === 'new') return status === null;
-        if (activeTab === 'review') return status === 'wrong';
+        if (activeTab === 'new') return status === null || practiceResetSet.has(item.hanzi);
+        if (activeTab === 'review') return status === 'wrong' || reviewPinnedSet.has(item.hanzi);
         return true;
       });
 
@@ -9078,9 +9112,11 @@ Lưu ý:
     function handleMark(hanzi, newStatus, event) {
       if (event) event.stopPropagation();
       const currentStatus = getWordStatus(hanzi);
+      const wasPracticeReset = practiceResetSet.has(hanzi);
+      practiceResetSet.delete(hanzi);
       let updatedStatus;
 
-      if (currentStatus === newStatus) {
+      if (!wasPracticeReset && currentStatus === newStatus) {
         updatedStatus = null;
         setWordStatus(hanzi, null);
       } else {
@@ -9097,23 +9133,27 @@ Lưu ý:
         }
       }
 
+      if (updatedStatus === 'correct' && reviewPinnedSet.has(hanzi)) {
+        reviewPinnedSet.delete(hanzi);
+      }
+
       // Smart review scheduling (upgrade group is self-managed → skipped)
       const markItem = groupWordsState.find(v => v.hanzi === hanzi);
       const isUpgradeMark = (markItem && markItem.level === 'upgrade') || (!currentSearchQuery && currentLevel === 'upgrade');
-      if (!isUpgradeMark) {
+      if (!isUpgradeMark && currentStatus !== updatedStatus) {
         srsOnTick(hanzi, currentStatus, updatedStatus, currentLevel === 'due' ? 'due' : 'group');
       }
 
       // Update state item revealed flag
       const item = groupWordsState.find(v => v.hanzi === hanzi);
-      if (item) item.revealed = true;
+      if (item) item.revealed = updatedStatus !== null;
 
       const safeSelector = CSS && CSS.escape ? CSS.escape(hanzi) : hanzi.replace(/"/g, '\\"');
       const targetRow = vocabListEl.querySelector(`.vocab-item[data-hanzi="${safeSelector}"]`);
 
       const belongsInTab = Boolean(currentSearchQuery) || (activeTab === 'all') ||
                            (activeTab === 'new' && updatedStatus === null) ||
-                           (activeTab === 'review' && updatedStatus === 'wrong');
+                           (activeTab === 'review' && (updatedStatus === 'wrong' || reviewPinnedSet.has(hanzi)));
 
       if (targetRow && item) {
         if (belongsInTab) {
@@ -9145,6 +9185,7 @@ Lưu ý:
 
       const correctCount = groupWords.filter(v => getWordStatus(v.hanzi) === 'correct').length;
       const wrongCount = groupWords.filter(v => getWordStatus(v.hanzi) === 'wrong').length;
+      const reviewTabCount = groupWords.filter(v => getWordStatus(v.hanzi) === 'wrong' || reviewPinnedSet.has(v.hanzi)).length;
       const newCount = groupWords.filter(v => getWordStatus(v.hanzi) === null).length;
       const totalCount = groupWords.length;
 
@@ -9153,7 +9194,10 @@ Lưu ý:
 
       countTabAll.textContent = totalCount;
       countTabNew.textContent = newCount;
-      countTabReview.textContent = wrongCount;
+      countTabReview.textContent = reviewTabCount;
+
+      const bannerWrongEl = document.getElementById('reviewBannerWrongCount');
+      if (bannerWrongEl) bannerWrongEl.textContent = reviewTabCount;
 
       if (typeof updateFilterDropdownLabel === 'function') {
         updateFilterDropdownLabel();
@@ -9617,7 +9661,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           },
           body: JSON.stringify({
             model: 'google/gemini-3.8-flash',
-            reasoning: { max_tokens: 0 },
+            reasoning: { effort: 'low' },
             messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
@@ -9723,7 +9767,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           },
           body: JSON.stringify({
             model: 'google/gemini-3.8-flash',
-            reasoning: { max_tokens: 0 },
+            reasoning: { effort: 'low' },
             messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
@@ -10469,7 +10513,7 @@ ${chunkText}
               },
               body: JSON.stringify({
                 model: options.model || 'google/gemini-3.8-flash',
-                reasoning: options.model && options.model.includes('deepseek') ? { enabled: false } : { max_tokens: 0 },
+                reasoning: options.model && options.model.includes('deepseek') ? { enabled: false } : { effort: 'low' },
                 messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
               })
             });
@@ -11442,12 +11486,11 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           },
           body: JSON.stringify({
             model: 'google/gemini-3.8-flash',
-            reasoning: { max_tokens: 0 },
+            reasoning: { effort: 'low' },
             messages: [
               { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
               { role: 'user', content: userContent }
-            ],
-            max_tokens: 3000
+            ]
           })
         });
 
@@ -13981,7 +14024,7 @@ ${wordListPrompt}
               },
               body: JSON.stringify({
                 model: currentModel,
-                reasoning: currentModel.includes('deepseek') ? { enabled: false } : { max_tokens: 0 },
+                reasoning: currentModel.includes('deepseek') ? { enabled: false } : { effort: 'low' },
                 messages: [
                   {
                     role: 'system',
@@ -15196,6 +15239,7 @@ ${wordListPrompt}
           document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
           tab.classList.add('active');
           activeTab = tab.getAttribute('data-tab');
+          if (typeof reviewPinnedSet !== 'undefined' && reviewPinnedSet) reviewPinnedSet.clear();
           const filterContainer = document.getElementById('filterDropdownContainer');
           if (filterContainer) filterContainer.classList.remove('open');
           updateFilterDropdownLabel();
@@ -15251,18 +15295,39 @@ ${wordListPrompt}
         });
       }
 
-      // Reset Current Group Progress
+      // Reset Currently Visible Words for Practice (Non-destructive to SRS / learned progress)
       btnReset.addEventListener('click', () => {
-        clearVocabSearch(false);
-        const groupWords = getGroupWordsRaw();
-        groupWords.forEach(v => {
-          setWordStatus(v.hanzi, null);
+        const visibleWords = groupWordsState.filter(item => {
+          if (!item || !item.hanzi) return false;
+          if (currentSearchQuery) return true;
+          const status = getWordStatus(item.hanzi);
+          if (activeTab === 'new') return status === null || practiceResetSet.has(item.hanzi);
+          if (activeTab === 'review') return status === 'wrong' || reviewPinnedSet.has(item.hanzi);
+          return true;
         });
-        resetShuffleState();
-        updateGroupWordsState();
-        renderGroupDropdown();
-        renderVocabList();
-        showToast('Đã đặt lại tiến độ nhóm hiện tại!');
+
+        if (visibleWords.length === 0) {
+          showToast('Không có từ nào đang hiển thị để làm mới!');
+          return;
+        }
+
+        const isReviewTab = !currentSearchQuery && activeTab === 'review';
+        const visibleSet = new Set();
+        visibleWords.forEach(v => {
+          visibleSet.add(v.hanzi);
+          practiceResetSet.add(v.hanzi);
+          if (isReviewTab) reviewPinnedSet.add(v.hanzi);
+          v.revealed = false;
+        });
+
+        if (shuffledGroupWords && Array.isArray(shuffledGroupWords)) {
+          shuffledGroupWords.forEach(v => {
+            if (visibleSet.has(v.hanzi)) v.revealed = false;
+          });
+        }
+
+        renderVocabList(true);
+        showToast(`🔄 Đã làm mới ${visibleWords.length} từ đang hiển thị để ôn lại (không ảnh hưởng tiến độ)!`);
       });
 
       // Submit / Restart Group
@@ -15273,10 +15338,12 @@ ${wordListPrompt}
           if (learned === groupWords.length && groupWords.length > 0) {
             showToast('🎉 Chúc mừng! Bạn đã thuộc tất cả từ trong nhóm này!');
           } else {
-            groupWords.forEach(v => setWordStatus(v.hanzi, null));
-            updateGroupWordsState();
-            renderVocabList();
-            showToast('Đã làm lại nhóm bài mới!');
+            groupWords.forEach(v => {
+              practiceResetSet.add(v.hanzi);
+              v.revealed = false;
+            });
+            renderVocabList(true);
+            showToast('🔄 Đã làm mới nhóm để ôn lại (không ảnh hưởng tiến độ)!');
           }
         });
       }
