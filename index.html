@@ -11372,7 +11372,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           }
         });
 
-        const newArticleId = 'art_' + Date.now();
+        const newArticleId = 'scan_' + Date.now();
         const articleTitle = customTitle || result.title || `Bài quét ảnh ${readingArticles.length + 1}`;
         const articleObj = {
           id: newArticleId,
@@ -11382,29 +11382,16 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           paragraphs: result.paragraphs,
           tokens: result.tokens,
           selectedWords: [],
+          sourceType: 'image_scan',
           createdAt: new Date().toLocaleDateString('vi-VN')
         };
 
-        readingArticles.unshift(articleObj);
-        saveReadingArticlesToStorage();
-        if (typeof triggerDebouncedCloudSave === 'function') {
-          triggerDebouncedCloudSave();
-        }
-
-        const customGroupId = 'custom_' + newArticleId;
-        if (!customGroups.some(g => g.id === customGroupId)) {
-          customGroups.push({
-            id: customGroupId,
-            name: `📖 ${articleTitle}`,
-            words: []
-          });
-          localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-        }
+        unsavedAiStoryArticle = articleObj;
 
         closeImageScanModal();
         if (readingInputModal) readingInputModal.classList.remove('active');
         openReadingViewModal(newArticleId);
-        showToast(`🎉 Đã tạo bài đọc "${articleTitle}" thành công!`);
+        showToast('🎉 Đã tạo bài đọc từ ảnh! Bấm "Lưu bài" ở cuối bài nếu muốn lưu lại.');
       } catch (err) {
         console.error('Image scan error:', err);
         closeImageScanModal();
@@ -12607,6 +12594,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 
       let storyFooterHTML = '';
       const isAiStoryArt = art.sourceType === 'ai_story' || String(art.id || '').startsWith('ai_story_');
+      const isImageScanArt = art.sourceType === 'image_scan' || String(art.id || '').startsWith('scan_');
       if (isAiStoryArt) {
         const targetWordsList = (art.targetWords && art.targetWords.length > 0) ? art.targetWords : (art.selectedWords || []);
         const isAlreadySaved = isReadingArticleSaved(art.id);
@@ -12645,6 +12633,20 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
               </button>
               <button type="button" id="btnSaveAiStoryArticle" class="ai-story-act-btn" style="flex: 0.95; padding: 9.5px 8px; font-size: 12.5px; background: ${isAlreadySaved ? '#eef7f0' : '#f4f0fa'}; color: ${isAlreadySaved ? '#3d6b46' : '#766299'}; border: 1.2px solid ${isAlreadySaved ? '#cce5d4' : '#dfd5ec'}; ${isAlreadySaved ? 'opacity: 0.75; cursor: default;' : ''}" onclick="saveCurrentAiStoryArticle('${art.id}')" ${isAlreadySaved ? 'disabled' : ''}>
                 ${isAlreadySaved ? 'Đã lưu' : 'Lưu bài'}
+              </button>
+            </div>
+          </div>
+        `;
+      } else if (isImageScanArt) {
+        const isAlreadySaved = isReadingArticleSaved(art.id);
+        storyFooterHTML = `
+          <div class="story-reader-footer" style="text-indent: 0;">
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+              <button type="button" class="ai-story-act-btn" style="flex: 1; padding: 9.5px 10px; font-size: 12.5px; background: #f4f0fa; color: #766299; border: 1.2px solid #dfd5ec;" onclick="openImageScanModal()">
+                📸 Quét ảnh khác
+              </button>
+              <button type="button" id="btnSaveAiStoryArticle" class="ai-story-act-btn reader" style="flex: 1; padding: 9.5px 10px; font-size: 12.5px; ${isAlreadySaved ? 'background: #eef7f0; color: #3d6b46; border: 1.2px solid #cce5d4; opacity: 0.85; cursor: default; box-shadow: none;' : ''}" onclick="saveCurrentAiStoryArticle('${art.id}')" ${isAlreadySaved ? 'disabled' : ''}>
+                ${isAlreadySaved ? '✓ Đã lưu bài đọc' : '💾 Lưu bài đọc'}
               </button>
             </div>
           </div>
