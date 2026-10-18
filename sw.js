@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hsk-vocab-cache-v168';
+const CACHE_NAME = 'hsk-vocab-cache-v169';
 const ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './loading.gif',
+  './butterfly_loading.gif',
   './story_loading.gif',
   './story_loading.gif?v=149',
   './audio_playing.gif',

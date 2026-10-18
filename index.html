@@ -1547,7 +1547,7 @@
       display: inline-block;
       position: relative;
       vertical-align: baseline;
-      padding: 1px 1px;
+      padding: 1px 0;
       margin: 0;
       border-radius: 4px;
       cursor: pointer;
@@ -1576,7 +1576,7 @@
     .reading-token:hover {
       background: rgba(135, 114, 168, 0.18);
       border-radius: 4px;
-      padding: 1px 1px;
+      padding: 1px 0;
       margin: 0;
       line-height: 1.15;
     }
@@ -1587,7 +1587,7 @@
       color: #4b3b66 !important;
       font-weight: normal !important;
       border-radius: 4px !important;
-      padding: 1px 1px !important;
+      padding: 1px 0 !important;
       margin: 0 !important;
       display: inline-block !important;
       vertical-align: baseline !important;
@@ -1602,8 +1602,8 @@
       font-weight: normal !important;
       background: #f1ebf8 !important;
       border-radius: 4px !important;
-      padding: 1px 2px !important;
-      margin: 0 1.5px !important;
+      padding: 1px 0 !important;
+      margin: 0 !important;
       display: inline-block !important;
       vertical-align: baseline !important;
       position: relative !important;
@@ -1614,8 +1614,8 @@
       background: #e3d7f2 !important;
       color: #43325e !important;
       font-weight: normal !important;
-      padding: 1px 2px !important;
-      margin: 0 1.5px !important;
+      padding: 1px 0 !important;
+      margin: 0 !important;
       line-height: 1.15 !important;
     }
 
@@ -1624,8 +1624,8 @@
       background: #f3eef9 !important;
       border-radius: 4px !important;
       cursor: pointer !important;
-      padding: 0 1.5px !important;
-      margin: 0 1.5px !important;
+      padding: 0 !important;
+      margin: 0 !important;
       box-shadow: inset 0 0 0 1px #d6c8eb !important;
       transition: background-color 0.2s ease, box-shadow 0.2s ease !important;
     }
@@ -1646,8 +1646,8 @@
       color: #584575 !important;
       background: #efe8f7 !important;
       border-radius: 4px !important;
-      padding: 0 1.5px !important;
-      margin: 0 1.5px !important;
+      padding: 0 !important;
+      margin: 0 !important;
       box-shadow: inset 0 0 0 1.2px #bfaee0 !important;
       animation: popRevealToken 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
@@ -1674,7 +1674,7 @@
       color: #4b3b66 !important;
       background: transparent !important;
       box-shadow: none !important;
-      padding: 1px 1px !important;
+      padding: 1px 0 !important;
       margin: 0 !important;
     }
     #readingPassageContainer.reading-review-mode .reading-token.selected.retry-passed .token-text {
@@ -1729,6 +1729,22 @@
     #readingPassageContainer.hide-underlines .reading-token.token-hsk79,
     #readingPassageContainer.hide-underlines .hsk-seg {
       text-decoration: none !important;
+    }
+
+    /* Highlight HSK 6 / HSK 7-9 words when clicking the H6 / H7-9 stat badges */
+    #readingPassageContainer.highlight-hsk6 .hsk-seg.hsk-seg-6,
+    #readingPassageContainer.highlight-hsk6 .reading-token.token-hsk6 {
+      background: #dcf2e3 !important;
+      color: #2b5835 !important;
+      border-radius: 4px !important;
+      box-shadow: 0 0 0 1px #b8dfc4 !important;
+    }
+    #readingPassageContainer.highlight-hsk79 .hsk-seg.hsk-seg-79,
+    #readingPassageContainer.highlight-hsk79 .reading-token.token-hsk79 {
+      background: #f5e6d8 !important;
+      color: #6e4527 !important;
+      border-radius: 4px !important;
+      box-shadow: 0 0 0 1px #e2c6ad !important;
     }
 
     /* Paragraph box with uniform line-height transition (0 padding to maximize reading width) */
@@ -4121,89 +4137,13 @@
     </div>
   </div>
 
-  <!-- AI Screenshot / Image Scanner Modal (Xiaohongshu, Douyin, Movies, Books) -->
-  <div class="modal-overlay" id="imageScanModal" style="z-index: 1180;" onclick="if(event.target===this) closeImageScanModal()">
-    <div class="modal-card af-modal-card" style="max-width: 480px; max-height: 90vh;">
-      <div class="modal-header af-header" style="border:none; padding: 0 2px; margin-bottom: 10px;">
-        <div class="af-header-left">
-          <img class="af-mascot" src="./cat_listening.png" alt="Mascot">
-          <span class="af-title">📸 Quét ảnh lấy từ &amp; bài đọc</span>
-        </div>
-        <button class="modal-close-btn" type="button" onclick="closeImageScanModal()">✕</button>
-      </div>
-      <div class="modal-body" style="padding: 0;">
-        <div class="af-card" style="padding: 13px 12px; text-align: left;">
-          <div style="font-size: 12px; color: #6e5991; line-height: 1.45; margin-bottom: 10px; background: #f8f5fc; padding: 8px 10px; border-radius: 12px; border: 1px dashed #d5c5eb;">
-            ✨ Chọn hoặc dán ảnh chụp màn hình <b>Xiaohongshu, Douyin, phụ đề phim, sách...</b> AI sẽ tự lọc bỏ chữ rác giao diện, nối lại câu bị đứt dòng và chuẩn hóa dấu câu!
-          </div>
-
-          <div style="display: flex; gap: 7px; margin-bottom: 10px;">
-            <button type="button" id="btnSelectScanImages" class="af-ctrl-btn primary" style="flex: 1.2; padding: 10px 8px; font-size: 12.5px;" onclick="document.getElementById('inputScanImageFiles').click()">
-              <span>📁 Chọn ảnh màn hình</span>
-            </button>
-            <button type="button" id="btnPasteScanImage" class="af-ctrl-btn" style="flex: 1; padding: 10px 8px; font-size: 12.5px;" onclick="pasteImageFromClipboardToScan()">
-              <span>📋 Dán ảnh</span>
-            </button>
-            <input type="file" id="inputScanImageFiles" accept="image/*" multiple style="display: none;" onchange="handleScanImageFilesSelected(this.files)" />
-          </div>
-
-          <!-- Selected Images Preview Strip -->
-          <div id="scanImagesPreviewWrap" style="display: none; margin-bottom: 10px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <span id="scanImagesCountLabel" style="font-size: 11.5px; font-weight: 700; color: #584575;">Đã chọn 1 ảnh</span>
-              <button type="button" onclick="clearScanSelectedImages()" style="background: none; border: none; color: #9e4b66; font-size: 11.5px; font-weight: 700; cursor: pointer; font-family: var(--font-mali);">✕ Xóa hết</button>
-            </div>
-            <div id="scanImagesThumbList" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;"></div>
-            <button type="button" id="btnRunAiImageScan" class="primary-submit-btn" style="width: 100%; margin-top: 8px; padding: 10px; font-size: 13.5px; font-weight: 700; border-radius: 12px;" onclick="runAiImageScan()">
-              ⚡ AI Quét chữ &amp; Lọc từ vựng
-            </button>
-          </div>
-
-          <!-- Loading State -->
-          <div id="scanImageLoadingBox" style="display: none; padding: 18px 10px; text-align: center;">
-            <img src="./loading.gif" style="width: 96px; height: 96px; object-fit: contain; mix-blend-mode: multiply;" alt="Đang quét..." />
-            <div id="scanImageLoadingText" style="font-size: 12.5px; font-weight: 700; color: #584575; margin-top: 6px;">🌸 Gemini 3.8 đang đọc ảnh, lọc chữ thừa &amp; sửa dấu câu...</div>
-          </div>
-
-          <!-- Scan Results Container -->
-          <div id="scanImageResultContainer" style="display: none;">
-            <div class="af-divider">✿</div>
-
-            <!-- 1. Cleaned Passage & Convert to Reading Article -->
-            <div class="af-example-zone" style="cursor: default; margin-bottom: 12px; background: #fbf9fe;">
-              <div class="af-example-head" style="margin-bottom: 6px;">
-                <span id="scanResultTitleLabel">✿ Văn bản đã làm sạch &amp; chuẩn hóa dấu câu</span>
-                <button type="button" onclick="speakChinese(document.getElementById('scanCleanedTextArea').value)" style="background: #efe8f7; border: 1px solid #d5c5eb; color: #584575; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; cursor: pointer; font-family: var(--font-mali); white-space: nowrap; flex-shrink: 0; text-transform: none; letter-spacing: 0;">🔊 Nghe thử</button>
-              </div>
-              <textarea id="scanCleanedTextArea" class="rd-paste-textarea" rows="3" style="width: 100%; box-sizing: border-box; font-family: var(--font-hanzi); font-size: 17px; line-height: 1.55; color: #2f2342; background: #ffffff; border: 1.3px solid #dfd3ef; border-radius: 10px; padding: 8px 10px; margin-bottom: 6px;"></textarea>
-              <div id="scanCleanedViText" style="font-size: 12.5px; color: #4d3e66; line-height: 1.5; margin-bottom: 10px; padding: 6px 8px; background: #f3eef9; border-radius: 8px;"></div>
-              <button type="button" id="btnConvertScanToReading" class="primary-submit-btn" style="width: 100%; padding: 10px; font-size: 13px; font-weight: 700; border-radius: 12px; background: linear-gradient(135deg, #74a682 0%, #568b65 100%);" onclick="convertScannedTextToReadingArticle()">
-                📖 Biến thành Bài đọc (Tách từ + Pinyin + Nghĩa)
-              </button>
-            </div>
-
-            <!-- 2. Extracted Vocabulary & Idioms -->
-            <div class="af-example-zone" style="cursor: default; background: #fbf9fe;">
-              <div class="af-example-head" style="margin-bottom: 8px;">
-                <span>✿ Từ vựng &amp; Thành ngữ lọc từ ảnh (<span id="scanWordsCountBadge">0</span>)</span>
-                <button type="button" id="btnToggleSelectAllScanWords" onclick="toggleSelectAllScannedWords()" style="background: #efe8f7; border: 1px solid #d5c5eb; color: #584575; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; cursor: pointer; font-family: var(--font-mali); white-space: nowrap; flex-shrink: 0; text-transform: none; letter-spacing: 0;">Chọn hết</button>
-              </div>
-
-              <!-- Target Custom Group Selector -->
-              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
-                <span style="font-size: 11.5px; font-weight: 700; color: #6e5991; white-space: nowrap; flex-shrink: 0;">Lưu vào:</span>
-                <select id="selectScanTargetCustomGroup" class="library-select" style="flex: 1; min-width: 0; width: 100%; padding: 6px 8px; font-size: 12px; border-radius: 10px;"></select>
-                <button type="button" onclick="quickCreateGroupFromScanModal()" style="background: #f3eef9; border: 1.2px solid #d5c5eb; color: #584575; font-size: 11.5px; font-weight: 700; padding: 6px 9px; border-radius: 10px; cursor: pointer; font-family: var(--font-mali); white-space: nowrap; flex-shrink: 0;">+ Nhóm mới</button>
-              </div>
-
-              <div id="scanExtractedWordsList" style="display: flex; flex-direction: column; gap: 7px; max-height: 290px; overflow-y: auto; margin-bottom: 10px; padding-right: 2px;"></div>
-
-              <button type="button" id="btnSaveScannedWordsToGroup" class="primary-submit-btn" style="width: 100%; padding: 10px; font-size: 13px; font-weight: 700; border-radius: 12px;" onclick="saveSelectedScannedWordsToCustomGroup()">
-                ➕ Lưu các từ đã chọn vào Nhóm tự tạo
-              </button>
-            </div>
-          </div>
-        </div>
+  <!-- Direct Image-to-Reading File Input & Butterfly Loading Overlay -->
+  <input type="file" id="inputScanImageFiles" accept="image/*" multiple style="display: none;" onchange="handleScanImageFilesSelected(this.files)" />
+  <div class="modal-overlay" id="imageScanModal" style="z-index: 1250;">
+    <div class="modal-card af-modal-card" style="max-width: 310px; padding: 22px 18px; text-align: center; background: #fcfaff; border-radius: 24px; border: 1.5px solid #e5d8f6; box-shadow: 0 16px 40px rgba(68, 48, 98, 0.22);">
+      <div id="scanImageLoadingBox" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <img src="./butterfly_loading.gif" style="width: 190px; height: 140px; object-fit: contain; display: block; margin: 0 auto;" alt="Đang tạo bài đọc..." />
+        <div id="scanImageLoadingText" style="font-size: 13px; font-weight: 700; color: #584575; margin-top: 8px; line-height: 1.45;">🦋 Đang đọc ảnh &amp; làm sạch câu chữ...</div>
       </div>
     </div>
   </div>
@@ -4239,11 +4179,11 @@
         <!-- Tiny Vocabulary Stats Bar (H6 奶绿 & H7-9 奶棕 counts & legend & review toggle) -->
         <div id="readingVocabStatsBar" style="display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 8px; padding: 0 1px; flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;">
           <div style="display: inline-flex; align-items: center; gap: 4px; flex-wrap: nowrap !important; flex-shrink: 0;">
-            <span style="font-size: 10px; font-weight: 700; color: #3d6b46; background: #edf6f0; border: 1px solid #cce5d4; padding: 1.5px 5px; border-radius: 6px; display: inline-flex; align-items: center; gap: 3.5px; font-family: var(--font-mali); white-space: nowrap !important; flex-shrink: 0;" title="Từ vựng thuộc list HSK 6 (gạch chân màu 奶绿)">
+            <span id="btnToggleHighlightH6" onclick="toggleReadingHskLevelHighlight('hsk6')" style="font-size: 10px; font-weight: 700; color: #3d6b46; background: #edf6f0; border: 1px solid #cce5d4; padding: 1.5px 5px; border-radius: 6px; display: inline-flex; align-items: center; gap: 3.5px; font-family: var(--font-mali); white-space: nowrap !important; flex-shrink: 0; cursor: pointer; user-select: none; transition: all 0.15s ease;" title="Chạm để bật/tắt highlight xanh cho toàn bộ từ HSK 6 trong bài">
               <span style="width: 7px; height: 2.5px; background: #689f76; border-radius: 2px; display: inline-block; flex-shrink: 0;"></span>
               H6: <b id="statCountH6">0</b><span class="vocab-unit-text"> từ</span>
             </span>
-            <span style="font-size: 10px; font-weight: 700; color: #7c5335; background: #faf4ef; border: 1px solid #ebd9cb; padding: 1.5px 5px; border-radius: 6px; display: inline-flex; align-items: center; gap: 3.5px; font-family: var(--font-mali); white-space: nowrap !important; flex-shrink: 0;" title="Từ vựng thuộc list HSK 7-9 (gạch chân màu 奶棕)">
+            <span id="btnToggleHighlightH79" onclick="toggleReadingHskLevelHighlight('hsk79')" style="font-size: 10px; font-weight: 700; color: #7c5335; background: #faf4ef; border: 1px solid #ebd9cb; padding: 1.5px 5px; border-radius: 6px; display: inline-flex; align-items: center; gap: 3.5px; font-family: var(--font-mali); white-space: nowrap !important; flex-shrink: 0; cursor: pointer; user-select: none; transition: all 0.15s ease;" title="Chạm để bật/tắt highlight màu trà sữa cho toàn bộ từ HSK 7-9 trong bài">
               <span style="width: 7px; height: 2.5px; background: #b08968; border-radius: 2px; display: inline-block; flex-shrink: 0;"></span>
               H7-9: <b id="statCountH79">0</b><span class="vocab-unit-text"> từ</span>
             </span>
@@ -11238,10 +11178,17 @@ ${chunkText}
     }
 
     function openImageScanModal() {
-      const modal = document.getElementById('imageScanModal');
-      if (!modal) return;
-      populateScanCustomGroupSelect();
-      modal.classList.add('active');
+      const apiKey = localStorage.getItem('openrouter_api_key');
+      if (!apiKey) {
+        apiKeyModal.classList.add('active');
+        showToast('Vui lòng nhập OpenRouter API Key!');
+        return;
+      }
+      const fileInput = document.getElementById('inputScanImageFiles');
+      if (fileInput) {
+        fileInput.value = '';
+        fileInput.click();
+      }
     }
     window.openImageScanModal = openImageScanModal;
 
@@ -11285,50 +11232,19 @@ ${chunkText}
       });
     }
 
-    function renderScanSelectedThumbs() {
-      const wrap = document.getElementById('scanImagesPreviewWrap');
-      const list = document.getElementById('scanImagesThumbList');
-      const countLbl = document.getElementById('scanImagesCountLabel');
-      if (!wrap || !list) return;
-
-      if (scanSelectedImages.length === 0) {
-        wrap.style.display = 'none';
-        list.innerHTML = '';
-        return;
-      }
-
-      wrap.style.display = 'block';
-      if (countLbl) countLbl.textContent = `Đã chọn ${scanSelectedImages.length} ảnh`;
-      list.innerHTML = scanSelectedImages.map((item, idx) => `
-        <div style="position: relative; width: 68px; height: 84px; border-radius: 10px; overflow: hidden; border: 1.5px solid #cbbbe5; flex-shrink: 0; background: #f3eef9;">
-          <img src="${item.dataUrl}" alt="Ảnh ${idx + 1}" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
-          <button type="button" onclick="removeScanSelectedImage('${item.id}')" style="position: absolute; top: 3px; right: 3px; width: 19px; height: 19px; border-radius: 50%; border: none; background: rgba(45, 31, 66, 0.78); color: #fff; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">✕</button>
-        </div>
-      `).join('');
-    }
-
-    function removeScanSelectedImage(id) {
-      scanSelectedImages = scanSelectedImages.filter(x => x.id !== id);
-      renderScanSelectedThumbs();
-    }
-    window.removeScanSelectedImage = removeScanSelectedImage;
-
-    function clearScanSelectedImages() {
-      scanSelectedImages = [];
-      const fileInput = document.getElementById('inputScanImageFiles');
-      if (fileInput) fileInput.value = '';
-      renderScanSelectedThumbs();
-    }
-    window.clearScanSelectedImages = clearScanSelectedImages;
-
     async function handleScanImageFilesSelected(fileList) {
       if (!fileList || fileList.length === 0) return;
+      const modal = document.getElementById('imageScanModal');
+      const loadingText = document.getElementById('scanImageLoadingText');
+      if (loadingText) loadingText.textContent = '🦋 Đang đọc ảnh & làm sạch câu chữ...';
+      if (modal) modal.classList.add('active');
+
+      scanSelectedImages = [];
       const files = Array.from(fileList).slice(0, 4);
       for (const f of files) {
         if (!f.type.startsWith('image/')) continue;
         try {
           const dataUrl = await compressImageForAiVision(f);
-          if (scanSelectedImages.length >= 4) scanSelectedImages.shift();
           scanSelectedImages.push({ id: 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), dataUrl });
         } catch (err) {
           console.warn('Compress image error:', err);
@@ -11336,66 +11252,15 @@ ${chunkText}
       }
       const fileInput = document.getElementById('inputScanImageFiles');
       if (fileInput) fileInput.value = '';
-      renderScanSelectedThumbs();
-      if (scanSelectedImages.length === 1) {
-        runAiImageScan();
+
+      if (scanSelectedImages.length === 0) {
+        closeImageScanModal();
+        showToast('⚠️ Không thể đọc ảnh đã chọn!');
+        return;
       }
+      await runAiImageScan();
     }
     window.handleScanImageFilesSelected = handleScanImageFilesSelected;
-
-    async function pasteImageFromClipboardToScan() {
-      try {
-        if (!navigator.clipboard || !navigator.clipboard.read) {
-          showToast('📋 Hãy bấm chọn ảnh từ máy hoặc nhấn Ctrl+V!');
-          return;
-        }
-        const items = await navigator.clipboard.read();
-        let added = 0;
-        for (const item of items) {
-          const imgType = item.types.find(t => t.startsWith('image/'));
-          if (imgType) {
-            const blob = await item.getType(imgType);
-            const dataUrl = await compressImageForAiVision(blob);
-            if (scanSelectedImages.length >= 4) scanSelectedImages.shift();
-            scanSelectedImages.push({ id: 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), dataUrl });
-            added++;
-          }
-        }
-        if (added > 0) {
-          renderScanSelectedThumbs();
-          runAiImageScan();
-        } else {
-          showToast('⚠️ Không tìm thấy ảnh nào trong bộ nhớ tạm (Clipboard)!');
-        }
-      } catch (err) {
-        showToast('📁 Vui lòng bấm "Chọn ảnh màn hình" để tải ảnh từ máy!');
-      }
-    }
-    window.pasteImageFromClipboardToScan = pasteImageFromClipboardToScan;
-
-    // Also allow Ctrl+V / Cmd+V when #imageScanModal is open
-    document.addEventListener('paste', async (e) => {
-      const modal = document.getElementById('imageScanModal');
-      if (!modal || !modal.classList.contains('active')) return;
-      const items = (e.clipboardData && e.clipboardData.items) ? Array.from(e.clipboardData.items) : [];
-      const imgItems = items.filter(it => it.type && it.type.startsWith('image/'));
-      if (imgItems.length === 0) return;
-      e.preventDefault();
-      for (const it of imgItems) {
-        const file = it.getAsFile();
-        if (file) {
-          try {
-            const dataUrl = await compressImageForAiVision(file);
-            if (scanSelectedImages.length >= 4) scanSelectedImages.shift();
-            scanSelectedImages.push({ id: 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), dataUrl });
-          } catch (err) {}
-        }
-      }
-      renderScanSelectedThumbs();
-      if (scanSelectedImages.length === 1) {
-        runAiImageScan();
-      }
-    });
 
     function postCleanScannedChineseText(raw) {
       if (!raw) return '';
@@ -11418,22 +11283,21 @@ ${chunkText}
 
     async function runAiImageScan() {
       if (scanSelectedImages.length === 0) {
-        showToast('Vui lòng chọn hoặc dán ít nhất 1 ảnh!');
+        closeImageScanModal();
         return;
       }
       const apiKey = localStorage.getItem('openrouter_api_key');
       if (!apiKey) {
+        closeImageScanModal();
         apiKeyModal.classList.add('active');
         showToast('Vui lòng nhập OpenRouter API Key!');
         return;
       }
 
-      const loadingBox = document.getElementById('scanImageLoadingBox');
-      const resultBox = document.getElementById('scanImageResultContainer');
-      const btnRun = document.getElementById('btnRunAiImageScan');
-      if (loadingBox) loadingBox.style.display = 'block';
-      if (resultBox) resultBox.style.display = 'none';
-      if (btnRun) btnRun.disabled = true;
+      const modal = document.getElementById('imageScanModal');
+      const loadingText = document.getElementById('scanImageLoadingText');
+      if (modal) modal.classList.add('active');
+      if (loadingText) loadingText.textContent = '🦋 Đang đọc ảnh & làm sạch câu chữ...';
 
       const scanPrompt = `Bạn là chuyên gia ngôn ngữ Trung - Việt cao cấp. Hãy đọc nội dung tiếng Trung trong (các) bức ảnh được cung cấp (có thể là ảnh chụp màn hình Xiaohongshu, Douyin, TikTok, Weibo, phụ đề phim hoặc trang sách).
 
@@ -11447,24 +11311,11 @@ QUY TẮC LÀM SẠCH VĂN BẢN & SỬA LỖI NGHIÊM NGẶT (BẮT BUỘC TUÂ
    - Nếu văn bản trong ảnh (đặc biệt là phụ đề phim, tiêu đề Xiaohongshu/Douyin) thiếu dấu câu hoặc dùng khoảng trắng thay cho dấu phẩy/dấu chấm, BẮT BUỘC tự động điền đầy đủ dấu câu tiếng Trung chuẩn xác (，、。！？：“”) đúng ngữ pháp và mạch ngắt ý tự nhiên.
    - Sửa các lỗi nhận diện chữ sai rõ rệt theo ngữ cảnh và chuyển toàn bộ sang 100% Chữ Hán Giản Thể (简体中文).
 
-3. LỌC TỪ VỰNG & THÀNH NGỮ ĐÁNG HỌC TRONG ẢNH ("words"):
-   - Trích xuất từ 5 đến 20 từ vựng / cụm từ cố định / thành ngữ 4 chữ (成语) hay và đáng học nhất xuất hiện trong văn bản đã làm sạch (ưu tiên từ vựng HSK 4-9, từ ghép 2-4 chữ, động từ/tính từ/phó từ đắt giá, cụm quán dụng, thành ngữ; không lấy đại từ đơn giản như 我, 你, 的, 了).
-   - Mỗi từ phải có đầy đủ: chữ Hán giản thể ("hanzi"), phiên âm có dấu thanh ("pinyin"), từ loại tiếng Việt ("pos": Danh từ, Động từ, Tính từ, Phó từ, Thành ngữ, Cụm từ...), và nghĩa tiếng Việt sát ngữ cảnh ("vietnamese").
-
 Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 {
   "title": "Tiêu đề ngắn gọn bằng tiếng Trung (3-7 chữ Hán)",
   "titleVi": "Tiêu đề tiếng Việt tương ứng",
-  "cleanedText": "Đoạn văn tiếng Trung hoàn chỉnh đã xóa sạch chữ thừa, nối liền các dòng bị đứt và chuẩn hóa đầy đủ dấu câu tiếng Trung chuẩn (，。！？)...",
-  "vietnamese": "Bản dịch tiếng Việt mượt mà, tự nhiên của toàn bộ đoạn văn trên...",
-  "words": [
-    {
-      "hanzi": "从容不迫",
-      "pinyin": "cóngróng bùpò",
-      "pos": "Thành ngữ",
-      "vietnamese": "ung dung tự tại, bình tĩnh không vội vàng"
-    }
-  ]
+  "cleanedText": "Đoạn văn tiếng Trung hoàn chỉnh đã xóa sạch chữ thừa, nối liền các dòng bị đứt và chuẩn hóa đầy đủ dấu câu tiếng Trung chuẩn (，。！？)..."
 }`;
 
       try {
@@ -11503,231 +11354,21 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         const contentStr = data.choices?.[0]?.message?.content || '{}';
         const parsed = deepToSimplified(safeParseJSON(contentStr) || {});
 
-        const cleanedText = postCleanScannedChineseText(parsed.cleanedText || '');
-        if (!cleanedText && (!Array.isArray(parsed.words) || parsed.words.length === 0)) {
+        const rawText = postCleanScannedChineseText(parsed.cleanedText || '');
+        if (!rawText) {
           throw new Error('Không tìm thấy chữ Hán nào trong ảnh!');
         }
 
-        const seenHanzi = new Set();
-        const wordsList = [];
-        (parsed.words || []).forEach(w => {
-          const hz = toSimplified(String(w.hanzi || '').trim());
-          if (!hz || seenHanzi.has(hz)) return;
-          seenHanzi.add(hz);
-          wordsList.push({
-            hanzi: hz,
-            pinyin: String(w.pinyin || '').trim(),
-            pos: String(w.pos || '').trim(),
-            vietnamese: String(w.vietnamese || w.meaning || '').trim(),
-            selected: true
-          });
-        });
+        const customTitle = toSimplified(String(parsed.title || 'Bài quét từ ảnh').trim());
+        const titleVi = String(parsed.titleVi || '').trim();
 
-        currentScannedResult = {
-          title: toSimplified(String(parsed.title || 'Bài quét từ ảnh').trim()),
-          titleVi: String(parsed.titleVi || '').trim(),
-          cleanedText,
-          vietnamese: String(parsed.vietnamese || '').trim(),
-          words: wordsList
-        };
-
-        renderScanResultUI();
-        showToast(`✨ Đã quét xong ảnh và lọc được ${wordsList.length} từ vựng!`);
-      } catch (err) {
-        console.error('Image scan error:', err);
-        showToast(`❌ Lỗi quét ảnh: ${err.message}`);
-      } finally {
-        if (loadingBox) loadingBox.style.display = 'none';
-        if (btnRun) btnRun.disabled = false;
-      }
-    }
-    window.runAiImageScan = runAiImageScan;
-
-    function getTargetScanGroupObj() {
-      const sel = document.getElementById('selectScanTargetCustomGroup');
-      const targetId = sel ? sel.value : (customGroups[0] && customGroups[0].id);
-      return customGroups.find(g => g.id === targetId) || customGroups[0];
-    }
-
-    function renderScanResultUI() {
-      if (!currentScannedResult) return;
-      const resultBox = document.getElementById('scanImageResultContainer');
-      const titleLbl = document.getElementById('scanResultTitleLabel');
-      const textArea = document.getElementById('scanCleanedTextArea');
-      const viBox = document.getElementById('scanCleanedViText');
-
-      if (resultBox) resultBox.style.display = 'block';
-      if (titleLbl) {
-        titleLbl.textContent = currentScannedResult.title
-          ? `✿ ${currentScannedResult.title}${currentScannedResult.titleVi ? ' — ' + currentScannedResult.titleVi : ''}`
-          : '✿ Văn bản đã làm sạch & chuẩn hóa dấu câu';
-      }
-      if (textArea) textArea.value = currentScannedResult.cleanedText || '';
-      if (viBox) {
-        viBox.textContent = currentScannedResult.vietnamese || '';
-        viBox.style.display = currentScannedResult.vietnamese ? 'block' : 'none';
-      }
-
-      populateScanCustomGroupSelect();
-      renderScannedWordsList();
-    }
-
-    function renderScannedWordsList() {
-      const listEl = document.getElementById('scanExtractedWordsList');
-      const countBadge = document.getElementById('scanWordsCountBadge');
-      const btnSelectAll = document.getElementById('btnToggleSelectAllScanWords');
-      if (!listEl || !currentScannedResult) return;
-
-      const words = currentScannedResult.words || [];
-      if (countBadge) countBadge.textContent = String(words.length);
-
-      const targetGrp = getTargetScanGroupObj();
-      const existingSet = new Set(((targetGrp && targetGrp.words) || []).map(w => w.hanzi));
-
-      if (words.length === 0) {
-        listEl.innerHTML = `<div style="padding: 12px; text-align: center; color: #9ca3af; font-size: 12.5px;">Không có từ vựng riêng lẻ nào được trích xuất.</div>`;
-        return;
-      }
-
-      const allSelected = words.every(w => w.selected);
-      if (btnSelectAll) btnSelectAll.textContent = allSelected ? 'Bỏ chọn hết' : 'Chọn hết';
-
-      listEl.innerHTML = words.map((w, idx) => {
-        const alreadyInGroup = existingSet.has(w.hanzi);
-        const hv = getHanViet(w.hanzi);
-        const safeHz = w.hanzi.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        const safePy = (w.pinyin || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        return `
-          <div style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: ${w.selected ? '#ffffff' : '#f5f2f9'}; border: 1.3px solid ${w.selected ? '#cbbbe5' : '#e5ddf2'}; transition: all 0.15s;">
-            <input type="checkbox" ${w.selected ? 'checked' : ''} onchange="toggleScannedWordIndex(${idx}, this.checked)" style="width: 17px; height: 17px; accent-color: #766299; cursor: pointer; flex-shrink: 0;" />
-            <div style="flex: 1; min-width: 0; cursor: pointer;" onclick="speakChinese('${safeHz}')" title="Chạm để nghe phát âm">
-              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                <span style="font-family: var(--font-hanzi); font-size: 18px; color: #2f2342;">${escapeHtml(w.hanzi)}</span>
-                <span style="font-size: 12.5px; font-weight: 700; color: #6e5991;">${escapeHtml(w.pinyin)}</span>
-                ${hv ? `<span style="font-size: 10px; font-weight: 700; color: #584575; background: #efe8f7; border: 1px solid #d5c5eb; padding: 1px 6px; border-radius: 999px;">${escapeHtml(hv)}</span>` : ''}
-                ${w.pos ? `<span style="font-size: 10px; font-weight: 700; color: #2f5675; background: #e7f1fa; border: 1px solid #c6def5; padding: 1px 6px; border-radius: 999px;">${escapeHtml(w.pos)}</span>` : ''}
-                ${alreadyInGroup ? `<span style="font-size: 10px; font-weight: 700; color: #3d6b46; background: #edf6f0; border: 1px solid #cce5d4; padding: 1px 6px; border-radius: 999px;">✓ Đã có</span>` : ''}
-              </div>
-              <div style="font-size: 12.5px; color: #4b5563; margin-top: 2px; line-height: 1.35;">${escapeHtml(w.vietnamese)}</div>
-            </div>
-            <button type="button" onclick="openAiExplainModal('${safeHz}', '${safePy}')" style="background: #f3eef9; border: 1px solid #dfd3ef; color: #584575; border-radius: 8px; padding: 4px 7px; font-size: 11.5px; font-weight: 700; cursor: pointer; flex-shrink: 0; font-family: var(--font-mali);" title="Xem giải thích chi tiết AI">Chi tiết</button>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function toggleScannedWordIndex(idx, checked) {
-      if (!currentScannedResult || !currentScannedResult.words || !currentScannedResult.words[idx]) return;
-      currentScannedResult.words[idx].selected = !!checked;
-      renderScannedWordsList();
-    }
-    window.toggleScannedWordIndex = toggleScannedWordIndex;
-
-    function toggleSelectAllScannedWords() {
-      if (!currentScannedResult || !Array.isArray(currentScannedResult.words)) return;
-      const allSelected = currentScannedResult.words.every(w => w.selected);
-      currentScannedResult.words.forEach(w => { w.selected = !allSelected; });
-      renderScannedWordsList();
-    }
-    window.toggleSelectAllScannedWords = toggleSelectAllScannedWords;
-
-    function quickCreateGroupFromScanModal() {
-      const name = prompt('Nhập tên nhóm tự chọn mới:', `Nhóm quét ảnh ${customGroups.length + 1}`);
-      if (!name || !name.trim()) return;
-      const newId = 'custom_' + Date.now();
-      customGroups.push({ id: newId, name: name.trim(), words: [] });
-      localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
-      populateScanCustomGroupSelect();
-      const sel = document.getElementById('selectScanTargetCustomGroup');
-      if (sel) sel.value = newId;
-      renderScannedWordsList();
-      showToast(`✨ Đã tạo nhóm "${name.trim()}"!`);
-    }
-    window.quickCreateGroupFromScanModal = quickCreateGroupFromScanModal;
-
-    function saveSelectedScannedWordsToCustomGroup() {
-      if (!currentScannedResult || !Array.isArray(currentScannedResult.words)) return;
-      const selectedWords = currentScannedResult.words.filter(w => w.selected && w.hanzi);
-      if (selectedWords.length === 0) {
-        showToast('Vui lòng tick chọn ít nhất 1 từ vựng để lưu!');
-        return;
-      }
-
-      const targetGrp = getTargetScanGroupObj();
-      if (!targetGrp) return;
-      if (!Array.isArray(targetGrp.words)) targetGrp.words = [];
-
-      let addedCount = 0;
-      let updatedCount = 0;
-      selectedWords.forEach(w => {
-        const existingIdx = targetGrp.words.findIndex(item => item.hanzi === w.hanzi);
-        if (existingIdx === -1) {
-          targetGrp.words.push({
-            hanzi: w.hanzi,
-            pinyin: w.pinyin || '',
-            pos: w.pos || '',
-            vietnamese: w.vietnamese || ''
-          });
-          addedCount++;
-        } else {
-          targetGrp.words[existingIdx] = {
-            ...targetGrp.words[existingIdx],
-            pinyin: w.pinyin || targetGrp.words[existingIdx].pinyin || '',
-            pos: w.pos || targetGrp.words[existingIdx].pos || '',
-            vietnamese: w.vietnamese || targetGrp.words[existingIdx].vietnamese || ''
-          };
-          updatedCount++;
-        }
-      });
-
-      localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
-      updateCustomLevelTabCount();
-      if (currentLevel === 'custom') {
-        currentCustomGroupId = targetGrp.id;
-        updateGroupWordsState();
-        renderGroupDropdown();
-        renderVocabList();
-      }
-      populateScanCustomGroupSelect();
-      renderScannedWordsList();
-
-      if (addedCount > 0) {
-        showToast(`🎉 Đã lưu ${addedCount} từ mới vào "${targetGrp.name}"!`);
-      } else {
-        showToast(`✓ Đã cập nhật ${updatedCount} từ trong "${targetGrp.name}"!`);
-      }
-    }
-    window.saveSelectedScannedWordsToCustomGroup = saveSelectedScannedWordsToCustomGroup;
-
-    async function convertScannedTextToReadingArticle() {
-      const textArea = document.getElementById('scanCleanedTextArea');
-      const rawText = postCleanScannedChineseText(textArea ? textArea.value : (currentScannedResult && currentScannedResult.cleanedText) || '');
-      if (!rawText) {
-        showToast('Không có nội dung văn bản tiếng Trung để tạo bài đọc!');
-        return;
-      }
-
-      const apiKey = localStorage.getItem('openrouter_api_key');
-      if (!apiKey) {
-        apiKeyModal.classList.add('active');
-        showToast('Vui lòng nhập OpenRouter API Key!');
-        return;
-      }
-
-      const btn = document.getElementById('btnConvertScanToReading');
-      if (btn) btn.disabled = true;
-
-      try {
-        const customTitle = (currentScannedResult && currentScannedResult.title) ? currentScannedResult.title : '';
-        const targetWords = (currentScannedResult && Array.isArray(currentScannedResult.words)) ? currentScannedResult.words : [];
+        if (loadingText) loadingText.textContent = '🦋 Đang tách từ & tạo bài đọc...';
 
         const result = await parsePassageChunksWithAi(rawText, apiKey, {
           customTitle,
-          targetWords,
+          targetWords: [],
           onProgress: (pct) => {
-            if (btn) btn.innerHTML = `<img src="./loading.gif" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 4px;" /> Đang tách từ &amp; tạo bài ${pct}%`;
+            if (loadingText) loadingText.textContent = `🦋 Đang tách từ & tạo bài đọc ${pct}%...`;
           }
         });
 
@@ -11736,7 +11377,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         const articleObj = {
           id: newArticleId,
           title: articleTitle,
-          titleVi: (currentScannedResult && currentScannedResult.titleVi) || '',
+          titleVi,
           rawText,
           paragraphs: result.paragraphs,
           tokens: result.tokens,
@@ -11765,16 +11406,12 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         openReadingViewModal(newArticleId);
         showToast(`🎉 Đã tạo bài đọc "${articleTitle}" thành công!`);
       } catch (err) {
-        console.error('Convert scan to reading error:', err);
-        showToast(`❌ Lỗi tạo bài đọc: ${err.message}`);
-      } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.innerHTML = `📖 Biến thành Bài đọc (Tách từ + Pinyin + Nghĩa)`;
-        }
+        console.error('Image scan error:', err);
+        closeImageScanModal();
+        showToast(`❌ Lỗi quét ảnh: ${err.message}`);
       }
     }
-    window.convertScannedTextToReadingArticle = convertScannedTextToReadingArticle;
+    window.runAiImageScan = runAiImageScan;
 
     function populateReadingArticleViewSelect(currentId) {
       const btnPrev = document.getElementById('btnPrevReadingArticle');
@@ -12927,12 +12564,9 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           overallTokenIdx += (para.tokens || []).length;
           const viText = para.vietnamese || (paragraphs.length === 1 && art.translation ? art.translation : 'Đoạn này chưa có bản dịch.');
           return `
-            <div style="margin-bottom: 14px; line-height: 1.6;">
-              <div class="reading-para-vi-box" data-pidx="${pIdx}" id="readingParaViBox_${pIdx}" style="display: flex; align-items: flex-start; gap: 8px; background: #f3eef9; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2d8ef; transition: all 0.25s ease;">
-                <span style="display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; margin-top: 2px; text-indent: 0;">${tinyBtnHTML}${tinyAudioBtnHTML}</span>
-                <div style="flex: 1; font-size: 14px; color: #4b3b66; font-style: italic; font-weight: 500; font-family: var(--font-mali) !important; word-break: normal !important; overflow-wrap: break-word !important; word-wrap: break-word !important; line-height: 1.6;">
-                  ${viText}
-                </div>
+            <div style="margin-bottom: 14px; line-height: 1.65;">
+              <div class="reading-para-vi-box" data-pidx="${pIdx}" id="readingParaViBox_${pIdx}" style="display: block; text-indent: 0; background: #f3eef9; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2d8ef; font-size: 15.5px; color: #4b3b66; font-style: normal; font-weight: 500; font-family: var(--font-mali) !important; word-break: normal !important; overflow-wrap: break-word !important; word-wrap: break-word !important; line-height: 1.65; transition: all 0.25s ease;">
+                <span style="display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; margin-right: 6px; text-indent: 0;">${tinyBtnHTML}${tinyAudioBtnHTML}</span>${viText}
               </div>
             </div>
           `;
@@ -12940,7 +12574,9 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           const paraTokensHTML = (para.tokens || []).map(tok => {
             const globalIdx = overallTokenIdx++;
             if (!tok.isVocab) {
-              const formattedPunct = (tok.hanzi || '').replace(/\n/g, '<br/>');
+              const cleanedPunct = (tok.hanzi || '').replace(/[ \t\u00a0\u3000]+/g, '');
+              if (!cleanedPunct) return '';
+              const formattedPunct = cleanedPunct.replace(/\n/g, '<br/>');
               return `<span class="reading-punct">${formattedPunct}</span>`;
             }
 
@@ -12963,8 +12599,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 
           return `
             <div class="reading-para-box" data-pidx="${pIdx}" id="readingParaBox_${pIdx}" style="margin-bottom: 14px; position: relative;">
-              <span style="display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; margin-right: 6px; text-indent: 0;">${tinyBtnHTML}${tinyAudioBtnHTML}</span>
-              ${paraTokensHTML}
+              <span style="display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; margin-right: 4px; text-indent: 0;">${tinyBtnHTML}${tinyAudioBtnHTML}</span>${paraTokensHTML}
             </div>
           `;
         }
@@ -13044,6 +12679,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       if (statCountH6El) statCountH6El.textContent = stats.h6Count;
       if (statCountH79El) statCountH79El.textContent = stats.h79Count;
 
+      updateReadingHskLevelHighlightUI();
       updateReadingGlossToggleUI();
       updateReadingUnderlinesToggleUI();
       updateReadingReviewToggleUI();
@@ -13066,6 +12702,54 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         btnToggleReview.dataset.bound = 'true';
       }
     }
+
+    let isReadingH6Highlighted = false;
+    let isReadingH79Highlighted = false;
+
+    function updateReadingHskLevelHighlightUI() {
+      const container = document.getElementById('readingPassageContainer');
+      const btnH6 = document.getElementById('btnToggleHighlightH6');
+      const btnH79 = document.getElementById('btnToggleHighlightH79');
+
+      if (container) {
+        container.classList.toggle('highlight-hsk6', isReadingH6Highlighted);
+        container.classList.toggle('highlight-hsk79', isReadingH79Highlighted);
+      }
+
+      if (btnH6) {
+        if (isReadingH6Highlighted) {
+          btnH6.style.background = '#cfebd8';
+          btnH6.style.borderColor = '#689f76';
+          btnH6.style.boxShadow = '0 0 0 1.2px rgba(104, 159, 118, 0.35)';
+        } else {
+          btnH6.style.background = '#edf6f0';
+          btnH6.style.borderColor = '#cce5d4';
+          btnH6.style.boxShadow = 'none';
+        }
+      }
+
+      if (btnH79) {
+        if (isReadingH79Highlighted) {
+          btnH79.style.background = '#f0decb';
+          btnH79.style.borderColor = '#b08968';
+          btnH79.style.boxShadow = '0 0 0 1.2px rgba(176, 137, 104, 0.35)';
+        } else {
+          btnH79.style.background = '#faf4ef';
+          btnH79.style.borderColor = '#ebd9cb';
+          btnH79.style.boxShadow = 'none';
+        }
+      }
+    }
+
+    function toggleReadingHskLevelHighlight(level) {
+      if (level === 'hsk6') {
+        isReadingH6Highlighted = !isReadingH6Highlighted;
+      } else if (level === 'hsk79') {
+        isReadingH79Highlighted = !isReadingH79Highlighted;
+      }
+      updateReadingHskLevelHighlightUI();
+    }
+    window.toggleReadingHskLevelHighlight = toggleReadingHskLevelHighlight;
 
     let isReadingGlossVisible = localStorage.getItem('hsk_show_reading_gloss') !== '0';
 
