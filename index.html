@@ -5389,6 +5389,7 @@
         openrouter_api_key: localStorage.getItem('openrouter_api_key') || '',
         reading_audio_speed: localStorage.getItem('hsk_reading_audio_speed') || '1.0',
         srsData: srsData || {},
+        aiCompareCache: aiCompareCache || {},
         studyStreak: (() => { try { return studyCloudPayload(); } catch (e) { return undefined; } })(),
         updated_at: new Date().toISOString()
       };
@@ -5556,6 +5557,10 @@
           if (rowData.groupCompletedDates && typeof rowData.groupCompletedDates === 'object') {
             Object.assign(groupCompletedDates, rowData.groupCompletedDates);
             localStorage.setItem('hsk_group_completed_dates', JSON.stringify(groupCompletedDates));
+          }
+          if (rowData.aiCompareCache && typeof rowData.aiCompareCache === 'object') {
+            Object.assign(aiCompareCache, rowData.aiCompareCache);
+            try { localStorage.setItem('hsk_ai_compare_cache', JSON.stringify(aiCompareCache)); } catch (e) {}
           }
           if (rowData.qwenAudioCache && typeof rowData.qwenAudioCache === 'object') {
             qwenAudioCache = Object.assign({}, rowData.qwenAudioCache, qwenAudioCache);
@@ -7526,13 +7531,18 @@
       throw new Error('Dữ liệu AI trả về bị lỗi cấu trúc chuỗi. Vui lòng bấm "Thử lại"!');
     }
 
-    // Fetch AI Word Distinction / Comparison Data from OpenRouter (gemini-2.5-flash)
-    async function fetchAiCompareWords(wordA, wordB) {
+    // Fetch AI Word Distinction / Comparison Data from OpenRouter (gemini-3.8-flash)
+    async function fetchAiCompareWords(wordA, wordB, forceRefresh = false) {
       const cacheKey = `${wordA}_vs_${wordB}`;
       const reverseCacheKey = `${wordB}_vs_${wordA}`;
 
-      if (aiCompareCache[cacheKey]) return aiCompareCache[cacheKey];
-      if (aiCompareCache[reverseCacheKey]) return aiCompareCache[reverseCacheKey];
+      if (!forceRefresh) {
+        if (aiCompareCache[cacheKey]) return aiCompareCache[cacheKey];
+        if (aiCompareCache[reverseCacheKey]) return aiCompareCache[reverseCacheKey];
+      } else {
+        delete aiCompareCache[cacheKey];
+        delete aiCompareCache[reverseCacheKey];
+      }
 
       const apiKey = localStorage.getItem('openrouter_api_key');
       if (!apiKey) throw new Error('Vui lòng nhập OpenRouter API Key!');
@@ -7580,7 +7590,8 @@ Lưu ý:
           'X-Title': 'HSK Vocab App'
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: 'google/gemini-3.8-flash',
+          reasoning: { max_tokens: 0 },
           messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }],
           max_tokens: 2000
         })
@@ -7597,6 +7608,7 @@ Lưu ý:
 
       aiCompareCache[cacheKey] = parsedJSON;
       try { localStorage.setItem('hsk_ai_compare_cache', JSON.stringify(aiCompareCache)); } catch(e){}
+      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
 
       return parsedJSON;
     }
@@ -7617,12 +7629,17 @@ Lưu ý:
 
       const escapedExAHanzi = (itemA.example_cn || '').replace(/'/g, "\\'");
       const escapedExBHanzi = (itemB.example_cn || '').replace(/'/g, "\\'");
+      const safeWordA = String(wordA || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const safeWordB = String(wordB || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
       containerEl.innerHTML = `
         <div style="margin-bottom: 12px; width: 100%;">
-          <div style="font-size: 13.5px; font-weight: 700; color: #5e4b7e; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 2px;">
-            <span>⚖️ So sánh: <b style="color: #766299; font-size: 16px;">${itemA.word}</b> <i>vs</i> <b style="color: #8e5899; font-size: 16px;">${itemB.word}</b></span>
-            <button onclick="document.getElementById('compareResultContainer').innerHTML=''" style="background: none; border: none; color: #9ca3af; font-size: 15px; cursor: pointer; padding: 2px 6px;" title="Đóng so sánh">✕</button>
+          <div style="font-size: 13.5px; font-weight: 700; color: #5e4b7e; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 2px;">
+            <span style="min-width: 0;">⚖️ So sánh: <b style="color: #766299; font-size: 16px;">${itemA.word}</b> <i>vs</i> <b style="color: #8e5899; font-size: 16px;">${itemB.word}</b></span>
+            <div style="display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;">
+              <button type="button" onclick="handleDoCompareWords('${safeWordA}', '${safeWordB}', true)" style="background: #f3eef9; border: 1px solid #dfd3ef; color: #6e5991; font-size: 11px; font-weight: 700; border-radius: 999px; cursor: pointer; padding: 2px 8px; font-family: var(--font-mali); white-space: nowrap;" title="Tạo lại phân biệt bằng Gemini 3.8">↻ Tạo lại</button>
+              <button onclick="document.getElementById('compareResultContainer').innerHTML=''" style="background: none; border: none; color: #9ca3af; font-size: 15px; cursor: pointer; padding: 2px 6px;" title="Đóng so sánh">✕</button>
+            </div>
           </div>
 
           <!-- Core Difference Box -->
@@ -7685,7 +7702,7 @@ Lưu ý:
     }
 
     // Handle Trigger Compare Action
-    async function handleDoCompareWords(wordA, wordB) {
+    async function handleDoCompareWords(wordA, wordB, forceRefresh = false) {
       const containerEl = document.getElementById('compareResultContainer');
       if (!containerEl) return;
 
@@ -7696,15 +7713,16 @@ Lưu ý:
       `;
 
       try {
-        const compareData = await fetchAiCompareWords(wordA, wordB);
+        const compareData = await fetchAiCompareWords(wordA, wordB, forceRefresh);
         renderAiCompareResult(containerEl, compareData, wordA, wordB);
+        if (forceRefresh) showToast('✨ Đã làm mới phân biệt bằng Gemini 3.8!');
       } catch (err) {
         console.error('AI compare error:', err);
         containerEl.innerHTML = `
           <div style="padding: 14px; background: #fef2f2; border-radius: 12px; border: 1px solid #fecaca; color: #dc2626; margin-bottom: 14px; font-size: 13px;">
             <b style="font-size: 13.5px;">❌ Không thể tải phân biệt AI:</b> ${err.message}
             <div style="margin-top: 8px;">
-              <button class="primary-submit-btn" style="padding: 5px 12px; font-size: 12px;" onclick="handleDoCompareWords('${wordA}', '${wordB}')">Thử lại</button>
+              <button class="primary-submit-btn" style="padding: 5px 12px; font-size: 12px;" onclick="handleDoCompareWords('${wordA}', '${wordB}', true)">Thử lại</button>
             </div>
           </div>
         `;
@@ -8187,7 +8205,8 @@ Viết bằng tiếng Việt, đúng chính tả, không dùng chữ phồn th�
             'X-Title': 'HSK Vocab App'
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
+            model: 'google/gemini-3.8-flash',
+            reasoning: { max_tokens: 0 },
             messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }],
             max_tokens: 600
           })
@@ -8216,15 +8235,19 @@ Viết bằng tiếng Việt, đúng chính tả, không dùng chữ phồn th�
     }
     window.getHanViet = getHanViet;
 
-    // Fetch Single AI Explanation from OpenRouter (gemini-2.5-flash) - Returns cached or newly fetched data
-    async function fetchSingleAiExplanation(hanzi, pinyin) {
-      if (aiCache[hanzi] && aiCache[hanzi].context && aiCache[hanzi].context.includes('important-highlight')) {
-        return aiCache[hanzi];
-      }
-      // Make sure the on-device store has finished loading before deciding to call the AI API
-      await aiStoreReady;
-      if (aiCache[hanzi] && aiCache[hanzi].context && aiCache[hanzi].context.includes('important-highlight')) {
-        return aiCache[hanzi];
+    // Fetch Single AI Explanation from OpenRouter (gemini-3.8-flash) - Returns cached or newly fetched data
+    async function fetchSingleAiExplanation(hanzi, pinyin, forceRefresh = false) {
+      if (!forceRefresh) {
+        if (aiCache[hanzi] && aiCache[hanzi].context && aiCache[hanzi].context.includes('important-highlight')) {
+          return aiCache[hanzi];
+        }
+        // Make sure the on-device store has finished loading before deciding to call the AI API
+        await aiStoreReady;
+        if (aiCache[hanzi] && aiCache[hanzi].context && aiCache[hanzi].context.includes('important-highlight')) {
+          return aiCache[hanzi];
+        }
+      } else {
+        await aiStoreReady;
       }
 
       const apiKey = localStorage.getItem('openrouter_api_key');
@@ -8258,7 +8281,8 @@ Lưu ý quan trọng:
           'X-Title': 'HSK Vocab App'
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: 'google/gemini-3.8-flash',
+          reasoning: { max_tokens: 0 },
           messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }],
           max_tokens: 2500
         })
@@ -8288,7 +8312,7 @@ Lưu ý quan trọng:
     }
 
     // Fetch AI Explanation for modal view
-    async function fetchAiExplanation(hanzi, pinyin) {
+    async function fetchAiExplanation(hanzi, pinyin, forceRefresh = false) {
       const apiKey = localStorage.getItem('openrouter_api_key');
       const modalCard = aiModal.querySelector('.modal-card');
 
@@ -8311,8 +8335,9 @@ Lưu ý quan trọng:
       `;
 
       try {
-        const parsed = await fetchSingleAiExplanation(hanzi, pinyin);
+        const parsed = await fetchSingleAiExplanation(hanzi, pinyin, forceRefresh);
         renderAiExplanation(parsed);
+        if (forceRefresh) showToast('✨ Đã tạo lại giải thích mới bằng Gemini 3.8!');
       } catch (err) {
         console.error('AI error:', err);
         modalCard.classList.remove('transparent-loading');
@@ -8321,7 +8346,7 @@ Lưu ý quan trọng:
           <div style="padding: 30px 20px; text-align: center; color: var(--red-color);">
             <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">❌ Không thể tải giải thích AI</p>
             <p style="font-size: 13.5px; color: #4b5563; margin-bottom: 16px;">${err.message}</p>
-            <button class="primary-submit-btn" onclick="fetchAiExplanation('${hanzi}', '${pinyin}')">Thử lại</button>
+            <button class="primary-submit-btn" onclick="fetchAiExplanation('${hanzi}', '${pinyin}', true)">Thử lại</button>
           </div>
         `;
       }
@@ -8539,14 +8564,13 @@ Lưu ý quan trọng:
           <div class="af-divider">✿</div>
 
           <!-- Context & Usage Card -->
-          ${data.context ? `
           <div class="af-example-zone" style="cursor: default; margin-bottom: 10px;">
             <div class="af-example-head" style="margin-bottom: 6px;">
               <span>✿ Ngữ cảnh & cách dùng</span>
+              <button type="button" id="btnRegenerateAiWord" style="background: #efe8f7; border: 1px solid #d5c5eb; color: #584575; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; cursor: pointer; font-family: var(--font-mali); white-space: nowrap; flex-shrink: 0; text-transform: none; letter-spacing: 0;" title="Tạo lại toàn bộ giải thích bằng Gemini 3.8">↻ Tạo lại AI</button>
             </div>
-            <div style="line-height: 1.6; font-size: 13px; color: #3c2e54;">${formatContextTextWithPurpleExamples(data.context || '')}</div>
+            <div style="line-height: 1.6; font-size: 13px; color: #3c2e54;">${formatContextTextWithPurpleExamples(data.context || 'Bấm "↻ Tạo lại AI" để tải giải thích chi tiết.')}</div>
           </div>
-          ` : ''}
 
           <!-- Example Sentences (Flashcard style) -->
           <div id="examplesContainer" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">
@@ -8577,6 +8601,14 @@ Lưu ý quan trọng:
       if (compareInput) {
         compareInput.addEventListener('keypress', (e) => {
           if (e.key === 'Enter') runCompare();
+        });
+      }
+
+      const btnRegen = document.getElementById('btnRegenerateAiWord');
+      if (btnRegen) {
+        btnRegen.addEventListener('click', (e) => {
+          e.stopPropagation();
+          fetchAiExplanation(data.hanzi, data.pinyin, true);
         });
       }
 
@@ -8617,7 +8649,8 @@ Lưu ý:
             'X-Title': 'HSK Vocab App'
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
+            model: 'google/gemini-3.8-flash',
+            reasoning: { max_tokens: 0 },
             messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
@@ -9491,7 +9524,8 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
             'X-Title': 'HSK Vocab App'
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
+            model: 'google/gemini-3.8-flash',
+            reasoning: { max_tokens: 0 },
             messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
@@ -9596,7 +9630,8 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
             'X-Title': 'HSK Vocab App'
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
+            model: 'google/gemini-3.8-flash',
+            reasoning: { max_tokens: 0 },
             messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
@@ -10341,7 +10376,7 @@ ${chunkText}
                 'X-Title': 'HSK Vocab App'
               },
               body: JSON.stringify({
-                model: options.model || 'google/gemini-2.5-flash',
+                model: options.model || 'google/gemini-3.8-flash',
                 reasoning: options.model && options.model.includes('deepseek') ? { enabled: false } : { max_tokens: 0 },
                 messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
               })
@@ -13270,7 +13305,7 @@ ${wordListPrompt}
       }
 
       try {
-        const storyModelsToTry = ['deepseek/deepseek-v4.1-flash', 'google/gemini-2.5-flash'];
+        const storyModelsToTry = ['deepseek/deepseek-v4.1-flash', 'google/gemini-3.8-flash'];
         let parsedStory = null;
         let lastErr = null;
 
