@@ -922,6 +922,23 @@
       padding-left: 4px;
     }
 
+    /* Left-Handed Study Mode: Move [✕] [✓] tick buttons to the left edge of each vocab row */
+    body.left-hand-mode .vocab-item {
+      grid-template-columns: auto 1fr 1fr;
+    }
+
+    body.left-hand-mode .vocab-item > .actions-cell {
+      order: -1;
+      padding-left: 0;
+      padding-right: 10px;
+    }
+
+    #btnLeftHandMode.active {
+      background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%);
+      border-color: #c084fc;
+      box-shadow: 0 2px 8px rgba(168, 85, 247, 0.22);
+    }
+
     .btn-circle {
       width: 26px;
       height: 26px;
@@ -3010,19 +3027,23 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 6px;
+      gap: 5px;
       margin-bottom: 6px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
     }
     .hsk-news-axis-badge {
       font-family: var(--font-mali);
-      font-size: 10.5px;
+      font-size: 10px;
       font-weight: 800;
-      padding: 2px 8px;
+      padding: 2px 7px;
       border-radius: 999px;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
     }
     .hsk-news-axis-badge.axis-tech { background: #e8f1fb; color: #285680; border: 1px solid #c3daf4; }
     .hsk-news-axis-badge.axis-eco { background: #e8f5ec; color: #2f6640; border: 1px solid #c0e2ca; }
@@ -3031,13 +3052,15 @@
     .hsk-news-axis-badge.axis-quote { background: #fdf2f4; color: #8c3b4f; border: 1px solid #f0cbd4; }
     .hsk-news-score-pill {
       font-family: var(--font-mali);
-      font-size: 10.5px;
+      font-size: 10px;
       font-weight: 800;
-      padding: 2px 7px;
+      padding: 2px 6.5px;
       border-radius: 999px;
       background: #fff4e6;
       color: #b45309;
       border: 1px solid #fcd34d;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .hsk-news-title-zh {
       font-family: var(--font-hanzi);
@@ -3070,17 +3093,39 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: 6px;
+      font-family: var(--font-mali);
+      font-size: 10.5px;
+      color: #6b7280;
+      flex-wrap: nowrap;
+    }
+    .hsk-news-pin-btn {
       font-family: var(--font-mali);
       font-size: 11px;
-      color: #6b7280;
-      flex-wrap: wrap;
+      font-weight: 800;
+      padding: 4px 8.5px;
+      border-radius: 999px;
+      background: #f5f0fb;
+      color: #634b87;
+      border: 1px solid #d9cbe9;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+    .hsk-news-pin-btn.pinned {
+      background: #fef3c7;
+      color: #92400e;
+      border-color: #f59e0b;
     }
     .hsk-news-read-btn {
       font-family: var(--font-mali);
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 800;
-      padding: 4.5px 11px;
+      padding: 4px 9.5px;
       border-radius: 999px;
       background: linear-gradient(135deg, #9882b8 0%, #766299 100%);
       color: #ffffff;
@@ -3088,7 +3133,9 @@
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 3.5px;
+      white-space: nowrap;
+      flex-shrink: 0;
       box-shadow: 0 2px 6px rgba(118, 98, 153, 0.22);
     }
 
@@ -3663,6 +3710,7 @@
       <button class="icon-action-btn" id="btnOpenImageScan" onclick="openImageScanModal()" title="Quét ảnh chụp màn hình (Xiaohongshu, Douyin, phim, sách) lấy từ vựng & tạo bài đọc">📸</button>
       <button class="icon-action-btn" id="btnOpenCustomGroups" title="Tạo nhóm từ riêng & AI điền">📁</button>
       <button class="icon-action-btn" id="btnApiKey" title="cài đặt OpenRouter API Key">🔑</button>
+      <button class="icon-action-btn" id="btnLeftHandMode" onclick="toggleLeftHandMode()" title="Chế độ cầm tay trái: chuyển nút tick ✕/✓ sang bên trái">🤚</button>
       <button class="icon-action-btn" id="btnTogglePanel" title="hiện/ẩn tùy chỉnh toolbar">⚙️</button>
       <button class="icon-action-btn" id="btnReset" title="đặt lại bài luyện">↻</button>
     </div>
@@ -4124,6 +4172,18 @@
         <!-- ===== Nhóm: Giao diện ===== -->
         <div class="st-group-label">Giao diện</div>
 
+        <!-- Left-Handed Study Mode -->
+        <div class="st-card">
+          <div class="st-head" style="margin-bottom: 0;">
+            <div class="st-icon">🤚</div>
+            <div class="st-title-wrap">
+              <div class="st-title">Chế độ ôn bài tay trái</div>
+              <div class="st-sub">Chuyển cột nút tick ✕ / ✓ sang bên trái màn hình</div>
+            </div>
+            <button type="button" class="st-btn st-btn-sm ghost" id="btnModalLeftHandToggle" onclick="toggleLeftHandMode()" style="flex: 0 0 auto; min-width: 86px;">Đang tắt</button>
+          </div>
+        </div>
+
         <!-- Custom Background -->
         <div class="st-card">
           <div class="st-head">
@@ -4304,17 +4364,12 @@
   <!-- HSK 7-9 Daily Curated Real News Modal -->
   <div class="modal-overlay" id="hskNewsModal" style="z-index: 1180;" onclick="if(event.target===this) closeHskNewsModal()">
     <div class="modal-card" style="max-width: 540px; max-height: 90vh; display: flex; flex-direction: column;">
-      <div class="modal-header" style="padding-bottom: 10px;">
-        <div style="min-width: 0; flex: 1;">
-          <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 800; color: var(--primary-color); display: flex; align-items: center; gap: 6px;">
-            <span>📰 Tin tức HSK 7-9 hằng ngày</span>
-          </div>
-          <div id="hskNewsUpdatedSub" style="font-family: var(--font-mali); font-size: 11px; color: #766299; font-weight: 600; margin-top: 2px;">
-            4 nguồn chuẩn đề thi: 人民日报 · 科普中国 · 新华网 · 中新网
-          </div>
+      <div class="modal-header" style="padding: 12px 14px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap;">
+        <div class="modal-title" style="font-family: var(--font-mali); font-size: 14.5px; font-weight: 800; color: var(--primary-color); display: flex; align-items: center; gap: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">
+          <span>📰 Tin tức HSK 7-9 hằng ngày</span>
         </div>
         <div style="display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;">
-          <button type="button" id="btnRefreshHskNews" onclick="fetchAndCurateHskDailyNews(true)" style="background: #f3eef9; border: 1.2px solid #dfd3ef; color: #584575; font-family: var(--font-mali); font-size: 11.5px; font-weight: 800; padding: 5px 10px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Quét lại tin báo Trung Quốc mới nhất hôm nay">
+          <button type="button" id="btnRefreshHskNews" onclick="fetchAndCurateHskDailyNews(true)" style="background: #f3eef9; border: 1.2px solid #dfd3ef; color: #584575; font-family: var(--font-mali); font-size: 11px; font-weight: 800; padding: 4px 9px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;" title="Quét lại tin báo Trung Quốc mới nhất hôm nay">
             <span>↻ Quét mới</span>
           </button>
           <button class="modal-close-btn" type="button" onclick="closeHskNewsModal()">✕</button>
@@ -4324,6 +4379,7 @@
         <!-- 5 Exam Topic Axes Filter Chips -->
         <div class="hsk-news-filter-row" id="hskNewsFilterRow">
           <button type="button" class="hsk-news-chip active" data-axis="all" onclick="filterHskNewsByAxis('all')">🔥 Tất cả</button>
+          <button type="button" class="hsk-news-chip" id="btnHskNewsChipPinned" data-axis="pinned" onclick="filterHskNewsByAxis('pinned')">📌 Đọc sau <span id="hskPinnedCountLabel">(0)</span></button>
           <button type="button" class="hsk-news-chip" data-axis="tech" onclick="filterHskNewsByAxis('tech')">🤖 AI &amp; Công nghệ (85%)</button>
           <button type="button" class="hsk-news-chip" data-axis="culture" onclick="filterHskNewsByAxis('culture')">🏛️ Văn hóa &amp; 非遗 (80%)</button>
           <button type="button" class="hsk-news-chip" data-axis="social" onclick="filterHskNewsByAxis('social')">👥 Xã hội &amp; Đời sống (85%)</button>
@@ -4331,12 +4387,10 @@
           <button type="button" class="hsk-news-chip" data-axis="quote" onclick="filterHskNewsByAxis('quote')">📜 Tư tưởng &amp; Luận (100%)</button>
         </div>
 
-        <!-- Loading State -->
-        <div id="hskNewsLoadingBox" style="display: none; text-align: center; padding: 26px 12px;">
-          <img src="./butterfly_loading.gif" style="width: 170px; height: 125px; object-fit: contain; display: block; margin: 0 auto;" alt="Đang lọc tin..." />
-          <div id="hskNewsLoadingText" style="font-family: var(--font-mali); font-size: 13px; font-weight: 700; color: #584575; margin-top: 8px; line-height: 1.45;">
-            🦋 Đang lấy tin mới hôm nay từ 人民日报 · 科普中国 · 新华网 · 中新网...
-          </div>
+        <!-- Loading State (Transparent Floating GIF) -->
+        <div id="hskNewsLoadingBox" style="display: none; text-align: center; padding: 0;">
+          <img src="./butterfly_loading.gif?v=174" style="width: 210px; height: 210px; object-fit: contain; display: block; margin: 0 auto;" alt="Đang lọc tin..." />
+          <div id="hskNewsLoadingText" style="display: none;"></div>
         </div>
 
         <!-- News Cards List -->
@@ -4345,13 +4399,13 @@
     </div>
   </div>
 
-  <!-- Direct Image-to-Reading File Input & Butterfly Loading Overlay -->
+  <!-- Direct Image-to-Reading File Input & Transparent Loading Overlay -->
   <input type="file" id="inputScanImageFiles" accept="image/*" multiple style="display: none;" onchange="handleScanImageFilesSelected(this.files)" />
-  <div class="modal-overlay" id="imageScanModal" style="z-index: 1250;">
-    <div class="modal-card af-modal-card" style="max-width: 310px; padding: 22px 18px; text-align: center; background: #fcfaff; border-radius: 24px; border: 1.5px solid #e5d8f6; box-shadow: 0 16px 40px rgba(68, 48, 98, 0.22);">
+  <div class="modal-overlay loading-overlay-transparent" id="imageScanModal" style="z-index: 1250;">
+    <div class="modal-card transparent-loading" style="max-width: 260px; padding: 0; text-align: center; background: transparent !important; border: none !important; box-shadow: none !important;">
       <div id="scanImageLoadingBox" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-        <img src="./butterfly_loading.gif" style="width: 190px; height: 140px; object-fit: contain; display: block; margin: 0 auto;" alt="Đang tạo bài đọc..." />
-        <div id="scanImageLoadingText" style="font-size: 13px; font-weight: 700; color: #584575; margin-top: 8px; line-height: 1.45;">🦋 Đang đọc ảnh &amp; làm sạch câu chữ...</div>
+        <img src="./butterfly_loading.gif?v=174" style="width: 210px; height: 210px; object-fit: contain; display: block; margin: 0 auto;" alt="Đang tạo bài đọc..." />
+        <div id="scanImageLoadingText" style="display: none;"></div>
       </div>
     </div>
   </div>
@@ -5656,6 +5710,7 @@
         groupCompletedDates: groupCompletedDates || {},
         readingArticles: cleanArticles,
         deletedReadingArticleIds: deletedReadingArticleIds || [],
+        pinnedHskNews: (typeof hskPinnedNewsList !== 'undefined' && Array.isArray(hskPinnedNewsList)) ? hskPinnedNewsList : [],
         openrouter_api_key: localStorage.getItem('openrouter_api_key') || '',
         reading_audio_speed: localStorage.getItem('hsk_reading_audio_speed') || '1.0',
         srsData: srsData || {},
@@ -5810,6 +5865,12 @@
           if (Array.isArray(rowData.upgradeWords)) {
             upgradeList = rowData.upgradeWords;
             localStorage.setItem('hsk_upgrade_words', JSON.stringify(upgradeList));
+          }
+
+          if (Array.isArray(rowData.pinnedHskNews)) {
+            hskPinnedNewsList = rowData.pinnedHskNews;
+            try { localStorage.setItem(HSK_PINNED_NEWS_KEY, JSON.stringify(hskPinnedNewsList)); } catch (e) {}
+            if (typeof updatePinnedNewsCountUI === 'function') updatePinnedNewsCountUI();
           }
 
           if (rowData.aiCache && typeof rowData.aiCache === 'object') {
@@ -11612,7 +11673,10 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
     // HSK 7-9 DAILY CURATED REAL NEWS READER
     // ==========================================
     const HSK_NEWS_CACHE_KEY = 'hsk79_daily_news_cache_v3';
+    const HSK_PINNED_NEWS_KEY = 'hsk79_pinned_news_v1';
     let hskCuratedNewsList = [];
+    let hskPinnedNewsList = safeGetJSON(HSK_PINNED_NEWS_KEY, []);
+    if (!Array.isArray(hskPinnedNewsList)) hskPinnedNewsList = [];
     let hskNewsActiveAxis = 'all';
     let isFetchingHskNews = false;
 
@@ -11623,6 +11687,45 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       eco: { icon: '🌿', label: 'Môi trường & Sinh thái (75%)', cls: 'axis-eco' },
       quote: { icon: '📜', label: 'Tư tưởng & Nghị luận (100%)', cls: 'axis-quote' }
     };
+
+    function updatePinnedNewsCountUI() {
+      const lbl = document.getElementById('hskPinnedCountLabel');
+      if (lbl) lbl.textContent = `(${hskPinnedNewsList.length})`;
+    }
+
+    function saveHskPinnedNews() {
+      try {
+        localStorage.setItem(HSK_PINNED_NEWS_KEY, JSON.stringify(hskPinnedNewsList));
+      } catch (e) {}
+      updatePinnedNewsCountUI();
+      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+    }
+
+    function isHskNewsPinned(link) {
+      return Boolean(link && hskPinnedNewsList.some(item => item && item.link === link));
+    }
+
+    function togglePinHskNewsItem(link) {
+      if (!link) return;
+      const existingIdx = hskPinnedNewsList.findIndex(item => item && item.link === link);
+      if (existingIdx !== -1) {
+        hskPinnedNewsList.splice(existingIdx, 1);
+        saveHskPinnedNews();
+        renderHskNewsCards();
+        showToast('🗑️ Đã bỏ ghim khỏi mục "Đọc sau"');
+        return;
+      }
+      const found = hskCuratedNewsList.find(item => item && item.link === link);
+      if (!found) return;
+      hskPinnedNewsList.unshift({
+        ...found,
+        pinnedAt: Date.now()
+      });
+      saveHskPinnedNews();
+      renderHskNewsCards();
+      showToast('📌 Đã ghim vào mục "Đọc sau" (không mất khi quét báo mới!)');
+    }
+    window.togglePinHskNewsItem = togglePinHskNewsItem;
 
     const HSK79_EXAM_BANK_MATRIX = `
 【QUY LUẬT & KHẨU VỊ RA ĐỀ HSK 7-9 (RÚT RA TỪ ĐỀ THI THẬT 2023–2026)】:
@@ -11652,16 +11755,13 @@ Lưu ý cốt lõi: Hội đồng ra đề HSK 7-9 KHÔNG BAO GIỜ lặp lại 
       }
       const modal = document.getElementById('hskNewsModal');
       if (modal) modal.classList.add('active');
+      updatePinnedNewsCountUI();
 
       // Load cached curated news if fetched within the last 4 hours
       try {
         const cached = JSON.parse(localStorage.getItem(HSK_NEWS_CACHE_KEY) || 'null');
         if (cached && Array.isArray(cached.items) && cached.items.length > 0) {
           hskCuratedNewsList = cached.items;
-          const subEl = document.getElementById('hskNewsUpdatedSub');
-          if (subEl && cached.updatedLabel) {
-            subEl.textContent = `4 nguồn chuẩn đề: 人民日报 · 科普中国 · 新华网 · 中新网 · Cập nhật: ${cached.updatedLabel}`;
-          }
           renderHskNewsCards();
           if (Date.now() - (cached.savedAt || 0) > 4 * 3600 * 1000) {
             fetchAndCurateHskDailyNews(true);
@@ -11741,6 +11841,31 @@ Lưu ý cốt lõi: Hội đồng ra đề HSK 7-9 KHÔNG BAO GIỜ lặp lại 
       return items.slice(0, 42);
     }
 
+    function setHskNewsLoadingOverlayState(isLoading) {
+      const modal = document.getElementById('hskNewsModal');
+      const card = modal ? modal.querySelector('.modal-card') : null;
+      const header = modal ? modal.querySelector('.modal-header') : null;
+      const filterRow = document.getElementById('hskNewsFilterRow');
+      const listEl = document.getElementById('hskNewsCardsList');
+      const loadingBox = document.getElementById('hskNewsLoadingBox');
+
+      if (isLoading) {
+        if (modal) modal.classList.add('loading-overlay-transparent');
+        if (card) card.classList.add('transparent-loading');
+        if (header) header.style.display = 'none';
+        if (filterRow) filterRow.style.display = 'none';
+        if (listEl) listEl.style.display = 'none';
+        if (loadingBox) loadingBox.style.display = 'block';
+      } else {
+        if (modal) modal.classList.remove('loading-overlay-transparent');
+        if (card) card.classList.remove('transparent-loading');
+        if (header) header.style.display = 'flex';
+        if (filterRow) filterRow.style.display = 'flex';
+        if (listEl) listEl.style.display = 'block';
+        if (loadingBox) loadingBox.style.display = 'none';
+      }
+    }
+
     async function fetchAndCurateHskDailyNews(forceRefresh = false) {
       if (isFetchingHskNews) return;
       const apiKey = localStorage.getItem('openrouter_api_key');
@@ -11751,14 +11876,11 @@ Lưu ý cốt lõi: Hội đồng ra đề HSK 7-9 KHÔNG BAO GIỜ lặp lại 
       }
 
       isFetchingHskNews = true;
-      const loadingBox = document.getElementById('hskNewsLoadingBox');
       const loadingText = document.getElementById('hskNewsLoadingText');
       const listEl = document.getElementById('hskNewsCardsList');
       const btnRefresh = document.getElementById('btnRefreshHskNews');
 
-      if (loadingBox) loadingBox.style.display = 'block';
-      if (loadingText) loadingText.textContent = '🦋 Đang quét tin mới hôm nay từ 4 nguồn chuẩn đề HSK 7-9: 人民日报 · 科普中国 · 新华网 · 中新网...';
-      if (listEl && (forceRefresh || hskCuratedNewsList.length === 0)) listEl.innerHTML = '';
+      setHskNewsLoadingOverlayState(true);
       if (btnRefresh) {
         btnRefresh.disabled = true;
         btnRefresh.style.opacity = '0.6';
@@ -11877,11 +11999,6 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           }));
         } catch (e) {}
 
-        const subEl = document.getElementById('hskNewsUpdatedSub');
-        if (subEl) {
-          subEl.textContent = `4 nguồn chuẩn đề: 人民日报 · 科普中国 · 新华网 · 中新网 · Cập nhật: ${nowLabel}`;
-        }
-
         renderHskNewsCards();
         if (forceRefresh) {
           showToast(`✨ Đã lọc ${curated.length} bản tin HSK 7-9 từ 4 nguồn báo chính thống!`);
@@ -11894,7 +12011,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         }
       } finally {
         isFetchingHskNews = false;
-        if (loadingBox) loadingBox.style.display = 'none';
+        setHskNewsLoadingOverlayState(false);
         if (btnRefresh) {
           btnRefresh.disabled = false;
           btnRefresh.style.opacity = '1';
@@ -11906,22 +12023,34 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
     function renderHskNewsCards() {
       const listEl = document.getElementById('hskNewsCardsList');
       if (!listEl) return;
+      updatePinnedNewsCountUI();
 
-      const filtered = hskNewsActiveAxis === 'all'
-        ? hskCuratedNewsList
-        : hskCuratedNewsList.filter(item => item.axis === hskNewsActiveAxis);
+      let filtered = [];
+      if (hskNewsActiveAxis === 'pinned') {
+        filtered = hskPinnedNewsList;
+      } else if (hskNewsActiveAxis === 'all') {
+        filtered = hskCuratedNewsList;
+      } else {
+        filtered = hskCuratedNewsList.filter(item => item.axis === hskNewsActiveAxis);
+      }
 
       if (!filtered || filtered.length === 0) {
-        listEl.innerHTML = `<div class="rd-empty">Chưa có bản tin nào thuộc chủ đề này trong đợt quét hiện tại.<br>Hãy chọn <b>"🔥 Tất cả"</b> hoặc bấm <b>"↻ Quét mới"</b> nhé!</div>`;
+        if (hskNewsActiveAxis === 'pinned') {
+          listEl.innerHTML = `<div class="rd-empty">📌 Chưa có bài báo nào được ghim.<br>Khi lướt danh sách tin tức, hãy chạm vào nút <b>"📌 Đọc sau"</b> trên các bài báo bạn tâm đắc để giữ lại đọc dần (không bao giờ bị mất khi sang ngày mới hoặc bấm Quét mới)!</div>`;
+        } else {
+          listEl.innerHTML = `<div class="rd-empty">Chưa có bản tin nào thuộc chủ đề này trong đợt quét hiện tại.<br>Hãy chọn <b>"🔥 Tất cả"</b> hoặc bấm <b>"↻ Quét mới"</b> nhé!</div>`;
+        }
         return;
       }
 
       listEl.innerHTML = filtered.map(item => {
-        const realIdx = hskCuratedNewsList.indexOf(item);
         const ax = HSK_NEWS_AXIS_META[item.axis] || HSK_NEWS_AXIS_META.social;
+        const isPinned = isHskNewsPinned(item.link);
+        const safeLink = escapeHtml(item.link || '');
+        const shortDate = String(item.dateStr || 'Hôm nay').replace(/^\d{4}-/, '');
 
         return `
-          <div class="hsk-news-card" onclick="openHskNewsArticleInReader(${realIdx})">
+          <div class="hsk-news-card" onclick="openHskNewsArticleInReader('${safeLink}')">
             <div class="hsk-news-card-top">
               <span class="hsk-news-axis-badge ${ax.cls}">${ax.icon} ${ax.label}</span>
               <span class="hsk-news-score-pill">🎯 Dự đoán ra thi: ${item.matchScore}%</span>
@@ -11930,10 +12059,15 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
             ${item.titleVi ? `<div class="hsk-news-title-vi">${escapeHtml(item.titleVi)}</div>` : ''}
             ${item.examMatch ? `<div class="hsk-news-exam-box">💡 ${escapeHtml(item.examMatch)}</div>` : ''}
             <div class="hsk-news-meta-foot">
-              <span>📰 ${escapeHtml(item.source || '人民日报')} · 📅 ${escapeHtml(item.dateStr || 'Hôm nay')}</span>
-              <button type="button" class="hsk-news-read-btn" onclick="event.stopPropagation(); openHskNewsArticleInReader(${realIdx})">
-                📖 Đọc &amp; Tách từ trong App
-              </button>
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">📰 ${escapeHtml(item.source || '人民日报')} · ${escapeHtml(shortDate)}</span>
+              <div style="display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;">
+                <button type="button" class="hsk-news-pin-btn ${isPinned ? 'pinned' : ''}" onclick="event.stopPropagation(); togglePinHskNewsItem('${safeLink}')" title="${isPinned ? 'Bấm để bỏ ghim khỏi mục Đọc sau' : 'Ghim bài báo này vào mục Đọc sau (không bị mất khi quét mới)'}">
+                  ${isPinned ? '📌 Đã ghim' : '📌 Đọc sau'}
+                </button>
+                <button type="button" class="hsk-news-read-btn" onclick="event.stopPropagation(); openHskNewsArticleInReader('${safeLink}')">
+                  📖 Đọc bài
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -11941,41 +12075,54 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
     }
     window.renderHskNewsCards = renderHskNewsCards;
 
-    function selectOptimalReadingExcerptParagraphs(paragraphs, fallbackSummary) {
+    function cleanFullArticleParagraphs(paragraphs, fallbackSummary) {
       const cleanParas = (paragraphs || [])
         .map(p => toSimplified(String(p || '').trim()))
-        .filter(p => p.length >= 15 && !/^(?:资料图|图为|中新社记者|中新网记者|新华社记者|人民网记者|本报记者|图片来源)/.test(p));
+        .filter(p => p.length >= 12 && !/^(?:资料图|图为|中新社记者|中新网记者|新华社记者|人民网记者|本报记者|图片来源)/.test(p));
 
       if (cleanParas.length === 0) {
         return fallbackSummary ? [toSimplified(fallbackSummary)] : [];
       }
 
-      // HSK 7-9 reading comprehension passages are ~320-480 Chinese characters.
-      // Select contiguous core paragraphs from the authentic article so the text is 100% real journalism and comfortable to study.
+      // Keep full article paragraphs up to ~4200 chars so AI can read the entire article from start to finish
+      const fullSelected = [];
+      let totalChars = 0;
+      for (let i = 0; i < cleanParas.length; i++) {
+        const p = cleanParas[i];
+        fullSelected.push(p);
+        totalChars += p.length;
+        if (totalChars >= 4200) break;
+      }
+      return fullSelected;
+    }
+
+    function selectOptimalReadingExcerptParagraphs(paragraphs, fallbackSummary) {
+      const cleanParas = cleanFullArticleParagraphs(paragraphs, fallbackSummary);
+      if (cleanParas.length === 0) return [];
       const selected = [];
       let totalChars = 0;
       for (let i = 0; i < cleanParas.length; i++) {
         const p = cleanParas[i];
-        if (selected.length > 0 && totalChars + p.length > 520 && totalChars >= 240) {
+        if (selected.length > 0 && totalChars + p.length > 560 && totalChars >= 300) {
           break;
         }
         selected.push(p);
         totalChars += p.length;
-        if (totalChars >= 360 || selected.length >= 4) {
+        if (totalChars >= 450 || selected.length >= 4) {
           break;
         }
       }
-      return selected.length > 0 ? selected : [cleanParas[0].slice(0, 480)];
+      return selected.length > 0 ? selected : [cleanParas[0].slice(0, 520)];
     }
 
     async function fetchLiveChinaNewsArticleParagraphs(targetUrl, fallbackSummary) {
-      // 1. Try Netlify Serverless Function first
+      // 1. Try Netlify Serverless Function first (returns all paragraphs of the article)
       try {
         const res = await fetch(`/.netlify/functions/fetch-hsk-news?mode=article&url=${encodeURIComponent(targetUrl)}`);
         if (res.ok) {
           const data = await res.json();
           if (data && Array.isArray(data.paragraphs) && data.paragraphs.length > 0) {
-            return selectOptimalReadingExcerptParagraphs(data.paragraphs, fallbackSummary);
+            return cleanFullArticleParagraphs(data.paragraphs, fallbackSummary);
           }
         }
       } catch (e) {
@@ -11989,7 +12136,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         if (r.ok) {
           const html = await r.text();
           const zwStart = html.search(/<div class="left_zw"|<div\s+class=["'][^"']*rm_txt_con|id=["']detailContent["']/i);
-          const region = zwStart !== -1 ? html.slice(zwStart, zwStart + 28000) : html;
+          const region = zwStart !== -1 ? html.slice(zwStart, zwStart + 32000) : html;
           const pRegex = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;
           const paras = [];
           let m;
@@ -11999,7 +12146,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
             if (txt.length >= 12) paras.push(txt);
           }
           if (paras.length > 0) {
-            return selectOptimalReadingExcerptParagraphs(paras, fallbackSummary);
+            return cleanFullArticleParagraphs(paras, fallbackSummary);
           }
         }
       } catch (e2) {
@@ -12012,9 +12159,109 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       throw new Error('Không tải được nội dung bài báo gốc. Vui lòng chọn bản tin khác!');
     }
 
-    async function openHskNewsArticleInReader(newsIndex) {
-      const item = hskCuratedNewsList[newsIndex];
+    async function condenseFullNewsToHskPassage(fullParagraphs, item, apiKey, loadingTextEl) {
+      const fullText = (fullParagraphs || []).join('\n').trim();
+      const hanziCount = (fullText.match(/[\u4e00-\u9fff]/g) || []).length;
+
+      // If the original article is already right in the ~420-560 char sweet spot and has 2-4 paragraphs, use it directly
+      if (hanziCount >= 420 && hanziCount <= 560 && fullParagraphs.length >= 2 && fullParagraphs.length <= 4) {
+        return fullText;
+      }
+
+      if (loadingTextEl) {
+        loadingTextEl.textContent = '🦋 AI đang tóm tắt & biên tập trọn vẹn bài báo gốc thành bài đọc ~500 chữ (đủ ý Mở - Thân - Kết)...';
+      }
+
+      const condensePrompt = `Bạn là Chuyên gia Biên tập Ngữ liệu Đề thi Đọc hiểu HSK 7-9 (Cao cấp).
+Dưới đây là TOÀN BỘ NỘI DUNG BÀI BÁO GỐC từ báo chính thống Trung Quốc (${item.source || '人民日报'}):
+- Tiêu đề: ${item.title}
+- Nội dung toàn bài báo gốc (${hanziCount} chữ Hán):
+${fullText.slice(0, 4200)}
+
+【NHIỆM VỤ BẮT BUỘC — CÔ ĐỌNG TRỌN VẸN TOÀN BÀI THÀNH ~500 CHỮ HÁN】:
+Hãy tóm tắt, cô đọng và biên tập lại (缩写与精编) TOÀN BỘ bài báo gốc trên thành một bài đọc hoàn chỉnh chuẩn đề thi Đọc hiểu HSK 7-9, đảm bảo nghiêm ngặt:
+1. **ĐỘ DÀI CHUẨN (~480 – 550 CHỮ HÁN)**:
+   - Toàn bài sau khi biên tập phải dài khoảng **480 – 550 chữ Hán (简体中文)**, chia thành **3 hoặc 4 đoạn văn (段落)** cân đối, mạch lạc.
+2. **ĐẦY ĐỦ TRỌN VẸN NỘI DUNG TỪ ĐẦU ĐẾN CUỐI (TUYỆT ĐỐI KHÔNG THIẾU Ý)**:
+   - Phải bao quát toàn bộ mạch ý chính của cả bài báo gốc từ đầu đến cuối:
+     + **Đoạn 1 (Mở đầu)**: Bối cảnh, sự kiện, hiện tượng hoặc phát minh mở đầu bài báo.
+     + **Đoạn 2 (& Đoạn 3) (Thân bài)**: Đầy đủ các luận điểm chính, nguyên nhân, cơ chế hoạt động, số liệu/dẫn chứng thực tế quan trọng xuyên suốt phần thân bài gốc.
+     + **Đoạn cuối (Kết bài)**: Ý nghĩa thực tiễn, nhận định của chuyên gia, giải pháp hoặc thông điệp kết luận ở cuối bài báo gốc.
+3. **GIỮ NGUYÊN VĂN PHONG BÁO CHÍ CHÍNH THỐNG & TỪ VỰNG HSK 7-9 ĐẮT GIÁ**:
+   - Giữ lại tối đa các từ vựng cao cấp HSK 6 / HSK 7-9, thành ngữ 4 chữ (成语), thuật ngữ chuyên môn và các câu văn báo chí/nghị luận đắt giá có trong bài báo gốc.
+   - 100% viết bằng Chữ Hán Giản Thể (简体中文), tuyệt đối không chèn tiếng Việt hay lời bình ngoài lề.
+
+Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
+{
+  "paragraphs": [
+    "Đoạn 1 (chữ Hán giản thể)...",
+    "Đoạn 2 (chữ Hán giản thể)...",
+    "Đoạn 3 (chữ Hán giản thể)..."
+  ]
+}`;
+
+      const modelsToTry = ['google/gemini-3.8-flash', 'deepseek/deepseek-v4.1-flash'];
+      for (let mIdx = 0; mIdx < modelsToTry.length; mIdx++) {
+        const modelName = modelsToTry[mIdx];
+        try {
+          const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': window.location.href,
+              'X-Title': 'HSK Vocab App'
+            },
+            body: JSON.stringify({
+              model: modelName,
+              reasoning: modelName.includes('deepseek') ? { enabled: false } : { effort: 'low' },
+              messages: [
+                { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
+                { role: 'user', content: condensePrompt }
+              ]
+            })
+          });
+          if (!response.ok) continue;
+          const data = await response.json();
+          const contentStr = data.choices?.[0]?.message?.content || '{}';
+          const parsed = deepToSimplified(safeParseJSON(contentStr) || {});
+          if (Array.isArray(parsed.paragraphs) && parsed.paragraphs.length > 0) {
+            const cleanOut = parsed.paragraphs
+              .map(p => toSimplified(String(p || '').trim()))
+              .filter(p => (p.match(/[\u4e00-\u9fff]/g) || []).length >= 25);
+            const joined = cleanOut.join('\n');
+            if ((joined.match(/[\u4e00-\u9fff]/g) || []).length >= 260) {
+              return joined;
+            }
+          }
+        } catch (e) {
+          console.warn('condenseFullNewsToHskPassage attempt warning:', e);
+        }
+      }
+
+      // Fallback if AI condensation fails: use optimal excerpt
+      return selectOptimalReadingExcerptParagraphs(fullParagraphs, item.summary).join('\n');
+    }
+
+    async function openHskNewsArticleInReader(newsKeyOrIndex) {
+      let item = null;
+      if (typeof newsKeyOrIndex === 'number') {
+        item = hskCuratedNewsList[newsKeyOrIndex];
+      } else if (typeof newsKeyOrIndex === 'string' && newsKeyOrIndex) {
+        item = hskCuratedNewsList.find(x => x && (x.link === newsKeyOrIndex || x.id === newsKeyOrIndex))
+          || hskPinnedNewsList.find(x => x && (x.link === newsKeyOrIndex || x.id === newsKeyOrIndex));
+      }
       if (!item) return;
+
+      // If this news article was already saved in readingArticles, open it directly!
+      const existingSaved = (readingArticles || []).find(a => a && a.newsUrl && item.link && a.newsUrl === item.link);
+      if (existingSaved) {
+        closeHskNewsModal();
+        if (readingInputModal) readingInputModal.classList.remove('active');
+        openReadingViewModal(existingSaved.id);
+        showToast('📖 Đã mở bài báo từ mục Bài đã lưu!');
+        return;
+      }
 
       const apiKey = localStorage.getItem('openrouter_api_key');
       if (!apiKey) {
@@ -12023,20 +12270,18 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         return;
       }
 
-      closeHskNewsModal();
-      if (readingInputModal) readingInputModal.classList.remove('active');
-
       const scanModal = document.getElementById('imageScanModal');
       const loadingText = document.getElementById('scanImageLoadingText');
-      if (loadingText) loadingText.textContent = `🦋 Đang tải nguyên văn bài báo gốc từ ${item.source || 'báo Trung Quốc'}...`;
+      if (loadingText) loadingText.textContent = `🦋 Đang tải toàn bộ bài báo gốc từ ${item.source || 'báo Trung Quốc'}...`;
       if (scanModal) scanModal.classList.add('active');
 
       try {
-        const excerptParas = await fetchLiveChinaNewsArticleParagraphs(item.link, item.summary);
-        const rawText = excerptParas.join('\n');
-        if (!rawText || rawText.length < 15) {
+        const fullParas = await fetchLiveChinaNewsArticleParagraphs(item.link, item.summary);
+        if (!fullParas || fullParas.length === 0 || fullParas.join('').length < 15) {
           throw new Error('Nội dung bài báo quá ngắn hoặc chỉ có hình ảnh.');
         }
+
+        const rawText = await condenseFullNewsToHskPassage(fullParas, item, apiKey, loadingText);
 
         if (loadingText) loadingText.textContent = '🦋 Đang tách từ HSK 7-9 & dịch nghĩa từng đoạn...';
 
@@ -12061,7 +12306,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           sourceType: 'hsk_news',
           newsUrl: item.link || '',
           newsDate: item.dateStr || 'Hôm nay',
-          newsSource: item.source || '中新网',
+          newsSource: item.source || '人民日报',
           examMatch: item.examMatch || '',
           createdAt: new Date().toLocaleDateString('vi-VN')
         };
@@ -12069,12 +12314,13 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         unsavedAiStoryArticle = articleObj;
 
         closeImageScanModal();
+        closeHskNewsModal();
+        if (readingInputModal) readingInputModal.classList.remove('active');
         openReadingViewModal(newArticleId);
-        showToast('📰 Đã mở bài báo gốc trong trình đọc! Bấm "Lưu bài đọc" ở cuối bài nếu muốn lưu lại.');
+        showToast('📰 Đã tạo bài đọc ~500 chữ đủ ý! Bấm "Lưu bài đọc" ở cuối bài nếu muốn lưu lại.');
       } catch (err) {
         console.error('openHskNewsArticleInReader error:', err);
         closeImageScanModal();
-        openHskNewsModal();
         showToast(`❌ ${err.message || 'Lỗi khi mở bài báo'}`);
       }
     }
@@ -16338,8 +16584,31 @@ ${wordListPrompt}
       setTimeout(maybeShowStudyReminder, 700);
     }
 
+    let leftHandMode = localStorage.getItem('hsk_left_hand_mode') === '1';
+
+    function applyLeftHandModeUI() {
+      document.body.classList.toggle('left-hand-mode', leftHandMode);
+      const btnHeader = document.getElementById('btnLeftHandMode');
+      if (btnHeader) {
+        btnHeader.classList.toggle('active', leftHandMode);
+      }
+      const btnModal = document.getElementById('btnModalLeftHandToggle');
+      if (btnModal) {
+        btnModal.textContent = leftHandMode ? '🤚 Đang bật' : 'Đang tắt';
+        btnModal.classList.toggle('ghost', !leftHandMode);
+      }
+    }
+
+    function toggleLeftHandMode() {
+      leftHandMode = !leftHandMode;
+      localStorage.setItem('hsk_left_hand_mode', leftHandMode ? '1' : '0');
+      applyLeftHandModeUI();
+      showToast(leftHandMode ? '🤚 Đã bật chế độ tay trái (nút tick ✕/✓ chuyển sang trái)' : '👉 Đã chuyển nút tick ✕/✓ về bên phải');
+    }
+
     // Initialize Page (Guaranteed execution on all mobile browsers & WebViews)
     function startApp() {
+      applyLeftHandModeUI();
       initDictionaryData();
       initTTS();
       setupEventListeners();
