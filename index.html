@@ -9013,7 +9013,7 @@ Lưu ý:
     function buildRowContent(item) {
       const rawStatus = getWordStatus(item.hanzi);
       const status = practiceResetSet.has(item.hanzi) ? null : rawStatus;
-      const isCol2Visible = alwaysShowCol2 || status !== null || item.revealed;
+      const isCol2Visible = alwaysShowCol2 || Boolean(item.revealed);
 
       const safeHanzi = (item.hanzi || '').replace(/\\/g, "\\\\").replace(/'/g, "\\\\'");
       const safePinyin = (item.pinyin || '').replace(/\\/g, "\\\\").replace(/'/g, "\\\\'");
@@ -9080,7 +9080,7 @@ Lưu ý:
         `;
 
         const vietnameseBlock = `
-          <div class="vietnamese-text">${item.vietnamese || ''}</div>
+          <div class="vietnamese-text" ${!alwaysShowCol2 && hanziInCol1 ? `onclick="toggleRevealItem('${safeId}', event)" style="cursor:pointer;"` : ''}>${item.vietnamese || ''}</div>
         `;
 
         const blankBlock = `
@@ -9112,8 +9112,7 @@ Lưu ý:
     // Toggle reveal state for an item on tap
     function toggleRevealItem(id, event) {
       if (event) event.stopPropagation();
-      const groupWords = getGroupWords();
-      const item = groupWords.find(v => v.id === id || v.hanzi === id);
+      const item = groupWordsState.find(v => v.id === id || v.hanzi === id);
       if (item) {
         item.revealed = !item.revealed;
         const targetRow = vocabListEl.querySelector(`.vocab-item[data-id="${CSS.escape ? CSS.escape(item.id || item.hanzi) : (item.id || item.hanzi)}"]`) ||
