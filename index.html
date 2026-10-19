@@ -3385,9 +3385,28 @@
 
     /* Enlarged Loading GIF Container */
     .loading-gif {
-      width: 200px;
-      height: 200px;
+      width: 210px;
+      height: 210px;
       object-fit: contain;
+    }
+
+    /* Compact % Progress Tag under Loading GIF */
+    .loading-pct-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 2px auto 0;
+      padding: 3px 11px;
+      border-radius: 999px;
+      background: rgba(59, 40, 89, 0.84);
+      color: #ffffff;
+      font-family: var(--font-mali);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
 
     /* ==========================================
@@ -3918,7 +3937,8 @@
 
       <!-- Loading View -->
       <div class="ai-story-body" id="aiStoryLoadingView" style="display: none; text-align: center; padding: 14px 8px;">
-        <img id="aiStoryLoadingGif" src="./story_loading.gif?v=149" alt="Đang sáng tác..." style="width: 210px; max-width: 92%; height: auto; object-fit: contain; display: inline-block; border-radius: 16px;" />
+        <img id="aiStoryLoadingGif" src="./butterfly_loading.gif?v=177" alt="Đang sáng tác..." style="width: 210px; height: 210px; object-fit: contain; display: block; margin: 0 auto;" />
+        <div id="aiStoryLoadingPct" class="loading-pct-pill">10%</div>
       </div>
     </div>
   </div>
@@ -4389,7 +4409,8 @@
 
         <!-- Loading State (Transparent Floating GIF) -->
         <div id="hskNewsLoadingBox" style="display: none; text-align: center; padding: 0;">
-          <img src="./butterfly_loading.gif?v=174" style="width: 210px; height: 210px; object-fit: contain; display: block; margin: 0 auto;" alt="Đang lọc tin..." />
+          <img src="./butterfly_loading.gif?v=177" style="width: 210px; height: 210px; object-fit: contain; display: block; margin: 0 auto;" alt="Đang lọc tin..." />
+          <div id="hskNewsLoadingPct" class="loading-pct-pill">10%</div>
           <div id="hskNewsLoadingText" style="display: none;"></div>
         </div>
 
@@ -4404,7 +4425,8 @@
   <div class="modal-overlay loading-overlay-transparent" id="imageScanModal" style="z-index: 1250;">
     <div class="modal-card transparent-loading" style="max-width: 260px; padding: 0; text-align: center; background: transparent !important; border: none !important; box-shadow: none !important;">
       <div id="scanImageLoadingBox" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-        <img src="./butterfly_loading.gif?v=174" style="width: 210px; height: 210px; object-fit: contain; display: block; margin: 0 auto;" alt="Đang tạo bài đọc..." />
+        <img src="./butterfly_loading.gif?v=177" style="width: 210px; height: 210px; object-fit: contain; display: block; margin: 0 auto;" alt="Đang tạo bài đọc..." />
+        <div id="scanImageLoadingPct" class="loading-pct-pill">10%</div>
         <div id="scanImageLoadingText" style="display: none;"></div>
       </div>
     </div>
@@ -8040,7 +8062,7 @@ Lưu ý:
 
       containerEl.innerHTML = `
         <div style="padding: 16px 0; text-align: center; display: flex; justify-content: center; align-items: center; background: transparent; border: none; margin-bottom: 10px;">
-          <img src="./loading.gif" style="width: 100px; height: 100px; object-fit: contain; background: transparent; mix-blend-mode: multiply;" alt="Đang tải..." />
+          <img src="./butterfly_loading.gif?v=177" style="width: 140px; height: 140px; object-fit: contain; background: transparent;" alt="Đang tải..." />
         </div>
       `;
 
@@ -8660,7 +8682,7 @@ Lưu ý quan trọng:
 
       aiModalBody.innerHTML = `
         <div style="padding: 0; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 240px;">
-          <img src="./loading.gif" class="loading-gif" alt="Đang tải..." />
+          <img src="./butterfly_loading.gif?v=177" class="loading-gif" alt="Đang tải..." />
         </div>
       `;
 
@@ -8953,7 +8975,7 @@ Lưu ý quan trọng:
       const btn = document.getElementById('btnLoadMoreExamples');
       if (!btn) return;
 
-      btn.innerHTML = `<img src="./loading.gif" style="width: 20px; height: 20px; object-fit: contain;" /> <span>Đang tạo thêm ví dụ...</span>`;
+      btn.innerHTML = `<img src="./butterfly_loading.gif?v=177" style="width: 22px; height: 22px; object-fit: contain;" /> <span>Đang tạo thêm ví dụ...</span>`;
       btn.disabled = true;
 
       try {
@@ -11347,6 +11369,46 @@ ${chunkText}
       return { paragraphs: allParagraphs || [], tokens: allTokens };
     }
 
+    function createSmoothPctController(elId, initialPct = 8) {
+      let current = initialPct;
+      let target = initialPct;
+      let timer = null;
+      const render = () => {
+        const el = document.getElementById(elId);
+        if (el) el.textContent = `${Math.min(100, Math.max(1, Math.round(current)))}%`;
+      };
+      render();
+      return {
+        setFloor(minPct) {
+          if (minPct > current) {
+            current = minPct;
+            render();
+          }
+        },
+        glideTo(maxPct, stepMs = 320) {
+          target = maxPct;
+          if (timer) clearInterval(timer);
+          timer = setInterval(() => {
+            if (current < target) {
+              const step = current < 50 ? 2 : 1;
+              current = Math.min(target, current + step);
+              render();
+            }
+          }, stepMs);
+        },
+        stop(finalPct) {
+          if (timer) {
+            clearInterval(timer);
+            timer = null;
+          }
+          if (typeof finalPct === 'number') {
+            current = finalPct;
+            render();
+          }
+        }
+      };
+    }
+
     // AI Tokenize Chinese Reading Passage via Gemini 2.5 Flash with Chunking & Progress %
     async function analyzeReadingPassageWithAi() {
       const apiKey = localStorage.getItem('openrouter_api_key');
@@ -11365,14 +11427,21 @@ ${chunkText}
       }
 
       btnAnalyzeReadingText.disabled = true;
+      const scanModal = document.getElementById('imageScanModal');
+      const pctCtrl = createSmoothPctController('scanImageLoadingPct', 8);
+      pctCtrl.glideTo(92, 300);
+      if (scanModal) scanModal.classList.add('active');
 
       try {
         const result = await parsePassageChunksWithAi(rawText, apiKey, {
           customTitle: title,
           onProgress: (pct) => {
-            btnAnalyzeReadingText.innerHTML = `<img src="./loading.gif" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 4px;" /> Đang tạo bài ${pct}%`;
+            pctCtrl.setFloor(pct);
+            pctCtrl.glideTo(Math.min(96, pct + 18), 320);
+            btnAnalyzeReadingText.innerHTML = `<img src="./butterfly_loading.gif?v=177" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 4px;" /> Đang tạo bài ${pct}%`;
           }
         });
+        pctCtrl.stop(100);
 
         const newArticleId = 'art_' + Date.now();
         const articleTitle = title || result.title || `Bài đọc ${readingArticles.length + 1}`;
@@ -11407,13 +11476,16 @@ ${chunkText}
         readingTitleInput.value = '';
         if (typeof updateReadingCharCount === 'function') updateReadingCharCount();
 
+        closeImageScanModal();
         if (readingInputModal) readingInputModal.classList.remove('active');
         openReadingViewModal(newArticleId);
         showToast(`🎉 Đã tạo bài đọc thành công (${(result.paragraphs || []).length || 1} đoạn)!`);
       } catch (err) {
         console.error('Reading AI analysis error:', err);
+        closeImageScanModal();
         showToast(`❌ Lỗi AI: ${err.message}`);
       } finally {
+        pctCtrl.stop();
         btnAnalyzeReadingText.disabled = false;
         btnAnalyzeReadingText.innerHTML = `⚡ AI tách từ &amp; tạo bài`;
       }
@@ -11504,6 +11576,8 @@ ${chunkText}
       if (!fileList || fileList.length === 0) return;
       const modal = document.getElementById('imageScanModal');
       const loadingText = document.getElementById('scanImageLoadingText');
+      const pctEl = document.getElementById('scanImageLoadingPct');
+      if (pctEl) pctEl.textContent = '5%';
       if (loadingText) loadingText.textContent = '🦋 Đang đọc ảnh & làm sạch câu chữ...';
       if (modal) modal.classList.add('active');
 
@@ -11564,6 +11638,8 @@ ${chunkText}
 
       const modal = document.getElementById('imageScanModal');
       const loadingText = document.getElementById('scanImageLoadingText');
+      const pctCtrl = createSmoothPctController('scanImageLoadingPct', 10);
+      pctCtrl.glideTo(46, 280);
       if (modal) modal.classList.add('active');
       if (loadingText) loadingText.textContent = '🦋 Đang đọc ảnh & làm sạch câu chữ...';
 
@@ -11630,15 +11706,21 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         const customTitle = toSimplified(String(parsed.title || 'Bài quét từ ảnh').trim());
         const titleVi = String(parsed.titleVi || '').trim();
 
+        pctCtrl.setFloor(50);
+        pctCtrl.glideTo(94, 300);
         if (loadingText) loadingText.textContent = '🦋 Đang tách từ & tạo bài đọc...';
 
         const result = await parsePassageChunksWithAi(rawText, apiKey, {
           customTitle,
           targetWords: [],
           onProgress: (pct) => {
+            const mapped = Math.round(50 + (pct * 0.46));
+            pctCtrl.setFloor(mapped);
+            pctCtrl.glideTo(Math.min(97, mapped + 10), 320);
             if (loadingText) loadingText.textContent = `🦋 Đang tách từ & tạo bài đọc ${pct}%...`;
           }
         });
+        pctCtrl.stop(100);
 
         const newArticleId = 'scan_' + Date.now();
         const articleTitle = customTitle || result.title || `Bài quét ảnh ${readingArticles.length + 1}`;
@@ -11664,6 +11746,8 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         console.error('Image scan error:', err);
         closeImageScanModal();
         showToast(`❌ Lỗi quét ảnh: ${err.message}`);
+      } finally {
+        pctCtrl.stop();
       }
     }
     window.runAiImageScan = runAiImageScan;
@@ -11878,6 +11962,8 @@ Lưu ý cốt lõi: Hội đồng ra đề HSK 7-9 KHÔNG BAO GIỜ lặp lại 
       const loadingText = document.getElementById('hskNewsLoadingText');
       const listEl = document.getElementById('hskNewsCardsList');
       const btnRefresh = document.getElementById('btnRefreshHskNews');
+      const pctCtrl = createSmoothPctController('hskNewsLoadingPct', 10);
+      pctCtrl.glideTo(38, 280);
 
       setHskNewsLoadingOverlayState(true);
       if (btnRefresh) {
@@ -11891,6 +11977,8 @@ Lưu ý cốt lõi: Hội đồng ra đề HSK 7-9 KHÔNG BAO GIỜ lặp lại 
           throw new Error('Không kết nối được nguồn báo Trung Quốc. Vui lòng thử lại!');
         }
 
+        pctCtrl.setFloor(42);
+        pctCtrl.glideTo(94, 300);
         if (loadingText) {
           loadingText.textContent = `🦋 Đã lấy ${rawArticles.length} bản tin từ 人民日报, 科普中国, 新华网, 中新网 · AI đang chọn bài có khả năng ra thi cao nhất...`;
         }
@@ -11986,6 +12074,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           throw new Error('AI chưa chọn được bản tin phù hợp. Vui lòng bấm Quét mới!');
         }
 
+        pctCtrl.stop(100);
         curated.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
         hskCuratedNewsList = curated;
 
@@ -12009,6 +12098,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           listEl.innerHTML = `<div class="rd-empty">⚠️ ${escapeHtml(err.message || 'Không tải được danh sách tin tức.')}<br><button type="button" onclick="fetchAndCurateHskDailyNews(true)" class="rd-mini-btn" style="margin-top:8px;">↻ Thử lại ngay</button></div>`;
         }
       } finally {
+        pctCtrl.stop();
         isFetchingHskNews = false;
         setHskNewsLoadingOverlayState(false);
         if (btnRefresh) {
@@ -12271,6 +12361,8 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 
       const scanModal = document.getElementById('imageScanModal');
       const loadingText = document.getElementById('scanImageLoadingText');
+      const pctCtrl = createSmoothPctController('scanImageLoadingPct', 8);
+      pctCtrl.glideTo(24, 260);
       if (loadingText) loadingText.textContent = `🦋 Đang tải toàn bộ bài báo gốc từ ${item.source || 'báo Trung Quốc'}...`;
       if (scanModal) scanModal.classList.add('active');
 
@@ -12280,17 +12372,25 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           throw new Error('Nội dung bài báo quá ngắn hoặc chỉ có hình ảnh.');
         }
 
+        pctCtrl.setFloor(26);
+        pctCtrl.glideTo(56, 300);
         const rawText = await condenseFullNewsToHskPassage(fullParas, item, apiKey, loadingText);
 
+        pctCtrl.setFloor(58);
+        pctCtrl.glideTo(94, 300);
         if (loadingText) loadingText.textContent = '🦋 Đang tách từ HSK 7-9 & dịch nghĩa từng đoạn...';
 
         const result = await parsePassageChunksWithAi(rawText, apiKey, {
           customTitle: item.title,
           targetWords: [],
           onProgress: (pct) => {
+            const mapped = Math.round(58 + (pct * 0.39));
+            pctCtrl.setFloor(mapped);
+            pctCtrl.glideTo(Math.min(97, mapped + 8), 320);
             if (loadingText) loadingText.textContent = `🦋 Đang tách từ HSK 7-9 & tạo bài đọc ${pct}%...`;
           }
         });
+        pctCtrl.stop(100);
 
         const newArticleId = 'news_' + Date.now();
         const articleObj = {
@@ -12321,6 +12421,8 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         console.error('openHskNewsArticleInReader error:', err);
         closeImageScanModal();
         showToast(`❌ ${err.message || 'Lỗi khi mở bài báo'}`);
+      } finally {
+        pctCtrl.stop();
       }
     }
     window.openHskNewsArticleInReader = openHskNewsArticleInReader;
@@ -14381,7 +14483,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         if (header) header.style.display = 'none';
         const gifEl = document.getElementById('aiStoryLoadingGif');
         if (gifEl) {
-          gifEl.src = './story_loading.gif?v=149';
+          gifEl.src = './butterfly_loading.gif?v=177';
         }
       } else {
         if (card) card.classList.remove('transparent-loading');
@@ -14507,6 +14609,8 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       const modal = document.getElementById('aiStoryModal');
       if (modal) modal.classList.add('active');
       showStoryView('loading');
+      const pctCtrl = createSmoothPctController('aiStoryLoadingPct', 8);
+      pctCtrl.glideTo(92, 280);
 
       const styleDescriptions = {
         daily: '日常幽默生活故事 (mẩu chuyện đời thường gần gũi, dí dỏm, tình huống sinh động dễ nhớ)',
@@ -14709,12 +14813,15 @@ ${wordListPrompt}
         if (Array.isArray(parsedStory.paragraphs) && parsedStory.paragraphs.length > 0) {
           parsedPassage = isolateTargetWordsInParagraphs(parsedStory.paragraphs, aiStorySelectedWords, { singleParagraph: true });
         } else {
+          pctCtrl.setFloor(65);
+          pctCtrl.glideTo(96, 280);
           const chunkParsed = await parsePassageChunksWithAi(parsedStory.content, apiKey, {
             targetWords: aiStorySelectedWords,
             customTitle: parsedStory.title
           });
           parsedPassage = isolateTargetWordsInParagraphs(chunkParsed.paragraphs, aiStorySelectedWords, { singleParagraph: true });
         }
+        pctCtrl.stop(100);
 
         const finalRawContent = parsedStory.content || parsedPassage.tokens.map(t => t.hanzi || '').join('');
         const newArticleId = 'ai_story_' + Date.now();
@@ -14756,6 +14863,7 @@ ${wordListPrompt}
         showToast(`❌ ${msg}`);
         showStoryView('setup');
       } finally {
+        pctCtrl.stop();
         clearTimeout(timeoutId);
         isGeneratingAiStory = false;
         aiStoryAbortController = null;
