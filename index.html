@@ -2941,6 +2941,158 @@
     }
     .rd-mark { background: #efe6fb; color: #4b3b66; border-radius: 3px; padding: 0 1px; }
 
+    /* ===== HSK 7-9 Daily News Reader Modal ===== */
+    .rd-news-entry-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: linear-gradient(135deg, #f3ecfb 0%, #eff7f2 100%);
+      border: 1.5px solid #d5c5eb;
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      box-shadow: 0 3px 10px rgba(118, 98, 153, 0.08);
+    }
+    .rd-news-entry-banner:active {
+      transform: scale(0.98);
+      background: #ede2f8;
+    }
+    .hsk-news-filter-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 10px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .hsk-news-filter-row::-webkit-scrollbar { display: none; }
+    .hsk-news-chip {
+      font-family: var(--font-mali);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1.2px solid #dfd3ef;
+      background: #ffffff;
+      color: #6b5a8e;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .hsk-news-chip.active {
+      background: #766299;
+      color: #ffffff;
+      border-color: #644f87;
+      box-shadow: 0 2px 7px rgba(118, 98, 153, 0.25);
+    }
+    .hsk-news-card {
+      background: #ffffff;
+      border: 1.4px solid #e6ddf3;
+      border-radius: 15px;
+      padding: 12px 13px;
+      margin-bottom: 10px;
+      transition: all 0.16s ease;
+      box-shadow: 0 2px 9px rgba(118, 98, 153, 0.06);
+      cursor: pointer;
+    }
+    .hsk-news-card:hover, .hsk-news-card:active {
+      border-color: #b7a2d9;
+      background: #fdfbff;
+      transform: translateY(-1px);
+    }
+    .hsk-news-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .hsk-news-axis-badge {
+      font-family: var(--font-mali);
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .hsk-news-axis-badge.axis-tech { background: #e8f1fb; color: #285680; border: 1px solid #c3daf4; }
+    .hsk-news-axis-badge.axis-eco { background: #e8f5ec; color: #2f6640; border: 1px solid #c0e2ca; }
+    .hsk-news-axis-badge.axis-culture { background: #faefe6; color: #7c4d2b; border: 1px solid #edd3bd; }
+    .hsk-news-axis-badge.axis-social { background: #f3ecfb; color: #5c4385; border: 1px solid #dac9f0; }
+    .hsk-news-axis-badge.axis-quote { background: #fdf2f4; color: #8c3b4f; border: 1px solid #f0cbd4; }
+    .hsk-news-score-pill {
+      font-family: var(--font-mali);
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: #fff4e6;
+      color: #b45309;
+      border: 1px solid #fcd34d;
+    }
+    .hsk-news-title-zh {
+      font-family: var(--font-hanzi);
+      font-size: 17.5px;
+      font-weight: normal;
+      color: #111827;
+      line-height: 1.4;
+      margin-bottom: 3px;
+    }
+    .hsk-news-title-vi {
+      font-family: var(--font-mali);
+      font-size: 13px;
+      font-weight: 700;
+      color: #584575;
+      line-height: 1.38;
+      margin-bottom: 6px;
+    }
+    .hsk-news-exam-box {
+      background: #faf6fe;
+      border-left: 3px solid #8772a8;
+      border-radius: 7px;
+      padding: 5px 8px;
+      font-family: var(--font-mali);
+      font-size: 11.5px;
+      color: #4b3b66;
+      line-height: 1.4;
+      margin-bottom: 7px;
+    }
+    .hsk-news-meta-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-family: var(--font-mali);
+      font-size: 11px;
+      color: #6b7280;
+      flex-wrap: wrap;
+    }
+    .hsk-news-read-btn {
+      font-family: var(--font-mali);
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 4.5px 11px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #9882b8 0%, #766299 100%);
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 2px 6px rgba(118, 98, 153, 0.22);
+    }
+
+
     .tiny-para-toggle-btn,
     .tiny-para-audio-btn {
       font-size: 13.5px !important;
@@ -3928,7 +4080,7 @@
       <div class="modal-header">
         <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color); display: inline-flex; align-items: center; gap: 7px;">
           <span>⚙️ Cài đặt &amp; Sao lưu</span>
-          <span id="appVersionBadge" style="font-size: 11.5px; font-weight: 700; color: #766299; background: #f3eef9; border: 1px solid #dfd3ef; padding: 1.5px 7px; border-radius: 999px; line-height: 1.3;">v171</span>
+          <span id="appVersionBadge" style="font-size: 11.5px; font-weight: 700; color: #766299; background: #f3eef9; border: 1px solid #dfd3ef; padding: 1.5px 7px; border-radius: 999px; line-height: 1.3;">v172</span>
         </div>
         <button class="modal-close-btn" id="btnCloseApiKeyModal">✕</button>
       </div>
@@ -4104,6 +4256,18 @@
         <!-- Title is auto-generated by AI; hidden input kept for compatibility -->
         <input type="hidden" id="readingTitleInput" value="" />
 
+        <!-- Daily HSK 7-9 Curated Real News Entry Banner -->
+        <div class="rd-news-entry-banner" onclick="openHskNewsModal()" title="Đọc báo Trung Quốc xuất bản hôm nay, được AI dự đoán chủ đề mới dễ ra thi nhất dựa trên quy luật ra đề HSK 7-9">
+          <div style="display: flex; align-items: center; gap: 9px; min-width: 0; flex: 1;">
+            <span style="font-size: 22px; line-height: 1; flex-shrink: 0;">📰</span>
+            <div style="min-width: 0; flex: 1;">
+              <div style="font-family: var(--font-mali); font-size: 13.5px; font-weight: 800; color: #4b3b66; line-height: 1.25;">Tin tức HSK 7-9 hôm nay</div>
+              <div style="font-family: var(--font-mali); font-size: 11px; font-weight: 600; color: #68528a; margin-top: 2px; line-height: 1.3;">Báo gốc 中新网 mới nhất · AI dự đoán chủ đề có khả năng ra thi</div>
+            </div>
+          </div>
+          <span style="font-family: var(--font-mali); font-size: 11.5px; font-weight: 800; color: #ffffff; background: linear-gradient(135deg, #9882b8 0%, #766299 100%); padding: 5px 10px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; box-shadow: 0 2px 6px rgba(118, 98, 153, 0.25);">Khám phá ➔</span>
+        </div>
+
         <!-- Compact paste box -->
         <div class="rd-paste-card">
           <div class="rd-paste-head">
@@ -4133,6 +4297,50 @@
         <div id="savedReadingArticlesList" class="rd-list">
           <!-- Saved articles list rendered dynamically -->
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HSK 7-9 Daily Curated Real News Modal -->
+  <div class="modal-overlay" id="hskNewsModal" style="z-index: 1180;" onclick="if(event.target===this) closeHskNewsModal()">
+    <div class="modal-card" style="max-width: 540px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="padding-bottom: 10px;">
+        <div style="min-width: 0; flex: 1;">
+          <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 800; color: var(--primary-color); display: flex; align-items: center; gap: 6px;">
+            <span>📰 Tin tức HSK 7-9 hằng ngày</span>
+          </div>
+          <div id="hskNewsUpdatedSub" style="font-family: var(--font-mali); font-size: 11px; color: #766299; font-weight: 600; margin-top: 2px;">
+            Nguồn thật 100%: Trung Quốc Tân Văn Mạng (chinanews.com.cn) · AI dự đoán chủ đề dễ ra thi
+          </div>
+        </div>
+        <div style="display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;">
+          <button type="button" id="btnRefreshHskNews" onclick="fetchAndCurateHskDailyNews(true)" style="background: #f3eef9; border: 1.2px solid #dfd3ef; color: #584575; font-family: var(--font-mali); font-size: 11.5px; font-weight: 800; padding: 5px 10px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Quét lại tin báo Trung Quốc mới nhất hôm nay">
+            <span>↻ Quét mới</span>
+          </button>
+          <button class="modal-close-btn" type="button" onclick="closeHskNewsModal()">✕</button>
+        </div>
+      </div>
+      <div class="modal-body" style="padding-top: 8px; overflow-y: auto; flex: 1;">
+        <!-- 5 Exam Topic Axes Filter Chips -->
+        <div class="hsk-news-filter-row" id="hskNewsFilterRow">
+          <button type="button" class="hsk-news-chip active" data-axis="all" onclick="filterHskNewsByAxis('all')">🔥 Tất cả</button>
+          <button type="button" class="hsk-news-chip" data-axis="tech" onclick="filterHskNewsByAxis('tech')">🤖 AI &amp; Công nghệ (85%)</button>
+          <button type="button" class="hsk-news-chip" data-axis="culture" onclick="filterHskNewsByAxis('culture')">🏛️ Văn hóa &amp; 非遗 (80%)</button>
+          <button type="button" class="hsk-news-chip" data-axis="social" onclick="filterHskNewsByAxis('social')">👥 Xã hội &amp; Đời sống (85%)</button>
+          <button type="button" class="hsk-news-chip" data-axis="eco" onclick="filterHskNewsByAxis('eco')">🌿 Môi trường &amp; Sinh thái (75%)</button>
+          <button type="button" class="hsk-news-chip" data-axis="quote" onclick="filterHskNewsByAxis('quote')">📜 Tư tưởng &amp; Luận (100%)</button>
+        </div>
+
+        <!-- Loading State -->
+        <div id="hskNewsLoadingBox" style="display: none; text-align: center; padding: 26px 12px;">
+          <img src="./butterfly_loading.gif" style="width: 170px; height: 125px; object-fit: contain; display: block; margin: 0 auto;" alt="Đang lọc tin..." />
+          <div id="hskNewsLoadingText" style="font-family: var(--font-mali); font-size: 13px; font-weight: 700; color: #584575; margin-top: 8px; line-height: 1.45;">
+            🦋 Đang lấy tin mới hôm nay từ Trung Quốc Tân Văn Mạng &amp; dự đoán chủ đề có khả năng ra thi...
+          </div>
+        </div>
+
+        <!-- News Cards List -->
+        <div id="hskNewsCardsList"></div>
       </div>
     </div>
   </div>
@@ -11400,6 +11608,480 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
     }
     window.runAiImageScan = runAiImageScan;
 
+    // ==========================================
+    // HSK 7-9 DAILY CURATED REAL NEWS READER
+    // ==========================================
+    const HSK_NEWS_CACHE_KEY = 'hsk79_daily_news_cache_v2';
+    let hskCuratedNewsList = [];
+    let hskNewsActiveAxis = 'all';
+    let isFetchingHskNews = false;
+
+    const HSK_NEWS_AXIS_META = {
+      tech: { icon: '🤖', label: 'AI & Công nghệ (85%)', cls: 'axis-tech' },
+      culture: { icon: '🏛️', label: 'Văn hóa & 非遗 (80%)', cls: 'axis-culture' },
+      social: { icon: '👥', label: 'Xã hội & Đời sống (85%)', cls: 'axis-social' },
+      eco: { icon: '🌿', label: 'Môi trường & Sinh thái (75%)', cls: 'axis-eco' },
+      quote: { icon: '📜', label: 'Tư tưởng & Nghị luận (100%)', cls: 'axis-quote' }
+    };
+
+    const HSK79_EXAM_BANK_MATRIX = `
+【QUY LUẬT & KHẨU VỊ RA ĐỀ HSK 7-9 (RÚT RA TỪ ĐỀ THI THẬT 2023–2026)】:
+Lưu ý cốt lõi: Hội đồng ra đề HSK 7-9 KHÔNG BAO GIỜ lặp lại y nguyên một bài báo/sự việc cũ đã từng ra thi, mà luôn săn tìm các **HIỆN TƯỢNG MỚI, PHÁT MINH MỚI, XU HƯỚNG MỚI** trên báo chí chính thống theo đúng 5 "khẩu vị" (gu ra đề) dưới đây:
+1. [tech] 🤖 Công nghệ đột phá & Khoa học ứng dụng thực tiễn (~85%):
+   - Các đề từng ra (để hiểu gu ra đề, KHÔNG chọn lại đúng bài cũ): Robot hình người, xe tự lái, giao diện não-máy, thị giác AI, thông tin gen, du lịch vũ trụ, xây dựng trên Mặt Trăng, drone chữa cháy rừng, tìm việc qua livestream, AI viết tiểu thuyết.
+   - Quy luật chọn bài MỚI có khả năng ra thi: Chọn những tin tức về **ứng dụng công nghệ/khoa học mới nổi giải quyết bài toán thực tế** (y sinh học mới, kinh tế tầm thấp, năng lượng mới, AI ứng dụng vào đời sống/nông nghiệp/giáo dục, khám phá khoa học tự nhiên mới) có tính phổ biến kiến thức (科普) hoặc gợi mở tranh luận.
+2. [culture] 🏛️ Văn hóa truyền thống, Khảo cổ & Làm sống lại di sản trong thời hiện đại (~80%):
+   - Các đề từng ra: Thêu phi vật thể, tu bổ kiến trúc gỗ cổ, khắc đá thời Tần, văn hóa đồ đồng, bảo tồn Trường Thành & Đôn Hoàng, thư viện cổ đại, văn hóa trà, phim kinh kịch.
+   - Quy luật chọn bài MỚI có khả năng ra thi: Chọn những bài viết về **phát hiện khảo cổ mới, nghề thủ công/di sản phi vật thể (非遗) ít người biết nhưng độc đáo, hoặc cách người trẻ/công nghệ hiện đại làm sống lại (活化/破圈) văn hóa cổ truyền, bảo tàng, cổ tịch, mỹ học phương Đông**.
+3. [social] 👥 Xu hướng Xã hội, Tâm lý học, Giáo dục & Lối sống đương đại (~85%):
+   - Các đề từng ra: Kinh tế tóc bạc, dưỡng lão khác nơi, người già nghiện video ngắn, lối sống tối giản nhẹ nhàng của giới trẻ, trường học ban đêm (夜校), người trẻ mất ngủ, vận động & sức khỏe tâm lý, nuôi thú cưng, làm việc linh hoạt, du lịch nghiên cứu học tập (研学).
+   - Quy luật chọn bài MỚI có khả năng ra thi: Chọn những bài phân tích **hiện tượng xã hội mới nổi, thói quen tiêu dùng/lối sống mới của giới trẻ hoặc người cao tuổi, tâm lý học đời sống, y tế/sức khỏe cộng đồng, mô hình giáo dục hoặc nghề nghiệp mới** có chiều sâu phân tích nguyên nhân - tác động.
+4. [eco] 🌿 Sinh thái học, Bảo vệ tự nhiên & Phát triển bền vững (~75%):
+   - Các đề từng ra: Cứu hộ & tái thả động vật hoang dã, sa mạc hóa hồ nước, rác thải nhựa đại dương, phân loại rác, bảo tồn thực vật nhiệt đới & cây bạch quả.
+   - Quy luật chọn bài MỚI có khả năng ra thi: Chọn những bài báo về **câu chuyện/mô hình phục hồi hệ sinh thái mới, bảo vệ các loài động thực vật quý hiếm mới, biến đổi khí hậu, lối sống xanh carbon thấp, quy hoạch đô thị sinh thái**.
+5. [quote] 📜 Tư tưởng, Triết lý nhân sinh & Góc nhìn nghị luận (~100% ở phần Nói 5.3 & Viết luận):
+   - Các đề từng ra: Tích tiểu thành đại (久久为功), lý thuyết gắn liền thực tiễn (绝知此事要躬行), rèn luyện qua thử thách, thận trọng từ đầu đến cuối, chữ tín & lòng biết ơn.
+   - Quy luật chọn bài MỚI có khả năng ra thi: Chọn những bài bình luận văn hóa - xã hội - giáo dục sâu sắc, bàn về **giá trị con người, đạo đức nghề nghiệp, thái độ sống, sự kiên trì, đọc sách và tư duy độc lập trong thời đại số**.`;
+
+    function openHskNewsModal() {
+      const apiKey = localStorage.getItem('openrouter_api_key');
+      if (!apiKey) {
+        if (apiKeyModal) apiKeyModal.classList.add('active');
+        showToast('Vui lòng nhập OpenRouter API Key để AI lọc tin tức HSK 7-9!');
+        return;
+      }
+      const modal = document.getElementById('hskNewsModal');
+      if (modal) modal.classList.add('active');
+
+      // Load cached curated news if fetched within the last 4 hours
+      try {
+        const cached = JSON.parse(localStorage.getItem(HSK_NEWS_CACHE_KEY) || 'null');
+        if (cached && Array.isArray(cached.items) && cached.items.length > 0) {
+          hskCuratedNewsList = cached.items;
+          const subEl = document.getElementById('hskNewsUpdatedSub');
+          if (subEl && cached.updatedLabel) {
+            subEl.textContent = `Nguồn thật 100%: Trung Quốc Tân Văn Mạng (chinanews.com.cn) · Cập nhật: ${cached.updatedLabel}`;
+          }
+          renderHskNewsCards();
+          // If cache is older than 4 hours, refresh silently or let user click refresh
+          if (Date.now() - (cached.savedAt || 0) > 4 * 3600 * 1000) {
+            fetchAndCurateHskDailyNews(true);
+          }
+          return;
+        }
+      } catch (e) {}
+
+      fetchAndCurateHskDailyNews(false);
+    }
+    window.openHskNewsModal = openHskNewsModal;
+
+    function closeHskNewsModal() {
+      const modal = document.getElementById('hskNewsModal');
+      if (modal) modal.classList.remove('active');
+    }
+    window.closeHskNewsModal = closeHskNewsModal;
+
+    function filterHskNewsByAxis(axis) {
+      hskNewsActiveAxis = axis || 'all';
+      document.querySelectorAll('#hskNewsFilterRow .hsk-news-chip').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-axis') === hskNewsActiveAxis);
+      });
+      renderHskNewsCards();
+    }
+    window.filterHskNewsByAxis = filterHskNewsByAxis;
+
+    async function fetchLiveChinaNewsFeedList() {
+      // 1. Try Netlify Serverless Function first
+      try {
+        const res = await fetch('/.netlify/functions/fetch-hsk-news?mode=list', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.articles) && data.articles.length > 0) {
+            return data.articles;
+          }
+        }
+      } catch (e) {
+        console.warn('Netlify function fetch-hsk-news fallback to CORS proxy:', e);
+      }
+
+      // 2. Fallback for local preview without Netlify dev server
+      const fallbackFeeds = [
+        { url: 'https://www.chinanews.com.cn/rss/culture.xml', category: '文化·非遗', source: '中新网·文化' },
+        { url: 'https://www.chinanews.com.cn/rss/society.xml', category: '社会·民生', source: '中新网·社会' },
+        { url: 'https://www.chinanews.com.cn/rss/finance.xml', category: '科技·经济', source: '中新网·产经' },
+        { url: 'https://www.chinanews.com.cn/rss/life.xml', category: '健康·生活', source: '中新网·生活' }
+      ];
+      const items = [];
+      const seen = new Set();
+      await Promise.allSettled(fallbackFeeds.map(async f => {
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(f.url)}`;
+        const r = await fetch(proxyUrl);
+        if (!r.ok) return;
+        const xml = await r.text();
+        const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+        let m;
+        while ((m = itemRegex.exec(xml)) !== null) {
+          const block = m[1];
+          const title = ((block.match(/<title>([\s\S]*?)<\/title>/i) || [])[1] || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
+          const link = ((block.match(/<link>([\s\S]*?)<\/link>/i) || [])[1] || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim().replace(/^http:\/\//i, 'https://');
+          const summary = ((block.match(/<description>([\s\S]*?)<\/description>/i) || [])[1] || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/<[^>]+>/g, '').trim();
+          if (!title || !link || seen.has(link)) continue;
+          seen.add(link);
+          const dMatch = link.match(/\/(\d{4})\/(\d{2})-(\d{2})\//);
+          const dateStr = dMatch ? `${dMatch[1]}-${dMatch[2]}-${dMatch[3]}` : 'Hôm nay';
+          items.push({
+            title,
+            link,
+            summary: summary.slice(0, 200),
+            dateStr,
+            feedCategory: f.category,
+            source: f.source
+          });
+        }
+      }));
+      return items.slice(0, 42);
+    }
+
+    async function fetchAndCurateHskDailyNews(forceRefresh = false) {
+      if (isFetchingHskNews) return;
+      const apiKey = localStorage.getItem('openrouter_api_key');
+      if (!apiKey) {
+        if (apiKeyModal) apiKeyModal.classList.add('active');
+        showToast('Vui lòng nhập OpenRouter API Key!');
+        return;
+      }
+
+      isFetchingHskNews = true;
+      const loadingBox = document.getElementById('hskNewsLoadingBox');
+      const loadingText = document.getElementById('hskNewsLoadingText');
+      const listEl = document.getElementById('hskNewsCardsList');
+      const btnRefresh = document.getElementById('btnRefreshHskNews');
+
+      if (loadingBox) loadingBox.style.display = 'block';
+      if (loadingText) loadingText.textContent = '🦋 Đang lấy tin báo Trung Quốc xuất bản hôm nay từ Trung Quốc Tân Văn Mạng (chinanews.com.cn)...';
+      if (listEl && (forceRefresh || hskCuratedNewsList.length === 0)) listEl.innerHTML = '';
+      if (btnRefresh) {
+        btnRefresh.disabled = true;
+        btnRefresh.style.opacity = '0.6';
+      }
+
+      try {
+        const rawArticles = await fetchLiveChinaNewsFeedList();
+        if (!rawArticles || rawArticles.length === 0) {
+          throw new Error('Không kết nối được nguồn báo Trung Quốc Tân Văn Mạng. Vui lòng thử lại!');
+        }
+
+        if (loadingText) {
+          loadingText.textContent = `🦋 Đã lấy ${rawArticles.length} bản tin mới nhất · AI đang phân tích quy luật ra đề để chọn bài có khả năng ra thi cao nhất...`;
+        }
+
+        const candidateListText = rawArticles.map((art, idx) =>
+          `[${idx}] (${art.dateStr} | ${art.source}) Tiêu đề: ${art.title}\n    Tóm tắt: ${art.summary || ''}`
+        ).join('\n');
+
+        const curatorPrompt = `Bạn là Chuyên gia Ra đề & Dự đoán Đề thi HSK 7-9 (Cao cấp).
+Dưới đây là danh sách ${rawArticles.length} bản tin thời sự THẬT vừa xuất bản trên Trung Quốc Tân Văn Mạng (chinanews.com.cn) hôm nay, cùng với BẢNG QUY LUẬT & KHẨU VỊ RA ĐỀ HSK 7-9 (đúc kết từ các kỳ thi 2023–2026).
+
+${HSK79_EXAM_BANK_MATRIX}
+
+【DANH SÁCH BẢN TIN THỜI SỰ MỚI NHẤT HÔM NAY】:
+${candidateListText}
+
+【NHIỆM VỤ CỦA BẠN — DỰ ĐOÁN BÀI MỚI CÓ KHẢ NĂNG RA THI】:
+1. **KHÔNG PHẢI tìm bài lặp lại nội dung đã từng ra thi rồi**! Mà hãy **dựa vào quy luật/khẩu vị ra đề từ các đề đã ra** để chọn ra **10 đến 12 bản tin MỚI** có **KHẢ NĂNG ĐƯỢC CHỌN VÀO ĐỀ THI HSK 7-9 SẮP TỚI CAO NHẤT** (cho phần Đọc hiểu, Nghe hiểu, Nói 5.3 hoặc Viết luận).
+2. **LOẠI BỎ NGAY** các tin tức ngoại giao chính trị thuần túy, hội nghị hành chính, tai nạn hình sự lẻ tẻ, tin vắn chứng khoán/tỷ giá, hoặc tin giải trí showbiz không mang giá trị học thuật/xã hội.
+3. **ƯU TIÊN TUYỆT ĐỐI** các bài báo có góc nhìn mới mẻ, mang tính thời đại, giải thích hiện tượng khoa học/xã hội/sinh thái/văn hóa sâu sắc đúng chuẩn chất liệu ngữ liệu mà ban giám khảo HSK 7-9 thường lấy làm đề thi.
+4. Với mỗi bài được chọn, trả về:
+   - \`index\`: Số thứ tự gốc \`[idx]\` trong danh sách trên (BẮT BUỘC khớp chính xác).
+   - \`axis\`: Phân vào đúng 1 trong 5 trục: \`"tech"\` | \`"culture"\` | \`"social"\` | \`"eco"\` | \`"quote"\`.
+   - \`matchScore\`: Điểm dự đoán khả năng ra thi HSK 7-9 (từ 85 đến 99).
+   - \`titleVi\`: Dịch tiêu đề bài báo sang tiếng Việt tự nhiên, chuẩn xác.
+   - \`examMatch\`: Giải thích ngắn gọn (1 câu súc tích) **vì sao chủ đề MỚI này đúng gu ra đề HSK 7-9 và dễ xuất hiện ở phần thi nào sắp tới** (Ví dụ: *"Chủ đề mới đúng gu Đọc hiểu & Nói HSK 7-9: Ứng dụng công nghệ mới giải quyết bài toán bảo tồn..."* — TUYỆT ĐỐI KHÔNG ghi kiểu "Khớp với đề tháng X/năm Y đã ra").
+
+Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
+{
+  "selected": [
+    {
+      "index": 0,
+      "axis": "culture",
+      "matchScore": 96,
+      "titleVi": "Bản dịch tiếng Việt của tiêu đề",
+      "examMatch": "Lý do ngắn gọn vì sao chủ đề mới này rất dễ được chọn làm ngữ liệu đề thi HSK 7-9 sắp tới..."
+    }
+  ]
+}`;
+
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.href,
+            'X-Title': 'HSK Vocab App'
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-3.8-flash',
+            reasoning: { effort: 'low' },
+            messages: [
+              { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
+              { role: 'user', content: curatorPrompt }
+            ]
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error?.message || `Lỗi HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const contentStr = data.choices?.[0]?.message?.content || '{}';
+        const parsed = deepToSimplified(safeParseJSON(contentStr) || {});
+        const selectedArr = Array.isArray(parsed.selected) ? parsed.selected : [];
+
+        const curated = [];
+        const usedIndices = new Set();
+
+        selectedArr.forEach(sel => {
+          const idx = typeof sel.index === 'number' ? sel.index : parseInt(sel.index, 10);
+          if (isNaN(idx) || idx < 0 || idx >= rawArticles.length || usedIndices.has(idx)) return;
+          usedIndices.add(idx);
+          const orig = rawArticles[idx];
+          const axisKey = HSK_NEWS_AXIS_META[sel.axis] ? sel.axis : 'social';
+          curated.push({
+            id: 'hsknews_' + Date.now() + '_' + idx,
+            title: toSimplified(orig.title),
+            titleVi: String(sel.titleVi || '').trim(),
+            link: orig.link,
+            summary: toSimplified(orig.summary || ''),
+            dateStr: orig.dateStr || 'Hôm nay',
+            source: orig.source || '中新网',
+            axis: axisKey,
+            matchScore: Math.min(99, Math.max(80, parseInt(sel.matchScore, 10) || 90)),
+            examMatch: String(sel.examMatch || '').trim()
+          });
+        });
+
+        if (curated.length === 0) {
+          throw new Error('AI chưa chọn được bản tin phù hợp. Vui lòng bấm Quét mới!');
+        }
+
+        curated.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+        hskCuratedNewsList = curated;
+
+        const nowLabel = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN');
+        try {
+          localStorage.setItem(HSK_NEWS_CACHE_KEY, JSON.stringify({
+            savedAt: Date.now(),
+            updatedLabel: nowLabel,
+            items: curated
+          }));
+        } catch (e) {}
+
+        const subEl = document.getElementById('hskNewsUpdatedSub');
+        if (subEl) {
+          subEl.textContent = `Nguồn thật 100%: Trung Quốc Tân Văn Mạng (chinanews.com.cn) · Cập nhật: ${nowLabel}`;
+        }
+
+        renderHskNewsCards();
+        if (forceRefresh) {
+          showToast(`✨ Đã lọc ${curated.length} bản tin HSK 7-9 mới nhất hôm nay!`);
+        }
+      } catch (err) {
+        console.error('fetchAndCurateHskDailyNews error:', err);
+        showToast(`❌ ${err.message || 'Lỗi khi tải tin tức HSK 7-9'}`);
+        if (listEl && hskCuratedNewsList.length === 0) {
+          listEl.innerHTML = `<div class="rd-empty">⚠️ ${escapeHtml(err.message || 'Không tải được danh sách tin tức.')}<br><button type="button" onclick="fetchAndCurateHskDailyNews(true)" class="rd-mini-btn" style="margin-top:8px;">↻ Thử lại ngay</button></div>`;
+        }
+      } finally {
+        isFetchingHskNews = false;
+        if (loadingBox) loadingBox.style.display = 'none';
+        if (btnRefresh) {
+          btnRefresh.disabled = false;
+          btnRefresh.style.opacity = '1';
+        }
+      }
+    }
+    window.fetchAndCurateHskDailyNews = fetchAndCurateHskDailyNews;
+
+    function renderHskNewsCards() {
+      const listEl = document.getElementById('hskNewsCardsList');
+      if (!listEl) return;
+
+      const filtered = hskNewsActiveAxis === 'all'
+        ? hskCuratedNewsList
+        : hskCuratedNewsList.filter(item => item.axis === hskNewsActiveAxis);
+
+      if (!filtered || filtered.length === 0) {
+        listEl.innerHTML = `<div class="rd-empty">Chưa có bản tin nào thuộc chủ đề này trong đợt quét hiện tại.<br>Hãy chọn <b>"🔥 Tất cả"</b> hoặc bấm <b>"↻ Quét mới"</b> nhé!</div>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(item => {
+        const realIdx = hskCuratedNewsList.indexOf(item);
+        const ax = HSK_NEWS_AXIS_META[item.axis] || HSK_NEWS_AXIS_META.social;
+
+        return `
+          <div class="hsk-news-card" onclick="openHskNewsArticleInReader(${realIdx})">
+            <div class="hsk-news-card-top">
+              <span class="hsk-news-axis-badge ${ax.cls}">${ax.icon} ${ax.label}</span>
+              <span class="hsk-news-score-pill">🎯 Dự đoán ra thi: ${item.matchScore}%</span>
+            </div>
+            <div class="hsk-news-title-zh">${escapeHtml(item.title)}</div>
+            ${item.titleVi ? `<div class="hsk-news-title-vi">${escapeHtml(item.titleVi)}</div>` : ''}
+            ${item.examMatch ? `<div class="hsk-news-exam-box">💡 ${escapeHtml(item.examMatch)}</div>` : ''}
+            <div class="hsk-news-meta-foot">
+              <span>📰 ${escapeHtml(item.source || '中新网')} · 📅 ${escapeHtml(item.dateStr || 'Hôm nay')}</span>
+              <button type="button" class="hsk-news-read-btn" onclick="event.stopPropagation(); openHskNewsArticleInReader(${realIdx})">
+                📖 Đọc &amp; Tách từ trong App
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    window.renderHskNewsCards = renderHskNewsCards;
+
+    function selectOptimalReadingExcerptParagraphs(paragraphs, fallbackSummary) {
+      const cleanParas = (paragraphs || [])
+        .map(p => toSimplified(String(p || '').trim()))
+        .filter(p => p.length >= 15 && !/^(?:资料图|图为|中新社记者|中新网记者|新华社记者|图片来源)/.test(p));
+
+      if (cleanParas.length === 0) {
+        return fallbackSummary ? [toSimplified(fallbackSummary)] : [];
+      }
+
+      // HSK 7-9 reading comprehension passages are ~320-480 Chinese characters.
+      // Select contiguous core paragraphs from the authentic article so the text is 100% real journalism and comfortable to study.
+      const selected = [];
+      let totalChars = 0;
+      for (let i = 0; i < cleanParas.length; i++) {
+        const p = cleanParas[i];
+        if (selected.length > 0 && totalChars + p.length > 520 && totalChars >= 240) {
+          break;
+        }
+        selected.push(p);
+        totalChars += p.length;
+        if (totalChars >= 360 || selected.length >= 4) {
+          break;
+        }
+      }
+      return selected.length > 0 ? selected : [cleanParas[0].slice(0, 480)];
+    }
+
+    async function fetchLiveChinaNewsArticleParagraphs(targetUrl, fallbackSummary) {
+      // 1. Try Netlify Serverless Function first
+      try {
+        const res = await fetch(`/.netlify/functions/fetch-hsk-news?mode=article&url=${encodeURIComponent(targetUrl)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.paragraphs) && data.paragraphs.length > 0) {
+            return selectOptimalReadingExcerptParagraphs(data.paragraphs, fallbackSummary);
+          }
+        }
+      } catch (e) {
+        console.warn('Netlify article fetch fallback to proxy:', e);
+      }
+
+      // 2. Fallback via CORS proxy if running locally
+      try {
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+        const r = await fetch(proxyUrl);
+        if (r.ok) {
+          const html = await r.text();
+          const zwStart = html.indexOf('<div class="left_zw"');
+          const region = zwStart !== -1 ? html.slice(zwStart, zwStart + 25000) : html;
+          const pRegex = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;
+          const paras = [];
+          let m;
+          while ((m = pRegex.exec(region)) !== null) {
+            if (/class=["']pictext/i.test(m[1])) continue;
+            const txt = m[1].replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, ' ').trim();
+            if (txt.length >= 12) paras.push(txt);
+          }
+          if (paras.length > 0) {
+            return selectOptimalReadingExcerptParagraphs(paras, fallbackSummary);
+          }
+        }
+      } catch (e2) {
+        console.warn('Fallback article proxy error:', e2);
+      }
+
+      if (fallbackSummary && fallbackSummary.length >= 20) {
+        return [toSimplified(fallbackSummary)];
+      }
+      throw new Error('Không tải được nội dung bài báo gốc. Vui lòng chọn bản tin khác!');
+    }
+
+    async function openHskNewsArticleInReader(newsIndex) {
+      const item = hskCuratedNewsList[newsIndex];
+      if (!item) return;
+
+      const apiKey = localStorage.getItem('openrouter_api_key');
+      if (!apiKey) {
+        if (apiKeyModal) apiKeyModal.classList.add('active');
+        showToast('Vui lòng nhập OpenRouter API Key!');
+        return;
+      }
+
+      closeHskNewsModal();
+      if (readingInputModal) readingInputModal.classList.remove('active');
+
+      const scanModal = document.getElementById('imageScanModal');
+      const loadingText = document.getElementById('scanImageLoadingText');
+      if (loadingText) loadingText.textContent = '🦋 Đang tải nguyên văn bài báo gốc từ Trung Quốc Tân Văn Mạng...';
+      if (scanModal) scanModal.classList.add('active');
+
+      try {
+        const excerptParas = await fetchLiveChinaNewsArticleParagraphs(item.link, item.summary);
+        const rawText = excerptParas.join('\n');
+        if (!rawText || rawText.length < 15) {
+          throw new Error('Nội dung bài báo quá ngắn hoặc chỉ có hình ảnh.');
+        }
+
+        if (loadingText) loadingText.textContent = '🦋 Đang tách từ HSK 7-9 & dịch nghĩa từng đoạn...';
+
+        const result = await parsePassageChunksWithAi(rawText, apiKey, {
+          customTitle: item.title,
+          targetWords: [],
+          onProgress: (pct) => {
+            if (loadingText) loadingText.textContent = `🦋 Đang tách từ HSK 7-9 & tạo bài đọc ${pct}%...`;
+          }
+        });
+
+        const newArticleId = 'news_' + Date.now();
+        const articleObj = {
+          id: newArticleId,
+          title: `📰 ${item.title}`,
+          titleVi: item.titleVi || '',
+          rawText,
+          content: rawText,
+          paragraphs: result.paragraphs,
+          tokens: result.tokens,
+          selectedWords: [],
+          sourceType: 'hsk_news',
+          newsUrl: item.link || '',
+          newsDate: item.dateStr || 'Hôm nay',
+          newsSource: item.source || '中新网',
+          examMatch: item.examMatch || '',
+          createdAt: new Date().toLocaleDateString('vi-VN')
+        };
+
+        unsavedAiStoryArticle = articleObj;
+
+        closeImageScanModal();
+        openReadingViewModal(newArticleId);
+        showToast('📰 Đã mở bài báo gốc trong trình đọc! Bấm "Lưu bài đọc" ở cuối bài nếu muốn lưu lại.');
+      } catch (err) {
+        console.error('openHskNewsArticleInReader error:', err);
+        closeImageScanModal();
+        openHskNewsModal();
+        showToast(`❌ ${err.message || 'Lỗi khi mở bài báo'}`);
+      }
+    }
+    window.openHskNewsArticleInReader = openHskNewsArticleInReader;
+
+
     function populateReadingArticleViewSelect(currentId) {
       const btnPrev = document.getElementById('btnPrevReadingArticle');
       const btnNext = document.getElementById('btnNextReadingArticle');
@@ -12592,9 +13274,24 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         }
       }).join('');
 
+      let newsHeaderHTML = '';
       let storyFooterHTML = '';
       const isAiStoryArt = art.sourceType === 'ai_story' || String(art.id || '').startsWith('ai_story_');
       const isImageScanArt = art.sourceType === 'image_scan' || String(art.id || '').startsWith('scan_');
+      const isHskNewsArt = art.sourceType === 'hsk_news' || String(art.id || '').startsWith('news_');
+
+      if (isHskNewsArt && (art.examMatch || art.newsUrl)) {
+        newsHeaderHTML = `
+          <div style="text-indent: 0; background: #faf6fe; border: 1.2px solid #e2d5f3; border-radius: 12px; padding: 8px 11px; margin-bottom: 12px; font-family: var(--font-mali); font-size: 11.5px; color: #4b3b66; line-height: 1.42;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; margin-bottom: ${art.examMatch ? '4px' : '0'};">
+              <span style="font-weight: 800; color: #5c4385;">📰 ${escapeHtml(art.newsSource || 'Trung Quốc Tân Văn Mạng')} · ${escapeHtml(art.newsDate || 'Mới nhất')}</span>
+              ${art.newsUrl ? `<a href="${escapeHtml(art.newsUrl)}" target="_blank" rel="noopener noreferrer" style="color: #766299; font-weight: 800; text-decoration: none; background: #efe8f7; padding: 1.5px 8px; border-radius: 999px; font-size: 10.5px;">Xem báo gốc ↗</a>` : ''}
+            </div>
+            ${art.examMatch ? `<div style="color: #374151;">💡 ${escapeHtml(art.examMatch)}</div>` : ''}
+          </div>
+        `;
+      }
+
       if (isAiStoryArt) {
         const targetWordsList = (art.targetWords && art.targetWords.length > 0) ? art.targetWords : (art.selectedWords || []);
         const isAlreadySaved = isReadingArticleSaved(art.id);
@@ -12651,9 +13348,23 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
             </div>
           </div>
         `;
+      } else if (isHskNewsArt) {
+        const isAlreadySaved = isReadingArticleSaved(art.id);
+        storyFooterHTML = `
+          <div class="story-reader-footer" style="text-indent: 0;">
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+              <button type="button" class="ai-story-act-btn" style="flex: 1; padding: 9.5px 10px; font-size: 12.5px; background: #f4f0fa; color: #766299; border: 1.2px solid #dfd5ec;" onclick="openHskNewsModal()">
+                📰 Xem tin khác
+              </button>
+              <button type="button" id="btnSaveAiStoryArticle" class="ai-story-act-btn reader" style="flex: 1; padding: 9.5px 10px; font-size: 12.5px; ${isAlreadySaved ? 'background: #eef7f0; color: #3d6b46; border: 1.2px solid #cce5d4; opacity: 0.85; cursor: default; box-shadow: none;' : ''}" onclick="saveCurrentAiStoryArticle('${art.id}')" ${isAlreadySaved ? 'disabled' : ''}>
+                ${isAlreadySaved ? '✓ Đã lưu bài đọc' : '💾 Lưu bài đọc'}
+              </button>
+            </div>
+          </div>
+        `;
       }
 
-      readingPassageContainer.innerHTML = (paragraphsHTML || '<div class="reading-para-box" style="margin-bottom: 14px;"></div>') + storyFooterHTML;
+      readingPassageContainer.innerHTML = newsHeaderHTML + (paragraphsHTML || '<div class="reading-para-box" style="margin-bottom: 14px;"></div>') + storyFooterHTML;
 
       // Attach touch/click long-press listeners to each paragraph audio button
       document.querySelectorAll('#readingPassageContainer .tiny-para-audio-btn').forEach(btn => {
