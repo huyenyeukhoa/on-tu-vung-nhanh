@@ -15132,11 +15132,12 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
     }
 
     // Transcribe 16kHz mono PCM into timestamped Simplified Chinese segments using Gemini 3.8 Flash
-    async function vslTranscribePcmWithAi(pcm, totalDuration, onProgress) {
+    async function vslTranscribePcmWithAi(pcm, totalDuration, onProgress, videoTitle = '') {
       const sampleRate = 16000;
       const windowSec = 65;
       const totalWindows = Math.max(1, Math.ceil(totalDuration / windowSec));
       const allSegments = [];
+      let prevContextText = '';
 
       for (let w = 0; w < totalWindows; w++) {
         const startSec = w * windowSec;
@@ -15152,17 +15153,22 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         const slice = pcm.subarray(startSample, endSample);
         const wavBase64 = vslEncodePcmToWavBase64(slice, sampleRate);
         const windowDur = Number((endSec - startSec).toFixed(2));
+        const contextHint = [
+          videoTitle ? `Chủ đề/Tiêu đề video: "${videoTitle}".` : '',
+          prevContextText ? `Các câu ngay trước đoạn này: "${prevContextText}".` : ''
+        ].filter(Boolean).join(' ');
 
-        const promptText = `Hãy nghe đoạn âm thanh tiếng Trung này (độ dài ${windowDur} giây) và chép lời chính xác 100% sang chữ Hán giản thể (Simplified Chinese), chia thành từng câu ngắn tự nhiên kèm mốc thời gian start và end (tính bằng giây từ 0.0 đến ${windowDur}).
-Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
+        const promptText = `Bạn là chuyên gia ngôn ngữ tiếng Trung HSK 7-9. Hãy nghe đoạn âm thanh tiếng Trung này (độ dài ${windowDur} giây) và chép lời chính xác 100% sang chữ Hán giản thể (Simplified Chinese), chia thành từng câu/mệnh đề tự nhiên kèm mốc thời gian start và end (tính bằng giây từ 0.0 đến ${windowDur}).
+${contextHint ? `Ngữ cảnh tham khảo: ${contextHint}\n` : ''}Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
 [
   {"start": 0.0, "end": 2.8, "text": "Câu chữ Hán giản thể 1"},
   {"start": 2.8, "end": 5.6, "text": "Câu chữ Hán giản thể 2"}
 ]
 Quy tắc bắt buộc:
-1. Chỉ dùng chữ Hán giản thể (Simplified Chinese), tuyệt đối không dùng chữ Phồn thể.
-2. Nếu đoạn âm thanh chỉ có nhạc nền hoặc im lặng không có tiếng người nói, trả về [].
-3. Chỉ trả về mảng JSON, không giải thích gì thêm.`;
+1. Tự động suy luận ngữ cảnh để dùng đúng chữ Hán chuẩn xác (tránh nhầm từ đồng âm như 的/地/得, 在/再, 做/作, viết đúng thành ngữ 4 chữ và thuật ngữ).
+2. Chỉ dùng chữ Hán giản thể (Simplified Chinese), thêm dấu câu (，。？！) tự nhiên.
+3. Nếu đoạn âm thanh chỉ có nhạc nền hoặc im lặng không có tiếng người nói, trả về [].
+4. Chỉ trả về mảng JSON, không giải thích gì thêm.`;
 
         let windowSegs = null;
         for (const modelName of FETCH_AI_MODELS) {
@@ -15213,54 +15219,207 @@ Quy tắc bắt buộc:
               text: txt
             });
           }
+          prevContextText = allSegments.slice(-2).map(s => s.text).join(' ');
         }
       }
 
       return allSegments;
     }
 
-    // Use the exact Reading Mode AI Phrase Segmentation + Vietnamese Translation + Gloss Normalization
-    async function vslAnalyzeSubtitlesWithAi(rawSegments, onProgress) {
-      const cleanSegments = (rawSegments || [])
+    // Merge tiny fragmented subtitle pieces (e.g. 1-3 char orphan fragments from auto-CC) before AI proofreading
+    function vslNormalizeRawSegments(rawSegments) {
+      const cleaned = (rawSegments || [])
         .map(s => ({
           start: Number(s.start) || 0,
-          end: Math.max((Number(s.start) || 0) + 0.8, Number(s.end) || ((Number(s.start) || 0) + 2.5)),
+          end: Math.max((Number(s.start) || 0) + 0.6, Number(s.end) || ((Number(s.start) || 0) + 2.2)),
           text: toSimplifiedChinese(String(s.text || '').replace(/\s+/g, ' ').trim())
         }))
         .filter(s => s.text.length > 0);
 
+      if (cleaned.length <= 1) return cleaned;
+
+      const merged = [];
+      for (let i = 0; i < cleaned.length; i++) {
+        const cur = { ...cleaned[i] };
+        const prev = merged[merged.length - 1];
+        const gap = prev ? (cur.start - prev.end) : 999;
+        const prevEndsWithStop = prev ? /[。！？!?；;]$/.test(prev.text) : true;
+        // If previous segment is very short (< 4 chars) or current is tiny (< 3 chars) and gap is tiny (< 0.45s), merge into one natural clause
+        if (
+          prev &&
+          !prevEndsWithStop &&
+          gap <= 0.45 &&
+          (prev.text.length <= 3 || cur.text.length <= 2) &&
+          (prev.text.length + cur.text.length <= 26)
+        ) {
+          prev.text = prev.text + cur.text;
+          prev.end = Math.max(prev.end, cur.end);
+        } else {
+          merged.push(cur);
+        }
+      }
+      return merged;
+    }
+
+    // STEP 1: AI Full-Passage Subtitle Proofreading & Error Correction (Kiểm tra & sửa lỗi từ/câu toàn đoạn trước khi tách từ và dịch)
+    async function vslProofreadAndRefineSubtitlesWithAi(rawSegments, videoTitle = '', onProgress) {
+      const segments = vslNormalizeRawSegments(rawSegments);
+      if (segments.length === 0) return { segments: [], passageContext: '' };
+
+      const chunkSize = 40;
+      const totalChunks = Math.ceil(segments.length / chunkSize);
+      const refinedSegments = [];
+      let passageContext = '';
+
+      // Full transcript preview so AI grasps the entire video's topic & terminology
+      const fullOverviewText = segments.map(s => s.text).join(' ').slice(0, 2200);
+
+      for (let c = 0; c < totalChunks; c++) {
+        if (typeof onProgress === 'function') {
+          onProgress(Math.round(((c + 0.2) / totalChunks) * 100));
+        }
+        const chunk = segments.slice(c * chunkSize, (c + 1) * chunkSize);
+        const inputJson = JSON.stringify(chunk.map((item, idx) => ({ idx, text: item.text })));
+
+        const prompt = `Bạn là biên tập viên hiệu đính phụ đề tiếng Trung cao cấp (trình độ HSK 9 / bản xứ).
+Nhiệm vụ: Đọc toàn bộ mạch văn của video, kiểm tra thật kỹ từng câu sub bên dưới xem có bị sai từ nào không (do nhận diện giọng nói ASR nghe nhầm từ đồng âm, sai chính tả, sai thành ngữ, sai thuật ngữ) và SỬA LẠI CHO CHUẨN XÁC NHẤT trước khi chuyển sang bước phân từ và dịch.
+
+Thông tin ngữ cảnh toàn đoạn video:
+- Tiêu đề video: "${videoTitle || 'Video tiếng Trung'}"
+- Toàn văn nội dung để đối chiếu mạch logic: "${fullOverviewText}"
+
+Danh sách các câu sub cần kiểm tra & hiệu đính:
+${inputJson}
+
+YÊU CẦU BẮT BUỘC:
+1. Kiểm tra và sửa triệt để:
+   - Lỗi từ đồng âm / gần âm do sub tự động hoặc ASR nghe nhầm (ví dụ: nhầm 的/地/得, 在/再, 做/作, 以/已, 即/既, 象/像, 必须/必需, 反应/反映, 权利/权力, hoặc nghe nhầm chữ trong thành ngữ 4 chữ, quán dụng ngữ, từ ghép HSK 6-9, tên riêng, thuật ngữ chuyên môn).
+   - Loại bỏ các từ lắp bắp vô nghĩa do lỗi nhận diện âm thanh nhưng giữ nguyên 100% ý nghĩa câu nói và khớp với độ dài câu gốc.
+   - Chuẩn hóa dấu câu tiếng Trung (，、。？！) tự nhiên, mạch lạc.
+   - Bắt buộc dùng 100% chữ Hán giản thể (Simplified Chinese).
+2. Giữ nguyên số lượng phần tử và đúng thứ tự "idx" (từ 0 đến ${chunk.length - 1}) để không làm lệch mốc thời gian video.
+3. Trả về DUY NHẤT một JSON object hợp lệ theo cấu trúc:
+{
+  "passageContext": "Tóm tắt ngắn gọn 1-2 câu bằng tiếng Việt về chủ đề, mạch nội dung và giọng điệu của đoạn video này để làm chuẩn dịch thuật",
+  "items": [
+    {"idx": 0, "text": "Câu chữ Hán giản thể đã được kiểm lỗi và sửa chuẩn xác"}
+  ]
+}`;
+
+        let parsedObj = null;
+        for (const modelName of FETCH_AI_MODELS) {
+          try {
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+              method: 'POST',
+              headers: getOpenRouterHeaders(),
+              body: JSON.stringify({
+                model: modelName,
+                temperature: 0.1,
+                messages: [
+                  SIMPLIFIED_ONLY_SYSTEM_MSG,
+                  { role: 'user', content: prompt }
+                ]
+              })
+            });
+            if (!response.ok) continue;
+            const data = await response.json();
+            const rawContent = data.choices && data.choices[0] && data.choices[0].message
+              ? data.choices[0].message.content
+              : '';
+            const cleaned = String(rawContent || '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+            const parsed = JSON.parse(cleaned);
+            if (parsed && (Array.isArray(parsed.items) || Array.isArray(parsed))) {
+              parsedObj = parsed;
+              break;
+            }
+          } catch (err) {
+            console.warn('vslProofreadAndRefineSubtitlesWithAi error:', modelName, err);
+          }
+        }
+
+        const itemsArr = parsedObj
+          ? (Array.isArray(parsedObj.items) ? parsedObj.items : (Array.isArray(parsedObj) ? parsedObj : []))
+          : [];
+        if (parsedObj && parsedObj.passageContext && !passageContext) {
+          passageContext = String(parsedObj.passageContext).trim();
+        }
+
+        for (let i = 0; i < chunk.length; i++) {
+          const orig = chunk[i];
+          const found = itemsArr.find(x => Number(x.idx) === i) || itemsArr[i];
+          const correctedText = found && found.text
+            ? toSimplifiedChinese(String(found.text).replace(/\s+/g, ' ').trim())
+            : orig.text;
+          refinedSegments.push({
+            start: orig.start,
+            end: orig.end,
+            text: correctedText || orig.text
+          });
+        }
+      }
+
+      return { segments: refinedSegments, passageContext };
+    }
+
+    // STEP 2: Proofread first -> Then Context-Aware AI Phrase Segmentation & Translation (Từ, Câu, Đoạn)
+    async function vslAnalyzeSubtitlesWithAi(rawSegments, onProgress, videoTitle = '') {
+      // Phase 1 (0% -> 35% of analysis progress): Proofread & fix any subtitle errors across the full passage
+      const proofreadRes = await vslProofreadAndRefineSubtitlesWithAi(rawSegments, videoTitle, (p) => {
+        if (typeof onProgress === 'function') {
+          onProgress(Math.round(p * 0.35));
+        }
+      });
+
+      const cleanSegments = proofreadRes.segments || [];
+      const passageContext = proofreadRes.passageContext || '';
       if (cleanSegments.length === 0) return [];
 
-      const batchSize = 18;
+      // Full passage text (already corrected) so every batch translates coherently within the whole passage
+      const fullCorrectedPassage = cleanSegments.map(s => s.text).join(' ').slice(0, 1800);
+
+      // Phase 2 (35% -> 100% of analysis progress): Word/Phrase Segmentation + Word Meaning + Sentence/Passage Translation
+      const batchSize = 16;
       const totalBatches = Math.ceil(cleanSegments.length / batchSize);
       const analyzedSubtitles = [];
 
       for (let b = 0; b < totalBatches; b++) {
         if (typeof onProgress === 'function') {
-          onProgress(Math.round(((b + 0.2) / totalBatches) * 100));
+          onProgress(35 + Math.round(((b + 0.2) / totalBatches) * 65));
         }
-        const batch = cleanSegments.slice(b * batchSize, (b + 1) * batchSize);
+        const batchStart = b * batchSize;
+        const batch = cleanSegments.slice(batchStart, batchStart + batchSize);
+        const prevLine = batchStart > 0 ? cleanSegments[batchStart - 1].text : '';
+        const nextLine = (batchStart + batchSize < cleanSegments.length) ? cleanSegments[batchStart + batchSize].text : '';
         const linesJson = JSON.stringify(batch.map((item, idx) => ({ idx, text: item.text })));
 
-        const prompt = `Bạn là chuyên gia ngôn ngữ HSK 6 - HSK 9. Hãy dịch nghĩa tiếng Việt và tách từ/cụm từ (word/phrase segmentation) cho danh sách câu thoại video tiếng Trung dưới đây.
-Danh sách câu thoại:
+        const prompt = `Bạn là chuyên gia ngôn ngữ và dịch thuật HSK 6 - HSK 9.
+Dưới đây là các câu phụ đề tiếng Trung ĐÃ ĐƯỢC HIỆU ĐÍNH nằm trong một đoạn video liền mạch.
+Hãy thực hiện PHÂN CỤM TỪ và DỊCH CHUẨN CHỈNH ở cả 3 cấp độ (TỪ - CÂU - ĐOẠN):
+
+Ngữ cảnh toàn đoạn video:
+- Tiêu đề: "${videoTitle || 'Video tiếng Trung'}"
+${passageContext ? `- Tóm tắt mạch đoạn: "${passageContext}"\n` : ''}- Nội dung toàn bài để đối chiếu mạch văn: "${fullCorrectedPassage}"
+${prevLine ? `- Câu liền trước: "${prevLine}"\n` : ''}${nextLine ? `- Câu liền sau: "${nextLine}"\n` : ''}
+Danh sách câu cần phân từ và dịch:
 ${linesJson}
 
-Yêu cầu BẮT BUỘC:
-1. Trả về DUY NHẤT một mảng JSON hợp lệ có cùng số phần tử:
+YÊU CẦU BẮT BUỘC:
+1. Trả về DUY NHẤT một mảng JSON hợp lệ có cùng số phần tử (${batch.length} phần tử):
 [
   {
     "idx": 0,
-    "vietnamese": "Bản dịch tiếng Việt tự nhiên, mượt mà của câu này",
+    "text": "Câu chữ Hán giản thể chuẩn xác (nếu phát hiện còn sót lỗi từ đồng âm nhỏ nào thì sửa nốt tại đây)",
+    "vietnamese": "Bản dịch tiếng Việt của câu này: dịch chuẩn xác, mượt mà, tự nhiên, liền mạch với các câu trước/sau trong đoạn",
     "tokens": [
-      {"hanzi": "Từ/cụm từ", "pinyin": "pinyin có dấu thanh", "vietnamese": "nghĩa ngắn gọn sát ngữ cảnh", "isVocab": true},
+      {"hanzi": "Từ/cụm từ", "pinyin": "pinyin có dấu thanh chuẩn (gồm cả biến điệu nếu có)", "vietnamese": "nghĩa tiếng Việt ngắn gọn, chuẩn xác nhất theo ngữ cảnh câu này", "isVocab": true},
       {"hanzi": "，", "pinyin": "", "vietnamese": "", "isVocab": false}
     ]
   }
 ]
-2. QUY TẮC TÁCH CỤM TỪ (Y HỆT BÀI ĐỌC):
-- Khi nối tất cả "hanzi" trong "tokens" của 1 câu lại phải khớp 100% với câu gốc.
+2. QUY TẮC PHÂN CỤM TỪ & DỊCH NGHĨA (Y HỆT BÀI ĐỌC):
+- Khi ghép tất cả "hanzi" trong "tokens" của 1 câu lại phải khớp 100% với trường "text" của câu đó.
 - KHÔNG tách vụn từng chữ đơn lẻ nếu chúng tạo thành từ ghép 2-4 chữ, thành ngữ (成语), quán dụng ngữ, hoặc cụm cố định (ví dụ: 归根到底, 截至目前, 无论如何, 脱颖而出, 不可或缺, 显而易见, 引以为豪, 之所以, 换句话说...).
+- Nghĩa của từng từ ("vietnamese" trong "tokens") phải là nghĩa phù hợp nhất với ngữ cảnh trong câu, ngắn gọn, súc tích (1-4 từ) để hiển thị đẹp dưới chân chữ Hán.
 - Chữ Hán bắt buộc là chữ Hán giản thể (Simplified Chinese).`;
 
         let batchParsed = null;
@@ -15271,7 +15430,7 @@ Yêu cầu BẮT BUỘC:
               headers: getOpenRouterHeaders(),
               body: JSON.stringify({
                 model: modelName,
-                temperature: 0.15,
+                temperature: 0.12,
                 messages: [
                   SIMPLIFIED_ONLY_SYSTEM_MSG,
                   { role: 'user', content: prompt }
@@ -15300,12 +15459,16 @@ Yêu cầu BẮT BUỘC:
             ? (batchParsed.find(x => Number(x.idx) === i) || batchParsed[i])
             : null;
 
+          const finalSentenceText = (aiItem && aiItem.text)
+            ? toSimplifiedChinese(String(aiItem.text).replace(/\s+/g, ' ').trim())
+            : orig.text;
+
           let tokens = [];
           if (aiItem && Array.isArray(aiItem.tokens) && aiItem.tokens.length > 0) {
             tokens = mergeFixedCompoundTokensInList(aiItem.tokens.map(normalizeAiTokenItem));
           } else {
             // Local dictionary segmentation fallback
-            const segs = segmentTokenForHsk(orig.text);
+            const segs = segmentTokenForHsk(finalSentenceText);
             tokens = mergeFixedCompoundTokensInList(segs.map(s => {
               const isHan = /[\u4e00-\u9fff]/.test(s.text);
               const meta = isHan ? lookupDictMetaForToken(s.text) : { pinyin: '', vietnamese: '' };
@@ -15321,7 +15484,7 @@ Yêu cầu BẮT BUỘC:
           analyzedSubtitles.push({
             start: orig.start,
             end: orig.end,
-            text: orig.text,
+            text: finalSentenceText,
             vietnamese: aiItem && aiItem.vietnamese ? String(aiItem.vietnamese).trim() : '',
             tokens
           });
@@ -15522,10 +15685,10 @@ Yêu cầu BẮT BUỘC:
             if (audioBuffer && audioBuffer.byteLength > 1000) {
               const decoded = await vslDecodeAudioTo16kHz(audioBuffer);
               if (!duration) duration = decoded.duration;
-              pctCtrl.setTarget(72, 3500);
+              pctCtrl.setTarget(68, 3500);
               rawSegments = await vslTranscribePcmWithAi(decoded.pcm, decoded.duration, (p) => {
-                pctCtrl.setTarget(48 + Math.round(p * 0.25), 800);
-              });
+                pctCtrl.setTarget(48 + Math.round(p * 0.20), 800);
+              }, title);
             }
           }
 
@@ -15533,10 +15696,10 @@ Yêu cầu BẮT BUỘC:
             throw new Error('Video YouTube này tắt phụ đề và hạn chế tải âm thanh. Bạn hãy bấm "📝 Dán lời thoại sẵn" hoặc tải video về máy rồi chọn "📱 Tải video từ máy" nhé!');
           }
 
-          pctCtrl.setTarget(95, 2500);
+          pctCtrl.setTarget(96, 2800);
           const subtitles = await vslAnalyzeSubtitlesWithAi(rawSegments, (p) => {
-            pctCtrl.setTarget(74 + Math.round(p * 0.22), 700);
-          });
+            pctCtrl.setTarget(68 + Math.round(p * 0.28), 700);
+          }, title);
 
           if (!duration && subtitles.length > 0) {
             duration = Math.ceil(subtitles[subtitles.length - 1].end);
@@ -15563,7 +15726,7 @@ Yêu cầu BẮT BUỘC:
           if (urlInput) urlInput.value = '';
           if (manualInput) manualInput.value = '';
           openVslLessonStudio(lesson.id);
-          showToast('🎬 Đã tạo bài học video YouTube thành công!');
+          showToast('🎬 Đã hiệu đính sub, phân từ & dịch xong video YouTube!');
           return;
         }
 
@@ -15579,9 +15742,10 @@ Yêu cầu BẮT BUỘC:
           throw new Error((dyData && dyData.error) || 'Không bóc tách được video từ link Douyin này. Bạn có thể lưu video về điện thoại rồi chọn "📱 Tải video từ máy" nhé!');
         }
 
+        const dyTitle = toSimplifiedChinese(dyData.title || 'Video Douyin (抖音)');
         pctCtrl.setTarget(45, 2200);
         const videoBuffer = await vslFetchProxiedMediaBuffer(dyData.videoUrl, (p) => {
-          pctCtrl.setTarget(22 + Math.round(p * 0.25), 500);
+          pctCtrl.setTarget(22 + Math.round(p * 0.23), 500);
         });
         const videoBlob = new Blob([videoBuffer], { type: 'video/mp4' });
         const metaThumb = await vslCaptureVideoThumbnail(videoBlob);
@@ -15591,22 +15755,22 @@ Yêu cầu BẮT BUỘC:
         if (manualText) {
           rawSegments = vslParseManualSubtitles(manualText, duration || 60);
         } else {
-          pctCtrl.setTarget(70, 3000);
+          pctCtrl.setTarget(68, 3000);
           const decoded = await vslDecodeAudioTo16kHz(videoBuffer);
           if (!duration) duration = decoded.duration;
           rawSegments = await vslTranscribePcmWithAi(decoded.pcm, decoded.duration, (p) => {
-            pctCtrl.setTarget(48 + Math.round(p * 0.24), 700);
-          });
+            pctCtrl.setTarget(45 + Math.round(p * 0.23), 700);
+          }, dyTitle);
         }
 
         if (!rawSegments || rawSegments.length === 0) {
           throw new Error('Không nhận diện được lời thoại tiếng Trung trong video Douyin này. Bạn có thể bấm "📝 Dán lời thoại sẵn" để nhập lời thoại nhé!');
         }
 
-        pctCtrl.setTarget(95, 2200);
+        pctCtrl.setTarget(96, 2600);
         const subtitles = await vslAnalyzeSubtitlesWithAi(rawSegments, (p) => {
-          pctCtrl.setTarget(73 + Math.round(p * 0.23), 600);
-        });
+          pctCtrl.setTarget(68 + Math.round(p * 0.28), 600);
+        }, dyTitle);
 
         const lessonId = 'vsl_dy_' + Date.now();
         await saveVideoBlobToIdb(lessonId, videoBlob);
@@ -15614,7 +15778,7 @@ Yêu cầu BẮT BUỘC:
         const lesson = {
           id: lessonId,
           sourceType: 'douyin',
-          title: toSimplifiedChinese(dyData.title || 'Video Douyin (抖音)'),
+          title: dyTitle,
           thumbnail: metaThumb.thumbnail || dyData.cover || '',
           duration: duration || (subtitles.length ? Math.ceil(subtitles[subtitles.length - 1].end) : 0),
           isPortrait: metaThumb.isPortrait !== undefined ? metaThumb.isPortrait : true,
@@ -15631,7 +15795,7 @@ Yêu cầu BẮT BUỘC:
         if (urlInput) urlInput.value = '';
         if (manualInput) manualInput.value = '';
         openVslLessonStudio(lesson.id);
-        showToast('🎬 Đã tải & phân tích xong video Douyin (抖音)!');
+        showToast('🎬 Đã hiệu đính sub, phân từ & dịch xong video Douyin (抖音)!');
       } catch (err) {
         vslHideLoadingOverlay(pctCtrl);
         alert('⚠️ ' + (err && err.message ? err.message : 'Có lỗi khi xử lý video.'));
@@ -15652,6 +15816,7 @@ Yêu cầu BẮT BUỘC:
         modal.classList.add('active');
       }
 
+      const cleanName = toSimplifiedChinese(String(file.name || 'Video từ máy').replace(/\.[a-zA-Z0-9]{2,5}$/, ''));
       const pctCtrl = vslShowLoadingOverlay(8);
       try {
         pctCtrl.setTarget(25, 1200);
@@ -15667,22 +15832,21 @@ Yêu cầu BẮT BUỘC:
           pctCtrl.setTarget(45, 1800);
           const decoded = await vslDecodeAudioTo16kHz(arrayBuffer);
           if (!duration) duration = decoded.duration;
-          pctCtrl.setTarget(72, 3500);
+          pctCtrl.setTarget(68, 3500);
           rawSegments = await vslTranscribePcmWithAi(decoded.pcm, decoded.duration, (p) => {
-            pctCtrl.setTarget(45 + Math.round(p * 0.28), 700);
-          });
+            pctCtrl.setTarget(45 + Math.round(p * 0.23), 700);
+          }, cleanName);
         }
 
         if (!rawSegments || rawSegments.length === 0) {
           throw new Error('Không tìm thấy câu thoại tiếng Trung trong video này. Bạn có thể bấm "📝 Dán lời thoại sẵn" trước khi chọn file nhé!');
         }
 
-        pctCtrl.setTarget(95, 2200);
+        pctCtrl.setTarget(96, 2600);
         const subtitles = await vslAnalyzeSubtitlesWithAi(rawSegments, (p) => {
-          pctCtrl.setTarget(74 + Math.round(p * 0.22), 600);
-        });
+          pctCtrl.setTarget(68 + Math.round(p * 0.28), 600);
+        }, cleanName);
 
-        const cleanName = toSimplifiedChinese(String(file.name || 'Video từ máy').replace(/\.[a-zA-Z0-9]{2,5}$/, ''));
         const lessonId = 'vsl_loc_' + Date.now();
         await saveVideoBlobToIdb(lessonId, videoBlob);
 
