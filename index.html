@@ -11789,6 +11789,19 @@ ${chunkText}
             }
           }, stepMs);
         },
+        setTarget(maxPct, durationMs = 1500) {
+          if (maxPct > current + 8) {
+            current = Math.max(current, maxPct - 14);
+            render();
+          }
+          const diff = Math.max(1, maxPct - current);
+          const stepMs = Math.max(80, Math.min(350, Math.round(durationMs / diff)));
+          this.glideTo(maxPct, stepMs);
+        },
+        complete() {
+          this.stop(100);
+          return new Promise(r => setTimeout(r, 120));
+        },
         stop(finalPct) {
           if (timer) {
             clearInterval(timer);
@@ -14635,6 +14648,21 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
     const VSL_STORAGE_KEY = 'hsk_video_lessons_v1';
     const VSL_IDB_NAME = 'HSK_Video_Blob_DB';
     const VSL_IDB_STORE = 'video_blobs';
+    const FETCH_AI_MODELS = ['google/gemini-3.8-flash', 'google/gemini-2.5-flash'];
+
+    function toSimplifiedChinese(str) {
+      return typeof toSimplified === 'function' ? toSimplified(String(str || '')) : String(str || '');
+    }
+
+    function getOpenRouterHeaders() {
+      const apiKey = localStorage.getItem('openrouter_api_key') || '';
+      return {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': window.location.href,
+        'X-Title': 'HSK Vocab App'
+      };
+    }
 
     let vslLessons = [];
     let activeVslLessonId = null;
@@ -15180,7 +15208,7 @@ Quy tắc bắt buộc:
                 model: modelName,
                 temperature: 0.1,
                 messages: [
-                  SIMPLIFIED_ONLY_SYSTEM_MSG,
+                  { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
                   {
                     role: 'user',
                     content: [
@@ -15196,8 +15224,8 @@ Quy tắc bắt buộc:
             const rawContent = data.choices && data.choices[0] && data.choices[0].message
               ? data.choices[0].message.content
               : '';
-            const cleaned = String(rawContent || '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-            const parsed = JSON.parse(cleaned);
+            const cleaned = String(rawContent || '').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+            const parsed = typeof safeParseJSON === 'function' ? safeParseJSON(cleaned) : JSON.parse(cleaned);
             if (Array.isArray(parsed)) {
               windowSegs = parsed;
               break;
@@ -15315,8 +15343,9 @@ YÊU CẦU BẮT BUỘC:
               body: JSON.stringify({
                 model: modelName,
                 temperature: 0.1,
+                reasoning: { effort: 'low' },
                 messages: [
-                  SIMPLIFIED_ONLY_SYSTEM_MSG,
+                  { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
                   { role: 'user', content: prompt }
                 ]
               })
@@ -15326,8 +15355,8 @@ YÊU CẦU BẮT BUỘC:
             const rawContent = data.choices && data.choices[0] && data.choices[0].message
               ? data.choices[0].message.content
               : '';
-            const cleaned = String(rawContent || '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-            const parsed = JSON.parse(cleaned);
+            const cleaned = String(rawContent || '').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+            const parsed = typeof safeParseJSON === 'function' ? safeParseJSON(cleaned) : JSON.parse(cleaned);
             if (parsed && (Array.isArray(parsed.items) || Array.isArray(parsed))) {
               parsedObj = parsed;
               break;
@@ -15431,8 +15460,9 @@ YÊU CẦU BẮT BUỘC:
               body: JSON.stringify({
                 model: modelName,
                 temperature: 0.12,
+                reasoning: { effort: 'low' },
                 messages: [
-                  SIMPLIFIED_ONLY_SYSTEM_MSG,
+                  { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
                   { role: 'user', content: prompt }
                 ]
               })
@@ -15442,8 +15472,8 @@ YÊU CẦU BẮT BUỘC:
             const rawContent = data.choices && data.choices[0] && data.choices[0].message
               ? data.choices[0].message.content
               : '';
-            const cleaned = String(rawContent || '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-            const parsed = JSON.parse(cleaned);
+            const cleaned = String(rawContent || '').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+            const parsed = typeof safeParseJSON === 'function' ? safeParseJSON(cleaned) : JSON.parse(cleaned);
             if (Array.isArray(parsed)) {
               batchParsed = parsed;
               break;
@@ -15465,7 +15495,7 @@ YÊU CẦU BẮT BUỘC:
 
           let tokens = [];
           if (aiItem && Array.isArray(aiItem.tokens) && aiItem.tokens.length > 0) {
-            tokens = mergeFixedCompoundTokensInList(aiItem.tokens.map(normalizeAiTokenItem));
+            tokens = mergeFixedCompoundTokensInList(aiItem.tokens.map(normalizeAiTokenItem).filter(Boolean));
           } else {
             // Local dictionary segmentation fallback
             const segs = segmentTokenForHsk(finalSentenceText);
