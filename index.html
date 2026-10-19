@@ -1704,49 +1704,6 @@
       100% { transform: scale(1); }
     }
 
-    /* Underline for HSK 6 vocabulary: 奶绿 (Milky Matcha Green) */
-    .reading-token.token-hsk6 {
-      text-decoration: underline !important;
-      text-decoration-color: #689f76 !important;
-      -webkit-text-decoration-color: #689f76 !important;
-      text-decoration-thickness: 2.2px !important;
-      text-underline-offset: 3.5px !important;
-      text-decoration-skip-ink: none !important;
-    }
-
-    /* Underline for HSK 7-9 vocabulary: 奶棕 (Milky Brown / Milk Tea) */
-    .reading-token.token-hsk79 {
-      text-decoration: underline !important;
-      text-decoration-color: #b08968 !important;
-      -webkit-text-decoration-color: #b08968 !important;
-      text-decoration-thickness: 2.2px !important;
-      text-underline-offset: 3.5px !important;
-    }
-
-    /* Partial underline: only the HSK sub-word inside a phrase token (e.g. 往常 in 像往常一样) */
-    .hsk-seg.hsk-seg-6 {
-      text-decoration: underline !important;
-      text-decoration-color: #689f76 !important;
-      -webkit-text-decoration-color: #689f76 !important;
-      text-decoration-thickness: 2.2px !important;
-      text-underline-offset: 3.5px !important;
-      text-decoration-skip-ink: none !important;
-    }
-    .hsk-seg.hsk-seg-79 {
-      text-decoration: underline !important;
-      text-decoration-color: #b08968 !important;
-      -webkit-text-decoration-color: #b08968 !important;
-      text-decoration-thickness: 2.2px !important;
-      text-underline-offset: 3.5px !important;
-      text-decoration-skip-ink: none !important;
-    }
-
-    /* Support toggling off vocabulary underlines */
-    #readingPassageContainer.hide-underlines .reading-token.token-hsk6,
-    #readingPassageContainer.hide-underlines .reading-token.token-hsk79,
-    #readingPassageContainer.hide-underlines .hsk-seg {
-      text-decoration: none !important;
-    }
 
     /* Highlight HSK 6 / HSK 7-9 words when clicking the H6 / H7-9 stat badges */
     #readingPassageContainer.highlight-hsk6 .hsk-seg.hsk-seg-6,
@@ -4475,9 +4432,6 @@
           <div style="display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; flex-wrap: nowrap !important;">
             <button id="btnToggleReadingGloss" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0; white-space: nowrap !important;" title="Chạm để ẩn hoặc hiện nghĩa Tiếng Việt dưới các từ đã lưu (highlight)">
               <span id="glossToggleText">Nghĩa TV</span>
-            </button>
-            <button id="btnToggleReadingUnderlines" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0; white-space: nowrap !important;" title="Chạm để ẩn hoặc hiện đường gạch chân từ vựng">
-              <span id="underlineToggleText">Gạch chân</span>
             </button>
             <button id="btnToggleReadingReview" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0; white-space: nowrap !important;" title="Chạm để bật/tắt chế độ ôn bài (làm mờ các từ đã lưu để tự kiểm tra, chạm vào chữ để hiện lại)">
               <span id="reviewToggleText">Ôn bài</span>
@@ -13740,19 +13694,12 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 
       updateReadingHskLevelHighlightUI();
       updateReadingGlossToggleUI();
-      updateReadingUnderlinesToggleUI();
       updateReadingReviewToggleUI();
 
       const btnToggleGloss = document.getElementById('btnToggleReadingGloss');
       if (btnToggleGloss && !btnToggleGloss.dataset.bound) {
         btnToggleGloss.addEventListener('click', toggleReadingGloss);
         btnToggleGloss.dataset.bound = 'true';
-      }
-
-      const btnToggleUnderlines = document.getElementById('btnToggleReadingUnderlines');
-      if (btnToggleUnderlines && !btnToggleUnderlines.dataset.bound) {
-        btnToggleUnderlines.addEventListener('click', toggleReadingUnderlines);
-        btnToggleUnderlines.dataset.bound = 'true';
       }
 
       const btnToggleReview = document.getElementById('btnToggleReadingReview');
@@ -13841,39 +13788,6 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       isReadingGlossVisible = !isReadingGlossVisible;
       localStorage.setItem('hsk_show_reading_gloss', isReadingGlossVisible ? '1' : '0');
       updateReadingGlossToggleUI();
-    }
-
-    let isReadingUnderlinesVisible = localStorage.getItem('hsk_show_reading_underlines') !== '0';
-
-    function updateReadingUnderlinesToggleUI() {
-      const btn = document.getElementById('btnToggleReadingUnderlines');
-      const container = document.getElementById('readingPassageContainer');
-      const text = document.getElementById('underlineToggleText');
-
-      if (isReadingUnderlinesVisible) {
-        if (container) container.classList.remove('hide-underlines');
-        if (btn) {
-          btn.style.background = '#f3eef9';
-          btn.style.color = '#766299';
-          btn.style.border = '1.2px solid #dfd3ef';
-          btn.title = 'Chạm để ẩn đường gạch chân từ vựng';
-        }
-      } else {
-        if (container) container.classList.add('hide-underlines');
-        if (btn) {
-          btn.style.background = '#f9fafb';
-          btn.style.color = '#9ca3af';
-          btn.style.border = '1.2px dashed #d1d5db';
-          btn.title = 'Chạm để hiện lại đường gạch chân từ vựng';
-        }
-      }
-      if (text) text.textContent = 'Gạch chân';
-    }
-
-    function toggleReadingUnderlines() {
-      isReadingUnderlinesVisible = !isReadingUnderlinesVisible;
-      localStorage.setItem('hsk_show_reading_underlines', isReadingUnderlinesVisible ? '1' : '0');
-      updateReadingUnderlinesToggleUI();
     }
 
     let isReadingReviewModeActive = false;
