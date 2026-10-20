@@ -6481,8 +6481,10 @@
           if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         }
 
-        if (typeof mhSyncReadingAndNewsToVault === 'function') mhSyncReadingAndNewsToVault();
-        if (typeof mhFlushVslLessonsToCloud === 'function') mhFlushVslLessonsToCloud();
+        if (isManual) {
+          if (typeof mhSyncReadingAndNewsToVault === 'function') mhSyncReadingAndNewsToVault();
+          if (typeof mhFlushVslLessonsToCloud === 'function') mhFlushVslLessonsToCloud();
+        }
 
         updateCloudStatusBadge('✓ Đã đồng bộ', false);
         if (isManual) {
@@ -6490,8 +6492,10 @@
         }
       } catch (err) {
         console.error('Supabase save error:', err);
-        if (typeof mhSyncReadingAndNewsToVault === 'function') mhSyncReadingAndNewsToVault();
-        if (typeof mhFlushVslLessonsToCloud === 'function') mhFlushVslLessonsToCloud();
+        if (isManual) {
+          if (typeof mhSyncReadingAndNewsToVault === 'function') mhSyncReadingAndNewsToVault();
+          if (typeof mhFlushVslLessonsToCloud === 'function') mhFlushVslLessonsToCloud();
+        }
         updateCloudStatusBadge('✓ Đã đồng bộ', false);
         if (isManual) {
           showToast('❌ Lỗi kết nối Đám mây Supabase!');
@@ -6510,7 +6514,7 @@
       if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
       cloudSyncTimer = setTimeout(() => {
         saveToCloud(false);
-      }, 50);
+      }, 1200);
     }
     window.triggerDebouncedCloudSave = triggerDebouncedCloudSave;
 
@@ -6760,6 +6764,7 @@
       aiDbPutMany(validKeys.map(k => [k, aiCache[k]])).catch(e => console.warn('AI IndexedDB save warning:', e));
       validKeys.forEach(k => aiPendingKeys.add(k));
       saveAiPendingKeys();
+      if (typeof isPreloadingAi !== 'undefined' && isPreloadingAi) return;
       scheduleAiCloudPush();
       // Legacy fallback: until the dedicated table is confirmed, keep syncing via the main blob too
       if (!options.skipBlobSave && !isAiCloudMigrated() && typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
@@ -6769,7 +6774,7 @@
 
     function scheduleAiCloudPush() {
       if (aiPushTimer) clearTimeout(aiPushTimer);
-      aiPushTimer = setTimeout(pushAiPendingToCloud, 800);
+      aiPushTimer = setTimeout(pushAiPendingToCloud, 1500);
     }
 
     function aiRestHeaders(extra = {}) {
@@ -9492,6 +9497,12 @@ Lưu ý quan trọng:
 
       isPreloadingAi = false;
       updatePreloadUIStatus();
+      if (preloadDoneCount > 0) {
+        if (typeof scheduleAiCloudPush === 'function') scheduleAiCloudPush();
+        if (typeof isAiCloudMigrated === 'function' && !isAiCloudMigrated() && typeof triggerDebouncedCloudSave === 'function') {
+          triggerDebouncedCloudSave();
+        }
+      }
 
       if (stopPreloadFlag) {
         showToast('⏹ Đã dừng nạp ngầm AI.');
@@ -15556,45 +15567,64 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
     }
 
     let mhVslCloudSyncTimer = null;
+    let mhVslLocalWriteTimer = null;
     const mhDirtyVslLessonIds = new Set();
+    let mhVslIndexDirty = false;
+    let mhLastVslCloudHydrateAt = 0;
+    const MH_UPLOADED_MP4_KEY = 'hsk_vsl_uploaded_mp4_ids_v1';
+    const mhUploadedMp4Ids = new Set(safeGetJSON(MH_UPLOADED_MP4_KEY, []));
 
     function saveVslLessonsToStorage(changedLessonId = null) {
       vslLessonsInitialized = true;
       const now = Date.now();
-      if (changedLessonId) {
+      if (changedLessonId && changedLessonId !== '__INDEX_ONLY__') {
         const target = findVslLessonById(changedLessonId);
         if (target) target.updatedAt = now;
         mhDirtyVslLessonIds.add(String(changedLessonId));
-      } else {
-        (vslLessons || []).forEach(l => {
-          if (l && l.id) mhDirtyVslLessonIds.add(String(l.id));
-        });
+        mhVslIndexDirty = true;
+      } else if (changedLessonId === '__INDEX_ONLY__') {
+        mhVslIndexDirty = true;
+      } else if (activeVslLessonId) {
+        const target = findVslLessonById(activeVslLessonId);
+        if (target) target.updatedAt = now;
+        mhDirtyVslLessonIds.add(String(activeVslLessonId));
+        mhVslIndexDirty = true;
+      } else if (vslLessons && vslLessons[0] && vslLessons[0].id) {
+        mhDirtyVslLessonIds.add(String(vslLessons[0].id));
+        mhVslIndexDirty = true;
       }
 
-      // 1. Always save full lessons to unlimited IndexedDB
+      // 1. Always save full lessons to unlimited IndexedDB asynchronously
       mhIdbPutKv('vsl_lessons', vslLessons);
 
-      // 2. Save to localStorage (with automatic fallback stripping heavy thumbnails if 5MB quota is tight)
-      try {
-        localStorage.setItem(VSL_STORAGE_KEY, JSON.stringify(vslLessons));
-      } catch (e) {
+      // 2. Debounce localStorage write so large JSON.stringify never blocks main thread during rapid edits
+      if (mhVslLocalWriteTimer) clearTimeout(mhVslLocalWriteTimer);
+      mhVslLocalWriteTimer = setTimeout(() => {
         try {
-          const lightLessons = (vslLessons || []).map(l => ({ ...l, thumbnail: '' }));
-          localStorage.setItem(VSL_STORAGE_KEY, JSON.stringify(lightLessons));
-        } catch (e2) {}
-      }
+          localStorage.setItem(VSL_STORAGE_KEY, JSON.stringify(vslLessons));
+        } catch (e) {
+          try {
+            const lightLessons = (vslLessons || []).map(l => ({ ...l, thumbnail: '' }));
+            localStorage.setItem(VSL_STORAGE_KEY, JSON.stringify(lightLessons));
+          } catch (e2) {}
+        }
+      }, 250);
 
       // 3. Debounced push to Supabase (nbexbqzuqcsqirpepdju)
       if (mhVslCloudSyncTimer) clearTimeout(mhVslCloudSyncTimer);
       mhVslCloudSyncTimer = setTimeout(() => {
         mhFlushVslLessonsToCloud();
-      }, 450);
+      }, 800);
     }
 
     async function mhFlushVslLessonsToCloud() {
       try {
         const idsToPush = Array.from(mhDirtyVslLessonIds);
+        const shouldPushIndex = mhVslIndexDirty || idsToPush.length > 0;
         mhDirtyVslLessonIds.clear();
+        mhVslIndexDirty = false;
+        if (!shouldPushIndex) return;
+
         for (const id of idsToPush) {
           const lesson = findVslLessonById(id);
           if (lesson) {
@@ -15612,27 +15642,39 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
     }
 
     async function mhEnsureLocalMp4UploadedToCloud(id) {
+      const strId = String(id);
+      if (mhUploadedMp4Ids.has(strId)) return;
       try {
         const db = await vslOpenIdb();
         const localBlob = await new Promise((resolve) => {
           const tx = db.transaction(VSL_IDB_STORE, 'readonly');
-          const req = tx.objectStore(VSL_IDB_STORE).get(String(id));
+          const req = tx.objectStore(VSL_IDB_STORE).get(strId);
           req.onsuccess = () => resolve(req.result ? req.result.blob : null);
           req.onerror = () => resolve(null);
         });
         if (localBlob && localBlob.size > 0) {
-          await mhUploadMp4BlobToCloud(id, localBlob);
+          const ok = await mhUploadMp4BlobToCloud(strId, localBlob);
+          if (ok) {
+            mhUploadedMp4Ids.add(strId);
+            try { localStorage.setItem(MH_UPLOADED_MP4_KEY, JSON.stringify(Array.from(mhUploadedMp4Ids))); } catch (e) {}
+          }
         }
       } catch (e) {}
     }
 
-    async function mhHydrateAndSyncVslVault() {
+    async function mhHydrateAndSyncVslVault(forceRemote = false) {
       loadVslLessonsFromStorage();
       // 1. Hydrate from local IndexedDB
       const idbLessons = await mhIdbGetKv('vsl_lessons');
       if (Array.isArray(idbLessons) && idbLessons.length > 0) {
         vslLessons = mhMergeVslLessonsArray(vslLessons, idbLessons);
       }
+      // Skip remote network roundtrip if we already synced within the last 5 minutes
+      if (!forceRemote && mhLastVslCloudHydrateAt > 0 && (Date.now() - mhLastVslCloudHydrateAt < 5 * 60 * 1000)) {
+        return;
+      }
+      mhLastVslCloudHydrateAt = Date.now();
+
       // 2. Sync from Supabase cloud vault (nbexbqzuqcsqirpepdju)
       try {
         const idxData = await mhPersonalSupaGet('vsl_lessons_index');
@@ -15643,10 +15685,17 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         }
         if (idxData && Array.isArray(idxData.lessonIds) && idxData.lessonIds.length > 0) {
           const deletedSet = new Set((vslDeletedLessonIds || []).map(String));
+          const localMap = new Map((vslLessons || []).map(l => [String(l.id), l]));
           const cloudLessons = [];
           for (const lid of idxData.lessonIds) {
-            if (deletedSet.has(String(lid))) continue;
-            const cLesson = await mhPersonalSupaGet(`vsl_lesson_${lid}`);
+            const sId = String(lid);
+            if (deletedSet.has(sId)) continue;
+            // Only download from cloud if missing locally or forceRemote is requested
+            const localExisting = localMap.get(sId);
+            if (localExisting && Array.isArray(localExisting.subtitles) && localExisting.subtitles.length > 0 && !forceRemote) {
+              continue;
+            }
+            const cLesson = await mhPersonalSupaGet(`vsl_lesson_${sId}`);
             if (cLesson && cLesson.id) cloudLessons.push(cLesson);
           }
           if (cloudLessons.length > 0) {
@@ -15654,7 +15703,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
             mhIdbPutKv('vsl_lessons', vslLessons);
           }
         }
-        // Push any local lessons that aren't in cloud index yet, and ensure local MP4 blobs are backed up to Supabase sequentially
+        // Push any local lessons that aren't in cloud index yet, and ensure un-uploaded local MP4 blobs are backed up
         const remoteIdSet = new Set((idxData && Array.isArray(idxData.lessonIds)) ? idxData.lessonIds.map(String) : []);
         let anyNewLocal = false;
         for (const l of (vslLessons || [])) {
@@ -15665,10 +15714,9 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           }
         }
         if (anyNewLocal) await mhFlushVslLessonsToCloud();
-        // Backup local MP4s in background one by one
         (async () => {
           for (const l of (vslLessons || [])) {
-            if (l && l.id && l.sourceType !== 'youtube') {
+            if (l && l.id && l.sourceType !== 'youtube' && !mhUploadedMp4Ids.has(String(l.id))) {
               await mhEnsureLocalMp4UploadedToCloud(l.id);
             }
           }
@@ -15925,7 +15973,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       }
       vslLessons = vslLessons.filter(item => String(item.id) !== strId);
       mhPersonalSupaDelete(`vsl_lesson_${strId}`);
-      saveVslLessonsToStorage();
+      saveVslLessonsToStorage('__INDEX_ONLY__');
       await deleteVideoBlobFromIdb(strId);
       renderVslVideoGrid();
       showToast('🗑️ Đã xóa video thành công!');
@@ -19331,22 +19379,34 @@ Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa ngắn gọn 2-
       try {
         const obj = safeParseJSON(cleaned);
         if (obj && typeof obj === 'object') {
+          let content = toSimplified(String(obj.content || obj.story || '').trim());
+          let translation = String(obj.translation || obj.vietnamese || '').trim();
+          let rawPhrases = Array.isArray(obj.phrases) ? obj.phrases : [];
           let paragraphs = Array.isArray(obj.paragraphs) && obj.paragraphs.length > 0 ? obj.paragraphs : null;
           if (!paragraphs && Array.isArray(obj.tokens) && obj.tokens.length > 0) {
-            paragraphs = [{ vietnamese: (obj.translation || obj.vietnamese || '').trim(), tokens: obj.tokens }];
+            paragraphs = [{ vietnamese: translation, tokens: obj.tokens }];
           }
           if (paragraphs) {
             paragraphs.forEach(p => {
-              if (Array.isArray(p.tokens)) {
+              if (!p) return;
+              if (Array.isArray(p.tokens) && p.tokens.length > 0) {
                 p.tokens = p.tokens.map(normalizeAiTokenItem).filter(Boolean);
+              } else {
+                const pText = toSimplified(String(p.text || p.hanzi || content || '').trim());
+                if (pText && typeof vslBuildSubtitleTokensWithAiPhrases === 'function') {
+                  p.tokens = vslBuildSubtitleTokensWithAiPhrases(pText, p.phrases || rawPhrases);
+                }
               }
             });
+          } else if (content && typeof vslBuildSubtitleTokensWithAiPhrases === 'function') {
+            paragraphs = [{
+              vietnamese: translation,
+              tokens: vslBuildSubtitleTokensWithAiPhrases(content, rawPhrases)
+            }];
           }
-          let content = (obj.content || obj.story || '').trim();
           if (!content && paragraphs) {
             content = paragraphs.map(p => (p.tokens || []).map(t => t.hanzi || '').join('')).join('\n').trim();
           }
-          let translation = (obj.translation || obj.vietnamese || '').trim();
           if (!translation && paragraphs) {
             translation = paragraphs.map(p => (p.vietnamese || '').trim()).filter(Boolean).join(' ');
           }
@@ -19371,14 +19431,18 @@ Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa ngắn gọn 2-
         return '';
       }
 
-      const content = getField('content') || getField('story');
+      const content = toSimplified(getField('content') || getField('story'));
       if (content) {
+        const translation = getField('translation') || getField('vietnamese') || '';
+        const builtTokens = typeof vslBuildSubtitleTokensWithAiPhrases === 'function'
+          ? vslBuildSubtitleTokensWithAiPhrases(content, [])
+          : null;
         return {
           title: getField('title') || 'Mẩu chuyện ngắn',
           titleVi: getField('titleVi') || '',
-          content: toSimplified(content),
-          translation: getField('translation') || getField('vietnamese') || '',
-          paragraphs: null
+          content,
+          translation,
+          paragraphs: builtTokens && builtTokens.length > 0 ? [{ vietnamese: translation, tokens: builtTokens }] : null
         };
       }
 
@@ -19432,81 +19496,31 @@ Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa ngắn gọn 2-
 必须自然、地道地将以下所有目标中文词汇融入这篇纯中文故事中：
 ${wordListPrompt}
 
-【PHẦN I — QUY TẮC SÁNG TÁC TRUYỆN TIẾNG TRUNG】:
+【QUY TẮC BẮT BUỘC】:
 1. 100% CHỮ HÁN GIẢN THỂ & VIẾT LIỀN 1 ĐOẠN VĂN DUY NHẤT:
-   - Toàn bộ câu chuyện gốc ("content"), tiêu đề ("title") và phần tử đầu tiên của mọi từ trong mảng "tokens" BẮT BUỘC PHẢI LÀ 100% CHỮ HÁN GIẢN THỂ (纯正简体中文汉字)! 严禁使用越南语编写故事正文或把越南语塞进 tokens 的第一个字段！
-   - Toàn bộ bài đọc ngắn (~120 - 150 chữ Hán) BẮT BUỘC viết liền mạch thành **1 ĐOẠN VĂN DUY NHẤT** (không xuống dòng \\n, mảng "paragraphs" CHỈ CÓ ĐÚNG 1 PHẦN TỬ DUY NHẤT, TUYỆT ĐỐI KHÔNG tách mỗi câu hay mỗi lời thoại thành 1 đoạn riêng gây rối mắt!).
-2. Tần suất & Cách dùng từ mục tiêu độc lập:
-   - Mỗi từ mục tiêu (${targetHanziList.join(', ')}) CHỈ DÙNG ĐÚNG 1 LẦN DUY NHẤT trong bài (【每个目标词汇在全文中只允许出现唯一 1 次，绝对禁止重复使用第 2 次】).
-   - Dùng từ mục tiêu (${targetHanziList.join(', ')}) như một TỪ ĐỘC LẬP đúng nghĩa gốc của nó (ví dụ: "生产" dùng độc lập như "恢复生产" / "投入生产", KHÔNG nhét vào "生产部"; "供应" dùng độc lập như "零件供应" / "保障供应", KHÔNG gắn hậu tố thành "供应商"; "评审" dùng độc lập như "严格评审" / "通过评审", KHÔNG nhét vào "项目评审会").
-   - Nếu từ mục tiêu kết thúc bằng trợ từ trạng ngữ "地" (ví dụ: 和蔼地, 气愤地, 悄悄地, 头也不回地...): BẮT BUỘC đặt NGAY TRƯỚC ĐỘNG TỪ hoặc CỤM ĐỘNG TỪ để làm trạng ngữ.
-   - Xưng hô chức danh tiếng Trung BẮT BUỘC viết theo trật tự chuẩn bản xứ: [Họ + Chức danh] (ví dụ: "王经理", "李总监", "张主任") hoặc [Phòng ban + Họ + Chức danh] ("生产部王经理"). TUYỆT ĐỐI CẤM viết ngược "[Chức danh + Họ 1 chữ]" như "经理王"!
+   - Toàn bộ câu chuyện gốc ("content") và tiêu đề ("title") BẮT BUỘC PHẢI LÀ 100% CHỮ HÁN GIẢN THỂ (纯正简体中文汉字), viết liền mạch thành **1 ĐOẠN VĂN DUY NHẤT** (~120 - 150 chữ Hán, không xuống dòng \\n).
+2. CÁCH DÙNG TỪ MỤC TIÊU (${targetHanziList.join(', ')}):
+   - Mỗi từ mục tiêu CHỈ DÙNG ĐÚNG 1 LẦN DUY NHẤT trong bài (【每个目标词汇在全文中只允许出现唯一 1 次】).
+   - Dùng từ mục tiêu như một TỪ ĐỘC LẬP đúng nghĩa gốc (KHÔNG đặt dấu ngoặc kép “ ” bao quanh từ mục tiêu, KHÔNG ghép thêm hậu tố như "部", "商", "会" làm biến đổi từ mục tiêu).
+   - Nếu từ mục tiêu kết thúc bằng "地" (như 和蔼地, 气愤地, 头也不回地): BẮT BUỘC đặt ngay trước động từ làm trạng ngữ.
+   - Xưng hô chức danh chuẩn bản xứ: [Họ + Chức danh] (ví dụ: "王经理", "李总监"), CẤM viết ngược "经理王".
+3. DỊCH TIẾNG VIỆT & CỤM TỪ ĐẶC BIỆT ("phrases"):
+   - Trường "vietnamese": Dịch toàn bộ đoạn truyện sang tiếng Việt mượt mà, tự nhiên, sát nghĩa.
+   - Trường "phrases": Hệ thống đã có sẵn từ điển cho các từ HSK phổ thông và từ mục tiêu. Trong mảng "phrases", bạn CHỈ CẦN liệt kê theo định dạng "Chữ Hán|pinyin|nghĩa tiếng Việt" các tên riêng, chức danh, phòng ban, cụm danh từ cố định, cụm cử chỉ/biểu cảm, động từ ly hợp hoặc thành ngữ 4 chữ xuất hiện trong truyện (ví dụ: "项目评审会|xiàng mù píng shěn huì|cuộc họp thẩm định dự án", "王经理|wáng jīng lǐ|giám đốc Vương", "皱起眉头|zhòu qǐ méi tóu|nhíu mày", "松了口气|sōng le kǒu qì|thở phào nhẹ nhõm").
 
-【PHẦN II — QUY TẮC TÁCH TỪ & GỘP CỤM TRONG MẢNG "tokens" (ÁP DỤNG Y HỆT CHUẨN TÁCH TỪ BÀI ĐỌC)】:
-0) TÁCH RIÊNG CÁC TỪ VỰNG MỤC TIÊU (${targetHanziList.join(', ')}):
-   - Khi gặp bất kỳ từ nào trong danh sách (${targetHanziList.join(', ')}), BẮT BUỘC giữ nguyên từ đó thành 1 token độc lập đúng mặt chữ (đầy đủ pinyin và vietnamese, TUYỆT ĐỐI KHÔNG đặt dấu ngoặc kép “ ” hay 「 」 bao quanh từ mục tiêu).
-
-1) QUY TẮC VÀNG PHÂN BIỆT "TỪ ĐỘC LẬP (TÁCH)" VÀ "CỤM QUÁN DỤNG / LY HỢP (GỘP)" (CỰC KỲ QUAN TRỌNG):
-   - **A. TÁCH RIÊNG đối với Tổ hợp tự do (Nghĩa cộng gộp 1 + 1 = 2)**:
-     + Khi động từ cảm xúc/nhận thức hoặc phó từ ghép với từ vựng độc lập đứng sau mà mỗi từ vẫn giữ nguyên nghĩa từ điển của nó, BẮT BUỘC tách thành từng từ vựng chuẩn (2–4 chữ) để người học bấm tra/lưu đúng từ cần học.
-     + Ví dụ tách chuẩn: tách "感到" + "害怕" (KHÔNG gộp thành "感到害怕"), tách "产生" + "共鸣", tách "显得" + "局促不安", tách "非常" + "感兴趣", tách "首次" + "会面".
-   - **B. GỘP TRỌN CẢ CỤM đối với Cụm danh từ cố định, Phòng ban/Chức danh, Cụm quán dụng, Động từ ly hợp, Cử chỉ/Biểu cảm & Thành ngữ**:
-     + Các cụm danh từ cố định, thuật ngữ công sở/chuyên môn, phòng ban, chức danh (như "项目评审会", "高层领导", "资源配置", "生产部", "供应商", "备用供应商", "技术负责人", "生产车间", "产品质量", "研发流程", "核心零件", "全体员工", "紧急会议", "王经理", "李总监", "邻居们", "同事们") BẮT BUỘC gộp trọn thành 1 token duy nhất kèm nghĩa tiếng Việt hoàn chỉnh, KHÔNG tách lẻ khiến người đọc phải tự ghép nghĩa!
-     + Các cụm quán dụng, động từ ly hợp, cụm cử chỉ/biểu cảm/lời nói, thành ngữ 4 chữ (như "皱起眉头", "皱着眉头", "点了点头", "摇了摇头", "松了口气", "叹了口气", "笑着说", "接着说", "小声说", "刚起了一个头", "头也不回地", "捏了一把汗", "吃了一惊", "有所触动", "莫名其妙", "一落千丈", "硬生生", "怼了回去") BẮT BUỘC gom trọn thành 1 token! (TUYỆT ĐỐI KHÔNG tách "皱起眉头" thành "皱起" + "眉头", KHÔNG tách "笑着说" thành "笑" + "着" + "说"!).
-   - **C. TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết hoặc tách hậu tố đơn ("部", "商", "会", "员", "室", "们", "着") thành chữ đơn**:
-     + Các từ 2 âm tiết chuẩn (như "感到", "害怕", "触动", "故事", "气愤") và từ có hậu tố ("生产部", "供应商", "评审会", "邻居们") luôn giữ nguyên cả từ, tuyệt đối không cắt vụn thành 1 chữ đơn ("部", "商", "会", "所", "起", "们", "着").
-
-2) QUY TẮC NGHĨA VIỆT CỦA TOKEN:
-   - Trong mảng tokens, trường "vietnamese" BẮT BUỘC dịch ĐÚNG SÁT NGHĨA CỦA CHÍNH TỪ / CỤM TỪ HÁN ĐÓ!
-   - Tuyệt đối không thêm các từ ngữ cảnh ở xa ngoài phạm vi token đó vào nghĩa tiếng Việt.
-   - **Ví dụ**:
-     - Token "感到" ➔ vietnamese: "cảm thấy" | Token "害怕" ➔ vietnamese: "sợ hãi"
-     - Token "皱起眉头" ➔ vietnamese: "nhíu mày / cau mày"
-     - Token "笑着说" ➔ vietnamese: "cười nói"
-     - Token "刚起了一个头" ➔ vietnamese: "vừa mới mở đầu" (dịch chuẩn nghĩa bóng cả cụm ly hợp)
-     - Token "头也不回地" ➔ vietnamese: "không ngoảnh đầu lại"
-
-3) QUY TẮC VỀ TRỢ TỪ "的", "地" VÀ LIÊN TỪ "与":
-   - Trợ từ "的" nối định ngữ và danh từ thông thường (như "半年以来" + "的" + "首次" + "会面", hoặc "大小姐" + "的" + "故事"), hãy tách chữ "的" thành 1 token riêng.
-   - Trợ từ "地" đứng sau tính từ 2 âm tiết thông thường (như "和蔼" + "地", "气愤" + "地", "高兴" + "地"), hãy tách chữ "地" thành 1 token riêng để người học lưu được từ gốc chuẩn ("和蔼", "气愤"). Chỉ gộp "地" khi thuộc cụm quán dụng/thành ngữ cố định (như "头也不回地").
-   - KHÔNG ghép liên từ "与" vào đầu từ B trong "A 与 B" (Ví dụ: tách "大小姐", "与", "佐野").
-
-4) TỰ ĐỘNG SỬA LỖI GRAMMAR "地" / "的":
-   - Trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (như "头也不回地走了", "气愤地说着", "高兴地笑"), bắt buộc dùng chữ "地" đúng chuẩn ngữ pháp!
-
-5) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU:
-   - Sử dụng dấu câu tiếng Trung chuẩn (，, 。, ！, ？, ：“”, 《》). Giữ lại đầy đủ mọi dấu câu trong mảng tokens.
-   - Không dùng dấu ngoặc kép thẳng " bên trong chuỗi JSON.
-
-Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown). Mảng "paragraphs" CHỈ CÓ ĐÚNG 1 PHẦN TỬ DUY NHẤT. Mỗi phần tử trong mảng "tokens" dùng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt" (với dấu câu hoặc trợ từ "的", "地" chỉ cần ghi chính ký tự đó, ví dụ "，", "的", "地"):
+Trả về JSON thuần tuý (KHÔNG bọc trong markdown):
 {
   "title": "纯中文标题 (3-6个汉字)",
   "titleVi": "Tiêu đề tiếng Việt tương ứng",
   "content": "项目评审会上，生产部王经理皱起眉头……（全文100%纯简体中文，连成唯一1个自然段，不换行，约120-150个汉字）",
-  "paragraphs": [
-    {
-      "tokens": [
-        "项目评审会|xiàng mù píng shěn huì|cuộc họp thẩm định dự án",
-        "上|shàng|trên / trong",
-        "，",
-        "生产部|shēng chǎn bù|phòng sản xuất",
-        "王经理|wáng jīng lǐ|giám đốc Vương",
-        "皱起眉头|zhòu qǐ méi tóu|nhíu mày",
-        "，",
-        "然后|rán hòu|sau đó",
-        "笑着说|xiào zhe shuō|cười nói",
-        "问题|wèn tí|vấn đề",
-        "已经|yǐ jīng|đã",
-        "解决|jiě jué|giải quyết",
-        "了|le|rồi",
-        "，",
-        "大家|dà jiā|mọi người",
-        "终于|zhōng yú|cuối cùng",
-        "松了口气|sōng le kǒu qì|thở phào nhẹ nhõm",
-        "。"
-      ],
-      "vietnamese": "Bản dịch tiếng Việt mượt mà, sát nghĩa của toàn bộ đoạn văn tiếng Trung ở trên..."
-    }
+  "vietnamese": "Bản dịch tiếng Việt mượt mà, sát nghĩa của toàn bộ đoạn văn tiếng Trung ở trên...",
+  "phrases": [
+    "项目评审会|xiàng mù píng shěn huì|cuộc họp thẩm định dự án",
+    "生产部|shēng chǎn bù|phòng sản xuất",
+    "王经理|wáng jīng lǐ|giám đốc Vương",
+    "皱起眉头|zhòu qǐ méi tóu|nhíu mày",
+    "笑着说|xiào zhe shuō|cười nói",
+    "松了口气|sōng le kǒu qì|thở phào nhẹ nhõm"
   ]
 }`;
 
