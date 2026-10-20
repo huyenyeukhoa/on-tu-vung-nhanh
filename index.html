@@ -11846,41 +11846,6 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         ? window.getInstantPinyin(s)
         : '';
 
-      // Compositional sub-word lookup for multi-character phrases (e.g. "这栋" -> "tòa này", "六个人" -> "sáu người", "人和事" -> "người và sự việc")
-      if (s.length > 1 && s.length <= 8 && /[\u4e00-\u9fff]/.test(s)) {
-        const subMeanings = [];
-        let i = 0;
-        while (i < s.length) {
-          let matched = false;
-          for (let len = Math.min(4, s.length - i); len >= 2; len--) {
-            const sub = s.slice(i, i + len);
-            const subMeta = lookupSingleDictEntryMeta(sub);
-            if (subMeta.vietnamese) {
-              subMeanings.push(String(subMeta.vietnamese).split(/[;,/]/)[0].trim());
-              i += len;
-              matched = true;
-              break;
-            }
-          }
-          if (!matched) {
-            const ch = s[i];
-            const chMeta = lookupSingleDictEntryMeta(ch);
-            if (chMeta.vietnamese) {
-              subMeanings.push(String(chMeta.vietnamese).split(/[;,/]/)[0].trim());
-            }
-            i += 1;
-          }
-        }
-        if (subMeanings.length > 0) {
-          const res = {
-            pinyin: fallbackPy || '',
-            vietnamese: subMeanings.join(' ')
-          };
-          dictMetaMemoCache.set(s, res);
-          return res;
-        }
-      }
-
       const fallbackRes = { pinyin: fallbackPy || '', vietnamese: '' };
       dictMetaMemoCache.set(s, fallbackRes);
       return fallbackRes;
@@ -12239,7 +12204,10 @@ ${chunkText}
       '很感兴趣的样子': { pinyin: 'hěn gǎn xìng qù de yàng zi', vietnamese: 'dáng vẻ rất hứng thú' },
       '刚起了一个头': { pinyin: 'gāng qǐ le yī gè tóu', vietnamese: 'vừa mới mở đầu' },
       '头也不回地': { pinyin: 'tóu yě bù huí de', vietnamese: 'không ngoảnh đầu lại' },
-      '怼了回去': { pinyin: 'duì le huí qù', vietnamese: 'bật lại / cãi lại' }
+      '怼了回去': { pinyin: 'duì le huí qù', vietnamese: 'bật lại / cãi lại' },
+      '落日飞车': { pinyin: 'luò rì fēi chē', vietnamese: 'xe buýt ngắm hoàng hôn (Sunset Coaster)' },
+      '落日': { pinyin: 'luò rì', vietnamese: 'hoàng hôn / mặt trời lặn' },
+      '飞车': { pinyin: 'fēi chē', vietnamese: 'chuyến xe tốc hành / xe bay' }
     };
 
     const CHINESE_SURNAMES_MAP = {
@@ -17520,11 +17488,21 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
           sub.tokens = mergeFixedCompoundTokensInList(sub.tokens);
           for (let j = 0; j < sub.tokens.length; j++) {
             const t = sub.tokens[j];
-            if (t && t.hanzi && /[\u4e00-\u9fff]/.test(t.hanzi) && (!t.pinyin || !t.vietnamese)) {
-              const meta = lookupDictMetaForToken(t.hanzi);
-              if (!t.pinyin && meta.pinyin) t.pinyin = meta.pinyin;
-              if (!t.vietnamese && meta.vietnamese) t.vietnamese = meta.vietnamese;
+            if (t && t.hanzi && /[\u4e00-\u9fff]/.test(t.hanzi)) {
+              const fixedMeta = FIXED_COMPOUND_PHRASES[t.hanzi];
+              if (fixedMeta && !t._userEdited) {
+                if (fixedMeta.pinyin && t.pinyin !== fixedMeta.pinyin) t.pinyin = fixedMeta.pinyin;
+                if (fixedMeta.vietnamese && t.vietnamese !== fixedMeta.vietnamese) t.vietnamese = fixedMeta.vietnamese;
+              } else if (!t.pinyin || !t.vietnamese) {
+                const meta = lookupDictMetaForToken(t.hanzi);
+                if (!t.pinyin && meta.pinyin) t.pinyin = meta.pinyin;
+                if (!t.vietnamese && meta.vietnamese) t.vietnamese = meta.vietnamese;
+              }
             }
+          }
+          if (sub.text && sub.text.includes('落日飞车') && sub.vietnamese && /xe buýt hai tầng/i.test(sub.vietnamese)) {
+            sub.vietnamese = sub.vietnamese.replace(/xe buýt hai tầng/gi, 'xe buýt ngắm hoàng hôn (Sunset Coaster)');
+            changed = true;
           }
           const afterSig = sub.tokens.map(t => `${(t && t.hanzi) || ''}:${(t && t.vietnamese) || ''}`).join('|');
           if (beforeSig !== afterSig) {
@@ -19392,13 +19370,15 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         const fixedCompound = FIXED_COMPOUND_PHRASES[h];
         const lw = lookup.get(h);
         const meta = (!tok.pinyin || !tok.vietnamese) ? lookupDictMetaForToken(h) : { pinyin: '', vietnamese: '' };
-        const resolvedPinyin = (fixedCompound && fixedCompound.pinyin)
+        const resolvedPinyin = (tok._userEdited && tok.pinyin)
+          || (fixedCompound && fixedCompound.pinyin)
           || tok.pinyin
           || (lw && lw.pinyin)
           || meta.pinyin
           || (typeof getLocalTokenPinyin === 'function' ? getLocalTokenPinyin(h) : '')
           || '';
-        const rawGloss = (fixedCompound && fixedCompound.vietnamese)
+        const rawGloss = (tok._userEdited && tok.vietnamese)
+          || (fixedCompound && fixedCompound.vietnamese)
           || tok.vietnamese
           || (lw && (lw.vietnamese || lw.vi || lw.meaning))
           || meta.vietnamese
@@ -19457,7 +19437,8 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       const fixedCompound = FIXED_COMPOUND_PHRASES[tok.hanzi];
       const meta = lookupDictMetaForToken(tok.hanzi);
 
-      const resolvedMeaning = (fixedCompound && fixedCompound.vietnamese)
+      const resolvedMeaning = (tok._userEdited && tok.vietnamese)
+        || (fixedCompound && fixedCompound.vietnamese)
         || (selWord && (selWord.vietnamese || selWord.meaning))
         || tok.vietnamese
         || (cgWord && (cgWord.vietnamese || cgWord.meaning))
@@ -19467,7 +19448,8 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         || (typeof VSL_COMMON_CHAR_GLOSS !== 'undefined' && VSL_COMMON_CHAR_GLOSS[tok.hanzi])
         || '';
 
-      const resolvedPinyin = (fixedCompound && fixedCompound.pinyin)
+      const resolvedPinyin = (tok._userEdited && tok.pinyin)
+        || (fixedCompound && fixedCompound.pinyin)
         || tok.pinyin
         || (selWord && selWord.pinyin)
         || (cgWord && cgWord.pinyin)
@@ -19623,10 +19605,16 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       }
     }
 
+    let vslEditTokenInputTimer = null;
+
     function vslOnEditTokenHanziInput(rawVal) {
       const h = toSimplifiedChinese(String(rawVal || '').trim());
       const editP = document.getElementById('vslEditTokenPinyinInput');
       const editV = document.getElementById('vslEditTokenViInput');
+      if (vslEditTokenInputTimer) {
+        clearTimeout(vslEditTokenInputTimer);
+        vslEditTokenInputTimer = null;
+      }
       if (!h) return;
       if (vslActiveTokenRef && h === vslActiveTokenRef.origHanzi) {
         if (editP) editP.value = vslActiveTokenRef.origPinyin || '';
@@ -19636,6 +19624,65 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       const fastMeta = vslLookupWordMetaFast(h);
       if (editP && fastMeta.pinyin) editP.value = fastMeta.pinyin;
       if (editV) editV.value = fastMeta.vietnamese || '';
+      if (vslActiveTokenRef) vslActiveTokenRef.pendingSentenceVi = '';
+      vslEditTokenInputTimer = setTimeout(() => {
+        const curH = toSimplifiedChinese(String((document.getElementById('vslEditTokenHanziInput') && document.getElementById('vslEditTokenHanziInput').value) || '').trim());
+        if (curH && curH === h && vslActiveTokenRef && curH !== vslActiveTokenRef.origHanzi) {
+          vslAiFillEditedToken();
+        }
+      }, 420);
+    }
+
+    async function vslRequestAiTokenAndSentenceUpdate(sentenceText, wordHanzi, prevLine = '', nextLine = '', videoTitle = '') {
+      const cleanSentence = toSimplifiedChinese(String(sentenceText || '').trim());
+      const cleanWord = toSimplifiedChinese(String(wordHanzi || '').trim());
+      if (!cleanWord) return null;
+
+      const contextPart = [
+        videoTitle ? `Tiêu đề video: "${videoTitle}".` : '',
+        prevLine ? `Câu trước: "${prevLine}".` : '',
+        nextLine ? `Câu sau: "${nextLine}".` : ''
+      ].filter(Boolean).join(' ');
+
+      const prompt = `Bạn là chuyên gia dịch thuật Trung - Việt. Người học vừa sửa lại chữ đúng trong câu phụ đề tiếng Trung:
+${contextPart ? contextPart + '\n' : ''}- Câu tiếng Trung hoàn chỉnh sau khi sửa: "${cleanSentence}"
+- Từ / cụm từ vừa sửa cần giải nghĩa: "${cleanWord}"
+
+Hãy trả về DUY NHẤT một đối tượng JSON hợp lệ (không bọc markdown):
+{
+  "pinyin": "pinyin chuẩn có dấu thanh của từ ${cleanWord}",
+  "vietnamese": "nghĩa tiếng Việt ngắn gọn, tự nhiên (2-6 chữ) của riêng từ/cụm ${cleanWord} đúng ngữ cảnh câu này (nếu là tên riêng/địa danh/thương hiệu/chuyến xe đặc trưng thì dịch đúng nghĩa thực tế, TUYỆT ĐỐI KHÔNG ghép nghĩa từng chữ rời rạc)",
+  "sentenceVi": "bản dịch tiếng Việt tự nhiên, mượt mà và chính xác cho toàn bộ câu '${cleanSentence}'"
+}`;
+
+      const fastModels = ['google/gemini-2.5-flash', 'deepseek/deepseek-v4.1-flash', 'google/gemini-3.8-flash'];
+      for (const modelName of fastModels) {
+        try {
+          const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: getOpenRouterHeaders(),
+            body: JSON.stringify({
+              model: modelName,
+              temperature: 0.1,
+              max_tokens: 220,
+              reasoning: { enabled: false },
+              messages: [
+                { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
+                { role: 'user', content: prompt }
+              ]
+            })
+          });
+          if (!resp.ok) continue;
+          const data = await resp.json();
+          const raw = data.choices?.[0]?.message?.content || '';
+          const cleaned = String(raw).replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+          const parsed = typeof safeParseJSON === 'function' ? safeParseJSON(cleaned) : JSON.parse(cleaned);
+          if (parsed && (parsed.vietnamese || parsed.sentenceVi)) {
+            return parsed;
+          }
+        } catch (e) {}
+      }
+      return null;
     }
 
     async function vslAiFillEditedToken() {
@@ -19652,48 +19699,26 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       }
 
       const lesson = findVslLessonById(vslActiveTokenRef.lessonId);
-      const sub = lesson && lesson.subtitles ? lesson.subtitles[vslActiveTokenRef.subIdx] : null;
+      const subs = (lesson && lesson.subtitles) || [];
+      const subIdx = vslActiveTokenRef.subIdx;
+      const sub = subs[subIdx] || null;
       const previewSentence = sub && Array.isArray(sub.tokens)
         ? sub.tokens.map((t, idx) => (idx === vslActiveTokenRef.tokIdx ? newHanzi : (t.hanzi || ''))).join('')
         : newHanzi;
+      const prevLine = subIdx > 0 && subs[subIdx - 1] ? subs[subIdx - 1].text : '';
+      const nextLine = subIdx + 1 < subs.length && subs[subIdx + 1] ? subs[subIdx + 1].text : '';
 
       if (btnAi) {
         btnAi.textContent = '⏳...';
         btnAi.disabled = true;
       }
       try {
-        const prompt = `Câu tiếng Trung: "${previewSentence}". Từ cần tra: "${newHanzi}".
-Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa ngắn gọn 2-5 chữ đúng ngữ cảnh","sentenceVi":"dịch cả câu sang tiếng Việt"}`;
-        // Prioritize gemini-2.5-flash with thinking disabled for sub-second response
-        const fastModels = ['google/gemini-2.5-flash', 'google/gemini-2.0-flash-001'];
-        for (const modelName of fastModels) {
-          try {
-            const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-              method: 'POST',
-              headers: getOpenRouterHeaders(),
-              body: JSON.stringify({
-                model: modelName,
-                temperature: 0,
-                max_tokens: 160,
-                reasoning: { exclude: true, effort: 'none' },
-                messages: [
-                  { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
-                  { role: 'user', content: prompt }
-                ]
-              })
-            });
-            if (!resp.ok) continue;
-            const data = await resp.json();
-            const raw = data.choices?.[0]?.message?.content || '';
-            const cleaned = String(raw).replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-            const parsed = typeof safeParseJSON === 'function' ? safeParseJSON(cleaned) : JSON.parse(cleaned);
-            if (parsed && (parsed.pinyin || parsed.vietnamese)) {
-              if (editP && parsed.pinyin) editP.value = String(parsed.pinyin).trim();
-              if (editV && parsed.vietnamese) editV.value = String(parsed.vietnamese).trim();
-              if (parsed.sentenceVi && vslActiveTokenRef) vslActiveTokenRef.pendingSentenceVi = String(parsed.sentenceVi).trim();
-              return parsed;
-            }
-          } catch (e) {}
+        const parsed = await vslRequestAiTokenAndSentenceUpdate(previewSentence, newHanzi, prevLine, nextLine, (lesson && lesson.title) || '');
+        if (parsed && (parsed.pinyin || parsed.vietnamese)) {
+          if (editP && parsed.pinyin) editP.value = String(parsed.pinyin).trim();
+          if (editV && parsed.vietnamese) editV.value = String(parsed.vietnamese).trim();
+          if (parsed.sentenceVi && vslActiveTokenRef) vslActiveTokenRef.pendingSentenceVi = String(parsed.sentenceVi).trim();
+          return parsed;
         }
       } finally {
         if (btnAi) {
@@ -19704,13 +19729,18 @@ Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa ngắn gọn 2-
       return null;
     }
 
-    // Instantaneous (0ms) Save for Edited Video Subtitle Token — never blocks UI on network!
+    // Instantaneous Save for Edited Video Subtitle Token + Auto-Update Word Meaning & Sentence Translation!
     function vslSaveEditedVideoToken() {
       const box = document.getElementById('vslTokenEditBox');
       if (!vslActiveTokenRef || (box && box.style.display === 'none')) return;
+      if (vslEditTokenInputTimer) {
+        clearTimeout(vslEditTokenInputTimer);
+        vslEditTokenInputTimer = null;
+      }
       const lesson = findVslLessonById(vslActiveTokenRef.lessonId);
       if (!lesson || !Array.isArray(lesson.subtitles)) return;
-      const sub = lesson.subtitles[vslActiveTokenRef.subIdx];
+      const subIdx = vslActiveTokenRef.subIdx;
+      const sub = lesson.subtitles[subIdx];
       if (!sub || !Array.isArray(sub.tokens) || !sub.tokens[vslActiveTokenRef.tokIdx]) return;
 
       const editH = document.getElementById('vslEditTokenHanziInput');
@@ -19727,18 +19757,30 @@ Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa ngắn gọn 2-
       let newVi = String((editV && editV.value) || '').trim();
       const origHanzi = vslActiveTokenRef.origHanzi;
       const hanziChanged = newHanzi !== origHanzi;
-      let needsBgAiRefine = false;
+      const fastMeta = vslLookupWordMetaFast(newHanzi);
+      const userTypedCustomMeaning = Boolean(
+        newVi &&
+        newVi !== vslActiveTokenRef.origVi &&
+        newVi !== fastMeta.vietnamese &&
+        newVi !== newHanzi &&
+        !vslActiveTokenRef.pendingSentenceVi
+      );
 
-      if (hanziChanged && (!newPinyin || !newVi || newVi === vslActiveTokenRef.origVi)) {
-        const fastMeta = vslLookupWordMetaFast(newHanzi);
+      if (hanziChanged) {
         if (!newPinyin || newPinyin === vslActiveTokenRef.origPinyin) {
-          newPinyin = fastMeta.pinyin || newPinyin;
+          newPinyin = fastMeta.pinyin || (typeof getLocalTokenPinyin === 'function' ? getLocalTokenPinyin(newHanzi) : '') || newPinyin;
         }
-        if (!newVi || newVi === vslActiveTokenRef.origVi) {
+        if (!userTypedCustomMeaning && !vslActiveTokenRef.pendingSentenceVi) {
           newVi = fastMeta.vietnamese || '';
         }
-        if (!newVi) needsBgAiRefine = true;
       }
+
+      // Whenever Hanzi changed (or meaning is still missing/broken), automatically call AI to update both the word meaning and the sentence translation!
+      const needsBgAiSentenceAndWordUpdate = Boolean(
+        (hanziChanged && !vslActiveTokenRef.pendingSentenceVi) ||
+        !newVi ||
+        newVi === newHanzi
+      );
 
       let targetTokIdx = vslActiveTokenRef.tokIdx;
 
@@ -19775,8 +19817,14 @@ Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa ngắn gọn 2-
       const tok = sub.tokens[targetTokIdx];
       tok.hanzi = newHanzi;
       tok.pinyin = newPinyin || (typeof getLocalTokenPinyin === 'function' ? getLocalTokenPinyin(newHanzi) : '');
-      tok.vietnamese = newVi || newHanzi;
+      tok.vietnamese = newVi || (needsBgAiSentenceAndWordUpdate ? '⏳ đang dịch...' : newHanzi);
       tok.isVocab = /[\u4e00-\u9fff]/.test(newHanzi);
+      tok._userEdited = true;
+
+      if ((userTypedCustomMeaning || vslActiveTokenRef.pendingSentenceVi) && newHanzi.length >= 2) {
+        FIXED_COMPOUND_PHRASES[newHanzi] = { pinyin: tok.pinyin, vietnamese: tok.vietnamese };
+        dictMetaMemoCache.delete(newHanzi);
+      }
 
       // Rebuild sentence text from tokens so full sentence stays 100% in sync
       sub.text = sub.tokens.map(t => t.hanzi || '').join('');
@@ -19785,34 +19833,37 @@ Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa ngắn gọn 2-
       }
       sub._aiEnriched = true;
       sub._aiProofreadV2 = true;
+      sub._aiSegmentedV3 = true;
 
-      // Also update in lesson.selectedWords and customGroups if the word was already saved
-      if (Array.isArray(lesson.selectedWords)) {
-        const selIdx = lesson.selectedWords.findIndex(w => w && (w.hanzi === origHanzi || w.hanzi === newHanzi));
-        if (selIdx >= 0) {
-          lesson.selectedWords[selIdx] = {
-            hanzi: newHanzi,
-            pinyin: tok.pinyin,
-            pos: 'từ vựng',
-            vietnamese: tok.vietnamese
-          };
+      const syncSavedWordLists = (finalPy, finalVi) => {
+        if (Array.isArray(lesson.selectedWords)) {
+          const selIdx = lesson.selectedWords.findIndex(w => w && (w.hanzi === origHanzi || w.hanzi === newHanzi));
+          if (selIdx >= 0) {
+            lesson.selectedWords[selIdx] = {
+              hanzi: newHanzi,
+              pinyin: finalPy,
+              pos: 'từ vựng',
+              vietnamese: finalVi
+            };
+          }
         }
-      }
-      const cg = customGroups.find(g => g.id === 'custom_' + lesson.id);
-      if (cg && Array.isArray(cg.words)) {
-        const cgIdx = cg.words.findIndex(w => w && (w.hanzi === origHanzi || w.hanzi === newHanzi));
-        if (cgIdx >= 0) {
-          cg.words[cgIdx] = {
-            hanzi: newHanzi,
-            pinyin: tok.pinyin,
-            pos: 'từ vựng',
-            vietnamese: tok.vietnamese
-          };
-          localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+        const cg = customGroups.find(g => g.id === 'custom_' + lesson.id);
+        if (cg && Array.isArray(cg.words)) {
+          const cgIdx = cg.words.findIndex(w => w && (w.hanzi === origHanzi || w.hanzi === newHanzi));
+          if (cgIdx >= 0) {
+            cg.words[cgIdx] = {
+              hanzi: newHanzi,
+              pinyin: finalPy,
+              pos: 'từ vựng',
+              vietnamese: finalVi
+            };
+            localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
+          }
         }
-      }
+      };
+      syncSavedWordLists(tok.pinyin, tok.vietnamese);
 
-      const savedSubIdx = vslActiveTokenRef.subIdx;
+      const savedSubIdx = subIdx;
       vslToggleTokenEditBox(false);
       vslComputeLessonHskStats(lesson);
       vslRenderCurrentSubtitleCard();
@@ -19846,29 +19897,58 @@ Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa ngắn gọn 2-
       if (btnToggleSave) btnToggleSave.onclick = () => toggleWordInVideoLesson(lesson.id, tok);
       vslUpdateDrawerButtonState((lesson.selectedWords || []).some(w => w.hanzi === tok.hanzi));
 
-      showToast(`✅ Đã lưu "${tok.hanzi}" (${tok.pinyin}: ${tok.vietnamese})`);
-
-      // Persist asynchronously in background
+      // Persist immediately
       saveVslLessonsToStorage(lesson.id);
       if (lesson.sourceType === 'youtube' && lesson.youtubeId) {
         vslSaveSharedMacSubtitles(lesson.youtubeId, lesson.subtitles);
       }
 
-      // If the new word wasn't in the local dictionary at all, refine meaning silently in background
-      if (needsBgAiRefine) {
-        vslAiFillEditedToken().then((aiRes) => {
-          if (!aiRes || !aiRes.vietnamese) return;
-          tok.vietnamese = String(aiRes.vietnamese).trim();
-          if (aiRes.pinyin) tok.pinyin = String(aiRes.pinyin).trim();
-          if (aiRes.sentenceVi) sub.vietnamese = String(aiRes.sentenceVi).trim();
-          saveVslLessonsToStorage(lesson.id);
-          if (activeVslLessonId === lesson.id && activeVslSubIndex === savedSubIdx) {
-            vslRenderCurrentSubtitleCard();
-            if (dMeaning && vslActiveTokenRef && vslActiveTokenRef.tokIdx === targetTokIdx) {
-              dMeaning.textContent = `Nghĩa: ${tok.vietnamese}`;
+      if (needsBgAiSentenceAndWordUpdate) {
+        showToast(`✨ Đã sửa "${tok.hanzi}" — đang tự động cập nhật lại nghĩa từ & dịch câu...`);
+        const prevLine = savedSubIdx > 0 && lesson.subtitles[savedSubIdx - 1] ? lesson.subtitles[savedSubIdx - 1].text : '';
+        const nextLine = savedSubIdx + 1 < lesson.subtitles.length && lesson.subtitles[savedSubIdx + 1] ? lesson.subtitles[savedSubIdx + 1].text : '';
+        vslRequestAiTokenAndSentenceUpdate(sub.text, newHanzi, prevLine, nextLine, lesson.title || '').then((aiRes) => {
+          if (!aiRes) return;
+          if (!userTypedCustomMeaning && aiRes.vietnamese) {
+            tok.vietnamese = String(aiRes.vietnamese).trim();
+          }
+          if (aiRes.pinyin && (!newPinyin || hanziChanged)) {
+            tok.pinyin = String(aiRes.pinyin).trim();
+          }
+          if (aiRes.sentenceVi) {
+            sub.vietnamese = String(aiRes.sentenceVi).trim();
+          }
+          if (tok.vietnamese && tok.vietnamese !== '⏳ đang dịch...' && newHanzi.length >= 2) {
+            FIXED_COMPOUND_PHRASES[newHanzi] = { pinyin: tok.pinyin, vietnamese: tok.vietnamese };
+            dictMetaMemoCache.delete(newHanzi);
+            if (typeof aiCache !== 'undefined' && aiCache) {
+              aiCache[newHanzi] = {
+                pinyin: tok.pinyin,
+                meaning: tok.vietnamese,
+                vietnamese: tok.vietnamese
+              };
             }
           }
+          syncSavedWordLists(tok.pinyin, tok.vietnamese);
+          saveVslLessonsToStorage(lesson.id);
+          if (lesson.sourceType === 'youtube' && lesson.youtubeId) {
+            vslSaveSharedMacSubtitles(lesson.youtubeId, lesson.subtitles);
+          }
+          if (activeVslLessonId === lesson.id && activeVslSubIndex === savedSubIdx) {
+            vslRenderCurrentSubtitleCard();
+            const refreshedEl = document.querySelector(`#vslSubtitleTokensBox .reading-token[data-sub-idx="${savedSubIdx}"][data-tok-idx="${targetTokIdx}"]`);
+            if (refreshedEl) refreshedEl.classList.add('active-token');
+            if (vslActiveTokenRef && vslActiveTokenRef.subIdx === savedSubIdx && vslActiveTokenRef.tokIdx === targetTokIdx) {
+              vslActiveTokenRef.origPinyin = tok.pinyin;
+              vslActiveTokenRef.origVi = tok.vietnamese;
+              if (dPinyin) dPinyin.textContent = tok.pinyin;
+              if (dMeaning) dMeaning.textContent = `Nghĩa: ${tok.vietnamese}`;
+            }
+          }
+          showToast(`✅ Đã cập nhật "${tok.hanzi}": ${tok.vietnamese}`);
         }).catch(() => {});
+      } else {
+        showToast(`✅ Đã lưu "${tok.hanzi}" (${tok.pinyin}: ${tok.vietnamese})`);
       }
     }
 
