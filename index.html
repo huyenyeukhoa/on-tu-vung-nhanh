@@ -9302,8 +9302,8 @@ Viết bằng tiếng Việt, đúng chính tả, không dùng chữ phồn th�
     }
     window.getHanViet = getHanViet;
 
-    // Fetch Single AI Explanation from OpenRouter (gemini-3.8-flash) - Returns cached or newly fetched data
-    async function fetchSingleAiExplanation(hanzi, pinyin, forceRefresh = false) {
+    // Fetch Single AI Explanation from OpenRouter (gemini-3.8-flash by default, gemini-2.5-flash for group preload) - Returns cached or newly fetched data
+    async function fetchSingleAiExplanation(hanzi, pinyin, forceRefresh = false, modelOverride = null) {
       if (!forceRefresh) {
         if (aiCache[hanzi] && aiCache[hanzi].context && aiCache[hanzi].context.includes('important-highlight')) {
           return aiCache[hanzi];
@@ -9339,6 +9339,7 @@ Lưu ý quan trọng:
 - Viết hoa chữ cái đầu tiên của câu và đầu tiêu đề theo đúng chuẩn chính tả tiếng Việt.
 - Tuyệt đối KHÔNG thêm icon loa 🔊 hay emoji âm thanh vào cuối câu chữ Hán, pinyin hoặc tiếng Việt.`;
 
+      const targetModel = modelOverride || 'google/gemini-3.8-flash';
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -9348,7 +9349,7 @@ Lưu ý quan trọng:
           'X-Title': 'HSK Vocab App'
         },
         body: JSON.stringify({
-          model: 'google/gemini-3.8-flash',
+          model: targetModel,
           reasoning: { enabled: false },
           messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
         })
@@ -9478,7 +9479,7 @@ Lưu ý quan trọng:
 
         if (!aiCache[item.hanzi] || !aiCache[item.hanzi].context || !aiCache[item.hanzi].context.includes('important-highlight')) {
           try {
-            await fetchSingleAiExplanation(item.hanzi, item.pinyin);
+            await fetchSingleAiExplanation(item.hanzi, item.pinyin, false, 'google/gemini-2.5-flash');
           } catch (e) {
             console.log('Preload skipped for', item.hanzi, e);
           }
