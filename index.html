@@ -4659,7 +4659,7 @@
       <div class="modal-header">
         <div class="modal-title" style="font-family: var(--font-mali); font-size: 16px; font-weight: 700; color: var(--primary-color); display: inline-flex; align-items: center; gap: 7px;">
           <span>⚙️ Cài đặt &amp; Sao lưu</span>
-          <span id="appVersionBadge" style="font-size: 11.5px; font-weight: 700; color: #766299; background: #f3eef9; border: 1px solid #dfd3ef; padding: 1.5px 7px; border-radius: 999px; line-height: 1.3;">v172</span>
+          <span id="appVersionBadge" style="font-size: 11.5px; font-weight: 700; color: #766299; background: #f3eef9; border: 1px solid #dfd3ef; padding: 1.5px 7px; border-radius: 999px; line-height: 1.3;">v204</span>
         </div>
         <button class="modal-close-btn" id="btnCloseApiKeyModal">✕</button>
       </div>
@@ -5545,12 +5545,34 @@
     let activeReadingArticleId = null;
     let unsavedAiStoryArticle = null;
 
+    function hydrateArticleTokensInPlace(art) {
+      if (!art || typeof art !== 'object') return art;
+      if ((!Array.isArray(art.tokens) || art.tokens.length === 0) && Array.isArray(art.paragraphs) && art.paragraphs.length > 0) {
+        art.tokens = art.paragraphs.reduce((acc, p) => acc.concat((p && Array.isArray(p.tokens)) ? p.tokens : []), []);
+      }
+      return art;
+    }
+
+    function stripReadingArticleForStorage(art) {
+      if (!art || typeof art !== 'object') return art;
+      const hasHeavyAudio = Boolean(art.audioUrl && art.audioUrl.length > 500);
+      const hasParagraphTokens = Array.isArray(art.paragraphs) && art.paragraphs.length > 0 && art.paragraphs.some(p => p && Array.isArray(p.tokens) && p.tokens.length > 0);
+      const hasDuplicateFlatTokens = hasParagraphTokens && Array.isArray(art.tokens) && art.tokens.length > 0;
+      if (!hasHeavyAudio && !hasDuplicateFlatTokens) return art;
+      const copy = Object.assign({}, art);
+      if (hasHeavyAudio) delete copy.audioUrl;
+      if (hasDuplicateFlatTokens) delete copy.tokens;
+      return copy;
+    }
+
+    readingArticles.forEach(hydrateArticleTokensInPlace);
+
     function findReadingArticleById(articleId) {
       if (!articleId) return null;
       const found = (readingArticles || []).find(a => String(a.id) === String(articleId));
-      if (found) return found;
+      if (found) return hydrateArticleTokensInPlace(found);
       if (unsavedAiStoryArticle && String(unsavedAiStoryArticle.id) === String(articleId)) {
-        return unsavedAiStoryArticle;
+        return hydrateArticleTokensInPlace(unsavedAiStoryArticle);
       }
       return null;
     }
@@ -5564,13 +5586,8 @@
     if (!Array.isArray(deletedReadingArticleIds)) deletedReadingArticleIds = [];
 
     function saveReadingArticlesToStorage(options = {}) {
-      const cleanArticles = (readingArticles || []).map(art => {
-        if (art && art.audioUrl && art.audioUrl.length > 500) {
-          const { audioUrl, ...rest } = art;
-          return rest;
-        }
-        return art;
-      });
+      (readingArticles || []).forEach(hydrateArticleTokensInPlace);
+      const cleanArticles = (readingArticles || []).map(stripReadingArticleForStorage);
       if (typeof mhIdbPutKv === 'function') {
         mhIdbPutKv('reading_articles', cleanArticles);
       }
@@ -5585,8 +5602,8 @@
     }
     window.saveReadingArticlesToStorage = saveReadingArticlesToStorage;
 
-    // Automatically strip heavy audioUrl strings from localStorage readingArticles to free up quota
-    if (readingArticles.some(a => a && a.audioUrl && a.audioUrl.length > 500)) {
+    // Automatically strip heavy audioUrl strings or duplicate flat tokens from localStorage readingArticles to free up quota
+    if (readingArticles.some(a => a && ((a.audioUrl && a.audioUrl.length > 500) || (Array.isArray(a.paragraphs) && a.paragraphs.length > 0 && Array.isArray(a.tokens) && a.tokens.length > 0)))) {
       saveReadingArticlesToStorage({ skipCloudSync: true });
     }
 
@@ -5772,10 +5789,37 @@
       element.addEventListener('mousemove', move);
     }
 
+    // Pre-compute and cache normalized search strings on dictionary/custom items
+    function ensureSearchCacheOnItem(it) {
+      if (!it || typeof it !== 'object') return it;
+      const h = it.hanzi || it.word || it.text || it.chinese || '';
+      const py = it.pinyin || '';
+      const vi = it.vietnamese || it.vi || it.meaning || '';
+      const upH = it.upgradedHanzi || '';
+      const upVi = it.upgradedVi || '';
+      if (it._pyNorm !== undefined && it._cachedH === h && it._cachedPy === py && it._cachedVi === vi && it._cachedUpH === upH && it._cachedUpVi === upVi) {
+        return it;
+      }
+      it._cachedH = h;
+      it._cachedPy = py;
+      it._cachedVi = vi;
+      it._cachedUpH = upH;
+      it._cachedUpVi = upVi;
+      it._hLower = h.toLowerCase();
+      it._pyLower = py.toLowerCase();
+      it._pyNorm = it._pyLower.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ü/g, 'v');
+      it._pyNoSpace = it._pyNorm.replace(/\s+/g, '');
+      it._viLower = vi.toLowerCase();
+      it._viNorm = it._viLower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      it._upHLower = upH.toLowerCase();
+      it._upViLower = upVi.toLowerCase();
+      return it;
+    }
+
     // Initialize Dictionary Data from hsk_dictionary.js
     function initDictionaryData() {
       if (typeof hsk6Data !== 'undefined' && hsk6Data !== null) {
-        hsk6List = Object.entries(hsk6Data).map(([hanzi, val], index) => ({
+        hsk6List = Object.entries(hsk6Data).map(([hanzi, val], index) => ensureSearchCacheOnItem({
           id: `hsk6_${index}`,
           hanzi: hanzi,
           pinyin: (val && val.py) || '',
@@ -5786,7 +5830,7 @@
       }
 
       if (typeof hsk79Data !== 'undefined' && hsk79Data !== null) {
-        hsk79List = Object.entries(hsk79Data).map(([hanzi, val], index) => ({
+        hsk79List = Object.entries(hsk79Data).map(([hanzi, val], index) => ensureSearchCacheOnItem({
           id: `hsk79_${index}`,
           hanzi: hanzi,
           pinyin: (val && val.py) || '',
@@ -6422,17 +6466,11 @@
       isCloudSyncing = true;
       updateCloudStatusBadge('🟡 Đang lưu...', false);
 
-      // Strip heavy base64 audio strings to keep cloud payload ultra-light (< 50KB) and super fast (~100ms)
+      // Strip heavy base64 audio strings & duplicate flat tokens to keep cloud payload ultra-light (< 35KB) and super fast (~100ms)
       const deletedSet = new Set((deletedReadingArticleIds || []).map(String));
       const cleanArticles = (readingArticles || [])
         .filter(a => !deletedSet.has(String(a.id)))
-        .map(art => {
-          if (art && art.audioUrl && art.audioUrl.length > 500) {
-            const { audioUrl, ...rest } = art;
-            return rest;
-          }
-          return art;
-        });
+        .map(stripReadingArticleForStorage);
 
       const payloadData = {
         customGroups: customGroups || [],
@@ -6611,7 +6649,7 @@
                 });
               }
             });
-            readingArticles = mergedArticles.filter(a => !deletedSet.has(String(a.id)));
+            readingArticles = mergedArticles.filter(a => !deletedSet.has(String(a.id))).map(hydrateArticleTokensInPlace);
             saveReadingArticlesToStorage({ skipCloudSync: true });
           }
 
@@ -7017,9 +7055,11 @@
     }
 
     // Render Group Selection Dropdown & Custom Mali Font Picker List
-    function renderGroupDropdown() {
+    function renderGroupDropdown(forceBuildList = false) {
       const selectGroupEl = document.getElementById('selectGroup');
       const listContainer = document.getElementById('groupPickerListContainer');
+      const pickerModalEl = document.getElementById('groupPickerModal');
+      const shouldBuildPickerList = Boolean(forceBuildList || (pickerModalEl && pickerModalEl.classList.contains('active')));
       const btnCustomGroupSelect = document.getElementById('btnCustomGroupSelect');
       const studyRow = btnCustomGroupSelect ? btnCustomGroupSelect.closest('.compact-study-row') : null;
       const hideGroupBtn = currentLevel === 'due' && !currentSearchQuery;
@@ -7029,8 +7069,10 @@
       if (studyRow) {
         studyRow.classList.toggle('no-group-btn', hideGroupBtn);
       }
-      if (listContainer) listContainer.innerHTML = '';
-      if (selectGroupEl) selectGroupEl.innerHTML = '';
+      if (shouldBuildPickerList) {
+        if (listContainer) listContainer.innerHTML = '';
+        if (selectGroupEl) selectGroupEl.innerHTML = '';
+      }
 
       if (currentLevel === 'custom') {
         if (!customGroups || customGroups.length === 0) {
@@ -7062,8 +7104,8 @@
           }
         }
 
-        // Populate modal picker list with ALL custom groups
-        if (listContainer) {
+        // Populate modal picker list with ALL custom groups (lazy: only when modal is open)
+        if (shouldBuildPickerList && listContainer) {
           // Track completion dates for custom groups (key: custom_<groupId>)
           let customDatesChanged = false;
           const customGroupInfo = customGroups.map(grp => {
@@ -7121,6 +7163,8 @@
           `;
 
           allDiv.addEventListener('click', () => {
+            const modal = document.getElementById('groupPickerModal');
+            if (modal) modal.classList.remove('active');
             clearVocabSearch(false);
             currentCustomGroupId = 'all_custom_groups';
             currentGroupIndex = 0;
@@ -7129,8 +7173,6 @@
             updateGroupWordsState();
             renderGroupDropdown();
             renderVocabList();
-            const modal = document.getElementById('groupPickerModal');
-            if (modal) modal.classList.remove('active');
           });
 
           listContainer.appendChild(allDiv);
@@ -7185,6 +7227,8 @@
             });
 
             itemDiv.addEventListener('click', () => {
+              const modal = document.getElementById('groupPickerModal');
+              if (modal) modal.classList.remove('active');
               clearVocabSearch(false);
               currentCustomGroupId = grp.id;
               currentGroupIndex = 0;
@@ -7193,8 +7237,6 @@
               updateGroupWordsState();
               renderGroupDropdown();
               renderVocabList();
-              const modal = document.getElementById('groupPickerModal');
-              if (modal) modal.classList.remove('active');
             });
 
             listContainer.appendChild(itemDiv);
@@ -7219,7 +7261,7 @@
             : (dueWords.length === 0 ? `Không có từ đến hạn` : `Nhóm ${currentGroupIndex + 1} (${s + 1}-${e})`);
         }
 
-        if (listContainer) {
+        if (shouldBuildPickerList && listContainer) {
           const queueAll = srsGetTodayQueue();
           const remaining = srsRemainingToday();
           const leeches = srsGetLeeches();
@@ -7262,6 +7304,8 @@
               <span class="group-picker-badge ${done ? 'completed' : 'in-progress'}">${done ? '🎉 ' : ''}${doneCount}/${slice.length} từ</span>
             `;
             itemDiv.addEventListener('click', () => {
+              const modal = document.getElementById('groupPickerModal');
+              if (modal) modal.classList.remove('active');
               clearVocabSearch(false);
               dueSubMode = 'due';
               currentGroupIndex = i;
@@ -7271,8 +7315,6 @@
               updateGroupWordsState();
               renderGroupDropdown();
               renderVocabList();
-              const modal = document.getElementById('groupPickerModal');
-              if (modal) modal.classList.remove('active');
             });
             listContainer.appendChild(itemDiv);
           }
@@ -7293,6 +7335,8 @@
             <span class="group-picker-badge in-progress">${leeches.length} từ</span>
           `;
           leechDiv.addEventListener('click', () => {
+            const modal = document.getElementById('groupPickerModal');
+            if (modal) modal.classList.remove('active');
             clearVocabSearch(false);
             dueSubMode = 'leech';
             currentGroupIndex = 0;
@@ -7302,8 +7346,6 @@
             updateGroupWordsState();
             renderGroupDropdown();
             renderVocabList();
-            const modal = document.getElementById('groupPickerModal');
-            if (modal) modal.classList.remove('active');
           });
           listContainer.appendChild(leechDiv);
         }
@@ -7339,8 +7381,8 @@
         }
       }
 
-      // Populate fallback select element
-      if (selectGroupEl) {
+      // Populate fallback select element & custom modal picker list only when modal is open
+      if (shouldBuildPickerList && selectGroupEl) {
         for (let i = 0; i < totalGroups; i++) {
           const start = words.length === 0 ? 0 : i * 100 + 1;
           const end = Math.min((i + 1) * 100, words.length);
@@ -7356,7 +7398,7 @@
       }
 
       // Populate custom modal picker list item for standard HSK levels
-      if (listContainer) {
+      if (shouldBuildPickerList && listContainer) {
         let indicesToRender = [];
         for (let i = 0; i < totalGroups; i++) {
           indicesToRender.push(i);
@@ -7417,6 +7459,8 @@
             `;
 
             itemDiv.addEventListener('click', () => {
+              const modal = document.getElementById('groupPickerModal');
+              if (modal) modal.classList.remove('active');
               clearVocabSearch(false);
               currentGroupIndex = i;
               if (selectGroupEl) selectGroupEl.value = i;
@@ -7425,8 +7469,6 @@
               updateGroupWordsState();
               renderGroupDropdown();
               renderVocabList();
-              const modal = document.getElementById('groupPickerModal');
-              if (modal) modal.classList.remove('active');
             });
 
             listContainer.appendChild(itemDiv);
@@ -7530,7 +7572,13 @@
       if (!q) return [];
       const qNormalized = q.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ü/g, 'v');
       const qNoSpace = qNormalized.replace(/\s+/g, '');
-      const tokens = rawQuery.split(/[,，;；\s\n\t]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
+      const rawTokens = rawQuery.split(/[,，;；\s\n\t]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
+      const parsedTokens = rawTokens.length > 1
+        ? rawTokens.map(tok => {
+            const tokNorm = tok.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ü/g, 'v');
+            return { tok, tokNorm, tokNoSpace: tokNorm.replace(/\s+/g, '') };
+          })
+        : null;
 
       // Ensure dictionary data is initialized
       if ((!hsk6List || hsk6List.length === 0) && typeof initDictionaryData === 'function') {
@@ -7538,125 +7586,118 @@
       }
 
       const seenHanzi = new Set();
-      const pool = [];
+      const results = [];
 
-      const addItems = (items, defaultLevel, defaultLabel) => {
+      const scanItems = (items, defaultLevel, defaultLabel) => {
         if (!items || !Array.isArray(items)) return;
         for (const it of items) {
           if (!it) continue;
           const hanzi = it.hanzi || it.word || it.text || it.chinese || '';
           if (!hanzi || seenHanzi.has(hanzi)) continue;
           seenHanzi.add(hanzi);
-          pool.push({
-            id: it.id || `search_${hanzi}`,
-            hanzi: hanzi,
-            pinyin: it.pinyin || '',
-            pos: it.pos || '',
-            vietnamese: it.vietnamese || it.vi || it.meaning || '',
-            level: it.level || defaultLevel,
-            levelLabel: it.level === 'hsk6' ? 'HSK 6' :
-                        it.level === 'hsk79' ? 'HSK 7-9' :
-                        it.level === 'upgrade' ? 'Nâng cấp' :
-                        defaultLabel,
-            upgrade1: it.upgrade1,
-            upgrade2: it.upgrade2,
-            upgradedHanzi: it.upgradedHanzi,
-            upgradedPinyin: it.upgradedPinyin,
-            upgradedVi: it.upgradedVi,
-            upgradedPos: it.upgradedPos,
-            status: getWordStatus(hanzi),
-            revealed: false
-          });
+
+          ensureSearchCacheOnItem(it);
+          const h = it._hLower;
+          const pyNorm = it._pyNorm;
+          const pyNoSpace = it._pyNoSpace;
+          const viNorm = it._viNorm;
+          const upH = it._upHLower;
+
+          let score = 0;
+          // Exact / prefix / substring match for full query
+          if (h === q || (upH && upH === q)) {
+            score = 100; // Exact Hanzi
+          } else if (h.startsWith(q) || (upH && upH.startsWith(q))) {
+            score = 80;  // Starts with Hanzi
+          } else if (h.includes(q) || (upH && upH.includes(q))) {
+            score = 60;  // Contains Hanzi
+          } else if (pyNoSpace && pyNoSpace === qNoSpace) {
+            score = 50;  // Exact Pinyin match
+          } else if (pyNorm && (pyNorm.startsWith(qNormalized) || pyNoSpace.startsWith(qNoSpace))) {
+            score = 40;  // Pinyin starts with
+          } else if (pyNorm && (pyNorm.includes(qNormalized) || pyNoSpace.includes(qNoSpace))) {
+            score = 30;  // Pinyin contains
+          } else if (viNorm && viNorm.includes(qNormalized)) {
+            score = 20;  // Vietnamese contains
+          }
+
+          // Token match for multi-term queries (e.g. "夫人，招生", "夫人 招生", "夫人, 招生")
+          if (parsedTokens) {
+            for (let tIdx = 0; tIdx < parsedTokens.length; tIdx++) {
+              const { tok, tokNorm, tokNoSpace } = parsedTokens[tIdx];
+              if (h === tok || (upH && upH === tok)) {
+                score = Math.max(score, 100);
+              } else if (h.startsWith(tok) || (upH && upH.startsWith(tok))) {
+                score = Math.max(score, 80);
+              } else if (h.includes(tok) || (upH && upH.includes(tok))) {
+                score = Math.max(score, 60);
+              } else if (pyNoSpace && pyNoSpace === tokNoSpace) {
+                score = Math.max(score, 50);
+              } else if (pyNorm && (pyNorm.startsWith(tokNorm) || pyNoSpace.startsWith(tokNoSpace))) {
+                score = Math.max(score, 40);
+              } else if (pyNorm && (pyNorm.includes(tokNorm) || pyNoSpace.includes(tokNoSpace))) {
+                score = Math.max(score, 30);
+              } else if (viNorm && viNorm.includes(tokNorm)) {
+                score = Math.max(score, 20);
+              }
+            }
+          }
+
+          if (score > 0) {
+            results.push({ it, hanzi, defaultLevel, defaultLabel, score });
+          }
         }
       };
 
       // 1. Current level words prioritized first
       if (currentLevel === 'hsk6') {
-        addItems(hsk6List, 'hsk6', 'HSK 6');
-        addItems(hsk79List, 'hsk79', 'HSK 7-9');
+        scanItems(hsk6List, 'hsk6', 'HSK 6');
+        scanItems(hsk79List, 'hsk79', 'HSK 7-9');
       } else {
-        addItems(hsk79List, 'hsk79', 'HSK 7-9');
-        addItems(hsk6List, 'hsk6', 'HSK 6');
+        scanItems(hsk79List, 'hsk79', 'HSK 7-9');
+        scanItems(hsk6List, 'hsk6', 'HSK 6');
       }
 
       // 2. Custom groups words
       if (Array.isArray(customGroups)) {
         customGroups.forEach(g => {
           if (g && Array.isArray(g.words)) {
-            addItems(g.words, 'custom', g.name || 'Tự tạo');
+            scanItems(g.words, 'custom', g.name || 'Tự tạo');
           }
         });
       }
 
       // 3. Upgrade words
       if (Array.isArray(upgradeList)) {
-        addItems(upgradeList, 'upgrade', 'Nâng cấp');
-      }
-
-      const results = [];
-
-      for (const item of pool) {
-        const h = item.hanzi.toLowerCase();
-        const py = (item.pinyin || '').toLowerCase();
-        const pyNorm = py.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ü/g, 'v');
-        const pyNoSpace = pyNorm.replace(/\s+/g, '');
-        const vi = (item.vietnamese || '').toLowerCase();
-        const viNorm = vi.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        const upH = (item.upgradedHanzi || '').toLowerCase();
-
-        let score = 0;
-        // Exact / prefix / substring match for full query
-        if (h === q || upH === q) {
-          score = 100; // Exact Hanzi
-        } else if (h.startsWith(q) || upH.startsWith(q)) {
-          score = 80;  // Starts with Hanzi
-        } else if (h.includes(q) || upH.includes(q)) {
-          score = 60;  // Contains Hanzi
-        } else if (pyNoSpace === qNoSpace) {
-          score = 50;  // Exact Pinyin match
-        } else if (pyNorm.startsWith(qNormalized) || pyNoSpace.startsWith(qNoSpace)) {
-          score = 40;  // Pinyin starts with
-        } else if (pyNorm.includes(qNormalized) || pyNoSpace.includes(qNoSpace)) {
-          score = 30;  // Pinyin contains
-        } else if (viNorm.includes(qNormalized)) {
-          score = 20;  // Vietnamese contains
-        }
-
-        // Token match for multi-term queries (e.g. "夫人，招生", "夫人 招生", "夫人, 招生")
-        if (tokens.length > 1) {
-          for (const tok of tokens) {
-            const tokNorm = tok.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ü/g, 'v');
-            const tokNoSpace = tokNorm.replace(/\s+/g, '');
-            if (h === tok || upH === tok) {
-              score = Math.max(score, 100);
-            } else if (h.startsWith(tok) || upH.startsWith(tok)) {
-              score = Math.max(score, 80);
-            } else if (h.includes(tok) || upH.includes(tok)) {
-              score = Math.max(score, 60);
-            } else if (pyNoSpace === tokNoSpace) {
-              score = Math.max(score, 50);
-            } else if (pyNorm.startsWith(tokNorm) || pyNoSpace.startsWith(tokNoSpace)) {
-              score = Math.max(score, 40);
-            } else if (pyNorm.includes(tokNorm) || pyNoSpace.includes(tokNoSpace)) {
-              score = Math.max(score, 30);
-            } else if (viNorm.includes(tokNorm)) {
-              score = Math.max(score, 20);
-            }
-          }
-        }
-
-        if (score > 0) {
-          results.push({ item, score });
-        }
+        scanItems(upgradeList, 'upgrade', 'Nâng cấp');
       }
 
       results.sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
-        return a.item.hanzi.length - b.item.hanzi.length; // shorter word first
+        return a.hanzi.length - b.hanzi.length; // shorter word first
       });
 
-      // Limit to top 100 results for silky fast 60fps rendering
-      return results.slice(0, 100).map(r => r.item);
+      // Limit to top 100 results for silky fast 60fps rendering & only allocate objects for top 100
+      return results.slice(0, 100).map(({ it, hanzi, defaultLevel, defaultLabel }) => ({
+        id: it.id || `search_${hanzi}`,
+        hanzi: hanzi,
+        pinyin: it.pinyin || '',
+        pos: it.pos || '',
+        vietnamese: it.vietnamese || it.vi || it.meaning || '',
+        level: it.level || defaultLevel,
+        levelLabel: it.level === 'hsk6' ? 'HSK 6' :
+                    it.level === 'hsk79' ? 'HSK 7-9' :
+                    it.level === 'upgrade' ? 'Nâng cấp' :
+                    defaultLabel,
+        upgrade1: it.upgrade1,
+        upgrade2: it.upgrade2,
+        upgradedHanzi: it.upgradedHanzi,
+        upgradedPinyin: it.upgradedPinyin,
+        upgradedVi: it.upgradedVi,
+        upgradedPos: it.upgradedPos,
+        status: getWordStatus(hanzi),
+        revealed: false
+      }));
     }
 
     function getGroupWordsRaw() {
@@ -10056,6 +10097,8 @@ Lưu ý:
         }
       }
 
+      const canLongPressDelete = (currentLevel === 'custom' || currentLevel === 'upgrade') && !currentSearchQuery;
+
       filteredData.forEach(item => {
         if (!item || !item.hanzi) return;
         try {
@@ -10066,34 +10109,36 @@ Lưu ý:
 
           row.innerHTML = buildRowContent(item);
 
-          // Enable long-press confirmation popup to delete word on custom/upgrade level
-          addLongPressListener(row, () => {
-            if (currentSearchQuery) return;
-            if (currentLevel === 'custom') {
-              if (currentCustomGroupId === 'all_custom_groups') {
-                const combined = getCurrentLevelWords();
-                const cIdx = combined.findIndex(w => w.hanzi === item.hanzi);
-                if (cIdx !== -1) {
-                  deleteCustomWord(cIdx);
+          // Enable long-press confirmation popup to delete word only on custom/upgrade level
+          if (canLongPressDelete) {
+            addLongPressListener(row, () => {
+              if (currentSearchQuery) return;
+              if (currentLevel === 'custom') {
+                if (currentCustomGroupId === 'all_custom_groups') {
+                  const combined = getCurrentLevelWords();
+                  const cIdx = combined.findIndex(w => w.hanzi === item.hanzi);
+                  if (cIdx !== -1) {
+                    deleteCustomWord(cIdx);
+                    return;
+                  }
+                }
+                const group = customGroups.find(g => g.id === currentCustomGroupId);
+                if (group) {
+                  const wIdx = group.words.findIndex(w => w.hanzi === item.hanzi);
+                  if (wIdx !== -1) {
+                    deleteCustomWord(wIdx);
+                    return;
+                  }
+                }
+              } else if (currentLevel === 'upgrade') {
+                const uIdx = upgradeList.findIndex(w => (w.upgradedHanzi || w.hanzi) === item.hanzi || w.hanzi === item.hanzi);
+                if (uIdx !== -1) {
+                  deleteUpgradeWord(uIdx);
                   return;
                 }
               }
-              const group = customGroups.find(g => g.id === currentCustomGroupId);
-              if (group) {
-                const wIdx = group.words.findIndex(w => w.hanzi === item.hanzi);
-                if (wIdx !== -1) {
-                  deleteCustomWord(wIdx);
-                  return;
-                }
-              }
-            } else if (currentLevel === 'upgrade') {
-              const uIdx = upgradeList.findIndex(w => (w.upgradedHanzi || w.hanzi) === item.hanzi || w.hanzi === item.hanzi);
-              if (uIdx !== -1) {
-                deleteUpgradeWord(uIdx);
-                return;
-              }
-            }
-          });
+            });
+          }
 
           fragment.appendChild(row);
         } catch (rowErr) {
@@ -10192,16 +10237,30 @@ Lưu ý:
       }
     }
 
-    // Update Bottom Counters & Filter Tab Counts
+    // Update Bottom Counters & Filter Tab Counts (single-pass over groupWordsState)
     function updateCounters() {
-      const currentPool = getCurrentLevelWords();
-      const groupWords = getGroupWords();
-
-      const correctCount = groupWords.filter(v => getWordStatus(v.hanzi) === 'correct').length;
-      const wrongCount = groupWords.filter(v => getWordStatus(v.hanzi) === 'wrong').length;
-      const reviewTabCount = groupWords.filter(v => getWordStatus(v.hanzi) === 'wrong' || reviewPinnedSet.has(v.hanzi)).length;
-      const newCount = groupWords.filter(v => getWordStatus(v.hanzi) === null).length;
+      const groupWords = groupWordsState || [];
+      let correctCount = 0;
+      let wrongCount = 0;
+      let reviewTabCount = 0;
+      let newCount = 0;
       const totalCount = groupWords.length;
+
+      for (let i = 0; i < totalCount; i++) {
+        const v = groupWords[i];
+        if (!v || !v.hanzi) continue;
+        const st = getWordStatus(v.hanzi);
+        if (st === 'correct') {
+          correctCount++;
+          if (reviewPinnedSet.has(v.hanzi)) reviewTabCount++;
+        } else if (st === 'wrong') {
+          wrongCount++;
+          reviewTabCount++;
+        } else {
+          newCount++;
+          if (reviewPinnedSet.has(v.hanzi)) reviewTabCount++;
+        }
+      }
 
       countCorrectEl.textContent = correctCount;
       countWrongEl.textContent = wrongCount;
@@ -10223,6 +10282,7 @@ Lưu ý:
     // ==========================================
     function renderLibraryResults() {
       const searchKeyword = inputLibrarySearch.value.trim().toLowerCase();
+      const searchKeywordNorm = searchKeyword ? searchKeyword.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ü/g, 'v') : '';
       const statusFilter = selectLibraryStatusFilter.value;
       const levelFilter = selectLibraryLevelFilter.value;
 
@@ -10236,29 +10296,38 @@ Lưu ý:
         pool.push(...upgradeList);
       }
 
-      // Filter results
-      let results = pool.filter(item => {
+      // Single pass for stats + search filtering using pre-computed search cache
+      const results = [];
+      let totalLearned = 0;
+      let totalWrong = 0;
+      const totalAll = pool.length;
+
+      for (let i = 0; i < totalAll; i++) {
+        const item = pool[i];
+        if (!item || !item.hanzi) continue;
         const status = getProgressStatus(item.hanzi);
-        if (statusFilter === 'correct' && status !== 'correct') return false;
-        if (statusFilter === 'wrong' && status !== 'wrong') return false;
-        if (statusFilter === 'new' && status !== null) return false;
+        if (status === 'correct') totalLearned++;
+        else if (status === 'wrong') totalWrong++;
+
+        if (statusFilter === 'correct' && status !== 'correct') continue;
+        if (statusFilter === 'wrong' && status !== 'wrong') continue;
+        if (statusFilter === 'new' && status !== null) continue;
 
         if (searchKeyword) {
-          const inHanzi = item.hanzi.toLowerCase().includes(searchKeyword);
-          const inUpgradedHanzi = (item.upgradedHanzi || '').toLowerCase().includes(searchKeyword);
-          const inPinyin = (item.pinyin || '').toLowerCase().includes(searchKeyword);
-          const inVi = (item.vietnamese || '').toLowerCase().includes(searchKeyword);
-          const inUpgradedVi = (item.upgradedVi || '').toLowerCase().includes(searchKeyword);
-          return inHanzi || inUpgradedHanzi || inPinyin || inVi || inUpgradedVi;
+          ensureSearchCacheOnItem(item);
+          const matched =
+            item._hLower.includes(searchKeyword) ||
+            (item._upHLower && item._upHLower.includes(searchKeyword)) ||
+            (item._pyLower && (item._pyLower.includes(searchKeyword) || item._pyNorm.includes(searchKeywordNorm))) ||
+            (item._viLower && (item._viLower.includes(searchKeyword) || item._viNorm.includes(searchKeywordNorm))) ||
+            (item._upViLower && item._upViLower.includes(searchKeyword));
+          if (!matched) continue;
         }
 
-        return true;
-      });
+        results.push(item);
+      }
 
       // Update Stats
-      const totalAll = pool.length;
-      const totalLearned = pool.filter(i => getProgressStatus(i.hanzi) === 'correct').length;
-      const totalWrong = pool.filter(i => getProgressStatus(i.hanzi) === 'wrong').length;
       const pct = totalAll > 0 ? ((totalLearned / totalAll) * 100).toFixed(1) : 0;
 
       libraryStatsEl.innerHTML = `
@@ -10272,8 +10341,9 @@ Lưu ý:
         return;
       }
 
-      // Render top 80 items lazy
+      // Render top 80 items lazy via DocumentFragment
       const displayList = results.slice(0, 80);
+      const frag = document.createDocumentFragment();
       displayList.forEach(item => {
         const status = getProgressStatus(item.hanzi);
         const row = document.createElement('div');
@@ -10305,15 +10375,17 @@ Lưu ý:
           </div>
         `;
 
-        libraryResultsListEl.appendChild(row);
+        frag.appendChild(row);
       });
 
       if (results.length > 80) {
         const moreDiv = document.createElement('div');
         moreDiv.style.cssText = 'padding: 12px; text-align: center; color: #6b7280; font-size: 13px; font-weight: 600;';
         moreDiv.textContent = `... còn thêm ${results.length - 80} từ khác (hãy gõ ô tìm kiếm để lọc)`;
-        libraryResultsListEl.appendChild(moreDiv);
+        frag.appendChild(moreDiv);
       }
+
+      libraryResultsListEl.appendChild(frag);
     }
 
     function handleLibraryMark(hanzi, newStatus, event) {
@@ -11039,7 +11111,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
       if (btnCustomGroupSelect) {
         btnCustomGroupSelect.addEventListener('click', () => {
-          renderGroupDropdown();
+          renderGroupDropdown(true);
           if (groupPickerModal) groupPickerModal.classList.add('active');
         });
       }
@@ -11064,7 +11136,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           subtabPickerOldest.style.color = '#6b7280';
           subtabPickerOldest.style.boxShadow = 'none';
 
-          renderGroupDropdown();
+          renderGroupDropdown(true);
         });
 
         subtabPickerOldest.addEventListener('click', () => {
@@ -11077,7 +11149,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           subtabPickerAll.style.color = '#6b7280';
           subtabPickerAll.style.boxShadow = 'none';
 
-          renderGroupDropdown();
+          renderGroupDropdown(true);
         });
       }
 
@@ -15801,13 +15873,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         const deletedSet = new Set((deletedReadingArticleIds || []).map(String));
         const cleanArticles = (readingArticles || [])
           .filter(a => a && a.id && !deletedSet.has(String(a.id)))
-          .map(art => {
-            if (art && art.audioUrl && art.audioUrl.length > 500) {
-              const { audioUrl, ...rest } = art;
-              return rest;
-            }
-            return art;
-          });
+          .map(stripReadingArticleForStorage);
         await mhIdbPutKv('reading_articles', cleanArticles);
         await mhPersonalSupaUpsert('reading_articles_data', {
           readingArticles: cleanArticles,
@@ -15832,7 +15898,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         const idbArts = await mhIdbGetKv('reading_articles');
         if (Array.isArray(idbArts) && idbArts.length > (readingArticles || []).length) {
           const delSet = new Set((deletedReadingArticleIds || []).map(String));
-          readingArticles = idbArts.filter(a => a && !delSet.has(String(a.id)));
+          readingArticles = idbArts.filter(a => a && !delSet.has(String(a.id))).map(hydrateArticleTokensInPlace);
         }
         // 2. Sync from Supabase personal vault (nbexbqzuqcsqirpepdju)
         const remoteReading = await mhPersonalSupaGet('reading_articles_data');
@@ -15861,9 +15927,10 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
                 });
               }
             }
-            readingArticles = merged;
-            mhIdbPutKv('reading_articles', readingArticles);
-            try { localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles)); } catch (e) {}
+            readingArticles = merged.map(hydrateArticleTokensInPlace);
+            const cleanMerged = readingArticles.map(stripReadingArticleForStorage);
+            mhIdbPutKv('reading_articles', cleanMerged);
+            try { localStorage.setItem('hsk_reading_articles', JSON.stringify(cleanMerged)); } catch (e) {}
           } else if ((readingArticles || []).length > 0) {
             mhSyncReadingAndNewsToVault();
           }
@@ -20112,7 +20179,11 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown):
         libraryModal.classList.remove('active');
       });
 
-      inputLibrarySearch.addEventListener('input', renderLibraryResults);
+      let librarySearchDebounceTimer = null;
+      inputLibrarySearch.addEventListener('input', () => {
+        clearTimeout(librarySearchDebounceTimer);
+        librarySearchDebounceTimer = setTimeout(renderLibraryResults, 120);
+      });
       selectLibraryLevelFilter.addEventListener('change', renderLibraryResults);
       selectLibraryStatusFilter.addEventListener('change', renderLibraryResults);
 
