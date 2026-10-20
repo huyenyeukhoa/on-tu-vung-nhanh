@@ -24,6 +24,7 @@
   <script src="./hsk_dictionary.js"></script>
   <script src="./opencc_t2cn.js"></script>
   <script src="./hanviet_dict.js"></script>
+  <script src="./pinyin_dict.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -3316,7 +3317,7 @@
       opacity: 0;
       pointer-events: none;
       transition: all 0.3s ease;
-      z-index: 300;
+      z-index: 99999;
     }
 
     .toast.show {
@@ -4066,7 +4067,13 @@
       width: 100%;
       box-sizing: border-box;
       overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
+      touch-action: pan-y manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
       background: rgba(252, 250, 255, 0.94);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
@@ -4085,13 +4092,40 @@
       margin: 0;
       width: 100%;
       padding-top: 2px;
+      will-change: transform;
+    }
+    .vsl-subtitle-gesture-pill {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      pointer-events: none;
+      z-index: 30;
+      background: rgba(88, 64, 128, 0.9);
+      color: #ffffff;
+      font-family: var(--font-mali);
+      font-size: 13px;
+      font-weight: 800;
+      padding: 6px 14px;
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(75, 59, 102, 0.25);
+      opacity: 0;
+      transition: opacity 0.16s ease, transform 0.16s ease;
+      white-space: nowrap;
+    }
+    .vsl-subtitle-gesture-pill.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
     }
     #vslSubtitleTokensBox {
       line-height: 1.55;
       font-size: 17.5px;
       font-family: var(--font-hanzi);
       text-indent: 0 !important;
-      word-break: break-word;
+      line-break: strict;
+      -webkit-line-break: strict;
+      word-break: keep-all;
+      overflow-wrap: break-word;
     }
     #vslSubtitleTokensBox .reading-token,
     #vslSubtitleTokensBox .reading-token.selected,
@@ -4105,6 +4139,10 @@
       border-radius: 4px !important;
       cursor: pointer;
       line-height: 1.2 !important;
+      white-space: nowrap !important;
+    }
+    #vslSubtitleTokensBox .reading-token .token-text {
+      white-space: nowrap !important;
     }
     #vslSubtitleTokensBox .reading-punct {
       display: inline !important;
@@ -4199,7 +4237,7 @@
       <button class="icon-action-btn srs-bell-btn" id="btnSrsBell" title="Ôn hôm nay (lịch ôn thông minh)">🔔<span class="srs-bell-count" id="srsBellCount" style="display:none;">0</span></button>
       <button class="icon-action-btn" id="btnOpenLibrary" title="Thư viện tra cứu & Đánh dấu tiến độ">📚</button>
       <button class="icon-action-btn" id="btnOpenReadingMode" title="Học từ vựng qua bài đọc">📖</button>
-      <button class="icon-action-btn" id="btnOpenVideoLearning" onclick="openVideoLearningModal()" title="Học từ vựng qua Video (YouTube, Douyin 抖音, Video từ máy)">🎬</button>
+      <button class="icon-action-btn srs-bell-btn" id="btnOpenVideoLearning" onclick="openVideoLearningModal()" title="Học từ vựng qua Video (YouTube, Douyin 抖音, Video từ máy)">🎬<span class="srs-bell-count" id="vslHeaderBgPctBadge" style="display:none; background:#684e92; font-size:8.5px; padding:0 3.5px;">0%</span></button>
       <button class="icon-action-btn" id="btnOpenImageScan" onclick="openImageScanModal()" title="Quét ảnh chụp màn hình (Xiaohongshu, Douyin, phim, sách) lấy từ vựng & tạo bài đọc">📸</button>
       <button class="icon-action-btn" id="btnOpenCustomGroups" title="Tạo nhóm từ riêng & AI điền">📁</button>
       <button class="icon-action-btn" id="btnApiKey" title="cài đặt OpenRouter API Key">🔑</button>
@@ -4934,6 +4972,27 @@
                 <span>📱 Tải video từ máy</span>
               </button>
             </div>
+
+            <div id="vslInlineProgressBox" style="display: none; flex-direction: column; gap: 6px; margin-top: 10px; padding: 9px 11px; background: linear-gradient(135deg, #f6f1fc 0%, #ede3fa 100%); border: 1.5px solid #d4c2ec; border-radius: 12px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 7px; min-width: 0; flex: 1;">
+                  <img src="./butterfly_loading.gif?v=177" style="width: 34px; height: 34px; object-fit: contain; flex-shrink: 0;" alt="Đang tạo..." />
+                  <div style="min-width: 0; flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span style="font-family: var(--font-mali); font-size: 12px; font-weight: 800; color: #4b3b66; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Đang tạo bài học...</span>
+                      <span id="vslInlineLoadingPct" style="background: #684e92; color: #fff; font-family: var(--font-mali); font-size: 10.5px; font-weight: 800; padding: 1.5px 7px; border-radius: 999px; flex-shrink: 0;">8%</span>
+                    </div>
+                    <div style="font-size: 10.5px; color: #6e5a8e; margin-top: 1px;">Có thể tắt cửa sổ để chạy ngầm</div>
+                  </div>
+                </div>
+                <button type="button" onclick="closeVideoLearningModal()" style="background: #fff; border: 1.2px solid #cbb6e8; color: #5c4385; font-family: var(--font-mali); font-size: 11px; font-weight: 800; padding: 5px 9px; border-radius: 9px; cursor: pointer; flex-shrink: 0; white-space: nowrap; box-shadow: 0 2px 6px rgba(104,78,146,0.08);">
+                  Ẩn chạy ngầm
+                </button>
+              </div>
+              <div style="width: 100%; height: 5px; background: rgba(104, 78, 146, 0.14); border-radius: 999px; overflow: hidden;">
+                <div id="vslInlineLoadingBar" style="width: 8%; height: 100%; background: linear-gradient(90deg, #8772a8 0%, #684e92 100%); border-radius: 999px; transition: width 0.25s ease;"></div>
+              </div>
+            </div>
           </div>
 
           <div class="rd-list-head" style="margin-top: 4px; margin-bottom: 8px;">
@@ -4953,6 +5012,9 @@
             Bài học Video
           </div>
           <div style="display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;">
+            <button type="button" id="vslBtnReproofreadAi" onclick="vslForceReproofreadCurrentVideo()" style="height: 27px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; gap: 3px; border-radius: 8px; background: #f3eef9; border: 1.2px solid #dfd3ef; cursor: pointer; color: #684e92; font-family: var(--font-mali); font-size: 11px; font-weight: 800; white-space: nowrap; transition: all 0.18s ease;" title="Chạy lại AI sửa lỗi đồng âm, phân tách từ và dịch lại phụ đề video này">
+              ✨ Sửa sub
+            </button>
             <button type="button" id="btnOpenStudyGroupFromVideo" onclick="openStudyGroupFromActiveVideo()" class="icon-action-btn" style="width: 27px; height: 27px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: #f3eef9; border: 1.2px solid #dfd3ef; cursor: pointer; padding: 0; color: #684e92;" title="Chuyển sang giao diện ôn tập 2 cột">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#684e92" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M22 10v6M2 10l10-5 10 5-10 5z" fill="rgba(104, 78, 146, 0.22)"/>
@@ -5013,10 +5075,11 @@
 
           <!-- Interactive Subtitle Box -->
           <div class="vsl-subtitle-stage" id="vslSubtitleStage">
-            <div class="vsl-subtitle-inner">
+            <div class="vsl-subtitle-inner" id="vslSubtitleInner">
               <div id="vslSubtitleTokensBox" class="show-vi-gloss"></div>
               <div id="vslSubtitleViBox" class="vsl-vi-box"></div>
             </div>
+            <div id="vslSubtitleGesturePill" class="vsl-subtitle-gesture-pill"></div>
           </div>
         </div>
 
@@ -9331,6 +9394,7 @@ Lưu ý quan trọng:
     let preloadGroupName = '';
 
     function updatePreloadUIStatus() {
+      const btn = document.getElementById('btnPreloadAiGroup');
       const btnLabel = document.getElementById('preloadAiLabel');
       const btnIcon = document.getElementById('preloadAiIcon');
       const statusBox = document.getElementById('preloadStatusBox');
@@ -9339,14 +9403,30 @@ Lưu ý quan trọng:
       const btnStop = document.getElementById('btnStopPreload');
 
       if (isPreloadingAi) {
-        if (btnIcon) btnIcon.textContent = '⏳';
-        if (btnLabel) btnLabel.textContent = `${preloadDoneCount}/${preloadTotal}`;
+        const remaining = Math.max(0, preloadTotal - preloadDoneCount);
+        if (btn) {
+          btn.classList.add('active');
+          btn.title = `AI đang tạo data: Còn lại ${remaining} từ (Đã nạp ${preloadDoneCount}/${preloadTotal})`;
+        }
+        if (btnIcon) {
+          btnIcon.innerHTML = `<span style="display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1; pointer-events:none;"><span style="font-size:11px; line-height:1;">⏳</span><span style="font-size:10px; font-weight:800; color:#5b3c8a; font-family:var(--font-mali), -apple-system, BlinkMacSystemFont, sans-serif; line-height:1; margin-top:2px; letter-spacing:-0.2px;">${remaining}</span></span>`;
+        }
+        if (btnLabel) btnLabel.textContent = `Còn ${remaining}`;
         if (statusBox) statusBox.style.display = 'block';
         if (statusText) statusText.textContent = `🎐 AI đang nạp ngầm (${preloadGroupName})...`;
-        if (statusSubText) statusSubText.textContent = `Đã nạp ${preloadDoneCount} / ${preloadTotal} từ`;
-        if (btnStop) btnStop.style.display = 'block';
+        if (statusSubText) statusSubText.textContent = `Còn lại ${remaining} từ (Đã nạp ${preloadDoneCount} / ${preloadTotal} từ)`;
+        if (btnStop) {
+          btnStop.style.display = 'block';
+          btnStop.textContent = stopPreloadFlag ? '⏳ Đang dừng...' : '⏸ Dừng Nạp Ngầm';
+        }
       } else {
-        if (btnIcon) btnIcon.textContent = '🎐';
+        if (btn) {
+          btn.classList.remove('active');
+          btn.title = 'Nạp AI nhóm: Mở hộp thoại nạp ngầm dữ liệu phân tích AI cho cả nhóm (🎐)';
+        }
+        if (btnIcon) {
+          btnIcon.innerHTML = '🎐';
+        }
         if (btnLabel) btnLabel.textContent = 'nạp AI nhóm';
         if (statusBox) statusBox.style.display = 'none';
         if (btnStop) btnStop.style.display = 'none';
@@ -11231,23 +11311,53 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
     function lookupDictMetaForToken(hanziStr) {
       if (!hanziStr) return { pinyin: '', vietnamese: '' };
+      const s = String(hanziStr).trim();
+      if (!s) return { pinyin: '', vietnamese: '' };
+
+      if (typeof FIXED_COMPOUND_PHRASES !== 'undefined' && FIXED_COMPOUND_PHRASES[s]) {
+        return {
+          pinyin: FIXED_COMPOUND_PHRASES[s].pinyin || '',
+          vietnamese: FIXED_COMPOUND_PHRASES[s].vietnamese || ''
+        };
+      }
+
       const lookup = typeof srsGetLookup === 'function' ? srsGetLookup() : null;
-      const lw = lookup ? lookup.get(hanziStr) : null;
+      const lw = lookup ? lookup.get(s) : null;
       if (lw && (lw.pinyin || lw.vietnamese || lw.vi || lw.meaning)) {
         return {
-          pinyin: lw.pinyin || '',
+          pinyin: lw.pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(s) : ''),
           vietnamese: lw.vietnamese || lw.vi || lw.meaning || ''
         };
       }
-      const dict = (typeof window !== 'undefined' && window.HSK_DICTIONARY) ? window.HSK_DICTIONARY : null;
-      if (dict && dict[hanziStr]) {
-        const entry = dict[hanziStr];
+
+      if (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[s]) {
+        const e6 = hsk6Data[s];
         return {
-          pinyin: entry.p || entry.pinyin || '',
-          vietnamese: entry.v || entry.vietnamese || entry.meaning || ''
+          pinyin: e6.py || e6.pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(s) : ''),
+          vietnamese: e6.vi || e6.vietnamese || e6.meaning || ''
         };
       }
-      return { pinyin: '', vietnamese: '' };
+      if (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[s]) {
+        const e79 = hsk79Data[s];
+        return {
+          pinyin: e79.py || e79.pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(s) : ''),
+          vietnamese: e79.vi || e79.vietnamese || e79.meaning || ''
+        };
+      }
+
+      const dict = (typeof window !== 'undefined' && window.HSK_DICTIONARY) ? window.HSK_DICTIONARY : null;
+      if (dict && dict[s]) {
+        const entry = dict[s];
+        return {
+          pinyin: entry.p || entry.py || entry.pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(s) : ''),
+          vietnamese: entry.v || entry.vi || entry.vietnamese || entry.meaning || ''
+        };
+      }
+
+      const fallbackPy = (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function')
+        ? window.getInstantPinyin(s)
+        : '';
+      return { pinyin: fallbackPy || '', vietnamese: '' };
     }
 
     async function parsePassageChunksWithAi(rawText, apiKey, options = {}) {
@@ -13939,10 +14049,27 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
     }
 
     let readingScrollSaveTimeout = null;
+    let readingTokenOpenedScrollTop = 0;
+    let readingTokenOpenedAt = 0;
+
+    function hideReadingTokenDrawerOnScroll() {
+      const drawer = document.getElementById('readingTokenDrawer');
+      if (drawer && drawer.style.display !== 'none') {
+        drawer.style.display = 'none';
+        document.querySelectorAll('#readingPassageContainer .reading-token.active-token').forEach(el => {
+          el.classList.remove('active-token');
+        });
+      }
+    }
+
     function handleReadingBodyScroll() {
       const scrollEl = document.getElementById('readingPassageContainer') || document.getElementById('readingViewModalBody');
       if (!scrollEl || !activeReadingArticleId) return;
       const top = scrollEl.scrollTop;
+
+      if (Date.now() - readingTokenOpenedAt > 120 && Math.abs(top - readingTokenOpenedScrollTop) >= 8) {
+        hideReadingTokenDrawerOnScroll();
+      }
 
       const btnTop = document.getElementById('btnReadingScrollToTop');
       if (btnTop) {
@@ -14656,7 +14783,12 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 
       btnToggleWordInReviewList.onclick = () => toggleWordInReadingArticle(articleId, tok);
 
-      if (readingTokenDrawer) readingTokenDrawer.style.display = 'block';
+      if (readingTokenDrawer) {
+        const scrollEl = document.getElementById('readingPassageContainer') || document.getElementById('readingViewModalBody');
+        readingTokenOpenedScrollTop = scrollEl ? scrollEl.scrollTop : 0;
+        readingTokenOpenedAt = Date.now();
+        readingTokenDrawer.style.display = 'block';
+      }
 
       // Auto speak token if toolbar "tự đọc" (autoSpeakOnTick) is enabled
       if (autoSpeakOnTick && tok.hanzi) {
@@ -14993,15 +15125,27 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       vslShowDashboardView();
     }
 
+    let vslActiveCreationCount = 0;
+
     function closeVideoLearningModal() {
       vslStopPlayers();
       const modal = document.getElementById('videoLearningModal');
+      const wasActive = !!(modal && modal.classList.contains('active'));
       if (modal) {
         modal.classList.remove('active');
         modal.classList.remove('studio-mode');
       }
       const drawer = document.getElementById('vslTokenDrawer');
       if (drawer) drawer.style.display = 'none';
+      const scanModal = document.getElementById('imageScanModal');
+      if (scanModal && vslActiveCreationCount > 0) {
+        scanModal.classList.remove('active');
+      }
+      if (wasActive && vslActiveCreationCount > 0) {
+        const pctEl = document.getElementById('vslInlineLoadingPct');
+        const pctTxt = pctEl ? pctEl.textContent : '';
+        showToast(`⏳ Đang chạy ngầm tạo video ${pctTxt ? '(' + pctTxt + ')' : ''}! Khi xong sẽ báo cho bạn nhé.`);
+      }
     }
 
     function vslShowDashboardView() {
@@ -15484,17 +15628,155 @@ Quy tắc bắt buộc:
     // Safe no-op for legacy HSK level map initializer call
     function buildHskLevelMap() {}
 
+    let _vslZhWordSegmenter = null;
+    function vslGetZhWordSegmenter() {
+      if (!_vslZhWordSegmenter && typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
+        try {
+          _vslZhWordSegmenter = new Intl.Segmenter('zh-CN', { granularity: 'word' });
+        } catch (e) {}
+      }
+      return _vslZhWordSegmenter;
+    }
+
+    // Check if a subtitle's token array is structurally broken (missing Pinyin or unsegmented >=10 char clauses)
+    function vslTokensNeedLocalRebuild(tokens) {
+      if (!Array.isArray(tokens) || tokens.length === 0) return true;
+      for (let i = 0; i < tokens.length; i++) {
+        const t = tokens[i];
+        const h = String((t && t.hanzi) || '').trim();
+        if (!h) continue;
+        const hasHan = /[\u4e00-\u9fff]/.test(h);
+        if (!hasHan) continue;
+        if (!t.pinyin || !String(t.pinyin).trim()) return true;
+        if (/[，。！？；：、“”‘’（）《》【】,.!?;:]/.test(h)) return true;
+        if (h.length >= 10) return true;
+      }
+      return false;
+    }
+
+    // Check if a subtitle needs AI proofreading/segmentation (including sentences where tokens were split into single chars without Vietnamese meanings)
+    function vslNeedsTokenRepair(tokens) {
+      if (vslTokensNeedLocalRebuild(tokens)) return true;
+      let missingViCount = 0;
+      let consecutiveSingleMissing = 0;
+      let maxConsecutiveSingleMissing = 0;
+      const particles = new Set(['的', '地', '得', '了', '着', '过', '吗', '呢', '吧', '啊', '呀', '哦', '嘛', '把', '被']);
+      for (let i = 0; i < tokens.length; i++) {
+        const t = tokens[i];
+        const h = String((t && t.hanzi) || '').trim();
+        if (!h || !/[\u4e00-\u9fff]/.test(h)) {
+          consecutiveSingleMissing = 0;
+          continue;
+        }
+        const hasVi = Boolean(t && t.vietnamese && String(t.vietnamese).trim());
+        const hasDict = Boolean(
+          (typeof FIXED_COMPOUND_PHRASES !== 'undefined' && FIXED_COMPOUND_PHRASES[h]) ||
+          (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[h]) ||
+          (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[h])
+        );
+        if (!hasVi && !hasDict && !particles.has(h)) {
+          missingViCount++;
+          if (h.length === 1) {
+            consecutiveSingleMissing++;
+            if (consecutiveSingleMissing > maxConsecutiveSingleMissing) {
+              maxConsecutiveSingleMissing = consecutiveSingleMissing;
+            }
+          } else {
+            consecutiveSingleMissing = 0;
+          }
+        } else {
+          consecutiveSingleMissing = 0;
+        }
+      }
+      return maxConsecutiveSingleMissing >= 2 || missingViCount >= 3;
+    }
+
+    // Segment a Chinese sentence into clean words using dictionary compounds + Intl.Segmenter('zh-CN')
+    function vslSegmentSentenceIntoWordStrings(sentence) {
+      const s = String(sentence || '').trim();
+      if (!s) return [];
+
+      const hasCompound = (w) =>
+        (typeof FIXED_COMPOUND_PHRASES !== 'undefined' && FIXED_COMPOUND_PHRASES[w]) ||
+        (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[w]) ||
+        (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[w]) ||
+        (typeof window !== 'undefined' && window.PINYIN_POLYPHONES && window.PINYIN_POLYPHONES[w]);
+
+      const segmenter = vslGetZhWordSegmenter();
+      if (segmenter) {
+        const rawParts = Array.from(segmenter.segment(s))
+          .map(x => x.segment)
+          .filter(x => x && x.trim().length > 0);
+        // Merge adjacent short segments if they form a known 2-4 char HSK/fixed compound
+        const merged = [];
+        let i = 0;
+        while (i < rawParts.length) {
+          let matched = false;
+          for (let span = Math.min(3, rawParts.length - i); span >= 2; span--) {
+            const candidate = rawParts.slice(i, i + span).join('');
+            if (candidate.length <= 4 && /^[\u4e00-\u9fff]+$/.test(candidate) && hasCompound(candidate)) {
+              merged.push(candidate);
+              i += span;
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            merged.push(rawParts[i].trim());
+            i++;
+          }
+        }
+        return merged.filter(Boolean);
+      }
+
+      // Fallback forward maximum matching (4 -> 2 chars, then single char) if Intl.Segmenter unavailable
+      const out = [];
+      let p = 0;
+      while (p < s.length) {
+        if (/\s/.test(s[p])) { p++; continue; }
+        if (!/[\u4e00-\u9fff]/.test(s[p])) {
+          let endP = p + 1;
+          if (/[a-zA-Z0-9.]/.test(s[p])) {
+            while (endP < s.length && /[a-zA-Z0-9.]/.test(s[endP])) endP++;
+          }
+          out.push(s.slice(p, endP));
+          p = endP;
+          continue;
+        }
+        let found = false;
+        for (let len = Math.min(4, s.length - p); len >= 2; len--) {
+          const sub = s.substr(p, len);
+          if (hasCompound(sub)) {
+            out.push(sub);
+            p += len;
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          out.push(s[p]);
+          p++;
+        }
+      }
+      return out;
+    }
+
     // Merge tiny fragmented subtitle pieces (e.g. 1-3 char orphan fragments from auto-CC) before AI analysis
     function vslNormalizeRawSegments(rawSegments) {
       const cleaned = (rawSegments || [])
-        .map(s => ({
-          start: Number(s.start) || 0,
-          end: Math.max((Number(s.start) || 0) + 0.6, Number(s.end) || ((Number(s.start) || 0) + 2.2)),
-          text: toSimplifiedChinese(String(s.text || '').replace(/\s+/g, ' ').trim()),
-          vietnamese: String(s.vietnamese || s.vi || s.vi_text || '').trim(),
-          tokens: Array.isArray(s.tokens) && s.tokens.length > 0 ? s.tokens : null,
-          _aiEnriched: !!(s._aiEnriched || (Array.isArray(s.tokens) && s.tokens.length > 0 && (s.vietnamese || s.vi)))
-        }))
+        .map(s => {
+          const hasValidTokens = Array.isArray(s.tokens) && s.tokens.length > 0 && !vslNeedsTokenRepair(s.tokens);
+          const isProofreadV2 = !!(s._aiProofreadV2 && hasValidTokens && (s.vietnamese || s.vi || s.vi_text));
+          return {
+            start: Number(s.start) || 0,
+            end: Math.max((Number(s.start) || 0) + 0.6, Number(s.end) || ((Number(s.start) || 0) + 2.2)),
+            text: toSimplifiedChinese(String(s.text || '').replace(/\s+/g, ' ').trim()),
+            vietnamese: String(s.vietnamese || s.vi || s.vi_text || '').trim(),
+            tokens: hasValidTokens ? s.tokens : null,
+            _aiEnriched: isProofreadV2,
+            _aiProofreadV2: isProofreadV2
+          };
+        })
         .filter(s => s.text.length > 0);
 
       if (cleaned.length <= 1) return cleaned;
@@ -15524,24 +15806,67 @@ Quy tắc bắt buộc:
       return merged;
     }
 
+    // Sanitize AI-returned tokens: preserve AI compound words & meanings (up to 9 chars) and ensure 100% of Chinese tokens have Pinyin
+    function vslSanitizeAiTokens(rawAiTokens) {
+      if (!Array.isArray(rawAiTokens) || rawAiTokens.length === 0) return [];
+      const initial = mergeFixedCompoundTokensInList(rawAiTokens.map(normalizeAiTokenItem).filter(Boolean));
+      const expanded = [];
+      for (let i = 0; i < initial.length; i++) {
+        const tok = initial[i];
+        if (!tok || !tok.hanzi) continue;
+        const h = String(tok.hanzi).trim();
+        if (!h) continue;
+        const hasHan = /[\u4e00-\u9fff]/.test(h);
+        if (!hasHan) {
+          expanded.push({ hanzi: h, pinyin: '', vietnamese: '', isVocab: false });
+          continue;
+        }
+        // Only split if AI returned an unsegmented >=10 char clause without meaning
+        if (h.length >= 10 && !(tok.vietnamese && String(tok.vietnamese).trim())) {
+          const subWords = vslSegmentSentenceIntoWordStrings(h);
+          for (const sw of subWords) {
+            const swHasHan = /[\u4e00-\u9fff]/.test(sw);
+            const meta = swHasHan ? lookupDictMetaForToken(sw) : { pinyin: '', vietnamese: '' };
+            const normSw = normalizeAiTokenItem({
+              hanzi: sw,
+              pinyin: meta.pinyin || '',
+              vietnamese: meta.vietnamese || '',
+              isVocab: swHasHan
+            });
+            if (normSw) expanded.push(normSw);
+          }
+        } else {
+          if (!tok.pinyin || !String(tok.pinyin).trim() || !tok.vietnamese || !String(tok.vietnamese).trim()) {
+            const meta = lookupDictMetaForToken(h);
+            if (!tok.pinyin || !String(tok.pinyin).trim()) tok.pinyin = meta.pinyin || '';
+            if ((!tok.vietnamese || !String(tok.vietnamese).trim()) && meta.vietnamese) tok.vietnamese = meta.vietnamese;
+          }
+          expanded.push(tok);
+        }
+      }
+      return mergeFixedCompoundTokensInList(expanded);
+    }
+
     function vslBuildLocalFallbackSubtitleItem(seg) {
       const finalSentenceText = toSimplifiedChinese(String((seg && seg.text) || '').replace(/\s+/g, ' ').trim());
-      if (seg && Array.isArray(seg.tokens) && seg.tokens.length > 0) {
+      if (seg && Array.isArray(seg.tokens) && seg.tokens.length > 0 && !vslTokensNeedLocalRebuild(seg.tokens)) {
+        const isProofread = !!(seg._aiProofreadV2 && !vslNeedsTokenRepair(seg.tokens));
         return {
           start: Number(seg.start) || 0,
           end: Math.max((Number(seg.start) || 0) + 0.6, Number(seg.end) || ((Number(seg.start) || 0) + 2.2)),
           text: finalSentenceText,
           vietnamese: String(seg.vietnamese || seg.vi || seg.vi_text || '').trim(),
           tokens: mergeFixedCompoundTokensInList(seg.tokens.map(normalizeAiTokenItem).filter(Boolean)),
-          _aiEnriched: !!seg._aiEnriched
+          _aiEnriched: isProofread,
+          _aiProofreadV2: isProofread
         };
       }
-      const segs = segmentTokenForHsk(finalSentenceText);
-      const tokens = mergeFixedCompoundTokensInList(segs.map(s => {
-        const isHan = /[\u4e00-\u9fff]/.test(s.text);
-        const meta = isHan ? lookupDictMetaForToken(s.text) : { pinyin: '', vietnamese: '' };
+      const wordStrings = vslSegmentSentenceIntoWordStrings(finalSentenceText);
+      const tokens = mergeFixedCompoundTokensInList(wordStrings.map(w => {
+        const isHan = /[\u4e00-\u9fff]/.test(w);
+        const meta = isHan ? lookupDictMetaForToken(w) : { pinyin: '', vietnamese: '' };
         return normalizeAiTokenItem({
-          hanzi: s.text,
+          hanzi: w,
           pinyin: meta.pinyin || '',
           vietnamese: meta.vietnamese || '',
           isVocab: isHan
@@ -15553,39 +15878,84 @@ Quy tắc bắt buộc:
         text: finalSentenceText,
         vietnamese: String((seg && (seg.vietnamese || seg.vi || seg.vi_text)) || '').trim(),
         tokens,
-        _aiEnriched: false
+        _aiEnriched: false,
+        _aiProofreadV2: false
       };
     }
 
+    function vslRepairLessonSubtitlesNow(lesson) {
+      if (!lesson || !Array.isArray(lesson.subtitles)) return false;
+      let changed = false;
+      for (let i = 0; i < lesson.subtitles.length; i++) {
+        const sub = lesson.subtitles[i];
+        if (!sub) continue;
+        if (vslTokensNeedLocalRebuild(sub.tokens)) {
+          const rebuilt = vslBuildLocalFallbackSubtitleItem({ ...sub, tokens: null, _aiEnriched: false, _aiProofreadV2: false });
+          sub.tokens = rebuilt.tokens;
+          sub._aiEnriched = false;
+          sub._aiProofreadV2 = false;
+          changed = true;
+        } else if (sub._aiProofreadV2 && vslNeedsTokenRepair(sub.tokens)) {
+          sub._aiEnriched = false;
+          sub._aiProofreadV2 = false;
+          changed = true;
+        }
+      }
+      if (changed) {
+        saveVslLessonsToStorage();
+      }
+      return changed;
+    }
+
+    let vslLastCreditWarnAt = 0;
+
     async function vslAnalyzeSingleBatchWithAi(batch, prevLine, nextLine, fullOverviewText, videoTitle) {
       const linesJson = JSON.stringify(batch.map((item, idx) => ({ idx, text: item.text })));
-      const prompt = `Bạn là biên tập viên phụ đề và chuyên gia dịch thuật HSK 6 - HSK 9.
-Dưới đây là các câu phụ đề tiếng Trung nằm trong một đoạn video liền mạch.
-Hãy đồng thời KIỂM LỖI CHÍNH TẢ/ĐỒNG ÂM (hiệu đính sub), PHÂN CỤM TỪ và DỊCH TIẾNG VIỆT chuẩn chỉnh:
+      const prompt = `Bạn là biên tập viên hiệu đính phụ đề tiếng Trung (ASR Proofreader) và chuyên gia dịch thuật HSK 6 - HSK 9.
+Các câu phụ đề dưới đây được tách từ giọng nói tự động (Whisper ASR) nên CÓ THỂ CHỨA LỖI ĐỒNG ÂM / GẦN ÂM SAI NGỮ CẢNH rất nặng.
+Ví dụ các lỗi đồng âm ASR điển hình cần sửa:
+- "日曼第二彩" -> phải sửa thành "日卖电视台" (Đài truyền hình Nichiuri trong Conan)
+- "毛李" -> "毛利" (Mouri / 毛利小五郎)
+- "高尔福明人答赛" -> "高尔夫名人大赛" (Giải đấu Golf Danh nhân)
+- "进而远职" -> "敬而远之" (thành ngữ: kính nhi viễn chi / luôn tránh xa)
+- "这动别数/别数" -> "这栋别墅/别墅"
+- "希望之官" -> "希望之馆", "心底下凉" -> "心地善良", "病事前" -> "病逝前", "穿业武装员" -> "长野五丈原"
+- Các lỗi trợ từ "的/地/得", "在/再", "做/作", tên nhân vật, địa danh, thành ngữ 4 chữ bị nghe trại âm.
+
+Hãy đối chiếu kỹ TIÊU ĐỀ VIDEO ("${videoTitle || 'Video tiếng Trung'}"), mạch truyện và câu liền trước/liền sau để ĐỒNG THỜI thực hiện 3 việc:
+1. SỬA TRIỆT ĐỂ MỌI LỖI ĐỒNG ÂM ASR sang chữ Hán giản thể chuẩn xác 100% theo ngữ cảnh thực tế của video.
+2. PHÂN CỤM TỪ VỰNG chuẩn (mỗi từ 1-4 chữ Hán, ví dụ tách "商品开发部" thành "商品|shāngpǐn|sản phẩm" và "开发部|kāifābù|bộ phận phát triển", giữ nguyên thành ngữ 4 chữ như "敬而远之") kèm Pinyin có dấu thanh và NGHĨA TIẾNG VIỆT NGẮN GỌN cho TẤT CẢ các từ.
+3. DỊCH CÂU ĐÃ SỬA sang tiếng Việt mượt mà, tự nhiên, chuẩn xác (bắt buộc dịch theo câu chữ Hán ĐÃ HIỆU ĐÍNH, tuyệt đối không dịch theo chữ nghe nhầm).
 
 Ngữ cảnh toàn đoạn video:
 - Tiêu đề: "${videoTitle || 'Video tiếng Trung'}"
-- Toàn văn để đối chiếu mạch logic: "${fullOverviewText}"
+- Tóm lược mạch bài: "${fullOverviewText}"
 ${prevLine ? `- Câu liền trước: "${prevLine}"\n` : ''}${nextLine ? `- Câu liền sau: "${nextLine}"\n` : ''}
-Danh sách câu cần xử lý:
+Danh sách câu cần hiệu đính & phân tích:
 ${linesJson}
 
-YÊU CẦU BẮT BUỘC:
-1. Trả về DUY NHẤT một mảng JSON hợp lệ có cùng số phần tử (${batch.length} phần tử):
+YÊU CẦU ĐỊNH DẠNG JSON BẮT BUỘC:
+Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} phần tử. Mỗi phần tử chữ Hán trong mảng "tokens" BẮT BUỘC có đủ 3 trường "Chữ Hán|pinyin có dấu thanh|nghĩa tiếng Việt ngắn gọn" (tuyệt đối không bỏ trống nghĩa tiếng Việt; chỉ với dấu câu mới ghi nguyên dấu câu như "，", "。"):
 [
   {
     "idx": 0,
-    "text": "Câu chữ Hán giản thể đã được sửa triệt để lỗi đồng âm ASR (như 的/地/得, 在/再, tên riêng, thành ngữ) và chuẩn hóa dấu câu",
-    "vietnamese": "Bản dịch tiếng Việt mượt mà, tự nhiên, khớp ngữ cảnh toàn đoạn",
+    "text": "Câu chữ Hán giản thể ĐÃ SỬA SẠCH lỗi đồng âm ASR và có dấu câu chuẩn",
+    "vietnamese": "Bản dịch tiếng Việt mượt mà, tự nhiên của câu sau khi đã sửa lỗi đồng âm",
     "tokens": [
-      {"hanzi": "Từ/cụm từ", "pinyin": "pinyin có dấu thanh chuẩn", "vietnamese": "nghĩa tiếng Việt ngắn gọn (1-4 từ) theo ngữ cảnh", "isVocab": true},
-      {"hanzi": "，", "pinyin": "", "vietnamese": "", "isVocab": false}
+      "曾经|céngjīng|từng",
+      "住|zhù|sống",
+      "在|zài|ở",
+      "这栋|zhè dòng|tòa này",
+      "别墅|biéshù|biệt thự",
+      "的|de|của",
+      "六个人|liù gè rén|sáu người",
+      "。"
     ]
   }
 ]
-2. QUY TẮC:
-- Khi ghép tất cả "hanzi" trong "tokens" của 1 câu phải khớp 100% với "text" của câu đó.
-- KHÔNG tách vụn chữ đơn lẻ nếu tạo thành từ ghép 2-4 chữ, thành ngữ (成语), quán dụng ngữ hoặc tên riêng.
+QUY TẮC:
+- MỌI từ/chữ Hán trong "tokens" BẮT BUỘC phải là chữ ĐÃ SỬA ĐÚNG, khớp 100% với "text", và có đầy đủ cả pinyin lẫn nghĩa tiếng Việt.
+- Mỗi từ trong "tokens" ưu tiên dài 1-4 chữ Hán (tách các cụm danh từ dài thành từng từ 2-3 chữ để người học bấm tra từ dễ dàng).
 - Bắt buộc dùng 100% chữ Hán giản thể (Simplified Chinese).`;
 
       let batchParsed = null;
@@ -15594,7 +15964,7 @@ YÊU CẦU BẮT BUỘC:
           const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: getOpenRouterHeaders(),
-            signal: AbortSignal.timeout(22000),
+            signal: AbortSignal.timeout(35000),
             body: JSON.stringify({
               model: modelName,
               temperature: 0.1,
@@ -15605,7 +15975,13 @@ YÊU CẦU BẮT BUỘC:
               ]
             })
           });
-          if (!response.ok) continue;
+          if (!response.ok) {
+            if ((response.status === 402 || response.status === 401) && Date.now() - vslLastCreditWarnAt > 12000) {
+              vslLastCreditWarnAt = Date.now();
+              showToast(response.status === 402 ? '⚠️ OpenRouter đang báo hết credit (402), vui lòng kiểm tra số dư!' : '⚠️ Lỗi OpenRouter API Key (401)!');
+            }
+            continue;
+          }
           const data = await response.json();
           const rawContent = data.choices && data.choices[0] && data.choices[0].message
             ? data.choices[0].message.content
@@ -15614,6 +15990,9 @@ YÊU CẦU BẮT BUỘC:
           const parsed = typeof safeParseJSON === 'function' ? safeParseJSON(cleaned) : JSON.parse(cleaned);
           if (Array.isArray(parsed)) {
             batchParsed = parsed;
+            break;
+          } else if (parsed && Array.isArray(parsed.items || parsed.subtitles || parsed.sentences)) {
+            batchParsed = parsed.items || parsed.subtitles || parsed.sentences;
             break;
           }
         } catch (err) {
@@ -15625,114 +16004,208 @@ YÊU CẦU BẮT BUỘC:
       for (let i = 0; i < batch.length; i++) {
         const orig = batch[i];
         const aiItem = Array.isArray(batchParsed)
-          ? (batchParsed.find(x => Number(x.idx) === i) || batchParsed[i])
+          ? (batchParsed.find(x => x && Number(x.idx) === i) || batchParsed[i])
           : null;
 
-        const finalSentenceText = (aiItem && aiItem.text)
+        const hasAiText = Boolean(aiItem && aiItem.text && String(aiItem.text).trim());
+        const finalSentenceText = hasAiText
           ? toSimplifiedChinese(String(aiItem.text).replace(/\s+/g, ' ').trim())
           : orig.text;
 
         let tokens = [];
         let enrichedOk = false;
         if (aiItem && Array.isArray(aiItem.tokens) && aiItem.tokens.length > 0) {
-          tokens = mergeFixedCompoundTokensInList(aiItem.tokens.map(normalizeAiTokenItem).filter(Boolean));
-          enrichedOk = true;
-        } else {
-          tokens = vslBuildLocalFallbackSubtitleItem({ ...orig, text: finalSentenceText }).tokens;
+          const sanitized = vslSanitizeAiTokens(aiItem.tokens);
+          if (sanitized.length > 0) {
+            tokens = sanitized;
+            enrichedOk = true;
+          }
+        }
+        if (!enrichedOk) {
+          tokens = vslBuildLocalFallbackSubtitleItem({ ...orig, text: finalSentenceText, tokens: null }).tokens;
+          if (hasAiText && tokens.length > 0) enrichedOk = true;
         }
 
         const viText = (aiItem && aiItem.vietnamese)
           ? String(aiItem.vietnamese).trim()
           : String(orig.vietnamese || orig.vi || '').trim();
 
+        const isProofread = !!(hasAiText && enrichedOk && viText);
         outBatch.push({
           start: orig.start,
           end: orig.end,
           text: finalSentenceText,
           vietnamese: viText,
           tokens,
-          _aiEnriched: !!(enrichedOk && viText)
+          _aiEnriched: isProofread,
+          _aiProofreadV2: isProofread
         });
       }
       return outBatch;
     }
 
-    const vslBackgroundEnrichingLocks = new Set();
+    const vslEnrichRunMap = new Map();
 
-    async function vslEnrichLessonSubtitlesInBackground(lesson) {
-      if (!lesson || !lesson.id || !Array.isArray(lesson.subtitles) || lesson.subtitles.length === 0) return;
-      if (vslBackgroundEnrichingLocks.has(lesson.id)) return;
-
-      const pendingIndices = [];
-      for (let i = 0; i < lesson.subtitles.length; i++) {
-        const s = lesson.subtitles[i];
-        if (!s || !s._aiEnriched || !s.vietnamese) {
-          pendingIndices.push(i);
-        }
+    function vslUpdateReproofreadBtnUI(lesson, isRunning) {
+      const btn = document.getElementById('vslBtnReproofreadAi');
+      if (!btn || !lesson || activeVslLessonId !== lesson.id) return;
+      const subs = lesson.subtitles || [];
+      if (!isRunning) {
+        btn.innerHTML = '✨ Sửa sub';
+        btn.style.background = '#f3eef9';
+        btn.style.borderColor = '#dfd3ef';
+        btn.style.color = '#684e92';
+        btn.style.opacity = '1';
+        return;
       }
-      if (pendingIndices.length === 0) return;
+      const doneCount = subs.filter(s => s && s._aiProofreadV2 && !vslNeedsTokenRepair(s.tokens)).length;
+      btn.innerHTML = `⏳ Sửa ${doneCount}/${subs.length}`;
+      btn.style.background = '#e6dcf5';
+      btn.style.borderColor = '#cbb8e8';
+      btn.style.color = '#523878';
+      btn.style.opacity = '1';
+    }
 
-      vslBackgroundEnrichingLocks.add(lesson.id);
+    async function vslForceReproofreadCurrentVideo() {
+      const lesson = findVslLessonById(activeVslLessonId);
+      if (!lesson || !Array.isArray(lesson.subtitles) || lesson.subtitles.length === 0) {
+        showToast('⚠️ Chưa có phụ đề để hiệu đính!');
+        return;
+      }
+      const drawer = document.getElementById('vslTokenDrawer');
+      if (drawer) drawer.style.display = 'none';
+
+      lesson.subtitles.forEach(s => {
+        if (s) {
+          s._aiProofreadV2 = false;
+          s._aiEnriched = false;
+        }
+      });
+      saveVslLessonsToStorage();
+      vslUpdateReproofreadBtnUI(lesson, true);
+      showToast('✨ Đang dùng AI sửa ngay câu đang xem và toàn bộ phụ đề...');
+      await vslEnrichLessonSubtitlesInBackground(lesson, true);
+    }
+
+    async function vslEnrichLessonSubtitlesInBackground(lesson, isManualTrigger = false) {
+      if (!lesson || !lesson.id || !Array.isArray(lesson.subtitles) || lesson.subtitles.length === 0) return;
+      if (!isManualTrigger && vslEnrichRunMap.has(lesson.id)) return;
+
+      const needsAi = (s) => !s || !s._aiProofreadV2 || !s.vietnamese || vslNeedsTokenRepair(s.tokens);
+      if (!lesson.subtitles.some(needsAi)) {
+        vslUpdateReproofreadBtnUI(lesson, false);
+        return;
+      }
+
+      const runId = Date.now() + Math.random();
+      vslEnrichRunMap.set(lesson.id, runId);
+      vslUpdateReproofreadBtnUI(lesson, true);
+      const attemptedInSession = new Set();
+      let toastedFirstBatch = false;
+      let isFirstWave = true;
+
       try {
         const subs = lesson.subtitles;
         const fullOverviewText = subs.map(s => s.text).join(' ').slice(0, 1800);
-        const batchSize = 15;
-        const chunks = [];
-        for (let i = 0; i < pendingIndices.length; i += batchSize) {
-          chunks.push(pendingIndices.slice(i, i + batchSize));
-        }
 
-        const concurrency = 4;
-        for (let w = 0; w < chunks.length; w += concurrency) {
-          const wave = chunks.slice(w, w + concurrency).map(async (idxList) => {
+        while (vslEnrichRunMap.get(lesson.id) === runId) {
+          // Dynamically prioritize sentences starting from activeVslSubIndex so whichever part of the video the user is watching is proofread first!
+          const pivot = (activeVslLessonId === lesson.id && activeVslSubIndex >= 0 && activeVslSubIndex < subs.length)
+            ? activeVslSubIndex
+            : 0;
+
+          const orderedPending = [];
+          for (let offset = 0; offset < subs.length; offset++) {
+            const idx = (pivot + offset) % subs.length;
+            if (!attemptedInSession.has(idx) && needsAi(subs[idx])) {
+              orderedPending.push(idx);
+            }
+          }
+          if (orderedPending.length === 0) break;
+
+          // Wave 1 uses a fast micro-batch of 3 sentences centered at the currently viewed subtitle so it repairs on screen in ~1.5s!
+          const waveChunks = [];
+          if (isFirstWave && (isManualTrigger || orderedPending[0] === pivot)) {
+            isFirstWave = false;
+            const fastSlice = orderedPending.slice(0, Math.min(3, orderedPending.length)).sort((a, b) => a - b);
+            fastSlice.forEach(idx => attemptedInSession.add(idx));
+            waveChunks.push(fastSlice);
+          } else {
+            isFirstWave = false;
+            const batchSize = 8;
+            const concurrency = 2;
+            for (let c = 0; c < concurrency && c * batchSize < orderedPending.length; c++) {
+              const slice = orderedPending.slice(c * batchSize, (c + 1) * batchSize).sort((a, b) => a - b);
+              slice.forEach(idx => attemptedInSession.add(idx));
+              waveChunks.push(slice);
+            }
+          }
+
+          await Promise.all(waveChunks.map(async (idxList) => {
             const batchItems = idxList.map(idx => subs[idx]);
             const firstIdx = idxList[0];
             const lastIdx = idxList[idxList.length - 1];
             const prevLine = firstIdx > 0 && subs[firstIdx - 1] ? subs[firstIdx - 1].text : '';
             const nextLine = lastIdx + 1 < subs.length && subs[lastIdx + 1] ? subs[lastIdx + 1].text : '';
             const analyzed = await vslAnalyzeSingleBatchWithAi(batchItems, prevLine, nextLine, fullOverviewText, lesson.title || '');
+            if (vslEnrichRunMap.get(lesson.id) !== runId) return;
+
+            let anySuccess = false;
             for (let k = 0; k < idxList.length; k++) {
               const targetIdx = idxList[k];
               if (analyzed[k] && subs[targetIdx]) {
                 subs[targetIdx] = analyzed[k];
+                if (analyzed[k]._aiProofreadV2) anySuccess = true;
               }
             }
-          });
-          await Promise.all(wave);
-          saveVslLessonsToStorage();
-          if (activeVslLessonId === lesson.id) {
-            vslComputeLessonHskStats(lesson);
-            vslRenderCurrentSubtitleCard();
-          }
+            saveVslLessonsToStorage();
+            if (activeVslLessonId === lesson.id) {
+              vslUpdateReproofreadBtnUI(lesson, true);
+              vslComputeLessonHskStats(lesson);
+              vslRenderCurrentSubtitleCard();
+              if (isManualTrigger && anySuccess && !toastedFirstBatch) {
+                toastedFirstBatch = true;
+                showToast('✅ Đã sửa xong câu đang xem! Đang tiếp tục hoàn thiện các câu còn lại...');
+              }
+            }
+          }));
         }
 
-        if (lesson.sourceType === 'youtube' && lesson.youtubeId) {
-          vslSaveSharedMacSubtitles(lesson.youtubeId, lesson.subtitles);
+        if (vslEnrichRunMap.get(lesson.id) === runId) {
+          if (lesson.sourceType === 'youtube' && lesson.youtubeId) {
+            vslSaveSharedMacSubtitles(lesson.youtubeId, lesson.subtitles);
+          }
+          if (isManualTrigger && activeVslLessonId === lesson.id) {
+            showToast('🎉 Đã hoàn tất hiệu đính AI cho toàn bộ phụ đề video!');
+          }
         }
       } catch (e) {
         console.warn('vslEnrichLessonSubtitlesInBackground error:', e);
       } finally {
-        vslBackgroundEnrichingLocks.delete(lesson.id);
+        if (vslEnrichRunMap.get(lesson.id) === runId) {
+          vslEnrichRunMap.delete(lesson.id);
+          vslUpdateReproofreadBtnUI(lesson, false);
+        }
       }
     }
 
     // Fast Single-Pass AI Proofreading + Phrase Segmentation + Translation
-    // For long videos (> 42 sentences), immediately analyzes the first 42 sentences in 1 parallel wave (~4s)
-    // so Studio opens right away, and enriches the remaining sentences seamlessly in the background!
+    // For long videos (> 24 sentences), immediately analyzes the first 24 sentences in 1 parallel wave (~3.5s)
+    // so Studio opens right away with AI-proofread opening subtitles, and enriches the rest in the background!
     async function vslAnalyzeSubtitlesWithAi(rawSegments, onProgress, videoTitle = '') {
       const cleanSegments = vslNormalizeRawSegments(rawSegments);
       if (cleanSegments.length === 0) return [];
 
-      // If cached segments already have full AI tokens & Vietnamese translations, return immediately!
-      const allAlreadyAnalyzed = cleanSegments.every(s => Array.isArray(s.tokens) && s.tokens.length > 0 && s.vietnamese);
+      // If cached segments have already passed v2 AI ASR proofreading & translation, return immediately!
+      const allAlreadyAnalyzed = cleanSegments.every(s => s._aiProofreadV2 && Array.isArray(s.tokens) && s.tokens.length > 0 && !vslNeedsTokenRepair(s.tokens) && s.vietnamese);
       if (allAlreadyAnalyzed) {
         if (typeof onProgress === 'function') onProgress(100);
-        return cleanSegments.map(s => vslBuildLocalFallbackSubtitleItem({ ...s, _aiEnriched: true }));
+        return cleanSegments.map(s => vslBuildLocalFallbackSubtitleItem({ ...s, _aiEnriched: true, _aiProofreadV2: true }));
       }
 
       const fullOverviewText = cleanSegments.map(s => s.text).join(' ').slice(0, 1800);
-      const batchSize = 14;
-      const immediateLimit = 42; // First 3 batches (~3-4 mins of video) analyzed immediately in 1 parallel wave!
+      const batchSize = 8;
+      const immediateLimit = 24; // First 3 batches (24 sentences) proofread immediately in 1 parallel wave!
       const immediateCount = Math.min(cleanSegments.length, immediateLimit);
       const immediateBatches = Math.ceil(immediateCount / batchSize);
       const analyzedSubtitles = cleanSegments.map(s => vslBuildLocalFallbackSubtitleItem(s));
@@ -15764,15 +16237,91 @@ YÊU CẦU BẮT BUỘC:
     }
 
     function vslShowLoadingOverlay(initialPct = 8) {
-      const scanModal = document.getElementById('imageScanModal');
-      if (scanModal) scanModal.classList.add('active');
-      return createSmoothPctController('scanImageLoadingPct', initialPct);
+      vslActiveCreationCount++;
+      const inlineBox = document.getElementById('vslInlineProgressBox');
+      const inlinePct = document.getElementById('vslInlineLoadingPct');
+      const inlineBar = document.getElementById('vslInlineLoadingBar');
+      const headerBadge = document.getElementById('vslHeaderBgPctBadge');
+      if (inlineBox) inlineBox.style.display = 'flex';
+      if (headerBadge) headerBadge.style.display = 'inline-flex';
+
+      let current = initialPct;
+      let target = initialPct;
+      let timer = null;
+      const syncUi = () => {
+        const pctVal = Math.min(100, Math.max(1, Math.round(current)));
+        const pctStr = `${pctVal}%`;
+        if (inlinePct) inlinePct.textContent = pctStr;
+        if (inlineBar) inlineBar.style.width = pctStr;
+        if (headerBadge) headerBadge.textContent = pctStr;
+      };
+      syncUi();
+
+      return {
+        setFloor(minPct) {
+          if (minPct > current) {
+            current = minPct;
+            syncUi();
+          }
+        },
+        glideTo(maxPct, stepMs = 320) {
+          target = maxPct;
+          if (timer) clearInterval(timer);
+          timer = setInterval(() => {
+            if (current < target) {
+              const step = current < 50 ? 2 : 1;
+              current = Math.min(target, current + step);
+              syncUi();
+            }
+          }, stepMs);
+        },
+        setTarget(maxPct, durationMs = 1500) {
+          const safeMax = Math.max(target, maxPct);
+          const diff = Math.max(1, safeMax - current);
+          const stepMs = Math.max(80, Math.min(380, Math.round(durationMs / diff)));
+          this.glideTo(safeMax, stepMs);
+        },
+        complete() {
+          this.stop(100);
+          return new Promise(r => setTimeout(r, 120));
+        },
+        stop(finalPct) {
+          if (timer) {
+            clearInterval(timer);
+            timer = null;
+          }
+          if (typeof finalPct === 'number') {
+            current = finalPct;
+            syncUi();
+          }
+        }
+      };
     }
 
     function vslHideLoadingOverlay(pctCtrl) {
       if (pctCtrl) pctCtrl.stop();
+      vslActiveCreationCount = Math.max(0, vslActiveCreationCount - 1);
+      if (vslActiveCreationCount === 0) {
+        const inlineBox = document.getElementById('vslInlineProgressBox');
+        const headerBadge = document.getElementById('vslHeaderBgPctBadge');
+        if (inlineBox) inlineBox.style.display = 'none';
+        if (headerBadge) headerBadge.style.display = 'none';
+      }
       const scanModal = document.getElementById('imageScanModal');
       if (scanModal) scanModal.classList.remove('active');
+    }
+
+    function vslFinalizeCreatedLesson(lesson, defaultToastMsg) {
+      renderVslVideoGrid();
+      const modal = document.getElementById('videoLearningModal');
+      const isModalOpenOnDash = !!(modal && modal.classList.contains('active') && !modal.classList.contains('studio-mode'));
+      if (isModalOpenOnDash) {
+        openVslLessonStudio(lesson.id);
+        showToast(defaultToastMsg);
+      } else {
+        const shortTitle = String((lesson && lesson.title) || 'Video mới').slice(0, 28);
+        showToast(`🎬 Đã tạo xong "${shortTitle}"! Mở 🎬 Học qua Video để xem nhé.`);
+      }
     }
 
     async function vslFetchProxiedMediaBuffer(mediaUrl, onProgress) {
@@ -15784,8 +16333,7 @@ YÊU CẦU BẮT BUỘC:
 
       while (safety < 35) {
         safety++;
-        const end = start + step - 1;
-        const resp = await fetch(`/.netlify/functions/resolve-douyin?action=proxy_chunk&url=${encodeURIComponent(mediaUrl)}&start=${start}&end=${end}`);
+        const resp = await fetch(`/.netlify/functions/resolve-douyin?action=proxy_chunk&u=${encodeURIComponent(mediaUrl)}&start=${start}&len=${step}`);
         if (!resp.ok) throw new Error(`Không tải được luồng media (${resp.status})`);
         const data = await resp.json();
         if (!data || !data.base64) throw new Error(data && data.error ? data.error : 'Dữ liệu media rỗng');
@@ -15799,7 +16347,7 @@ YÊU CẦU BẮT BUỘC:
           const m = String(data.contentRange).match(/\/(\d+)/);
           if (m) totalSize = Number(m[1]);
         }
-        start += data.byteLength || bytes.length;
+        start += Number(data.byteLength) || bytes.length;
         if (totalSize > 0 && typeof onProgress === 'function') {
           onProgress(Math.min(99, Math.round((start / totalSize) * 100)));
         }
@@ -15841,14 +16389,18 @@ YÊU CẦU BẮT BUỘC:
           try { val = JSON.parse(val); } catch (e) {}
         }
         if (Array.isArray(val) && val.length >= 2) {
-          return val.map(s => ({
-            start: Number(s.start) || 0,
-            end: s.end ? Number(s.end) : Number((Number(s.start || 0) + Math.max(0.8, Number(s.dur) || 2.5)).toFixed(2)),
-            text: toSimplifiedChinese(String(s.text || '').trim()),
-            vietnamese: String(s.vietnamese || s.vi || s.vi_text || '').trim(),
-            tokens: Array.isArray(s.tokens) && s.tokens.length > 0 ? s.tokens : null,
-            _aiEnriched: !!(s._aiEnriched || (Array.isArray(s.tokens) && s.tokens.length > 0 && (s.vietnamese || s.vi)))
-          })).filter(s => s.text);
+          return val.map(s => {
+            const isProofread = !!(s._aiProofreadV2 && Array.isArray(s.tokens) && s.tokens.length > 0 && (s.vietnamese || s.vi));
+            return {
+              start: Number(s.start) || 0,
+              end: s.end ? Number(s.end) : Number((Number(s.start || 0) + Math.max(0.8, Number(s.dur) || 2.5)).toFixed(2)),
+              text: toSimplifiedChinese(String(s.text || '').trim()),
+              vietnamese: String(s.vietnamese || s.vi || s.vi_text || '').trim(),
+              tokens: Array.isArray(s.tokens) && s.tokens.length > 0 ? s.tokens : null,
+              _aiEnriched: isProofread,
+              _aiProofreadV2: isProofread
+            };
+          }).filter(s => s.text);
         }
       } catch (e) {
         console.warn('vslFetchSharedMacSubtitles error:', e);
@@ -15868,7 +16420,8 @@ YÊU CẦU BẮT BUỘC:
           vi: s.vietnamese || s.vi || '',
           vi_text: s.vietnamese || s.vi_text || '',
           tokens: Array.isArray(s.tokens) && s.tokens.length > 0 ? s.tokens : undefined,
-          _aiEnriched: !!s._aiEnriched
+          _aiEnriched: !!s._aiProofreadV2,
+          _aiProofreadV2: !!s._aiProofreadV2
         }));
         await fetch(`${VSL_MAC_SUPA_URL}/rest/v1/app_settings?on_conflict=key`, {
           method: 'POST',
@@ -16197,8 +16750,7 @@ YÊU CẦU BẮT BUỘC:
 
           if (urlInput) urlInput.value = '';
           if (manualInput) manualInput.value = '';
-          openVslLessonStudio(lesson.id);
-          showToast('🎬 Đã hiệu đính sub, phân từ & dịch xong video YouTube!');
+          vslFinalizeCreatedLesson(lesson, '🎬 Đã hiệu đính sub, phân từ & dịch xong video YouTube!');
           return;
         }
 
@@ -16207,7 +16759,7 @@ YÊU CẦU BẮT BUỘC:
         const dyResp = await fetch('/.netlify/functions/resolve-douyin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: rawUrl })
+          body: JSON.stringify({ url: rawUrl, text: rawUrl })
         });
         const dyData = await dyResp.json();
         if (!dyResp.ok || !dyData || !dyData.videoUrl) {
@@ -16266,8 +16818,7 @@ YÊU CẦU BẮT BUỘC:
 
         if (urlInput) urlInput.value = '';
         if (manualInput) manualInput.value = '';
-        openVslLessonStudio(lesson.id);
-        showToast('🎬 Đã hiệu đính sub, phân từ & dịch xong video Douyin (抖音)!');
+        vslFinalizeCreatedLesson(lesson, '🎬 Đã hiệu đính sub, phân từ & dịch xong video Douyin (抖音)!');
       } catch (err) {
         vslHideLoadingOverlay(pctCtrl);
         alert('⚠️ ' + (err && err.message ? err.message : 'Có lỗi khi xử lý video.'));
@@ -16341,8 +16892,7 @@ YÊU CẦU BẮT BUỘC:
 
         if (fileInput) fileInput.value = '';
         if (manualInput) manualInput.value = '';
-        openVslLessonStudio(lesson.id);
-        showToast('📱 Đã tạo bài học từ video trên máy thành công!');
+        vslFinalizeCreatedLesson(lesson, '📱 Đã tạo bài học từ video trên máy thành công!');
       } catch (err) {
         if (fileInput) fileInput.value = '';
         vslHideLoadingOverlay(pctCtrl);
@@ -16467,22 +17017,28 @@ YÊU CẦU BẮT BUỘC:
       vslUpdatePlayPauseButtonUI(false);
     }
 
+    function vslPlayVideo() {
+      const lesson = findVslLessonById(activeVslLessonId);
+      if (!lesson) return;
+      vslAutoPausedForIndex = -1;
+      if (lesson.sourceType === 'youtube') {
+        if (vslYtPlayer && typeof vslYtPlayer.playVideo === 'function') {
+          try { vslYtPlayer.playVideo(); } catch (e) {}
+        }
+      } else {
+        const html5Vid = document.getElementById('vslHtml5Video');
+        if (html5Vid) html5Vid.play().catch(() => {});
+      }
+      vslUpdatePlayPauseButtonUI(true);
+    }
+
     function vslTogglePlayPause() {
       const lesson = findVslLessonById(activeVslLessonId);
       if (!lesson) return;
       if (vslIsPlaying()) {
         vslPauseVideo();
       } else {
-        vslAutoPausedForIndex = -1;
-        if (lesson.sourceType === 'youtube') {
-          if (vslYtPlayer && typeof vslYtPlayer.playVideo === 'function') {
-            vslYtPlayer.playVideo();
-          }
-        } else {
-          const html5Vid = document.getElementById('vslHtml5Video');
-          if (html5Vid) html5Vid.play().catch(() => {});
-        }
-        vslUpdatePlayPauseButtonUI(true);
+        vslPlayVideo();
       }
     }
 
@@ -16527,6 +17083,8 @@ YÊU CẦU BẮT BUỘC:
         lesson.selectedWords = [...cg.words];
       }
 
+      vslInitSubtitleStageGestures();
+      vslRepairLessonSubtitlesNow(lesson);
       vslComputeLessonHskStats(lesson);
       vslUpdateDisplayToggleButtonsUI();
       vslRenderCurrentSubtitleCard();
@@ -16630,19 +17188,17 @@ YÊU CẦU BẮT BUỘC:
       // Wait for programmatic seek (Prev / Next / Replay) to settle before auto-matching timestamps
       if (now < vslSeekLockUntil) return;
 
-      // 3. Find matching subtitle index for current timestamp without overlapping next sentence's start
+      // 3. Find matching subtitle index for current timestamp
       let matchedIdx = -1;
       for (let i = 0; i < subs.length; i++) {
-        const nextStart = (i + 1 < subs.length) ? subs[i + 1].start : Infinity;
-        const effectiveEnd = Math.min(subs[i].end, nextStart);
-        if (t >= subs[i].start - 0.03 && t < effectiveEnd - 0.02) {
+        if (t >= subs[i].start - 0.03 && t < subs[i].end - 0.02) {
           matchedIdx = i;
           break;
         }
       }
       if (matchedIdx === -1) {
         for (let i = subs.length - 1; i >= 0; i--) {
-          if (t >= subs[i].start - 0.02) {
+          if (t >= subs[i].start - 0.03) {
             matchedIdx = i;
             break;
           }
@@ -16655,26 +17211,301 @@ YÊU CẦU BẮT BUỘC:
       }
     }
 
-    function vslPrevSubtitle() {
+    let vslGesturePillTimer = null;
+    let vslLastSwipeAt = 0;
+    let vslLastDoubleTapAt = 0;
+    let vslSubtitleStageGesturesBound = false;
+
+    function vslShowGesturePill(text) {
+      const pill = document.getElementById('vslSubtitleGesturePill');
+      if (!pill) return;
+      pill.textContent = text;
+      pill.classList.add('show');
+      if (vslGesturePillTimer) clearTimeout(vslGesturePillTimer);
+      vslGesturePillTimer = setTimeout(() => {
+        pill.classList.remove('show');
+      }, 650);
+    }
+
+    function vslAnimateSubtitleSlide(fromOffsetPx) {
+      const inner = document.getElementById('vslSubtitleInner');
+      if (!inner) return;
+      inner.style.transition = 'none';
+      inner.style.transform = `translateX(${fromOffsetPx}px)`;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          inner.style.transition = 'transform 0.18s cubic-bezier(0.22, 1, 0.36, 1)';
+          inner.style.transform = 'translateX(0)';
+        });
+      });
+    }
+
+    function vslPrevSubtitle(fromSwipe = false) {
       const lesson = findVslLessonById(activeVslLessonId);
       if (!lesson || !lesson.subtitles || !lesson.subtitles.length) return;
+      const drawer = document.getElementById('vslTokenDrawer');
+      if (drawer) drawer.style.display = 'none';
       activeVslSubIndex = Math.max(0, activeVslSubIndex - 1);
       vslRenderCurrentSubtitleCard();
       vslSeekTo(lesson.subtitles[activeVslSubIndex].start, true);
+      if (fromSwipe) {
+        vslAnimateSubtitleSlide(-26);
+        vslShowGesturePill(`⏮ Câu ${activeVslSubIndex + 1}/${lesson.subtitles.length}`);
+      }
     }
 
-    function vslNextSubtitle() {
+    function vslNextSubtitle(fromSwipe = false) {
       const lesson = findVslLessonById(activeVslLessonId);
       if (!lesson || !lesson.subtitles || !lesson.subtitles.length) return;
+      const drawer = document.getElementById('vslTokenDrawer');
+      if (drawer) drawer.style.display = 'none';
       activeVslSubIndex = Math.min(lesson.subtitles.length - 1, activeVslSubIndex + 1);
       vslRenderCurrentSubtitleCard();
       vslSeekTo(lesson.subtitles[activeVslSubIndex].start, true);
+      if (fromSwipe) {
+        vslAnimateSubtitleSlide(26);
+        vslShowGesturePill(`⏭ Câu ${activeVslSubIndex + 1}/${lesson.subtitles.length}`);
+      }
     }
 
-    function vslReplayCurrentSubtitle() {
+    function vslAnimateSubtitleSlideY(fromOffsetPx) {
+      const inner = document.getElementById('vslSubtitleInner');
+      if (!inner) return;
+      inner.style.transition = 'none';
+      inner.style.transform = `translateY(${fromOffsetPx}px)`;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          inner.style.transition = 'transform 0.18s cubic-bezier(0.22, 1, 0.36, 1)';
+          inner.style.transform = 'translateY(0)';
+        });
+      });
+    }
+
+    function vslInitSubtitleStageGestures() {
+      if (vslSubtitleStageGesturesBound) return;
+      const stage = document.getElementById('vslSubtitleStage');
+      const drawer = document.getElementById('vslTokenDrawer');
+      if (!stage) return;
+      vslSubtitleStageGesturesBound = true;
+
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let startScrollTop = 0;
+      let isSwipingH = false;
+      let isSwipingDown = false;
+      let isScrollingV = false;
+      let lastTapTime = 0;
+      let lastTapX = 0;
+      let lastTapY = 0;
+      let wasPlayingBeforeFirstTap = false;
+
+      const isInteractiveDrawerControl = (target) => {
+        if (!target || !target.closest) return false;
+        return Boolean(target.closest('button, #vslDrawerHanzi, #vslBtnSpeakDrawerWord, #vslBtnToggleWordInReviewList'));
+      };
+
+      const onTouchStart = (e) => {
+        if (!e.touches || e.touches.length !== 1) return;
+        if (isInteractiveDrawerControl(e.target)) return;
+        const t = e.touches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        startScrollTop = stage.scrollTop || 0;
+        isSwipingH = false;
+        isSwipingDown = false;
+        isScrollingV = false;
+        if (Date.now() - lastTapTime > 360) {
+          wasPlayingBeforeFirstTap = vslIsPlaying();
+        }
+      };
+
+      const onTouchMove = (e) => {
+        if (!e.touches || e.touches.length !== 1) return;
+        const t = e.touches[0];
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+
+        if (!isSwipingH && !isSwipingDown && !isScrollingV) {
+          if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+            isSwipingH = true;
+          } else if (dy > 12 && Math.abs(dy) > Math.abs(dx) * 1.2 && startScrollTop <= 2) {
+            isSwipingDown = true;
+          } else if (Math.abs(dy) > 14) {
+            isScrollingV = true;
+          }
+        }
+
+        if (isSwipingH) {
+          if (e.cancelable) e.preventDefault();
+          const inner = document.getElementById('vslSubtitleInner');
+          if (inner) {
+            inner.style.transition = 'none';
+            const clamped = Math.max(-56, Math.min(56, dx * 0.38));
+            inner.style.transform = `translateX(${clamped}px)`;
+          }
+        } else if (isSwipingDown) {
+          if (e.cancelable) e.preventDefault();
+          const inner = document.getElementById('vslSubtitleInner');
+          if (inner) {
+            inner.style.transition = 'none';
+            const clampedY = Math.max(0, Math.min(44, dy * 0.36));
+            inner.style.transform = `translateY(${clampedY}px)`;
+          }
+        }
+      };
+
+      const onTouchEnd = (e) => {
+        if (isInteractiveDrawerControl(e.target)) return;
+        const inner = document.getElementById('vslSubtitleInner');
+        const t = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
+        if (!t) return;
+
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+
+        if (isSwipingH) {
+          if (inner) {
+            inner.style.transition = 'transform 0.18s ease-out';
+            inner.style.transform = 'translateX(0)';
+          }
+          lastTapTime = 0;
+          if (Math.abs(dx) >= 36) {
+            vslLastSwipeAt = Date.now();
+            if (dx < 0) {
+              vslNextSubtitle(true);
+            } else {
+              vslPrevSubtitle(true);
+            }
+          }
+          isSwipingH = false;
+          return;
+        }
+
+        if (isSwipingDown) {
+          if (inner) {
+            inner.style.transition = 'transform 0.18s ease-out';
+            inner.style.transform = 'translateY(0)';
+          }
+          lastTapTime = 0;
+          if (dy >= 34) {
+            vslLastSwipeAt = Date.now();
+            vslReplayCurrentSubtitle(true);
+          }
+          isSwipingDown = false;
+          return;
+        }
+
+        if (isScrollingV || Math.hypot(dx, dy) > 18) return;
+
+        const now = Date.now();
+        const dt = now - lastTapTime;
+        const tapDist = Math.hypot(t.clientX - lastTapX, t.clientY - lastTapY);
+        const hitToken = Boolean(e.target && e.target.closest && e.target.closest('.reading-token'));
+
+        if (dt > 35 && dt <= 360 && tapDist < (hitToken ? 38 : 60)) {
+          if (e.cancelable) e.preventDefault();
+          vslLastDoubleTapAt = now;
+          lastTapTime = 0;
+
+          const tokenDrawer = document.getElementById('vslTokenDrawer');
+          if (wasPlayingBeforeFirstTap) {
+            vslPauseVideo();
+            if (hitToken && tokenDrawer) {
+              tokenDrawer.style.display = 'none';
+              document.querySelectorAll('#vslSubtitleTokensBox .reading-token.active-token').forEach(el => el.classList.remove('active-token'));
+            }
+            vslShowGesturePill('⏸ Tạm dừng');
+          } else {
+            if (tokenDrawer) tokenDrawer.style.display = 'none';
+            document.querySelectorAll('#vslSubtitleTokensBox .reading-token.active-token').forEach(el => el.classList.remove('active-token'));
+            vslPlayVideo();
+            vslShowGesturePill('▶ Phát');
+          }
+          return;
+        }
+
+        lastTapTime = now;
+        lastTapX = t.clientX;
+        lastTapY = t.clientY;
+      };
+
+      const onTouchCancel = () => {
+        isSwipingH = false;
+        isSwipingDown = false;
+        isScrollingV = false;
+        const inner = document.getElementById('vslSubtitleInner');
+        if (inner) {
+          inner.style.transition = 'transform 0.18s ease-out';
+          inner.style.transform = 'translate(0, 0)';
+        }
+      };
+
+      stage.addEventListener('touchstart', onTouchStart, { passive: true });
+      stage.addEventListener('touchmove', onTouchMove, { passive: false });
+      stage.addEventListener('touchend', onTouchEnd, { passive: false });
+      stage.addEventListener('touchcancel', onTouchCancel, { passive: true });
+
+      if (drawer) {
+        drawer.addEventListener('touchstart', onTouchStart, { passive: true });
+        drawer.addEventListener('touchmove', onTouchMove, { passive: false });
+        drawer.addEventListener('touchend', onTouchEnd, { passive: false });
+        drawer.addEventListener('touchcancel', onTouchCancel, { passive: true });
+      }
+
+      // Desktop double-click and mouse drag support
+      stage.addEventListener('dblclick', (e) => {
+        if (Date.now() - vslLastDoubleTapAt < 500) return;
+        if (isInteractiveDrawerControl(e.target)) return;
+        e.preventDefault();
+        vslLastDoubleTapAt = Date.now();
+        const tokenDrawer = document.getElementById('vslTokenDrawer');
+        if (vslIsPlaying()) {
+          vslPauseVideo();
+          vslShowGesturePill('⏸ Tạm dừng');
+        } else {
+          if (tokenDrawer) tokenDrawer.style.display = 'none';
+          document.querySelectorAll('#vslSubtitleTokensBox .reading-token.active-token').forEach(el => el.classList.remove('active-token'));
+          vslPlayVideo();
+          vslShowGesturePill('▶ Phát');
+        }
+      });
+
+      let mouseDown = false;
+      let mouseStartX = 0;
+      let mouseStartY = 0;
+      stage.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        mouseDown = true;
+        mouseStartX = e.clientX;
+        mouseStartY = e.clientY;
+      });
+      window.addEventListener('mouseup', (e) => {
+        if (!mouseDown) return;
+        mouseDown = false;
+        const dx = e.clientX - mouseStartX;
+        const dy = e.clientY - mouseStartY;
+        if (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+          vslLastSwipeAt = Date.now();
+          if (dx < 0) vslNextSubtitle(true);
+          else vslPrevSubtitle(true);
+        } else if (dy >= 48 && Math.abs(dy) > Math.abs(dx) * 1.4 && (stage.scrollTop || 0) <= 2) {
+          vslLastSwipeAt = Date.now();
+          vslReplayCurrentSubtitle(true);
+        }
+      });
+    }
+
+    function vslReplayCurrentSubtitle(fromSwipe = false) {
       const lesson = findVslLessonById(activeVslLessonId);
       if (!lesson || !lesson.subtitles || !lesson.subtitles[activeVslSubIndex]) return;
+      const drawer = document.getElementById('vslTokenDrawer');
+      if (drawer) drawer.style.display = 'none';
+      document.querySelectorAll('#vslSubtitleTokensBox .reading-token.active-token').forEach(el => el.classList.remove('active-token'));
       vslSeekTo(lesson.subtitles[activeVslSubIndex].start, true);
+      if (fromSwipe) {
+        vslAnimateSubtitleSlideY(18);
+        vslShowGesturePill('🔊 Phát lại câu này');
+      }
     }
 
     function vslToggleLoopSentence() {
@@ -16838,16 +17669,19 @@ YÊU CẦU BẮT BUỘC:
       const lookup = srsGetLookup();
       const savedSet = new Set((lesson.selectedWords || []).map(w => w.hanzi));
 
-      if (!Array.isArray(sub.tokens) || sub.tokens.length === 0) {
-        sub.tokens = vslBuildLocalFallbackSubtitleItem(sub).tokens;
+      if (vslTokensNeedLocalRebuild(sub.tokens)) {
+        sub.tokens = vslBuildLocalFallbackSubtitleItem({ ...sub, tokens: null, _aiEnriched: false, _aiProofreadV2: false }).tokens;
+      }
+      if ((!sub._aiProofreadV2 || vslNeedsTokenRepair(sub.tokens)) && !vslEnrichRunMap.has(lesson.id)) {
+        vslEnrichLessonSubtitlesInBackground(lesson);
       }
       const tokens = sub.tokens;
 
-      tokBox.innerHTML = tokens.map((tok, tIdx) => {
+      const renderedParts = tokens.map((tok, tIdx) => {
         const h = tok.hanzi || '';
         const isPunct = !tok.isVocab && !/[\u4e00-\u9fff]/.test(h);
         if (isPunct) {
-          return `<span class="reading-punct">${escapeHtml(h)}</span>`;
+          return { isPunct: true, text: h, html: `<span class="reading-punct">${escapeHtml(h)}</span>` };
         }
 
         const segs = segmentTokenForHsk(h);
@@ -16873,8 +17707,25 @@ YÊU CẦU BẮT BUỘC:
           || '';
         const shortGloss = String(rawGloss).split(/[;,/]/)[0].trim();
 
-        return `<span class="reading-token ${isSelected ? 'selected' : ''}" data-hanzi="${escapeHtml(h)}" data-sub-idx="${activeVslSubIndex}" data-tok-idx="${tIdx}" onclick="handleVideoTokenClick(${activeVslSubIndex}, ${tIdx}, event)"><span class="vsl-tok-pinyin token-pinyin">${escapeHtml(resolvedPinyin)}</span><span class="token-text token-hanzi">${innerHanziHTML}</span><span class="token-vi-gloss">${escapeHtml(shortGloss)}</span></span>`;
-      }).join('');
+        return {
+          isPunct: false,
+          text: h,
+          html: `<span class="reading-token ${isSelected ? 'selected' : ''}" data-hanzi="${escapeHtml(h)}" data-sub-idx="${activeVslSubIndex}" data-tok-idx="${tIdx}" onclick="handleVideoTokenClick(${activeVslSubIndex}, ${tIdx}, event)"><span class="vsl-tok-pinyin token-pinyin">${escapeHtml(resolvedPinyin)}</span><span class="token-text token-hanzi">${innerHanziHTML}</span><span class="token-vi-gloss">${escapeHtml(shortGloss)}</span></span>`
+        };
+      });
+
+      let finalTokensHtml = '';
+      for (let i = 0; i < renderedParts.length; i++) {
+        const cur = renderedParts[i];
+        const next = renderedParts[i + 1];
+        if (!cur.isPunct && next && next.isPunct && /^[，。！？；：、,.!?;:”’）》】」]+$/.test(next.text)) {
+          finalTokensHtml += `<span style="white-space:nowrap;">${cur.html}${next.html}</span>`;
+          i++;
+        } else {
+          finalTokensHtml += cur.html;
+        }
+      }
+      tokBox.innerHTML = finalTokensHtml;
 
       const viLineText = String(sub.vietnamese || sub.vi || sub.vi_text || '').trim();
       viBox.textContent = viLineText;
@@ -16883,6 +17734,7 @@ YÊU CẦU BẮT BUỘC:
 
     // Token clicked inside Video Subtitle Stage -> Uses 100% Reading Mode lookup & saving mechanism!
     function handleVideoTokenClick(subIdx, tokIdx, event) {
+      if (Date.now() - vslLastSwipeAt < 380 || Date.now() - vslLastDoubleTapAt < 380) return;
       const lesson = findVslLessonById(activeVslLessonId);
       if (!lesson || !lesson.subtitles || !lesson.subtitles[subIdx]) return;
       const sub = lesson.subtitles[subIdx];
@@ -17088,6 +17940,7 @@ YÊU CẦU BẮT BUỘC:
     window.toggleVslGloss = toggleVslGloss;
     window.handleVideoTokenClick = handleVideoTokenClick;
     window.openStudyGroupFromActiveVideo = openStudyGroupFromActiveVideo;
+    window.vslForceReproofreadCurrentVideo = vslForceReproofreadCurrentVideo;
 
     // ==========================================
     // AI STORY GENERATOR FOR LEECH & REVIEW WORDS
@@ -17996,6 +18849,17 @@ ${wordListPrompt}
       const passageEl = document.getElementById('readingPassageContainer');
       if (passageEl) {
         passageEl.addEventListener('scroll', handleReadingBodyScroll, { passive: true });
+        let passageTouchStartY = 0;
+        passageEl.addEventListener('touchstart', (e) => {
+          if (e.touches && e.touches[0]) {
+            passageTouchStartY = e.touches[0].clientY;
+          }
+        }, { passive: true });
+        passageEl.addEventListener('touchmove', (e) => {
+          if (e.touches && e.touches[0] && Math.abs(e.touches[0].clientY - passageTouchStartY) >= 12) {
+            hideReadingTokenDrawerOnScroll();
+          }
+        }, { passive: true });
       }
 
       const modalBodyEl = document.getElementById('readingViewModalBody');

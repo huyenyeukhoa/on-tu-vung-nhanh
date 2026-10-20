@@ -1,10 +1,11 @@
-const CACHE_NAME = 'hsk-vocab-cache-v186';
+const CACHE_NAME = 'hsk-vocab-cache-v193';
 const ASSETS = [
   './',
   './index.html',
   './hsk_dictionary.js',
   './opencc_t2cn.js',
   './hanviet_dict.js',
+  './pinyin_dict.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
