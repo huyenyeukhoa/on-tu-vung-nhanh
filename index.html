@@ -11910,28 +11910,25 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
         const prompt = `Bạn là chuyên gia ngôn ngữ Tiếng Trung và biên tập viên dịch thuật cao cấp. Hãy phân tích đoạn văn tiếng Trung sau (phần ${i + 1}/${chunks.length}):
 ${targetRuleText}
-1) QUY TẮC VÀNG PHÂN BIỆT "TỪ ĐỘC LẬP (TÁCH)" VÀ "CỤM QUÁN DỤNG / LY HỢP / CỤM PHẢI GHÉP CHUNG MỚI HIỂU ĐƯỢC (GỘP)" (CỰC KỲ QUAN TRỌNG):
-   - **A. TÁCH RIÊNG đối với Tổ hợp tự do (Nghĩa cộng gộp 1 + 1 = 2)**:
-     + Khi động từ cảm xúc/nhận thức hoặc phó từ ghép với từ vựng độc lập đứng sau mà mỗi từ vẫn giữ nguyên nghĩa từ điển của nó, BẮT BUỘC tách thành từng từ vựng chuẩn (2–4 chữ) để người học bấm tra/lưu đúng từ cần học.
-     + Ví dụ tách chuẩn: tách "感到" + "害怕" (KHÔNG gộp thành "感到害怕"), tách "产生" + "共鸣", tách "显得" + "局促不安", tách "非常" + "感兴趣", tách "首次" + "会面".
-   - **B. GỘP TRỌN CẢ CỤM đối với những cụm phải ghép chung mới hiểu được nghĩa (Cụm danh từ cố định, Phòng ban/Chức danh, Cụm quán dụng, Động từ ly hợp, Cử chỉ/Biểu cảm & Thành ngữ)**:
-     + Các cụm danh từ cố định, thuật ngữ công sở/chuyên môn, phòng ban, chức danh (như "项目评审会", "高层领导", "资源配置", "生产部", "供应商", "备用供应商", "技术负责人", "生产车间", "产品质量", "研发流程", "核心零件", "全体员工", "紧急会议", "王经理", "李总监", "邻居们", "同事们") BẮT BUỘC gộp trọn thành 1 token duy nhất kèm nghĩa tiếng Việt hoàn chỉnh, KHÔNG tách lẻ khiến người đọc phải tự ghép nghĩa!
-     + Các cụm quán dụng, động từ ly hợp, cụm cử chỉ/biểu cảm/lời nói, thành ngữ 4 chữ (như "来例假", "第一次", "皱起眉头", "皱着眉头", "点了点头", "摇了摇头", "松了口气", "叹了口气", "笑着说", "接着说", "小声说", "刚起了一个头", "头也不回地", "捏了一把汗", "吃了一惊", "有所触动", "莫名其妙", "一落千丈", "硬生生", "怼了回去") BẮT BUỘC gom trọn thành 1 token!
-   - **C. TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết hoặc tách hậu tố đơn ("部", "商", "会", "员", "室", "们", "着", "过", "了") thành chữ đơn**:
-     + Các từ 2 âm tiết chuẩn (như "因为", "此前", "从未", "接触过", "关于", "女性", "生理", "相关", "知识", "就连", "母亲", "从没", "讲过", "女孩", "以为", "自己", "得了", "怪病", "感到", "害怕", "触动", "故事", "气愤") và từ có hậu tố ("生产部", "供应商", "评审会", "邻居们") luôn giữ nguyên cả từ, tuyệt đối không cắt vụn thành 1 chữ đơn.
+1) QUY TẮC GOM CỤM TỪ & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH (CỰC KỲ QUAN TRỌNG):
+   - **BẮT BUỘC gom các cụm từ ghép, cụm danh từ, cụm phương vị (trong/trên/sau...), cụm động-tân ngắn, cụm ngữ pháp hay, động từ ly hợp, thành ngữ, cụm diễn đạt hoàn chỉnh thành 1 token có nghĩa tự nhiên** để người học bấm vào hiểu được cả cụm!
+   - **Ví dụ gom cụm chuẩn**:
+     + Cụm biểu cảm / hành động / ngữ pháp: "很感兴趣的样子" (dáng vẻ rất hứng thú), "刚起了一个头" (vừa mới mở đầu / vừa mới cất lời), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ / kỳ lạ), "一落千丈" (tuột dốc không phanh), "硬生生" (thẳng thừng / cứng rắn), "怼了回去" (bật lại / cãi lại), "有所触动" (có chút xúc动), "深表关切" (bày tỏ sự quan tâm sâu sắc), "皱起眉头" (nhíu mày), "松了口气" (thở phào nhẹ nhõm), "笑着说" (cười nói), "找到了它" (tìm thấy nó), "戴名牌" (đeo bảng tên).
+     + Cụm danh từ / thời gian / nơi chốn / phương vị: "首次会面" (cuộc gặp đầu tiên), "半年以来" (nửa năm qua), "他们五个人" (5 người bọn họ), "社区群里" (trong nhóm khu dân cư), "寻狗消息" (tin nhắn tìm chó), "手机定位" (định vị điện thoại), "我家小狗" (chú chó nhỏ nhà tôi), "走丢后" (sau khi đi lạc), "王阿姨" (dì Vương), "王经理" (giám đốc Vương), "项目评审会" (cuộc họp thẩm định dự án), "第一次" (lần đầu tiên), "来例假" (có kinh nguyệt), "怪病" (bệnh lạ), "相关知识" (kiến thức liên quan).
+   - **TUYỆT ĐỐI KHÔNG xé lẻ vụn vặt 1–2 chữ đơn** (như "群", "里", "后", "上", "下", "起", "感", "所", "部", "商", "会", "店", "馆", "牌", "们", "着", "了", "过") tách rời khỏi cụm từ chính khiến người đọc bấm vào không hiểu nghĩa cả cụm! (Ví dụ: BẮT BUỘC gom "社区群里", CẤM tách thành "社区" + "群" + "里"; BẮT BUỘC gom "寻狗消息", CẤM tách "寻狗" + "消息"; BẮT BUỘC gom "走丢后", CẤM tách "走丢" + "后").
 
 2) QUY TẮC NGHĨA VIỆT CỦA TOKEN:
    - Trong mảng tokens, phần nghĩa tiếng Việt BẮT BUỘC dịch ĐÚNG SÁT NGHĨA CỦA CHÍNH TỪ / CỤM TỪ HÁN ĐÓ trong ngữ cảnh câu!
    - Tuyệt đối không thêm các từ ngữ cảnh ở xa ngoài phạm vi token đó vào nghĩa tiếng Việt.
    - **Ví dụ**:
-     - Token "感到" ➔ "cảm thấy" | Token "害怕" ➔ "sợ hãi"
-     - Token "刚起了一个头" ➔ "vừa mới mở đầu" (dịch chuẩn nghĩa bóng cả cụm ly hợp)
-     - Token "头也不回地" ➔ "không ngoảnh đầu lại"
-     - Token "来例假" ➔ "có kinh nguyệt" | Token "怪病" ➔ "bệnh lạ"
+     - Token "刚起了一个头" ➔ "vừa mới mở đầu" (dịch chuẩn nghĩa bóng cả cụm)
+     - Token "很感兴趣的样子" ➔ "dáng vẻ rất hứng thú"
+     - Token "社区群里" ➔ "trong nhóm khu dân cư" | Token "寻狗消息" ➔ "tin nhắn tìm chó"
+     - Token "头也不回地" ➔ "không ngoảnh đầu lại" | Token "首次会面" ➔ "cuộc gặp đầu tiên"
 
 3) QUY TẮC VỀ TRỢ TỪ "的", "地" VÀ LIÊN TỪ "与":
-   - Trợ từ "的" nối định ngữ và danh từ thông thường (như "半年以来" + "的" + "首次" + "会面", hoặc "大小姐" + "的" + "故事"), hãy tách chữ "的" thành 1 token riêng.
-   - Trợ từ "地" đứng sau tính từ 2 âm tiết thông thường (như "和蔼" + "地", "气愤" + "地", "高兴" + "地"), hãy tách chữ "地" thành 1 token riêng để người học lưu được từ gốc chuẩn ("和蔼", "气愤"). Chỉ gộp "地" khi thuộc cụm quán dụng/thành ngữ cố định (như "头也不回地").
+   - Trợ từ "的" nối giữa hai cụm từ độc lập (như "半年以来" + "的" + "首次会面", hoặc "大小姐" + "的" + "故事", "上次" + "的" + "经验"), hãy tách chữ "的" thành 1 token riêng (trừ khi nằm trong 1 cụm biểu đạt liền mạch như "很感兴趣的样子").
+   - Trợ từ "地" đứng sau tính từ 2 âm tiết thông thường (như "和蔼" + "地", "气愤" + "地"), hãy tách chữ "地" thành 1 token riêng. Chỉ gộp "地" khi thuộc cụm quán dụng/thành ngữ cố định (như "头也不回地").
    - KHÔNG ghép liên từ "与" vào đầu từ B trong "A 与 B" (Ví dụ: tách "大小姐", "与", "佐野").
 
 4) TỰ ĐỘNG SỬA LỖI GRAMMAR "地" / "的" & CHUẨN HÓA DẤU CÂU:
@@ -11941,7 +11938,7 @@ ${targetRuleText}
 ${isFirstChunk && !customTitle ? `5) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ (3 đến 6 từ) vào trường "title".` : ''}
 ${isFirstChunk && !customTitle ? '6)' : '5)'} Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo ngắt đoạn gốc:
    - Dịch toàn bộ đoạn đó sang TIẾNG VIỆT mượt mà, chuẩn ngữ cảnh.
-   - Phân tách thành chuỗi các TỪ / CỤM QUÁN DỤNG / DẤU CÂU nối tiếp nhau hoàn chỉnh thành đoạn văn trong mảng "tokens".
+   - Phân tách thành chuỗi các TỪ / CỤM TỪ CÓ NGHĨA / DẤU CÂU nối tiếp nhau hoàn chỉnh thành đoạn văn trong mảng "tokens".
 
 Đoạn văn gốc:
 """
@@ -11953,12 +11950,11 @@ ${chunkText}
   ${isFirstChunk && !customTitle ? '"title": "Tiêu đề tiếng Việt tự nhiên mượt mà",' : ''}
   "paragraphs": [
     {
-      "vietnamese": "Nhìn thấy Conan cảm thấy sợ hãi, câu chuyện của tiểu thư vừa mới mở đầu đã bị Tam Điền Nhi thẳng thừng bật lại, sau đó tức giận bỏ đi một mạch không ngoảnh đầu lại.",
+      "vietnamese": "Nhìn thấy Conan làm bộ dáng rất có hứng thú, câu chuyện của tiểu thư vừa mới mở đầu đã bị Tam Điền Nhi thẳng thừng bật lại, sau đó tức giận bỏ đi một mạch không ngoảnh đầu lại.",
       "tokens": [
         "看着|kàn zhe|nhìn thấy",
         "柯南|kē nán|Conan",
-        "感到|gǎn dào|cảm thấy",
-        "害怕|hài pà|sợ hãi",
+        "很感兴趣的样子|hěn gǎn xìng qù de yàng zi|dáng vẻ rất hứng thú",
         "，",
         "大小姐|dà xiǎo jiě|tiểu thư",
         "的",
@@ -12209,7 +12205,41 @@ ${chunkText}
       '张总监': { pinyin: 'zhāng zǒng jiān', vietnamese: 'giám đốc Trương' },
       '得了': { pinyin: 'dé le', vietnamese: 'mắc phải, bị (bệnh)' },
       '来例假': { pinyin: 'lái lìjià', vietnamese: 'có kinh nguyệt' },
-      '例假': { pinyin: 'lìjià', vietnamese: 'kỳ kinh nguyệt' }
+      '例假': { pinyin: 'lìjià', vietnamese: 'kỳ kinh nguyệt' },
+      '社区群里': { pinyin: 'shè qū qún lǐ', vietnamese: 'trong nhóm khu dân cư' },
+      '社区群': { pinyin: 'shè qū qún', vietnamese: 'nhóm khu dân cư' },
+      '微信群里': { pinyin: 'wēi xìn qún lǐ', vietnamese: 'trong nhóm WeChat' },
+      '微信群': { pinyin: 'wēi xìn qún', vietnamese: 'nhóm WeChat' },
+      '工作群里': { pinyin: 'gōng zuò qún lǐ', vietnamese: 'trong nhóm công việc' },
+      '工作群': { pinyin: 'gōng zuò qún', vietnamese: 'nhóm công việc' },
+      '班级群里': { pinyin: 'bān jí qún lǐ', vietnamese: 'trong nhóm lớp' },
+      '班级群': { pinyin: 'bān jí qún', vietnamese: 'nhóm lớp' },
+      '业主群里': { pinyin: 'yè zhǔ qún lǐ', vietnamese: 'trong nhóm cư dân' },
+      '业主群': { pinyin: 'yè zhǔ qún', vietnamese: 'nhóm cư dân' },
+      '家庭群里': { pinyin: 'jiā tíng qún lǐ', vietnamese: 'trong nhóm gia đình' },
+      '家庭群': { pinyin: 'jiā tíng qún', vietnamese: 'nhóm gia đình' },
+      '群里': { pinyin: 'qún lǐ', vietnamese: 'trong nhóm' },
+      '寻狗消息': { pinyin: 'xún gǒu xiāo xi', vietnamese: 'tin nhắn tìm chó' },
+      '寻狗启事': { pinyin: 'xún gǒu qǐ shì', vietnamese: 'thông báo tìm chó' },
+      '寻人启事': { pinyin: 'xún rén qǐ shì', vietnamese: 'thông báo tìm người' },
+      '手机定位': { pinyin: 'shǒu jī dìng wèi', vietnamese: 'định vị điện thoại' },
+      '我家小狗': { pinyin: 'wǒ jiā xiǎo gǒu', vietnamese: 'chú chó nhỏ nhà tôi' },
+      '走丢后': { pinyin: 'zǒu diū hòu', vietnamese: 'sau khi đi lạc' },
+      '走丢': { pinyin: 'zǒu diū', vietnamese: 'đi lạc, thất lạc' },
+      '王阿姨': { pinyin: 'wáng ā yí', vietnamese: 'dì Vương / cô Vương' },
+      '李阿姨': { pinyin: 'lǐ ā yí', vietnamese: 'dì Lý / cô Lý' },
+      '张阿姨': { pinyin: 'zhāng ā yí', vietnamese: 'dì Trương / cô Trương' },
+      '深表关切': { pinyin: 'shēn biǎo guān qiè', vietnamese: 'bày tỏ sự quan tâm sâu sắc' },
+      '戴名牌': { pinyin: 'dài míng pái', vietnamese: 'đeo bảng tên' },
+      '名牌': { pinyin: 'míng pái', vietnamese: 'bảng tên / hàng hiệu' },
+      '找到了它': { pinyin: 'zhǎo dào le tā', vietnamese: 'tìm thấy nó' },
+      '找到了': { pinyin: 'zhǎo dào le', vietnamese: 'tìm thấy rồi' },
+      '首次会面': { pinyin: 'shǒu cì huì miàn', vietnamese: 'cuộc gặp đầu tiên' },
+      '半年以来': { pinyin: 'bàn nián yǐ lái', vietnamese: 'nửa năm qua' },
+      '很感兴趣的样子': { pinyin: 'hěn gǎn xìng qù de yàng zi', vietnamese: 'dáng vẻ rất hứng thú' },
+      '刚起了一个头': { pinyin: 'gāng qǐ le yī gè tóu', vietnamese: 'vừa mới mở đầu' },
+      '头也不回地': { pinyin: 'tóu yě bù huí de', vietnamese: 'không ngoảnh đầu lại' },
+      '怼了回去': { pinyin: 'duì le huí qù', vietnamese: 'bật lại / cãi lại' }
     };
 
     const CHINESE_SURNAMES_MAP = {
@@ -12231,7 +12261,21 @@ ${chunkText}
       '部长': { py: 'bù zhǎng', vi: 'trưởng phòng' },
       '主任': { py: 'zhǔ rèn', vi: 'chủ nhiệm' },
       '主管': { py: 'zhǔ guǎn', vi: 'quản lý' },
-      '组长': { py: 'zǔ zhǎng', vi: 'tổ trưởng' }
+      '组长': { py: 'zǔ zhǎng', vi: 'tổ trưởng' },
+      '阿姨': { py: 'ā yí', vi: 'dì / cô' },
+      '叔叔': { py: 'shū shu', vi: 'chú' },
+      '爷爷': { py: 'yé ye', vi: 'ông' },
+      '奶奶': { py: 'nǎi nai', vi: 'bà' },
+      '老师': { py: 'lǎo shī', vi: 'thầy / cô' },
+      '医生': { py: 'yī shēng', vi: 'bác sĩ' },
+      '先生': { py: 'xiān sheng', vi: 'ông / anh' },
+      '女士': { py: 'nǚ shì', vi: 'bà / cô' },
+      '小姐': { py: 'xiǎo jiě', vi: 'cô / tiểu thư' },
+      '师傅': { py: 'shī fu', vi: 'bác tài / sư phụ' },
+      '老板': { py: 'lǎo bǎn', vi: 'ông chủ' },
+      '教授': { py: 'jiào shòu', vi: 'giáo sư' },
+      '院长': { py: 'yuàn zhǎng', vi: 'viện trưởng' },
+      '队长': { py: 'duì zhǎng', vi: 'đội trưởng' }
     };
 
     function mergeFixedCompoundTokensInList(tokens) {
@@ -12287,12 +12331,22 @@ ${chunkText}
         }
       }
 
-      // 2. Fix inverted "[Title] + [1-char Surname]" -> "[Surname][Title]" (e.g. "经理" + "王" -> "王经理")
+      // 2. Fix "[1-char Surname] + [Title]" OR inverted "[Title] + [1-char Surname]" -> "[Surname][Title]"
       const titleFixed = [];
       for (let i = 0; i < expanded.length; i++) {
         const cur = expanded[i];
         const nxt = expanded[i + 1];
-        if (cur && nxt && CHINESE_TITLES_MAP[cur.hanzi] && CHINESE_SURNAMES_MAP[nxt.hanzi]) {
+        if (cur && nxt && CHINESE_SURNAMES_MAP[cur.hanzi] && CHINESE_TITLES_MAP[nxt.hanzi]) {
+          const sInfo = CHINESE_SURNAMES_MAP[cur.hanzi];
+          const tInfo = CHINESE_TITLES_MAP[nxt.hanzi];
+          titleFixed.push({
+            hanzi: cur.hanzi + nxt.hanzi,
+            pinyin: `${sInfo.py} ${tInfo.py}`,
+            vietnamese: `${tInfo.vi} ${sInfo.vi}`,
+            isVocab: true
+          });
+          i++; // skip nxt
+        } else if (cur && nxt && CHINESE_TITLES_MAP[cur.hanzi] && CHINESE_SURNAMES_MAP[nxt.hanzi]) {
           const sInfo = CHINESE_SURNAMES_MAP[nxt.hanzi];
           const tInfo = CHINESE_TITLES_MAP[cur.hanzi];
           titleFixed.push({
@@ -12369,7 +12423,7 @@ ${chunkText}
         }
       }
 
-      // 4. Merge remaining general "[Noun] + 们", "[Verb] + 着 + 说/问/道", and "[1-char Verb] + 着" patterns
+      // 4. Merge remaining general "[Noun] + 群(+里)", "[Noun] + 们", "[Verb] + 着 + 说/问/道", and "[1-char Verb] + 着" patterns
       const speechVerbsMap = {
         '说': { py: 'shuō', vi: 'nói' },
         '问': { py: 'wèn', vi: 'hỏi' },
@@ -12389,6 +12443,60 @@ ${chunkText}
         const cur = merged[k];
         const nxt = merged[k + 1];
         const nxt2 = merged[k + 2];
+
+        // Case 0A: [1-3 char Noun] + "群" + "里" (3 tokens, e.g. "社区" + "群" + "里" -> "社区群里")
+        if (
+          cur && nxt && nxt2 &&
+          cur.isVocab && nxt.hanzi === '群' && nxt2.hanzi === '里' &&
+          cur.hanzi.length >= 1 && cur.hanzi.length <= 3 && !nonVerbSingleChars.has(cur.hanzi) && !AI_PUNCT_TEST_RE.test(cur.hanzi)
+        ) {
+          const combinedH = cur.hanzi + '群里';
+          const fixed = FIXED_COMPOUND_PHRASES[combinedH];
+          finalMerged.push({
+            hanzi: combinedH,
+            pinyin: (fixed && fixed.pinyin) || `${cur.pinyin || ''} qún lǐ`.trim(),
+            vietnamese: (fixed && fixed.vietnamese) || (cur.vietnamese ? `trong nhóm ${cur.vietnamese}` : 'trong nhóm'),
+            isVocab: true
+          });
+          k += 3;
+          continue;
+        }
+
+        // Case 0B: [1-3 char Noun] + "群里" (2 tokens, e.g. "社区" + "群里" -> "社区群里")
+        if (
+          cur && nxt &&
+          cur.isVocab && nxt.hanzi === '群里' &&
+          cur.hanzi.length >= 1 && cur.hanzi.length <= 3 && !nonVerbSingleChars.has(cur.hanzi) && !AI_PUNCT_TEST_RE.test(cur.hanzi)
+        ) {
+          const combinedH = cur.hanzi + '群里';
+          const fixed = FIXED_COMPOUND_PHRASES[combinedH];
+          finalMerged.push({
+            hanzi: combinedH,
+            pinyin: (fixed && fixed.pinyin) || `${cur.pinyin || ''} qún lǐ`.trim(),
+            vietnamese: (fixed && fixed.vietnamese) || (cur.vietnamese ? `trong nhóm ${cur.vietnamese}` : 'trong nhóm'),
+            isVocab: true
+          });
+          k += 2;
+          continue;
+        }
+
+        // Case 0C: [1-3 char Noun] + "群" (2 tokens, e.g. "社区" + "群" -> "社区群")
+        if (
+          cur && nxt &&
+          cur.isVocab && nxt.hanzi === '群' &&
+          cur.hanzi.length >= 1 && cur.hanzi.length <= 3 && !nonVerbSingleChars.has(cur.hanzi) && !AI_PUNCT_TEST_RE.test(cur.hanzi)
+        ) {
+          const combinedH = cur.hanzi + '群';
+          const fixed = FIXED_COMPOUND_PHRASES[combinedH];
+          finalMerged.push({
+            hanzi: combinedH,
+            pinyin: (fixed && fixed.pinyin) || `${cur.pinyin || ''} qún`.trim(),
+            vietnamese: (fixed && fixed.vietnamese) || (cur.vietnamese ? `nhóm ${cur.vietnamese}` : 'nhóm'),
+            isVocab: true
+          });
+          k += 2;
+          continue;
+        }
 
         // Case A: [1-2 char Verb] + "着" + [说/问/道/喊/叫] (3 tokens)
         if (
@@ -16895,17 +17003,17 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 
         const promptText = `Bạn là chuyên gia ngôn ngữ tiếng Trung HSK 7-9 và biên tập viên dịch thuật cao cấp. Hãy nghe đoạn âm thanh tiếng Trung này (độ dài ${windowDur} giây), chép lời chính xác 100% sang chữ Hán giản thể (Simplified Chinese), dịch tự nhiên sang tiếng Việt, chia thành từng câu/mệnh đề kèm mốc thời gian start và end (tính bằng giây từ 0.0 đến ${windowDur}), và phân tách từ/cụm từ trong mảng "tokens".
 ${contextHint ? `Ngữ cảnh tham khảo: ${contextHint}\n` : ''}
-【QUY TẮC VÀNG PHÂN TÁCH TỪ & CỤM TỪ TRONG MẢNG "tokens" (GIỐNG HỆT BÀI ĐỌC)】:
-1. **A. TÁCH RIÊNG đối với Tổ hợp tự do (Nghĩa cộng gộp 1 + 1 = 2)**:
-   - Khi động từ cảm xúc/nhận thức, đại từ, phó từ, giới từ ghép với từ vựng độc lập đứng sau mà mỗi từ vẫn giữ nguyên nghĩa từ điển của nó, BẮT BUỘC tách thành từng từ vựng chuẩn (2–4 chữ) để người học bấm tra/lưu đúng từ cần học.
-   - Ví dụ tách chuẩn: tách "感到" + "害怕" (KHÔNG gộp "感到害怕"), tách "因为" + "她" + "此前" + "从未" + "接触过" + "关于" + "女性" + "生理" + "的" + "相关" + "知识".
-2. **B. GỘP TRỌN CẢ CỤM đối với những cụm phải ghép chung mới hiểu được nghĩa (Cụm danh từ cố định, Phòng ban/Chức danh, Cụm quán dụng, Động từ ly hợp, Cử chỉ/Biểu cảm & Thành ngữ)**:
-   - Các cụm danh từ cố định, tên riêng, chức danh, phòng ban (như "日卖电视台", "高尔夫名人大赛", "项目评审会", "王经理", "邻居们") BẮT BUỘC gộp trọn thành 1 token duy nhất kèm nghĩa tiếng Việt hoàn chỉnh!
-   - Các cụm quán dụng, động từ ly hợp, cụm cử chỉ/biểu cảm/lời nói, thành ngữ 4 chữ hoặc những cụm phải đi chung mới hiểu được nghĩa (như "来例假", "第一次", "皱起眉头", "点了点头", "摇了摇头", "松了口气", "叹了口气", "笑着说", "接着说", "刚起了一个头", "头也不回地", "捏了一把汗", "吃了一惊", "莫名其妙", "怼了回去", "接触过", "讲过", "得了") BẮT BUỘC gom trọn thành 1 token!
-3. **C. TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết thành chữ đơn**:
-   - Các từ 2 âm tiết chuẩn (như "因为", "此前", "从未", "关于", "女性", "生理", "相关", "知识", "就连", "母亲", "从没", "女孩", "以为", "自己", "怪病", "感到", "害怕", "故事") luôn giữ nguyên cả từ 2 chữ, tuyệt đối không cắt vụn thành từng chữ đơn ("因", "此", "女"...).
-4. **D. NGHĨA TIẾNG VIỆT & TRỢ TỪ / DẤU CÂU**:
-   - Mỗi phần tử trong "tokens" ghi theo định dạng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt sát ngữ cảnh" (với dấu câu hoặc trợ từ "的", "地" đứng độc lập chỉ cần ghi chính ký tự đó, ví dụ "，", "。", "的", "地").
+【QUY TẮC GOM CỤM TỪ & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH TRONG MẢNG "tokens" (GIỐNG HỆT BÀI ĐỌC)】:
+1. **BẮT BUỘC GOM TRỌN CÁC CỤM TỪ GHÉP & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH**:
+   - BẮT BUỘC gom các cụm từ ghép, cụm danh từ, cụm phương vị (trong/trên/sau...), cụm động-tân ngắn, cụm ngữ pháp hay, động từ ly hợp, thành ngữ, cụm diễn đạt hoàn chỉnh thành 1 token có nghĩa tự nhiên để người học bấm vào hiểu được cả cụm!
+   - **Ví dụ gom cụm chuẩn**:
+     + Cụm biểu cảm / hành động / ngữ pháp: "很感兴趣的样子" (dáng vẻ rất hứng thú), "刚起了一个头" (vừa mới mở đầu / vừa mới cất lời), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ / kỳ lạ), "一落千丈" (tuột dốc không phanh), "硬生生" (thẳng thừng / cứng rắn), "怼了回去" (bật lại / cãi lại), "有所触动" (có chút xúc động), "皱起眉头" (nhíu mày), "松了口气" (thở phào nhẹ nhõm), "笑着说" (cười nói), "来例假" (có kinh nguyệt), "得了" (mắc phải), "接触过" (từng tiếp xúc), "讲过" (từng kể / nói qua).
+     + Cụm danh từ / thời gian / nơi chốn / tên riêng: "首次会面" (cuộc gặp đầu tiên), "半年以来" (nửa năm qua), "他们五个人" (5 người bọn họ), "第一次" (lần đầu tiên), "怪病" (bệnh lạ), "相关知识" (kiến thức liên quan), "日卖电视台" (Đài truyền hình Nichiuri), "高尔夫名人大赛" (Giải Golf Người Nổi Tiếng), "项目评审会" (cuộc họp thẩm định dự án), "社区群里" (trong nhóm khu dân cư), "王经理" (giám đốc Vương), "王阿姨" (dì Vương), "邻居们" (những người hàng xóm).
+2. **TUYỆT ĐỐI KHÔNG XÉ LẺ VỤN VẶT TỪ ĐƠN HOẶC TỪ GHÉP 2 ÂM TIẾT**:
+   - TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết (như "因为", "此前", "从未", "关于", "女性", "生理", "相关", "知识", "就连", "母亲", "从没", "女孩", "以为", "自己", "怪病", "感到", "害怕", "故事") hoặc tách hậu tố/chữ đơn ("群", "里", "后", "上", "下", "起", "感", "所", "部", "商", "会", "员", "室", "们", "着", "过", "了") rời khỏi cụm từ chính!
+3. **TRỢ TỪ "的", "地" & ĐỊNH DẠNG MỖI TOKEN**:
+   - Tách trợ từ "的", "地" thông thường thành token riêng (trừ khi nằm trong cụm cố định như "很感兴趣的样子", "头也不回地").
+   - Mỗi phần tử trong "tokens" ghi theo chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt sát ngữ cảnh" (với dấu câu hoặc trợ từ "的", "地" đứng độc lập chỉ cần ghi chính ký tự đó, ví dụ "，", "。", "的", "地").
 
 Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
 [
@@ -17380,16 +17488,14 @@ Các câu phụ đề dưới đây được tách từ giọng nói tự độn
 Hãy đối chiếu TIÊU ĐỀ VIDEO ("${videoTitle || 'Video tiếng Trung'}"), mạch bài ("${fullOverviewText}")${prevLine ? `, câu trước ("${prevLine}")` : ''}${nextLine ? `, câu sau ("${nextLine}")` : ''} để thực hiện 3 nhiệm vụ:
 1. SỬA TRIỆT ĐỂ MỌI LỖI ĐỒNG ÂM ASR sang chữ Hán giản thể chuẩn xác 100% và thêm dấu câu tự nhiên ("text").
 2. DỊCH CÂU ĐÃ SỬA sang tiếng Việt mượt mà, tự nhiên, chuẩn xác ("vietnamese").
-3. PHÂN TÁCH CÂU ĐÃ SỬA THÀNH MẢNG "tokens" THEO ĐÚNG QUY TẮC VÀNG CỦA BÀI ĐỌC:
-   - **A. TÁCH RIÊNG đối với Tổ hợp tự do (Nghĩa cộng gộp 1 + 1 = 2)**:
-     + Khi động từ cảm xúc/nhận thức, đại từ, phó từ, giới từ ghép với từ vựng độc lập đứng sau mà mỗi từ vẫn giữ nguyên nghĩa từ điển của nó, BẮT BUỘC tách thành từng từ vựng chuẩn (2–4 chữ) để người học bấm tra/lưu đúng từ cần học.
-     + Ví dụ tách chuẩn: tách "感到" + "害怕" (KHÔNG gộp thành "感到害怕"), tách "产生" + "共鸣", tách "因为" + "她" + "此前" + "从未" + "接触过" + "关于" + "女性" + "生理" + "的" + "相关" + "知识".
-   - **B. GỘP TRỌN CẢ CỤM đối với những cụm phải ghép chung mới hiểu được nghĩa (Cụm danh từ cố định, Phòng ban/Chức danh, Cụm quán dụng, Động từ ly hợp, Cử chỉ/Biểu cảm & Thành ngữ)**:
-     + Các cụm danh từ cố định, thuật ngữ chuyên môn, phòng ban, chức danh, tên riêng (như "日卖电视台", "高尔夫名人大赛", "项目评审会", "高层领导", "生产部", "供应商", "王经理", "李总监", "邻居们") BẮT BUỘC gộp trọn thành 1 token duy nhất kèm nghĩa tiếng Việt hoàn chỉnh, KHÔNG tách lẻ khiến người đọc phải tự ghép nghĩa!
-     + Các cụm quán dụng, động từ ly hợp, cụm cử chỉ/biểu cảm/lời nói, thành ngữ 4 chữ hoặc những cụm phải đi chung mới hiểu được nghĩa (như "来例假", "第一次", "皱起眉头", "点了点头", "摇了摇头", "松了口气", "叹了口气", "笑着说", "接着说", "刚起了一个头", "头也不回地", "捏了一把汗", "吃了一惊", "有所触动", "莫名其妙", "硬生生", "怼了回去", "接触过", "讲过", "得了") BẮT BUỘC gom trọn thành 1 token!
-   - **C. TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết hoặc tách hậu tố đơn ("部", "商", "会", "员", "室", "们", "着", "过", "了") thành chữ đơn**:
-     + Các từ 2 âm tiết chuẩn (như "因为", "此前", "从未", "关于", "女性", "生理", "相关", "知识", "就连", "母亲", "从没", "女孩", "以为", "自己", "怪病", "感到", "害怕", "故事", "气愤") luôn giữ nguyên cả từ, tuyệt đối không cắt vụn thành 1 chữ đơn.
-   - **D. ĐỊNH DẠNG MỖI TOKEN**:
+3. PHÂN TÁCH CÂU ĐÃ SỬA THÀNH MẢNG "tokens" THEO ĐÚNG QUY TẮC GOM CỤM TỪ CỦA BÀI ĐỌC:
+   - **A. GOM TRỌN CÁC CỤM TỪ GHÉP & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH**:
+     + BẮT BUỘC gom các cụm từ ghép, cụm danh từ, cụm phương vị (trong/trên/sau...), cụm động-tân ngắn, cụm ngữ pháp hay, động từ ly hợp, thành ngữ, cụm diễn đạt hoàn chỉnh thành 1 token có nghĩa tự nhiên để người học bấm vào hiểu được cả cụm!
+     + Ví dụ gom cụm chuẩn: "很感兴趣的样子" (dáng vẻ rất hứng thú), "刚起了一个头" (vừa mới mở đầu), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ / kỳ lạ), "一落千丈" (tuột dốc không phanh), "硬生生" (thẳng thừng / cứng rắn), "怼了回去" (bật lại / cãi lại), "有所触动" (có chút xúc động), "皱起眉头" (nhíu mày), "松了口气" (thở phào nhẹ nhõm), "笑着说" (cười nói), "第一次" (lần đầu tiên), "来例假" (có kinh nguyệt), "得了" (mắc phải), "怪病" (bệnh lạ), "相关知识" (kiến thức liên quan), "接触过" (từng tiếp xúc), "讲过" (từng kể), "首次会面" (cuộc gặp đầu tiên), "半年以来" (nửa năm qua), "他们五个人" (5 người bọn họ), "社区群里" (trong nhóm khu dân cư), "日卖电视台" (Đài truyền hình Nichiuri), "高尔夫名人大赛" (Giải Golf Người Nổi Tiếng), "项目评审会" (cuộc họp thẩm định dự án), "王经理" (giám đốc Vương), "王阿姨" (dì Vương), "邻居们" (những người hàng xóm).
+   - **B. TUYỆT ĐỐI KHÔNG XÉ LẺ VỤN VẶT TỪ ĐƠN HOẶC TỪ GHÉP 2 ÂM TIẾT**:
+     + Các từ 2 âm tiết chuẩn (như "因为", "此前", "从未", "关于", "女性", "生理", "相关", "知识", "就连", "母亲", "从没", "女孩", "以为", "自己", "怪病", "感到", "害怕", "故事", "气愤") luôn giữ nguyên cả từ, và TUYỆT ĐỐI KHÔNG tách hậu tố/chữ đơn ("群", "里", "后", "上", "下", "起", "感", "所", "部", "商", "会", "员", "室", "们", "着", "过", "了") thành chữ đơn lẻ!
+   - **C. TRỢ TỪ "的", "地" & ĐỊNH DẠNG MỖI TOKEN**:
+     + Tách trợ từ "的", "地" thông thường thành token riêng (trừ khi nằm trong cụm cố định như "很感兴趣的样子", "头也不回地").
      + Ghi theo chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt sát ngữ cảnh" (với dấu câu hoặc trợ từ "的", "地" đứng độc lập chỉ cần ghi chính ký tự đó, ví dụ "，", "。", "的", "地").
 
 Danh sách ${batch.length} câu cần hiệu đính, dịch & phân tách từ:
@@ -20092,7 +20198,7 @@ Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa ngắn gọn 2-
             paragraphs.forEach(p => {
               if (!p) return;
               if (Array.isArray(p.tokens) && p.tokens.length > 0) {
-                p.tokens = p.tokens.map(normalizeAiTokenItem).filter(Boolean);
+                p.tokens = mergeFixedCompoundTokensInList(p.tokens.map(normalizeAiTokenItem).filter(Boolean));
               } else {
                 const pText = toSimplified(String(p.text || p.hanzi || content || '').trim());
                 if (pText && typeof vslBuildSubtitleTokensWithAiPhrases === 'function') {
@@ -20204,44 +20310,47 @@ ${wordListPrompt}
 2. CÁCH DÙNG TỪ MỤC TIÊU (${targetHanziList.join(', ')}):
    - Mỗi từ mục tiêu CHỈ DÙNG ĐÚNG 1 LẦN DUY NHẤT trong bài (【每个目标词汇在全文中只允许出现唯一 1 次】).
    - Dùng từ mục tiêu như một TỪ ĐỘC LẬP đúng nghĩa gốc (KHÔNG đặt dấu ngoặc kép “ ” bao quanh từ mục tiêu, KHÔNG ghép thêm hậu tố như "部", "商", "会" làm biến đổi từ mục tiêu).
-   - Nếu từ mục tiêu kết thúc bằng "地" (như 和蔼地, 气愤地, 头也不回地): BẮT BUỘC đặt ngay trước động từ làm trạng ngữ.
-   - Xưng hô chức danh chuẩn bản xứ: [Họ + Chức danh] (ví dụ: "王经理", "李总监"), CẤM viết ngược "经理王".
-3. QUY TẮC VÀNG PHÂN TÁCH TỪ & CỤM TỪ TRONG MẢNG "tokens" (GIỐNG HỆT BÀI ĐỌC):
-   - **A. TÁCH RIÊNG đối với Tổ hợp tự do (Nghĩa cộng gộp 1 + 1 = 2)**:
-     + Khi động từ cảm xúc/nhận thức hoặc phó từ ghép với từ vựng độc lập đứng sau mà mỗi từ vẫn giữ nguyên nghĩa từ điển của nó, BẮT BUỘC tách thành từng từ vựng chuẩn (2–4 chữ) để người học bấm tra/lưu đúng từ cần học (Ví dụ: tách "感到" + "害怕", tách "产生" + "共鸣", tách "非常" + "感兴趣").
-   - **B. GỘP TRỌN CẢ CỤM đối với những cụm phải ghép chung mới hiểu được nghĩa (Cụm danh từ cố định, Phòng ban/Chức danh, Cụm quán dụng, Động từ ly hợp, Cử chỉ/Biểu cảm & Thành ngữ)**:
-     + Các cụm danh từ cố định, thuật ngữ công sở/chuyên môn, phòng ban, chức danh (như "项目评审会", "高层领导", "资源配置", "生产部", "供应商", "备用供应商", "技术负责人", "生产车间", "产品质量", "研发流程", "核心零件", "全体员工", "紧急会议", "王经理", "李总监", "邻居们", "同事们") BẮT BUỘC gộp trọn thành 1 token duy nhất kèm nghĩa tiếng Việt hoàn chỉnh, KHÔNG tách lẻ khiến người đọc phải tự ghép nghĩa!
-     + Các cụm quán dụng, động từ ly hợp, cụm cử chỉ/biểu cảm/lời nói, thành ngữ 4 chữ (như "皱起眉头", "皱着眉头", "点了点头", "摇了摇头", "松了口气", "叹了口气", "笑着说", "接着说", "小声说", "刚起了一个头", "头也不回地", "捏了一把汗", "吃了一惊", "有所触动", "莫名其妙", "一落千丈", "硬生生", "怼了回去") BẮT BUỘC gom trọn thành 1 token!
-   - **C. TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết hoặc tách hậu tố đơn ("部", "商", "会", "员", "室", "们", "着", "过", "了") thành chữ đơn**.
-   - **D. TRỢ TỪ "的", "地" & NGHĨA TIẾNG VIỆT**:
-     + Tách trợ từ "的", "地" thông thường thành token riêng (chỉ gộp "地" khi thuộc cụm quán dụng cố định như "头也不回地").
+   - Khi phân tách trong mảng "tokens", BẮT BUỘC giữ nguyên mỗi từ mục tiêu (${targetHanziList.join(', ')}) thành 1 token độc lập đúng mặt chữ.
+   - Xưng hô chức danh chuẩn bản xứ: [Họ + Chức danh/Xưng hô] (ví dụ: "王经理", "李总监", "王阿姨"), CẤM viết ngược "经理王".
+3. QUY TẮC GOM CỤM TỪ & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH TRONG MẢNG "tokens" (CỰC KỲ QUAN TRỌNG - GIỐNG HỆT BÀI ĐỌC):
+   - **A. BẮT BUỘC GOM TRỌN CÁC CỤM TỪ GHÉP & CỤM DIỄN ĐẠT HOÀN CHỈNH**:
+     + Ngoài các từ mục tiêu ở Mục 2, đối với mọi từ ngữ xung quanh trong câu chuyện, BẮT BUỘC gom trọn các cụm danh từ, cụm phương vị (trong/trên/sau...), cụm động-tân ngắn, chức danh, phòng ban, động từ ly hợp, cụm cử chỉ/biểu cảm/lời nói, thành ngữ thành **1 token có nghĩa tự nhiên hoàn chỉnh** để người học bấm vào hiểu ngay cả cụm!
+     + **Ví dụ gom cụm chuẩn bắt buộc**:
+       • Cụm nơi chốn / phương vị / thời gian: gom "社区群里" (trong nhóm khu dân cư — CẤM tách thành "社区" + "群" + "里"!), gom "微信群里" (trong nhóm WeChat), gom "走丢后" (sau khi đi lạc), gom "半年以来" (nửa năm qua), gom "首次会面" (cuộc gặp đầu tiên).
+       • Cụm danh từ & xưng hô: gom "王阿姨" (dì Vương), "王经理" (giám đốc Vương), "我家小狗" (chú chó nhỏ nhà tôi), "寻狗消息" (tin nhắn tìm chó), "手机定位" (định vị điện thoại), "项目评审会" (cuộc họp thẩm định dự án), "高层领导" (lãnh đạo cấp cao), "生产部" (phòng sản xuất), "供应商" (nhà cung cấp), "邻居们" (những người hàng xóm).
+       • Cụm động từ / biểu cảm / ngữ pháp: gom "深表关切" (bày tỏ sự quan tâm sâu sắc), "笑着说" (cười nói), "戴名牌" (đeo bảng tên), "找到了它" (tìm thấy nó), "皱起眉头" (nhíu mày), "松了口气" (thở phào nhẹ nhõm), "点了点头" (gật đầu), "很感兴趣的样子" (dáng vẻ rất hứng thú), "刚起了一个头" (vừa mới mở đầu), "头也不回地" (không ngoảnh đầu lại).
+   - **B. TUYỆT ĐỐI KHÔNG XÉ LẺ VỤN VẶT CHỮ ĐƠN HOẶC TÁCH RỜI HẬU TỐ**:
+     + CẤM tách lẻ các chữ đơn như "群", "里", "后", "上", "下", "部", "商", "会", "店", "馆", "牌", "们", "着", "了", "过" đứng bơ vơ một mình khi chúng thuộc về cụm danh từ/động từ phía trước!
+   - **C. TRỢ TỪ "的", "地" & ĐỊNH DẠNG MỖI TOKEN**:
+     + Tách trợ từ "的", "地" thông thường thành token riêng (ví dụ: "上次" + "的" + "经验").
      + Mỗi phần tử trong mảng "tokens" dùng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt sát ngữ cảnh" (với dấu câu hoặc trợ từ "的", "地" chỉ cần ghi chính ký tự đó, ví dụ "，", "的", "地").
 
 Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown). Mảng "paragraphs" CHỈ CÓ ĐÚNG 1 PHẦN TỬ DUY NHẤT:
 {
   "title": "纯中文标题 (3-6个汉字)",
   "titleVi": "Tiêu đề tiếng Việt tương ứng",
-  "content": "项目评审会上，生产部王经理皱起眉头……（全文100%纯简体中文，连成唯一1个自然段，不换行，约120-150个汉字）",
+  "content": "邻居王阿姨对我家小狗情深意重，昨天它走丢后，她深表关切，立刻在社区群里传输寻狗消息……（全文100%纯简体中文，连成唯一1个自然段，不换行，约120-150个汉字）",
   "paragraphs": [
     {
       "tokens": [
-        "项目评审会|xiàng mù píng shěn huì|cuộc họp thẩm định dự án",
-        "上|shàng|trên / trong",
+        "邻居|lín jū|hàng xóm",
+        "王阿姨|wáng ā yí|dì Vương",
+        "对|duì|đối với",
+        "我家小狗|wǒ jiā xiǎo gǒu|chú chó nhỏ nhà tôi",
+        "情深意重|qíng shēn yì zhòng|tình sâu nghĩa nặng",
         "，",
-        "生产部|shēng chǎn bù|phòng sản xuất",
-        "王经理|wáng jīng lǐ|giám đốc Vương",
-        "皱起眉头|zhòu qǐ méi tóu|nhíu mày",
+        "昨天|zuó tiān|hôm qua",
+        "它|tā|nó",
+        "走丢后|zǒu diū hòu|sau khi đi lạc",
         "，",
-        "然后|rán hòu|sau đó",
-        "笑着说|xiào zhe shuō|cười nói",
-        "问题|wèn tí|vấn đề",
-        "已经|yǐ jīng|đã",
-        "解决|jiě jué|giải quyết",
-        "了|le|rồi",
+        "她|tā|bà ấy / cô ấy",
+        "深表关切|shēn biǎo guān qiè|bày tỏ sự quan tâm sâu sắc",
         "，",
-        "大家|dà jiā|mọi người",
-        "终于|zhōng yú|cuối cùng",
-        "松了口气|sōng le kǒu qì|thở phào nhẹ nhõm",
+        "立刻|lì kè|lập tức",
+        "在|zài|ở / tại",
+        "社区群里|shè qū qún lǐ|trong nhóm khu dân cư",
+        "传输|chuán shū|truyền tải / gửi",
+        "寻狗消息|xún gǒu xiāo xi|tin nhắn tìm chó",
         "。"
       ],
       "vietnamese": "Bản dịch tiếng Việt mượt mà, sát nghĩa của toàn bộ đoạn văn tiếng Trung ở trên..."
