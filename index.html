@@ -3945,29 +3945,28 @@
       font-weight: 700;
       color: #766299;
     }
-    /* Decorative Lavender Bezel Frame Around Video */
+    /* Clean Modern Frame Around Video */
     .vsl-player-frame-wrap {
       width: 100%;
       box-sizing: border-box;
-      background: linear-gradient(145deg, #f4effc 0%, #e5d8f6 50%, #d6c3ef 100%);
-      border-radius: 18px;
-      padding: 6px;
+      background: rgba(255, 255, 255, 0.94);
+      border-radius: 16px;
+      padding: 3px;
       position: relative;
       margin: 0 auto 8px;
-      box-shadow: 0 5px 16px rgba(104, 78, 146, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.95);
-      border: 1.8px solid #c3aee0;
+      box-shadow: 0 4px 14px rgba(30, 20, 48, 0.12);
+      border: 1.2px solid #e2d8ef;
       flex-shrink: 0;
     }
     .vsl-player-screen {
       width: 100%;
       aspect-ratio: 16 / 9;
-      max-height: 31vh;
+      max-height: 32vh;
       background: #0f0d15;
-      border-radius: 12px;
+      border-radius: 13px;
       overflow: hidden;
       position: relative;
-      border: 1.5px solid #483666;
-      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.45);
+      border: none;
     }
     .vsl-player-frame-wrap.is-vertical-video,
     .vsl-player-frame-wrap.portrait-mode {
@@ -4060,7 +4059,7 @@
       color: #ffffff;
       border-color: #5e4b7e;
     }
-    /* Fixed-size subtitle stage that fills remaining screen height and never jumps in size */
+    /* Fixed-size subtitle stage that fills remaining screen height and aligns text cleanly at top */
     .vsl-subtitle-stage {
       flex: 1;
       min-height: 0;
@@ -4073,7 +4072,7 @@
       -webkit-backdrop-filter: blur(8px);
       border: 1.5px solid #dfd3ef;
       border-radius: 16px;
-      padding: 14px 12px 14px;
+      padding: 12px 12px 14px;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
@@ -4083,9 +4082,9 @@
       box-shadow: 0 4px 16px rgba(118, 98, 153, 0.06), inset 0 1px 4px rgba(118, 98, 153, 0.04);
     }
     .vsl-subtitle-inner {
-      margin: auto 0;
+      margin: 0;
       width: 100%;
-      padding-top: 4px;
+      padding-top: 2px;
     }
     #vslSubtitleTokensBox {
       line-height: 1.55;
