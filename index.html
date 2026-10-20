@@ -8660,7 +8660,7 @@ Lưu ý:
         },
         body: JSON.stringify({
           model: 'google/gemini-3.8-flash',
-          reasoning: { effort: 'low' },
+          reasoning: { enabled: false },
           messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
         })
       });
@@ -9274,7 +9274,7 @@ Viết bằng tiếng Việt, đúng chính tả, không dùng chữ phồn th�
           },
           body: JSON.stringify({
             model: 'google/gemini-3.8-flash',
-            reasoning: { effort: 'low' },
+            reasoning: { enabled: false },
             messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
@@ -9326,7 +9326,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json) với đ�
   "pos": "Từ loại của từ này bằng tiếng Việt. ĐẶC BIỆT: NẾU TỪ NÀY LÀ THÀNH NGỮ (成语), bắt buộc phải ghi rõ từ loại mà thành ngữ đó đóng vai trò trong ngoặc đơn, ví dụ: 'Thành ngữ (động từ)', 'Thành ngữ (tính từ)', 'Thành ngữ (danh từ)', 'Thành ngữ (phó từ)'. Nếu là từ thông thường thì ghi từ loại bình thường (ví dụ: Tính từ, Động từ, Danh từ, Phó từ,...)",
   "hanViet": "Âm Hán Việt IN HOA chuẩn xác của từ này (ví dụ: NHÂN SƠN NHÂN HẢI, NHẬT ÍCH, CHƯNG CHƯNG NHẬT THƯỢNG, BẤT KHẢ TƯ NGHỊ,...)",
   "meaning": "Nghĩa tiếng Việt ngắn gọn, chuẩn xác",
-  "context": "Hãy giải thích cách dùng tự nhiên VÀ BẮT BUỘC KÈM THEO 2-3 VÍ DỤ TÌNH HUỐNG ĐỜI SỐNG CỤ THỂ THỰC TẾ. Viết sao cho người học dễ hình dung nhất. Trong đoạn giải thích này: 1) BẮT BUỘC bao quanh DUY NHẤT MỘT cụm từ dài hoặc một vế câu quan trọng nhất thể hiện rõ rệt sắc thái cốt lõi của từ này bằng thẻ <span class=\\'important-highlight\\'>cụm từ/vế câu cần bôi đỏ</span>. (Lưu ý: BẮT BUỘC dùng dấu nháy đơn ' cho class). 2) BẮT BUỘC bao quanh TẤT CẢ các câu/dòng lấy ví dụ ngữ cảnh (bắt đầu bằng Ví dụ, Hoặc khi, Chẳng hạn...) bằng thẻ <span class=\\'context-example-purple\\'>câu ví dụ</span> để in đậm màu tím. Yêu cầu cực kỳ nghiêm ngặt: Mỗi từ CHỈ ĐƯỢC BÔI ĐỎ ĐÚNG 1 VỊ TRÍ DUY NHẤT cho cụm từ mấu chốt.",
+  "context": "Hãy giải thích cách dùng tự nhiên VÀ BẮT BUỘC KÈM THEO 2-3 VÍ DỤ TÌNH HUỐNG ĐỜI SỐNG CỤ THỂ THỰC TẾ. Viết sao cho người học dễ hình dung nhất. Trong đoạn giải thích này: 1) BẮT BUỘC bao quanh DUY NHẤT MỘT cụm từ dài hoặc một vế câu quan trọng nhất thể hiện rõ rệt sắc thái cốt lõi của từ này bằng thẻ <span class=\\'important-highlight\\'>cụm từ/vế câu cần bôi đỏ</span>. (Lưu ý: BẮT BUỘC dùng dấu nháy đơn ' cho class). 2) BẮT BUỘC bao quanh TẤT CẢ các câu/dòng lấy ví dụ ngữ cảnh (bắt đầu bằng Ví dụ, Hoặc khi, Chẳng hạn...) bằng thẻ <span class=\\'context-example-purple\\'>câu ví dụ</span> để in đậm màu tím. Yêu cầu cực kỳ nghiêm ngặt: Mỗi từ CHỈ ĐƯỢC BÔI ĐỎ ĐÚNG 1 VỊ TRÍ DUYNHẤT cho cụm từ mấu chốt.",
   "examples": [
     {"hanzi": "câu chữ hán 1", "pinyin": "pinyin 1", "vietnamese": "nghĩa tiếng việt 1"},
     {"hanzi": "câu chữ hán 2", "pinyin": "pinyin 2", "vietnamese": "nghĩa tiếng việt 2"},
@@ -9349,7 +9349,7 @@ Lưu ý quan trọng:
         },
         body: JSON.stringify({
           model: 'google/gemini-3.8-flash',
-          reasoning: { effort: 'low' },
+          reasoning: { enabled: false },
           messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
         })
       });
@@ -9733,7 +9733,7 @@ Lưu ý:
           },
           body: JSON.stringify({
             model: 'google/gemini-3.8-flash',
-            reasoning: { effort: 'low' },
+            reasoning: { enabled: false },
             messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
@@ -10622,7 +10622,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           },
           body: JSON.stringify({
             model: 'google/gemini-3.8-flash',
-            reasoning: { effort: 'low' },
+            reasoning: { enabled: false },
             messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
@@ -10728,7 +10728,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           },
           body: JSON.stringify({
             model: 'google/gemini-3.8-flash',
-            reasoning: { effort: 'low' },
+            reasoning: { enabled: false },
             messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
@@ -11342,18 +11342,48 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       return chunks.length > 0 ? chunks : [text];
     }
 
-    function lookupDictMetaForToken(hanziStr) {
-      if (!hanziStr) return { pinyin: '', vietnamese: '' };
-      const s = String(hanziStr).trim();
-      if (!s) return { pinyin: '', vietnamese: '' };
+    const COMMON_SINGLE_CHAR_GLOSS = {
+      '人': 'người', '和': 'và', '与': 'và', '或': 'hoặc', '事': 'sự việc', '物': 'vật',
+      '的': 'của', '地': 'một cách', '得': 'đến mức', '了': 'rồi', '着': 'đang', '过': 'từng',
+      '在': 'ở, đang', '是': 'là', '有': 'có', '没': 'không', '不': 'không', '很': 'rất',
+      '太': 'quá', '更': 'hơn', '最': 'nhất', '都': 'đều', '也': 'cũng', '还': 'vẫn, còn',
+      '就': 'liền, thì', '才': 'mới', '又': 'lại', '再': 'lại', '把': 'đem', '被': 'bị, được',
+      '给': 'cho', '对': 'đối với', '向': 'hướng về', '从': 'từ', '到': 'đến', '里': 'trong',
+      '上': 'trên', '下': 'dưới', '前': 'trước', '后': 'sau', '中': 'trong, giữa', '内': 'trong',
+      '外': 'ngoài', '大': 'lớn', '小': 'nhỏ', '多': 'nhiều', '少': 'ít', '好': 'tốt',
+      '新': 'mới', '老': 'cũ, già', '高': 'cao', '低': 'thấp', '长': 'dài', '短': 'ngắn',
+      '快': 'nhanh', '慢': 'chậm', '早': 'sớm', '晚': 'muộn', '看': 'xem, nhìn', '听': 'nghe',
+      '说': 'nói', '走': 'đi', '来': 'đến', '去': 'đi', '做': 'làm', '想': 'nghĩ, muốn',
+      '要': 'cần, muốn', '能': 'có thể', '会': 'biết, sẽ', '让': 'khiến, để', '叫': 'gọi',
+      '我': 'tôi', '你': 'bạn', '他': 'anh ấy', '她': 'cô ấy', '它': 'nó', '们': 'các',
+      '这': 'này', '那': 'đó', '哪': 'nào', '谁': 'ai', '什': 'gì', '么': 'gì',
+      '个': 'cái, người', '位': 'vị', '次': 'lần', '年': 'năm', '月': 'tháng', '日': 'ngày',
+      '天': 'trời, ngày', '时': 'lúc, giờ', '分': 'phút, phần', '点': 'giờ, điểm', '家': 'nhà, gia đình',
+      '国': 'nước', '水': 'nước', '火': 'lửa', '风': 'gió', '雨': 'mưa', '山': 'núi',
+      '路': 'đường', '车': 'xe', '门': 'cửa', '手': 'tay', '心': 'lòng, tim', '头': 'đầu',
+      '眼': 'mắt', '口': 'miệng', '声': 'tiếng', '话': 'lời nói', '书': 'sách', '字': 'chữ',
+      '钱': 'tiền', '吃': 'ăn', '喝': 'uống', '睡': 'ngủ', '买': 'mua', '卖': 'bán',
+      '开': 'mở', '关': 'đóng', '坐': 'ngồi', '站': 'đứng, trạm', '住': 'ở, sống', '等': 'đợi',
+      '找': 'tìm', '用': 'dùng', '拿': 'cầm, lấy', '放': 'đặt, để', '带': 'mang theo', '送': 'tặng, tiễn',
+      '问': 'hỏi', '答': 'trả lời', '笑': 'cười', '哭': 'khóc', '怕': 'sợ', '爱': 'yêu, thích',
+      '真': 'thật', '假': 'giả', '对': 'đúng, đối với', '错': 'sai', '难': 'khó', '易': 'dễ',
+      '远': 'xa', '近': 'gần', '深': 'sâu', '浅': 'nông', '重': 'nặng', '轻': 'nhẹ',
+      '满': 'đầy', '空': 'trống', '白': 'trắng', '黑': 'đen', '红': 'đỏ', '美': 'đẹp',
+      '但': 'nhưng', '却': 'lại, nhưng', '而': 'mà, còn', '因': 'vì', '为': 'vì, làm', '若': 'nếu',
+      '如': 'như, nếu', '虽': 'tuy', '然': 'nhưng, vậy', '便': 'liền', '已': 'đã', '曾': 'từng',
+      '正': 'đang, chính', '将': 'sẽ, đem', '刚': 'vừa mới', '先': 'trước', '只': 'chỉ', '光': 'ánh sáng, chỉ',
+      '别': 'đừng, khác', '莫': 'đừng', '非': 'không phải', '无': 'không có', '未': 'chưa',
+      '吗': 'không (nghi vấn)', '呢': 'đấy, nhỉ', '吧': 'nhé, đi', '啊': 'à, ôi', '呀': 'à, ôi', '哦': 'ồ'
+    };
 
+    function lookupSingleDictEntryMeta(s) {
+      if (!s) return { pinyin: '', vietnamese: '' };
       if (typeof FIXED_COMPOUND_PHRASES !== 'undefined' && FIXED_COMPOUND_PHRASES[s]) {
         return {
           pinyin: FIXED_COMPOUND_PHRASES[s].pinyin || '',
           vietnamese: FIXED_COMPOUND_PHRASES[s].vietnamese || ''
         };
       }
-
       const lookup = typeof srsGetLookup === 'function' ? srsGetLookup() : null;
       const lw = lookup ? lookup.get(s) : null;
       if (lw && (lw.pinyin || lw.vietnamese || lw.vi || lw.meaning)) {
@@ -11362,7 +11392,6 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           vietnamese: lw.vietnamese || lw.vi || lw.meaning || ''
         };
       }
-
       if (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[s]) {
         const e6 = hsk6Data[s];
         return {
@@ -11377,7 +11406,6 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           vietnamese: e79.vi || e79.vietnamese || e79.meaning || ''
         };
       }
-
       const dict = (typeof window !== 'undefined' && window.HSK_DICTIONARY) ? window.HSK_DICTIONARY : null;
       if (dict && dict[s]) {
         const entry = dict[s];
@@ -11386,10 +11414,71 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           vietnamese: entry.v || entry.vi || entry.vietnamese || entry.meaning || ''
         };
       }
+      if (typeof aiCache !== 'undefined' && aiCache && aiCache[s] && (aiCache[s].meaning || aiCache[s].vietnamese)) {
+        return {
+          pinyin: aiCache[s].pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(s) : ''),
+          vietnamese: aiCache[s].meaning || aiCache[s].vietnamese || ''
+        };
+      }
+      if (COMMON_SINGLE_CHAR_GLOSS[s]) {
+        return {
+          pinyin: (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function') ? window.getInstantPinyin(s) : '',
+          vietnamese: COMMON_SINGLE_CHAR_GLOSS[s]
+        };
+      }
+      return { pinyin: '', vietnamese: '' };
+    }
+
+    function lookupDictMetaForToken(hanziStr) {
+      if (!hanziStr) return { pinyin: '', vietnamese: '' };
+      const s = String(hanziStr).trim();
+      if (!s) return { pinyin: '', vietnamese: '' };
+
+      const direct = lookupSingleDictEntryMeta(s);
+      if (direct.vietnamese) {
+        if (!direct.pinyin && typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function') {
+          direct.pinyin = window.getInstantPinyin(s) || '';
+        }
+        return direct;
+      }
 
       const fallbackPy = (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function')
         ? window.getInstantPinyin(s)
         : '';
+
+      // Compositional sub-word lookup for multi-character phrases (e.g. "这栋" -> "tòa này", "六个人" -> "sáu người", "人和事" -> "người và sự việc")
+      if (s.length > 1 && s.length <= 8 && /[\u4e00-\u9fff]/.test(s)) {
+        const subMeanings = [];
+        let i = 0;
+        while (i < s.length) {
+          let matched = false;
+          for (let len = Math.min(4, s.length - i); len >= 2; len--) {
+            const sub = s.slice(i, i + len);
+            const subMeta = lookupSingleDictEntryMeta(sub);
+            if (subMeta.vietnamese) {
+              subMeanings.push(String(subMeta.vietnamese).split(/[;,/]/)[0].trim());
+              i += len;
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            const ch = s[i];
+            const chMeta = lookupSingleDictEntryMeta(ch);
+            if (chMeta.vietnamese) {
+              subMeanings.push(String(chMeta.vietnamese).split(/[;,/]/)[0].trim());
+            }
+            i += 1;
+          }
+        }
+        if (subMeanings.length > 0) {
+          return {
+            pinyin: fallbackPy || '',
+            vietnamese: subMeanings.join(' ')
+          };
+        }
+      }
+
       return { pinyin: fallbackPy || '', vietnamese: '' };
     }
 
@@ -11399,7 +11488,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       const onProgress = typeof options.onProgress === 'function' ? options.onProgress : null;
       const customTitle = options.customTitle || '';
 
-      const chunks = splitTextIntoChunks(rawText, 550);
+      const chunks = splitTextIntoChunks(rawText, 900);
       let allParagraphs = [];
       let allTokens = [];
       let aiAutoTitle = customTitle;
@@ -11441,7 +11530,7 @@ ${targetRuleText}
    - KHÔNG ghép liên từ "与" vào đầu từ B trong "A 与 B" (Ví dụ: tách "大小姐", "与", "佐野").
 
 4) TỰ ĐỘNG SỬA LỖI GRAMMAR "地" / "的":
-   - Trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (như "头也不回地走了", "气愤地说着", "高兴地笑"), nếu bài gốc viết sai thành chữ "的", bạn BẮT BUỘC sửa thành "地" đúng chuẩn ngữ pháp!
+   - Trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (như "头也不回地走了", "气愤地说着", "高兴地笑"), nếu bài gốc viết sai thành chữ "地", bạn BẮT BUỘC sửa thành "地" đúng chuẩn ngữ pháp!
 
 5) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU:
    - BẮT BUỘC bổ sung và chuẩn hóa dấu câu tiếng Trung (，, 。, ！, ？, ：“”, 《》) nếu bài gốc thiếu hoặc dính liền chữ.
@@ -11504,7 +11593,7 @@ ${chunkText}
               },
               body: JSON.stringify({
                 model: options.model || 'google/gemini-3.8-flash',
-                reasoning: options.model && options.model.includes('deepseek') ? { enabled: false } : { effort: 'low' },
+                reasoning: { enabled: false },
                 messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
               })
             });
@@ -12452,7 +12541,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           },
           body: JSON.stringify({
             model: 'google/gemini-3.8-flash',
-            reasoning: { effort: 'low' },
+            reasoning: { enabled: false },
             messages: [
               { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
               { role: 'user', content: userContent }
@@ -12528,6 +12617,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
     // ==========================================
     const HSK_NEWS_CACHE_KEY = 'hsk79_daily_news_cache_v3';
     const HSK_PINNED_NEWS_KEY = 'hsk79_pinned_news_v1';
+    const HSK_NEWS_READER_CACHE_KEY = 'hsk79_parsed_news_reader_cache_v1';
     let hskCuratedNewsList = [];
     let hskPinnedNewsList = safeGetJSON(HSK_PINNED_NEWS_KEY, []);
     if (!Array.isArray(hskPinnedNewsList)) hskPinnedNewsList = [];
@@ -12611,13 +12701,13 @@ Lưu ý cốt lõi: Hội đồng ra đề HSK 7-9 KHÔNG BAO GIỜ lặp lại 
       if (modal) modal.classList.add('active');
       updatePinnedNewsCountUI();
 
-      // Load cached curated news if fetched within the last 4 hours
+      // Load cached curated news if fetched within the last 12 hours
       try {
         const cached = JSON.parse(localStorage.getItem(HSK_NEWS_CACHE_KEY) || 'null');
         if (cached && Array.isArray(cached.items) && cached.items.length > 0) {
           hskCuratedNewsList = cached.items;
           renderHskNewsCards();
-          if (Date.now() - (cached.savedAt || 0) > 4 * 3600 * 1000) {
+          if (Date.now() - (cached.savedAt || 0) > 12 * 3600 * 1000) {
             fetchAndCurateHskDailyNews(true);
           }
           return;
@@ -12800,7 +12890,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           },
           body: JSON.stringify({
             model: 'google/gemini-3.8-flash',
-            reasoning: { effort: 'low' },
+            reasoning: { enabled: false },
             messages: [
               { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
               { role: 'user', content: curatorPrompt }
@@ -13074,7 +13164,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
             },
             body: JSON.stringify({
               model: modelName,
-              reasoning: modelName.includes('deepseek') ? { enabled: false } : { effort: 'low' },
+              reasoning: { enabled: false },
               messages: [
                 { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
                 { role: 'user', content: condensePrompt }
@@ -13113,7 +13203,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       }
       if (!item) return;
 
-      // If this news article was already saved in readingArticles, open it directly!
+      // 1. If this news article was already saved in readingArticles, open it directly ($0)!
       const existingSaved = (readingArticles || []).find(a => a && a.newsUrl && item.link && a.newsUrl === item.link);
       if (existingSaved) {
         closeHskNewsModal();
@@ -13121,6 +13211,22 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         openReadingViewModal(existingSaved.id);
         showToast('📖 Đã mở bài báo từ mục Bài đã lưu!');
         return;
+      }
+
+      // 2. If this news article was already parsed earlier, open from local cache ($0)!
+      if (item.link) {
+        try {
+          const readerCache = JSON.parse(localStorage.getItem(HSK_NEWS_READER_CACHE_KEY) || '{}');
+          const cachedArt = readerCache && readerCache[item.link];
+          if (cachedArt && Array.isArray(cachedArt.paragraphs) && cachedArt.paragraphs.length > 0) {
+            unsavedAiStoryArticle = cachedArt;
+            closeHskNewsModal();
+            if (readingInputModal) readingInputModal.classList.remove('active');
+            openReadingViewModal(cachedArt.id);
+            showToast('📰 Đã mở lại bài báo từ bộ nhớ đệm (không tốn AI)!');
+            return;
+          }
+        } catch (e) {}
       }
 
       const apiKey = localStorage.getItem('openrouter_api_key');
@@ -13180,6 +13286,18 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           examMatch: item.examMatch || '',
           createdAt: new Date().toLocaleDateString('vi-VN')
         };
+
+        if (item.link) {
+          try {
+            const readerCache = JSON.parse(localStorage.getItem(HSK_NEWS_READER_CACHE_KEY) || '{}');
+            const keys = Object.keys(readerCache);
+            if (keys.length >= 20) {
+              delete readerCache[keys[0]];
+            }
+            readerCache[item.link] = articleObj;
+            localStorage.setItem(HSK_NEWS_READER_CACHE_KEY, JSON.stringify(readerCache));
+          } catch (e) {}
+        }
 
         unsavedAiStoryArticle = articleObj;
 
@@ -14192,42 +14310,20 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       setTimeout(updateReadingTitleMarquee, 60);
       setTimeout(updateReadingTitleMarquee, 250);
 
-      // Auto-heal legacy AI story articles that had single-character token splits from older versions
-      const vocabToks = (art.tokens || []).filter(t => t && t.isVocab && t.hanzi);
-      const brokenSingleCharToks = vocabToks.filter(t => t.hanzi.length === 1 && (!t.pinyin || !t.vietnamese));
-      const isBrokenLegacyArticle = vocabToks.length > 8 && (brokenSingleCharToks.length / vocabToks.length > 0.25);
-      const apiKey = localStorage.getItem('openrouter_api_key');
-
-      if (isBrokenLegacyArticle && apiKey && !art._reTokenizing) {
-        art._reTokenizing = true;
-        let rawClean = art.rawText || art.content || (art.tokens || []).map(t => t.hanzi).join('');
-        (art.selectedWords || []).forEach(w => {
-          if (w && w.hanzi) {
-            const esc = w.hanzi.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            rawClean = rawClean.replace(new RegExp(`[“"「『]${esc}[”"」』]`, 'g'), w.hanzi);
+      // Heal legacy articles locally using dictionary lookup ($0 API cost) instead of calling OpenRouter in background
+      if (Array.isArray(art.tokens) && art.tokens.length > 0) {
+        let localHealed = false;
+        art.tokens.forEach(t => {
+          if (t && t.isVocab && t.hanzi && (!t.pinyin || !t.vietnamese)) {
+            const meta = lookupDictMetaForToken(t.hanzi);
+            if (!t.pinyin && meta.pinyin) { t.pinyin = meta.pinyin; localHealed = true; }
+            if (!t.vietnamese && meta.vietnamese) { t.vietnamese = meta.vietnamese; localHealed = true; }
           }
         });
-        showToast('✨ Đang tự động gom lại cụm từ chuẩn cho bài đọc...');
-        parsePassageChunksWithAi(rawClean, apiKey, {
-          targetWords: art.selectedWords || [],
-          customTitle: art.title
-        }).then(res => {
-          art._reTokenizing = false;
-          if (res && res.paragraphs && res.paragraphs.length > 0) {
-            art.rawText = rawClean;
-            art.content = rawClean;
-            art.paragraphs = res.paragraphs;
-            art.tokens = res.tokens;
-            if (isReadingArticleSaved(art.id)) saveReadingArticlesToStorage();
-            if (activeReadingArticleId === art.id) {
-              renderReadingPassageContent(art);
-              showToast('✅ Đã gom cụm từ hoàn chỉnh!');
-            }
-          }
-        }).catch(err => {
-          art._reTokenizing = false;
-          console.warn('Auto re-tokenize warning:', err);
-        });
+        if (localHealed) {
+          if (isReadingArticleSaved(art.id)) saveReadingArticlesToStorage();
+          renderReadingPassageContent(art);
+        }
       }
 
       // Auto-resume reading position
@@ -16072,10 +16168,10 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       return btoa(binary);
     }
 
-    // Transcribe 16kHz mono PCM into timestamped Simplified Chinese segments using Gemini 3.8 Flash
+    // Transcribe 16kHz mono PCM into timestamped Simplified Chinese + Vietnamese segments in a SINGLE pass!
     async function vslTranscribePcmWithAi(pcm, totalDuration, onProgress, videoTitle = '') {
       const sampleRate = 16000;
-      const windowSec = 65;
+      const windowSec = 95;
       const totalWindows = Math.max(1, Math.ceil(totalDuration / windowSec));
       const allSegments = [];
       let prevContextText = '';
@@ -16099,17 +16195,21 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           prevContextText ? `Các câu ngay trước đoạn này: "${prevContextText}".` : ''
         ].filter(Boolean).join(' ');
 
-        const promptText = `Bạn là chuyên gia ngôn ngữ tiếng Trung HSK 7-9. Hãy nghe đoạn âm thanh tiếng Trung này (độ dài ${windowDur} giây) và chép lời chính xác 100% sang chữ Hán giản thể (Simplified Chinese), chia thành từng câu/mệnh đề tự nhiên kèm mốc thời gian start và end (tính bằng giây từ 0.0 đến ${windowDur}).
+        const promptText = `Bạn là chuyên gia ngôn ngữ tiếng Trung HSK 7-9. Hãy nghe đoạn âm thanh tiếng Trung này (độ dài ${windowDur} giây), chép lời chính xác 100% sang chữ Hán giản thể (Simplified Chinese) và dịch tự nhiên sang tiếng Việt, chia thành từng câu/mệnh đề kèm mốc thời gian start và end (tính bằng giây từ 0.0 đến ${windowDur}).
 ${contextHint ? `Ngữ cảnh tham khảo: ${contextHint}\n` : ''}Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
 [
-  {"start": 0.0, "end": 2.8, "text": "Câu chữ Hán giản thể 1"},
-  {"start": 2.8, "end": 5.6, "text": "Câu chữ Hán giản thể 2"}
+  {
+    "start": 0.0,
+    "end": 2.8,
+    "text": "Câu chữ Hán giản thể chuẩn xác 1",
+    "vietnamese": "Bản dịch tiếng Việt mượt mà của câu 1",
+    "phrases": ["Tên riêng/thành ngữ/từ khó (nếu có)|pinyin|nghĩa Việt"]
+  }
 ]
 Quy tắc bắt buộc:
-1. Tự động suy luận ngữ cảnh để dùng đúng chữ Hán chuẩn xác (tránh nhầm từ đồng âm như 的/地/得, 在/再, 做/作, viết đúng thành ngữ 4 chữ và thuật ngữ).
-2. Chỉ dùng chữ Hán giản thể (Simplified Chinese), thêm dấu câu (，。？！) tự nhiên.
-3. Nếu đoạn âm thanh chỉ có nhạc nền hoặc im lặng không có tiếng người nói, trả về [].
-4. Chỉ trả về mảng JSON, không giải thích gì thêm.`;
+1. Tự động suy luận ngữ cảnh để dùng đúng chữ Hán chuẩn xác (tránh nhầm từ đồng âm như 的/地/得, 在/再, 做/作, viết đúng tên nhân vật, địa danh, thành ngữ 4 chữ).
+2. Trường "phrases" CHỈ liệt kê tên riêng, thành ngữ 4 chữ hoặc cụm từ đặc thù trong câu đó theo dạng "Chữ Hán|pinyin|nghĩa Việt" (nếu câu toàn từ thông dụng thì để [] hoặc lược bỏ).
+3. Chỉ dùng chữ Hán giản thể (Simplified Chinese), thêm dấu câu (，。？！) tự nhiên. Nếu đoạn âm thanh chỉ có nhạc nền hoặc im lặng, trả về [].`;
 
         let windowSegs = null;
         for (const modelName of FETCH_AI_MODELS) {
@@ -16120,6 +16220,7 @@ Quy tắc bắt buộc:
               body: JSON.stringify({
                 model: modelName,
                 temperature: 0.1,
+                reasoning: { enabled: false },
                 messages: [
                   { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
                   {
@@ -16154,10 +16255,17 @@ Quy tắc bắt buộc:
             if (!txt) continue;
             const st = Math.max(0, Number(seg.start) || 0) + startSec;
             const ed = Math.max(st + 0.8, (Number(seg.end) || (Number(seg.start) + 2.5)) + startSec);
+            const viTxt = String(seg.vietnamese || seg.vi || '').trim();
+            const builtTokens = vslBuildSubtitleTokensWithAiPhrases(txt, seg.phrases);
+            const isComplete = Boolean(viTxt && builtTokens.length > 0);
             allSegments.push({
               start: Number(st.toFixed(2)),
               end: Number(Math.min(totalDuration + 1, ed).toFixed(2)),
-              text: txt
+              text: txt,
+              vietnamese: viTxt,
+              tokens: builtTokens,
+              _aiEnriched: isComplete,
+              _aiProofreadV2: isComplete
             });
           }
           prevContextText = allSegments.slice(-2).map(s => s.text).join(' ');
@@ -16195,7 +16303,12 @@ Quy tắc bắt buộc:
     }
 
     function vslIsSubtitleAiDone(s) {
-      return !!(s && s._aiProofreadV2 && Array.isArray(s.tokens) && s.tokens.length > 0 && String(s.vietnamese || s.vi || s.vi_text || '').trim());
+      if (!s || s._forceReproofread) return false;
+      if (!Array.isArray(s.tokens) || s.tokens.length === 0) return false;
+      const hasVi = Boolean(String(s.vietnamese || s.vi || s.vi_text || '').trim());
+      if (!hasVi) return false;
+      if (s._aiProofreadV2 || s._aiEnriched) return true;
+      return !vslTokensNeedLocalRebuild(s.tokens);
     }
 
     // Check if a subtitle needs AI proofreading/segmentation
@@ -16306,17 +16419,89 @@ Quy tắc bắt buộc:
       return out;
     }
 
+    // Build complete subtitle tokens locally ($0 cost) and overlay any AI special phrases/idioms/proper nouns!
+    function vslBuildSubtitleTokensWithAiPhrases(sentenceText, rawAiPhrases) {
+      const cleanSentence = toSimplifiedChinese(String(sentenceText || '').replace(/\s+/g, ' ').trim());
+      if (!cleanSentence) return [];
+
+      const phraseList = [];
+      if (Array.isArray(rawAiPhrases)) {
+        for (const item of rawAiPhrases) {
+          const norm = normalizeAiTokenItem(item);
+          if (norm && norm.hanzi && /[\u4e00-\u9fff]/.test(norm.hanzi) && norm.hanzi.length <= 10) {
+            const h = toSimplifiedChinese(norm.hanzi.trim());
+            const py = norm.pinyin || lookupDictMetaForToken(h).pinyin || '';
+            const vi = norm.vietnamese || lookupDictMetaForToken(h).vietnamese || '';
+            if (h.length >= 2 && vi && typeof FIXED_COMPOUND_PHRASES !== 'undefined' && !FIXED_COMPOUND_PHRASES[h]) {
+              FIXED_COMPOUND_PHRASES[h] = { pinyin: py, vietnamese: vi };
+            }
+            phraseList.push({ hanzi: h, pinyin: py, vietnamese: vi });
+          }
+        }
+      }
+      phraseList.sort((a, b) => b.hanzi.length - a.hanzi.length);
+
+      // Split sentence around any matched AI phrases first so even 5-8 char proper nouns stay intact
+      let chunks = [{ type: 'raw', text: cleanSentence }];
+      for (const ph of phraseList) {
+        if (!ph.hanzi) continue;
+        const nextChunks = [];
+        for (const c of chunks) {
+          if (c.type !== 'raw' || !c.text.includes(ph.hanzi)) {
+            nextChunks.push(c);
+            continue;
+          }
+          const parts = c.text.split(ph.hanzi);
+          for (let idx = 0; idx < parts.length; idx++) {
+            if (parts[idx]) nextChunks.push({ type: 'raw', text: parts[idx] });
+            if (idx < parts.length - 1) {
+              nextChunks.push({ type: 'phrase', hanzi: ph.hanzi, pinyin: ph.pinyin, vietnamese: ph.vietnamese });
+            }
+          }
+        }
+        chunks = nextChunks;
+      }
+
+      const finalTokens = [];
+      for (const c of chunks) {
+        if (c.type === 'phrase') {
+          const normPh = normalizeAiTokenItem({
+            hanzi: c.hanzi,
+            pinyin: c.pinyin,
+            vietnamese: c.vietnamese,
+            isVocab: true
+          });
+          if (normPh) finalTokens.push(normPh);
+        } else {
+          const wordStrings = vslSegmentSentenceIntoWordStrings(c.text);
+          for (const w of wordStrings) {
+            const isHan = /[\u4e00-\u9fff]/.test(w);
+            const meta = isHan ? lookupDictMetaForToken(w) : { pinyin: '', vietnamese: '' };
+            const normW = normalizeAiTokenItem({
+              hanzi: w,
+              pinyin: meta.pinyin || '',
+              vietnamese: meta.vietnamese || '',
+              isVocab: isHan
+            });
+            if (normW) finalTokens.push(normW);
+          }
+        }
+      }
+      return mergeFixedCompoundTokensInList(finalTokens);
+    }
+
     // Merge tiny fragmented subtitle pieces (e.g. 1-3 char orphan fragments from auto-CC) before AI analysis
     function vslNormalizeRawSegments(rawSegments) {
       const cleaned = (rawSegments || [])
         .map(s => {
           const hasValidTokens = Array.isArray(s.tokens) && s.tokens.length > 0 && !vslTokensNeedLocalRebuild(s.tokens);
-          const isProofreadV2 = !!(s._aiProofreadV2 && hasValidTokens && (s.vietnamese || s.vi || s.vi_text));
+          const viStr = String(s.vietnamese || s.vi || s.vi_text || '').trim();
+          const isProofreadV2 = !!(!s._forceReproofread && hasValidTokens && viStr);
           return {
             start: Number(s.start) || 0,
             end: Math.max((Number(s.start) || 0) + 0.6, Number(s.end) || ((Number(s.start) || 0) + 2.2)),
             text: toSimplifiedChinese(String(s.text || '').replace(/\s+/g, ' ').trim()),
-            vietnamese: String(s.vietnamese || s.vi || s.vi_text || '').trim(),
+            vietnamese: viStr,
             tokens: hasValidTokens ? s.tokens : null,
             _aiEnriched: isProofreadV2,
             _aiProofreadV2: isProofreadV2
@@ -16396,7 +16581,7 @@ Quy tắc bắt buộc:
       const finalSentenceText = toSimplifiedChinese(String((seg && seg.text) || '').replace(/\s+/g, ' ').trim());
       if (seg && Array.isArray(seg.tokens) && seg.tokens.length > 0 && !vslTokensNeedLocalRebuild(seg.tokens)) {
         const viStr = String(seg.vietnamese || seg.vi || seg.vi_text || '').trim();
-        const isProofread = !!(seg._aiProofreadV2 && viStr);
+        const isProofread = !!(!seg._forceReproofread && viStr);
         return {
           start: Number(seg.start) || 0,
           end: Math.max((Number(seg.start) || 0) + 0.6, Number(seg.end) || ((Number(seg.start) || 0) + 2.2)),
@@ -16407,25 +16592,17 @@ Quy tắc bắt buộc:
           _aiProofreadV2: isProofread
         };
       }
-      const wordStrings = vslSegmentSentenceIntoWordStrings(finalSentenceText);
-      const tokens = mergeFixedCompoundTokensInList(wordStrings.map(w => {
-        const isHan = /[\u4e00-\u9fff]/.test(w);
-        const meta = isHan ? lookupDictMetaForToken(w) : { pinyin: '', vietnamese: '' };
-        return normalizeAiTokenItem({
-          hanzi: w,
-          pinyin: meta.pinyin || '',
-          vietnamese: meta.vietnamese || '',
-          isVocab: isHan
-        });
-      }).filter(Boolean));
+      const tokens = vslBuildSubtitleTokensWithAiPhrases(finalSentenceText, seg && seg.phrases);
+      const viStr = String((seg && (seg.vietnamese || seg.vi || seg.vi_text)) || '').trim();
+      const isProofread = !!(!seg || !seg._forceReproofread) && Boolean(viStr && tokens.length > 0);
       return {
         start: Number(seg && seg.start) || 0,
         end: Math.max((Number(seg && seg.start) || 0) + 0.6, Number(seg && seg.end) || ((Number(seg && seg.start) || 0) + 2.2)),
         text: finalSentenceText,
-        vietnamese: String((seg && (seg.vietnamese || seg.vi || seg.vi_text)) || '').trim(),
+        vietnamese: viStr,
         tokens,
-        _aiEnriched: false,
-        _aiProofreadV2: false
+        _aiEnriched: isProofread,
+        _aiProofreadV2: isProofread
       };
     }
 
@@ -16435,8 +16612,13 @@ Quy tắc bắt buộc:
       for (let i = 0; i < lesson.subtitles.length; i++) {
         const sub = lesson.subtitles[i];
         if (!sub) continue;
-        // Never wipe _aiProofreadV2 if the sentence has already been proofread by AI!
+        // Fill any missing Pinyin/Vietnamese locally ($0 cost) and mark done if translation is present
         if (vslIsSubtitleAiDone(sub)) {
+          if (!sub._aiProofreadV2) {
+            sub._aiProofreadV2 = true;
+            sub._aiEnriched = true;
+            changed = true;
+          }
           for (let j = 0; j < sub.tokens.length; j++) {
             const t = sub.tokens[j];
             if (t && t.hanzi && /[\u4e00-\u9fff]/.test(t.hanzi) && (!t.pinyin || !t.vietnamese)) {
@@ -16448,8 +16630,12 @@ Quy tắc bắt buộc:
           continue;
         }
         if (vslTokensNeedLocalRebuild(sub.tokens)) {
-          const rebuilt = vslBuildLocalFallbackSubtitleItem({ ...sub, tokens: null, _aiEnriched: false, _aiProofreadV2: false });
+          const rebuilt = vslBuildLocalFallbackSubtitleItem({ ...sub, tokens: null });
           sub.tokens = rebuilt.tokens;
+          if (rebuilt._aiProofreadV2) {
+            sub._aiProofreadV2 = true;
+            sub._aiEnriched = true;
+          }
           changed = true;
         }
       }
@@ -16463,52 +16649,27 @@ Quy tắc bắt buộc:
 
     async function vslAnalyzeSingleBatchWithAi(batch, prevLine, nextLine, fullOverviewText, videoTitle) {
       const linesJson = JSON.stringify(batch.map((item, idx) => ({ idx, text: item.text })));
-      const prompt = `Bạn là biên tập viên hiệu đính phụ đề tiếng Trung (ASR Proofreader) và chuyên gia dịch thuật HSK 6 - HSK 9.
-Các câu phụ đề dưới đây được tách từ giọng nói tự động (Whisper ASR) nên CÓ THỂ CHỨA LỖI ĐỒNG ÂM / GẦN ÂM SAI NGỮ CẢNH rất nặng.
-Ví dụ các lỗi đồng âm ASR điển hình cần sửa:
-- "日曼第二彩" -> phải sửa thành "日卖电视台" (Đài truyền hình Nichiuri trong Conan)
-- "毛李" -> "毛利" (Mouri / 毛利小五郎)
-- "高尔福明人答赛" -> "高尔夫名人大赛" (Giải đấu Golf Danh nhân)
-- "进而远职" -> "敬而远之" (thành ngữ: kính nhi viễn chi / luôn tránh xa)
-- "这动别数/别数" -> "这栋别墅/别墅"
-- "希望之官" -> "希望之馆", "心底下凉" -> "心地善良", "病事前" -> "病逝前", "穿业武装员" -> "长野五丈原"
-- Các lỗi trợ từ "的/地/得", "在/再", "做/作", tên nhân vật, địa danh, thành ngữ 4 chữ bị nghe trại âm.
+      const prompt = `Bạn là biên tập viên hiệu đính phụ đề tiếng Trung (ASR Proofreader) và dịch giả HSK 6 - HSK 9.
+Các câu phụ đề dưới đây được tách từ giọng nói tự động (ASR) nên CÓ THỂ CHỨA LỖI ĐỒNG ÂM / GẦN ÂM SAI NGỮ CẢNH:
+- Ví dụ: "日曼第二彩" -> "日卖电视台" (Đài truyền hình Nichiuri), "毛李" -> "毛利" (Mouri), "高尔福明人答赛" -> "高尔夫名人大赛", "进而远职" -> "敬而远之", "这动别数" -> "这栋别墅", "心底下凉" -> "心地善良", "病事前" -> "病逝前", lỗi "的/地/得", "在/再", "做/作".
 
-Hãy đối chiếu kỹ TIÊU ĐỀ VIDEO ("${videoTitle || 'Video tiếng Trung'}"), mạch truyện và câu liền trước/liền sau để ĐỒNG THỜI thực hiện 3 việc:
-1. SỬA TRIỆT ĐỂ MỌI LỖI ĐỒNG ÂM ASR sang chữ Hán giản thể chuẩn xác 100% theo ngữ cảnh thực tế của video.
-2. PHÂN CỤM TỪ VỰNG chuẩn (mỗi từ 1-4 chữ Hán, ví dụ tách "商品开发部" thành "商品|shāngpǐn|sản phẩm" và "开发部|kāifābù|bộ phận phát triển", giữ nguyên thành ngữ 4 chữ như "敬而远之") kèm Pinyin có dấu thanh và NGHĨA TIẾNG VIỆT NGẮN GỌN cho TẤT CẢ các từ.
-3. DỊCH CÂU ĐÃ SỬA sang tiếng Việt mượt mà, tự nhiên, chuẩn xác (bắt buộc dịch theo câu chữ Hán ĐÃ HIỆU ĐÍNH, tuyệt đối không dịch theo chữ nghe nhầm).
+Hãy đối chiếu TIÊU ĐỀ VIDEO ("${videoTitle || 'Video tiếng Trung'}"), mạch bài ("${fullOverviewText}")${prevLine ? `, câu trước ("${prevLine}")` : ''}${nextLine ? `, câu sau ("${nextLine}")` : ''} để:
+1. SỬA TRIỆT ĐỂ MỌI LỖI ĐỒNG ÂM ASR sang chữ Hán giản thể chuẩn xác 100% và thêm dấu câu tự nhiên.
+2. DỊCH CÂU ĐÃ SỬA sang tiếng Việt mượt mà, tự nhiên, chuẩn xác.
+3. Trong mảng "phrases", CHỈ liệt kê các TÊN RIÊNG (nhân vật, tổ chức, địa danh), THÀNH NGỮ 4 CHỮ hoặc CỤM TỪ ĐẶC THÙ khó tra từ điển xuất hiện trong câu theo định dạng "Chữ Hán|pinyin|nghĩa tiếng Việt ngắn gọn" (các từ thông thường KHÔNG cần liệt kê để phản hồi cực nhanh; nếu câu không có từ đặc thù thì để "phrases": []).
 
-Ngữ cảnh toàn đoạn video:
-- Tiêu đề: "${videoTitle || 'Video tiếng Trung'}"
-- Tóm lược mạch bài: "${fullOverviewText}"
-${prevLine ? `- Câu liền trước: "${prevLine}"\n` : ''}${nextLine ? `- Câu liền sau: "${nextLine}"\n` : ''}
-Danh sách câu cần hiệu đính & phân tích:
+Danh sách ${batch.length} câu cần hiệu đính & dịch:
 ${linesJson}
 
-YÊU CẦU ĐỊNH DẠNG JSON BẮT BUỘC:
-Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} phần tử. Mỗi phần tử chữ Hán trong mảng "tokens" BẮT BUỘC có đủ 3 trường "Chữ Hán|pinyin có dấu thanh|nghĩa tiếng Việt ngắn gọn" (tuyệt đối không bỏ trống nghĩa tiếng Việt; chỉ với dấu câu mới ghi nguyên dấu câu như "，", "。"):
+Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} phần tử:
 [
   {
     "idx": 0,
-    "text": "Câu chữ Hán giản thể ĐÃ SỬA SẠCH lỗi đồng âm ASR và có dấu câu chuẩn",
-    "vietnamese": "Bản dịch tiếng Việt mượt mà, tự nhiên của câu sau khi đã sửa lỗi đồng âm",
-    "tokens": [
-      "曾经|céngjīng|từng",
-      "住|zhù|sống",
-      "在|zài|ở",
-      "这栋|zhè dòng|tòa này",
-      "别墅|biéshù|biệt thự",
-      "的|de|của",
-      "六个人|liù gè rén|sáu người",
-      "。"
-    ]
+    "text": "Câu chữ Hán giản thể ĐÃ SỬA SẠCH lỗi đồng âm ASR",
+    "vietnamese": "Bản dịch tiếng Việt mượt mà, tự nhiên của câu",
+    "phrases": ["日卖电视台|rìmài diànshìtái|Đài truyền hình Nichiuri", "敬而远之|jìng ér yuǎn zhī|kính nhi viễn chi"]
   }
-]
-QUY TẮC:
-- MỌI từ/chữ Hán trong "tokens" BẮT BUỘC phải là chữ ĐÃ SỬA ĐÚNG, khớp 100% với "text", và có đầy đủ cả pinyin lẫn nghĩa tiếng Việt.
-- Mỗi từ trong "tokens" ưu tiên dài 1-4 chữ Hán (tách các cụm danh từ dài thành từng từ 2-3 chữ để người học bấm tra từ dễ dàng).
-- Bắt buộc dùng 100% chữ Hán giản thể (Simplified Chinese).`;
+]`;
 
       let batchParsed = null;
       for (const modelName of FETCH_AI_MODELS) {
@@ -16520,7 +16681,7 @@ QUY TẮC:
             body: JSON.stringify({
               model: modelName,
               temperature: 0.1,
-              reasoning: { effort: 'low' },
+              reasoning: { enabled: false },
               messages: [
                 { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
                 { role: 'user', content: prompt }
@@ -16574,12 +16735,12 @@ QUY TẮC:
           }
         }
         if (!enrichedOk) {
-          tokens = vslBuildLocalFallbackSubtitleItem({ ...orig, text: finalSentenceText, tokens: null }).tokens;
+          tokens = vslBuildSubtitleTokensWithAiPhrases(finalSentenceText, aiItem && aiItem.phrases);
           if (hasAiText && tokens.length > 0) enrichedOk = true;
         }
 
-        let viText = (aiItem && aiItem.vietnamese)
-          ? String(aiItem.vietnamese).trim()
+        let viText = (aiItem && (aiItem.vietnamese || aiItem.vi))
+          ? String(aiItem.vietnamese || aiItem.vi).trim()
           : String(orig.vietnamese || orig.vi || '').trim();
         if (!viText && hasAiText && tokens.length > 0) {
           viText = tokens.map(t => t && t.vietnamese ? String(t.vietnamese).split(/[;,/]/)[0].trim() : '').filter(Boolean).join(' ') || finalSentenceText;
@@ -16634,6 +16795,7 @@ QUY TẮC:
         if (s) {
           s._aiProofreadV2 = false;
           s._aiEnriched = false;
+          s._forceReproofread = true;
         }
       });
       saveVslLessonsToStorage(lesson.id);
@@ -16665,7 +16827,7 @@ QUY TẮC:
       let isFirstWave = true;
 
       try {
-        const fullOverviewText = lesson.subtitles.map(s => s.text).join(' ').slice(0, 1800);
+        const fullOverviewText = lesson.subtitles.map(s => s.text).join(' ').slice(0, 600);
 
         while (vslEnrichRunMap.get(lesson.id) === runId) {
           const liveLesson = findVslLessonById(lesson.id) || lesson;
@@ -16684,14 +16846,14 @@ QUY TẮC:
           if (orderedPending.length === 0) break;
 
           const waveChunks = [];
-          if (isFirstWave && (isManualTrigger || orderedPending[0] === pivot)) {
+          if (isFirstWave && isManualTrigger) {
             isFirstWave = false;
-            const fastSlice = orderedPending.slice(0, Math.min(3, orderedPending.length)).sort((a, b) => a - b);
+            const fastSlice = orderedPending.slice(0, Math.min(6, orderedPending.length)).sort((a, b) => a - b);
             fastSlice.forEach(idx => attemptedInSession.add(idx));
             waveChunks.push(fastSlice);
           } else {
             isFirstWave = false;
-            const batchSize = 8;
+            const batchSize = 25;
             const concurrency = 2;
             for (let c = 0; c < concurrency && c * batchSize < orderedPending.length; c++) {
               const slice = orderedPending.slice(c * batchSize, (c + 1) * batchSize).sort((a, b) => a - b);
@@ -16751,22 +16913,22 @@ QUY TẮC:
     }
 
     // Fast Single-Pass AI Proofreading + Phrase Segmentation + Translation
-    // For long videos (> 24 sentences), immediately analyzes the first 24 sentences in 1 parallel wave (~3.5s)
-    // so Studio opens right away with AI-proofread opening subtitles, and enriches the rest in the background!
+    // Immediately analyzes the first 25 sentences in 1 single compact request (~2.5s)
+    // so Studio opens right away with AI-proofread opening subtitles, and enriches the rest in 25-sentence batches!
     async function vslAnalyzeSubtitlesWithAi(rawSegments, onProgress, videoTitle = '') {
       const cleanSegments = vslNormalizeRawSegments(rawSegments);
       if (cleanSegments.length === 0) return [];
 
-      // If cached segments have already passed v2 AI ASR proofreading & translation, return immediately!
+      // If segments are already translated & tokenized (e.g. from single-pass audio transcription or cache), return immediately ($0)!
       const allAlreadyAnalyzed = cleanSegments.every(vslIsSubtitleAiDone);
       if (allAlreadyAnalyzed) {
         if (typeof onProgress === 'function') onProgress(100);
         return cleanSegments.map(s => vslBuildLocalFallbackSubtitleItem({ ...s, _aiEnriched: true, _aiProofreadV2: true }));
       }
 
-      const fullOverviewText = cleanSegments.map(s => s.text).join(' ').slice(0, 1800);
-      const batchSize = 8;
-      const immediateLimit = 24; // First 3 batches (24 sentences) proofread immediately in 1 parallel wave!
+      const fullOverviewText = cleanSegments.map(s => s.text).join(' ').slice(0, 600);
+      const batchSize = 25;
+      const immediateLimit = 25; // First 25 sentences proofread in 1 single API call!
       const immediateCount = Math.min(cleanSegments.length, immediateLimit);
       const immediateBatches = Math.ceil(immediateCount / batchSize);
       const analyzedSubtitles = cleanSegments.map(s => vslBuildLocalFallbackSubtitleItem(s));
@@ -17237,17 +17399,18 @@ QUY TẮC:
               text: toSimplifiedChinese(String(s.text || '').trim())
             }));
           } else {
-            // Video không có sẵn CC trên YouTube -> Gửi yêu cầu tới Trạm AI trên máy Mac ngay lập tức!
+            // Video không có sẵn CC trên YouTube -> Ưu tiên Trạm AI trên máy Mac (miễn phí 100%) trước!
             pctCtrl.setTarget(35, 1800);
-            const macWorkerPromise = vslRequestMacWorkerSubtitles(
+            const macSubs = await vslRequestMacWorkerSubtitles(
               ytId,
               title,
               (data && data.duration) || '03:00',
               (p) => pctCtrl.setTarget(Math.max(35, Math.min(68, Math.round(p * 0.7))), 900)
             );
-
-            // Nếu Cloud lấy được trực tiếp audioBase64 thì chạy song song, bên nào xong trước lấy bên đó
-            if (data && data.audioBase64) {
+            if (macSubs && macSubs.length >= 2) {
+              rawSegments = macSubs;
+            } else if (data && data.audioBase64) {
+              // Chỉ gọi AI Cloud khi máy Mac không phản hồi
               try {
                 const bin = atob(data.audioBase64);
                 const bytes = new Uint8Array(bin.length);
@@ -17263,13 +17426,6 @@ QUY TẮC:
                 }
               } catch (audioErr) {
                 console.warn('Cloud audioBase64 decode error:', audioErr);
-              }
-            }
-
-            if (!rawSegments || rawSegments.length === 0) {
-              const macSubs = await macWorkerPromise;
-              if (macSubs && macSubs.length >= 2) {
-                rawSegments = macSubs;
               }
             }
           }
@@ -19379,7 +19535,7 @@ ${wordListPrompt}
               },
               body: JSON.stringify({
                 model: currentModel,
-                reasoning: currentModel.includes('deepseek') ? { enabled: false } : { effort: 'low' },
+                reasoning: { enabled: false },
                 messages: [
                   {
                     role: 'system',
