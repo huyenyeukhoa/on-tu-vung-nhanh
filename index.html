@@ -5545,17 +5545,23 @@
     if (!Array.isArray(deletedReadingArticleIds)) deletedReadingArticleIds = [];
 
     function saveReadingArticlesToStorage() {
+      const cleanArticles = (readingArticles || []).map(art => {
+        if (art && art.audioUrl && art.audioUrl.length > 500) {
+          const { audioUrl, ...rest } = art;
+          return rest;
+        }
+        return art;
+      });
+      if (typeof mhIdbPutKv === 'function') {
+        mhIdbPutKv('reading_articles', cleanArticles);
+      }
+      if (typeof mhQueueReadingAndNewsCloudSync === 'function') {
+        mhQueueReadingAndNewsCloudSync();
+      }
       try {
-        const cleanArticles = (readingArticles || []).map(art => {
-          if (art && art.audioUrl && art.audioUrl.length > 500) {
-            const { audioUrl, ...rest } = art;
-            return rest;
-          }
-          return art;
-        });
         localStorage.setItem('hsk_reading_articles', JSON.stringify(cleanArticles));
       } catch (e) {
-        console.warn('saveReadingArticlesToStorage quota warning:', e);
+        console.warn('saveReadingArticlesToStorage quota warning (saved in IndexedDB & Supabase):', e);
       }
     }
     window.saveReadingArticlesToStorage = saveReadingArticlesToStorage;
@@ -6455,12 +6461,17 @@
           if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         }
 
+        if (typeof mhSyncReadingAndNewsToVault === 'function') mhSyncReadingAndNewsToVault();
+        if (typeof mhFlushVslLessonsToCloud === 'function') mhFlushVslLessonsToCloud();
+
         updateCloudStatusBadge('✓ Đã đồng bộ', false);
         if (isManual) {
           showToast('☁️ Đã sao lưu dữ liệu lên Đám mây Supabase!');
         }
       } catch (err) {
         console.error('Supabase save error:', err);
+        if (typeof mhSyncReadingAndNewsToVault === 'function') mhSyncReadingAndNewsToVault();
+        if (typeof mhFlushVslLessonsToCloud === 'function') mhFlushVslLessonsToCloud();
         updateCloudStatusBadge('✓ Đã đồng bộ', false);
         if (isManual) {
           showToast('❌ Lỗi kết nối Đám mây Supabase!');
@@ -6646,8 +6657,10 @@
         }
       }
 
-      // Sync AI explanations from their dedicated table (runs independently of the main blob)
+      // Sync AI explanations and Personal Vault (Reading, News, Video Subtitles & MP4s on nbexbqzuqcsqirpepdju)
       if (typeof syncAiCacheWithCloud === 'function') syncAiCacheWithCloud();
+      if (typeof mhHydrateReadingAndNewsFromVault === 'function') mhHydrateReadingAndNewsFromVault();
+      if (typeof mhHydrateAndSyncVslVault === 'function') mhHydrateAndSyncVslVault();
     }
 
     // ==========================================
@@ -15036,6 +15049,86 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
     let vslHighlightH6 = false;
     let vslHighlightH79 = false;
 
+    const MH_VAULT_SUPA_URL = 'https://nbexbqzuqcsqirpepdju.supabase.co';
+    const MH_VAULT_SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5iZXhicXp1cWNzcWlycGVwZGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMDU0NzgsImV4cCI6MjA5NDg4MTQ3OH0.tCnibOv1hsZm3aPwK7lmhEe1UT5yifiu3RQTymFYxRA';
+    const MH_VAULT_PREFIX = 'mh_personal_app_v1:';
+    let mhDedicatedVaultTableState = 'unknown'; // 'unknown' | 'available' | 'fallback_app_settings'
+    let vslLessonsInitialized = false;
+    let vslDeletedLessonIds = safeGetJSON('hsk_vsl_deleted_ids_v1', []);
+    if (!Array.isArray(vslDeletedLessonIds)) vslDeletedLessonIds = [];
+
+    function mhVaultHeaders(extra = {}) {
+      return Object.assign({
+        'apikey': MH_VAULT_SUPA_KEY,
+        'Authorization': 'Bearer ' + MH_VAULT_SUPA_KEY,
+        'Content-Type': 'application/json'
+      }, extra);
+    }
+
+    async function mhPersonalSupaUpsert(rawKey, value) {
+      const fullKey = rawKey.startsWith(MH_VAULT_PREFIX) ? rawKey : (MH_VAULT_PREFIX + rawKey);
+      if (mhDedicatedVaultTableState !== 'fallback_app_settings') {
+        try {
+          const r = await fetch(`${MH_VAULT_SUPA_URL}/rest/v1/hsk_personal_vault?on_conflict=key`, {
+            method: 'POST',
+            headers: mhVaultHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+            body: JSON.stringify({ key: fullKey, value, updated_at: new Date().toISOString() })
+          });
+          if (r.ok) {
+            mhDedicatedVaultTableState = 'available';
+            return true;
+          }
+          if (r.status === 404 || r.status === 400) {
+            mhDedicatedVaultTableState = 'fallback_app_settings';
+          }
+        } catch (e) {}
+      }
+      try {
+        const r2 = await fetch(`${MH_VAULT_SUPA_URL}/rest/v1/app_settings?on_conflict=key`, {
+          method: 'POST',
+          headers: mhVaultHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+          body: JSON.stringify({ key: fullKey, value })
+        });
+        return r2.ok;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    async function mhPersonalSupaGet(rawKey) {
+      const fullKey = rawKey.startsWith(MH_VAULT_PREFIX) ? rawKey : (MH_VAULT_PREFIX + rawKey);
+      const table = mhDedicatedVaultTableState === 'available' ? 'hsk_personal_vault' : 'app_settings';
+      try {
+        const r = await fetch(`${MH_VAULT_SUPA_URL}/rest/v1/${table}?key=eq.${encodeURIComponent(fullKey)}&select=value`, {
+          headers: mhVaultHeaders()
+        });
+        if (!r.ok && table === 'hsk_personal_vault') {
+          mhDedicatedVaultTableState = 'fallback_app_settings';
+          return mhPersonalSupaGet(rawKey);
+        }
+        if (!r.ok) return null;
+        const rows = await r.json();
+        let val = rows && rows[0] ? rows[0].value : null;
+        if (typeof val === 'string') {
+          try { val = JSON.parse(val); } catch (e) {}
+        }
+        return val;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function mhPersonalSupaDelete(rawKey) {
+      const fullKey = rawKey.startsWith(MH_VAULT_PREFIX) ? rawKey : (MH_VAULT_PREFIX + rawKey);
+      const table = mhDedicatedVaultTableState === 'available' ? 'hsk_personal_vault' : 'app_settings';
+      try {
+        await fetch(`${MH_VAULT_SUPA_URL}/rest/v1/${table}?key=eq.${encodeURIComponent(fullKey)}`, {
+          method: 'DELETE',
+          headers: mhVaultHeaders()
+        });
+      } catch (e) {}
+    }
+
     function vslOpenIdb() {
       return new Promise((resolve, reject) => {
         if (!window.indexedDB) return reject(new Error('IndexedDB not supported'));
@@ -15051,41 +15144,12 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       });
     }
 
-    async function saveVideoBlobToIdb(id, blob) {
-      try {
-        const db = await vslOpenIdb();
-        return await new Promise((resolve, reject) => {
-          const tx = db.transaction(VSL_IDB_STORE, 'readwrite');
-          tx.objectStore(VSL_IDB_STORE).put({ id: String(id), blob, updatedAt: Date.now() });
-          tx.oncomplete = () => resolve(true);
-          tx.onerror = (e) => reject(e.target.error);
-        });
-      } catch (e) {
-        console.warn('saveVideoBlobToIdb error:', e);
-        return false;
-      }
-    }
-
-    async function getVideoBlobFromIdb(id) {
-      try {
-        const db = await vslOpenIdb();
-        return await new Promise((resolve) => {
-          const tx = db.transaction(VSL_IDB_STORE, 'readonly');
-          const req = tx.objectStore(VSL_IDB_STORE).get(String(id));
-          req.onsuccess = () => resolve(req.result ? req.result.blob : null);
-          req.onerror = () => resolve(null);
-        });
-      } catch (e) {
-        return null;
-      }
-    }
-
-    async function deleteVideoBlobFromIdb(id) {
+    async function mhIdbPutKv(key, data) {
       try {
         const db = await vslOpenIdb();
         return await new Promise((resolve) => {
           const tx = db.transaction(VSL_IDB_STORE, 'readwrite');
-          tx.objectStore(VSL_IDB_STORE).delete(String(id));
+          tx.objectStore(VSL_IDB_STORE).put({ id: '__kv_' + String(key), data, updatedAt: Date.now() });
           tx.oncomplete = () => resolve(true);
           tx.onerror = () => resolve(false);
         });
@@ -15094,23 +15158,469 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       }
     }
 
-    function loadVslLessonsFromStorage() {
+    async function mhIdbGetKv(key) {
+      try {
+        const db = await vslOpenIdb();
+        return await new Promise((resolve) => {
+          const tx = db.transaction(VSL_IDB_STORE, 'readonly');
+          const req = tx.objectStore(VSL_IDB_STORE).get('__kv_' + String(key));
+          req.onsuccess = () => resolve(req.result ? req.result.data : null);
+          req.onerror = () => resolve(null);
+        });
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function mhUint8ToBase64(bytes) {
+      let binary = '';
+      const len = bytes.byteLength;
+      const step = 0x8000;
+      for (let i = 0; i < len; i += step) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + step, len)));
+      }
+      return btoa(binary);
+    }
+
+    function mhBase64ToUint8(b64) {
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes;
+    }
+
+    const mhMp4UploadingSet = new Set();
+
+    async function mhUploadMp4BlobToCloud(id, blob) {
+      const strId = String(id || '');
+      if (!strId || !blob || !blob.size || mhMp4UploadingSet.has(strId)) return false;
+      mhMp4UploadingSet.add(strId);
+      try {
+        const existingMeta = await mhPersonalSupaGet(`vsl_mp4_meta_${strId}`);
+        if (existingMeta && Number(existingMeta.size) === Number(blob.size) && Number(existingMeta.chunkCount) > 0) {
+          return true;
+        }
+        const ab = await blob.arrayBuffer();
+        const allBytes = new Uint8Array(ab);
+        const chunkSize = 1200 * 1024; // 1.2MB binary (~1.6MB base64) per row
+        const chunkCount = Math.ceil(allBytes.byteLength / chunkSize);
+        for (let idx = 0; idx < chunkCount; idx++) {
+          const slice = allBytes.subarray(idx * chunkSize, Math.min((idx + 1) * chunkSize, allBytes.byteLength));
+          const b64 = mhUint8ToBase64(slice);
+          const ok = await mhPersonalSupaUpsert(`vsl_mp4_chunk_${strId}_${idx}`, {
+            id: strId,
+            idx,
+            b64
+          });
+          if (!ok) return false;
+        }
+        await mhPersonalSupaUpsert(`vsl_mp4_meta_${strId}`, {
+          id: strId,
+          mimeType: blob.type || 'video/mp4',
+          size: allBytes.byteLength,
+          chunkCount,
+          updatedAt: Date.now()
+        });
+        return true;
+      } catch (e) {
+        console.warn('mhUploadMp4BlobToCloud error:', e);
+        return false;
+      } finally {
+        mhMp4UploadingSet.delete(strId);
+      }
+    }
+
+    async function mhDownloadMp4BlobFromCloud(id) {
+      const strId = String(id || '');
+      if (!strId) return null;
+      try {
+        const meta = await mhPersonalSupaGet(`vsl_mp4_meta_${strId}`);
+        if (!meta || !Number(meta.chunkCount)) return null;
+        const chunkCount = Number(meta.chunkCount);
+        const chunks = [];
+        for (let idx = 0; idx < chunkCount; idx++) {
+          const chunkObj = await mhPersonalSupaGet(`vsl_mp4_chunk_${strId}_${idx}`);
+          if (!chunkObj || !chunkObj.b64) return null;
+          chunks.push(mhBase64ToUint8(chunkObj.b64));
+        }
+        const totalLen = chunks.reduce((acc, c) => acc + c.byteLength, 0);
+        const merged = new Uint8Array(totalLen);
+        let offset = 0;
+        for (const c of chunks) {
+          merged.set(c, offset);
+          offset += c.byteLength;
+        }
+        return new Blob([merged.buffer], { type: meta.mimeType || 'video/mp4' });
+      } catch (e) {
+        console.warn('mhDownloadMp4BlobFromCloud error:', e);
+        return null;
+      }
+    }
+
+    async function saveVideoBlobToIdb(id, blob, skipCloudUpload = false) {
+      let localOk = false;
+      try {
+        const db = await vslOpenIdb();
+        localOk = await new Promise((resolve, reject) => {
+          const tx = db.transaction(VSL_IDB_STORE, 'readwrite');
+          tx.objectStore(VSL_IDB_STORE).put({ id: String(id), blob, updatedAt: Date.now() });
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = (e) => reject(e.target.error);
+        });
+      } catch (e) {
+        console.warn('saveVideoBlobToIdb error:', e);
+      }
+      if (!skipCloudUpload && blob && blob.size) {
+        mhUploadMp4BlobToCloud(id, blob).catch(() => {});
+      }
+      return localOk;
+    }
+
+    async function getVideoBlobFromIdb(id) {
+      try {
+        const db = await vslOpenIdb();
+        const localBlob = await new Promise((resolve) => {
+          const tx = db.transaction(VSL_IDB_STORE, 'readonly');
+          const req = tx.objectStore(VSL_IDB_STORE).get(String(id));
+          req.onsuccess = () => resolve(req.result ? req.result.blob : null);
+          req.onerror = () => resolve(null);
+        });
+        if (localBlob && localBlob.size > 0) {
+          // Ensure it is also backed up to Supabase in background if not yet uploaded
+          mhUploadMp4BlobToCloud(id, localBlob).catch(() => {});
+          return localBlob;
+        }
+      } catch (e) {}
+
+      // Fallback: pull MP4 from Supabase cloud vault and cache in IndexedDB!
+      showToast('☁️ Đang tải file video MP4 từ Đám mây Supabase...');
+      const cloudBlob = await mhDownloadMp4BlobFromCloud(id);
+      if (cloudBlob && cloudBlob.size > 0) {
+        await saveVideoBlobToIdb(id, cloudBlob, true);
+        return cloudBlob;
+      }
+      return null;
+    }
+
+    async function deleteVideoBlobFromIdb(id) {
+      const strId = String(id || '');
+      try {
+        const meta = await mhPersonalSupaGet(`vsl_mp4_meta_${strId}`);
+        if (meta && Number(meta.chunkCount) > 0) {
+          for (let i = 0; i < Number(meta.chunkCount); i++) {
+            mhPersonalSupaDelete(`vsl_mp4_chunk_${strId}_${i}`);
+          }
+        }
+        mhPersonalSupaDelete(`vsl_mp4_meta_${strId}`);
+      } catch (e) {}
+      try {
+        const db = await vslOpenIdb();
+        return await new Promise((resolve) => {
+          const tx = db.transaction(VSL_IDB_STORE, 'readwrite');
+          tx.objectStore(VSL_IDB_STORE).delete(strId);
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => resolve(false);
+        });
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // Merge two versions of the same video lesson, ALWAYS preserving AI-proofread subtitles (_aiProofreadV2 === true)
+    function mhMergeSingleVslLesson(a, b) {
+      if (!a) return b;
+      if (!b) return a;
+      const base = (Number(b.updatedAt) || 0) > (Number(a.updatedAt) || 0) ? { ...a, ...b } : { ...b, ...a };
+      const subsA = Array.isArray(a.subtitles) ? a.subtitles : [];
+      const subsB = Array.isArray(b.subtitles) ? b.subtitles : [];
+      const maxLen = Math.max(subsA.length, subsB.length);
+      if (maxLen > 0) {
+        const mergedSubs = [];
+        for (let i = 0; i < maxLen; i++) {
+          const sa = subsA[i];
+          const sb = subsB[i];
+          if (sa && sb) {
+            const aDone = !!(sa._aiProofreadV2 && Array.isArray(sa.tokens) && sa.tokens.length > 0 && sa.vietnamese);
+            const bDone = !!(sb._aiProofreadV2 && Array.isArray(sb.tokens) && sb.tokens.length > 0 && sb.vietnamese);
+            if (aDone && !bDone) mergedSubs.push(sa);
+            else if (bDone && !aDone) mergedSubs.push(sb);
+            else mergedSubs.push((Number(b.updatedAt) || 0) >= (Number(a.updatedAt) || 0) ? sb : sa);
+          } else {
+            mergedSubs.push(sa || sb);
+          }
+        }
+        base.subtitles = mergedSubs;
+      }
+      // Merge selectedWords
+      const wordMap = new Map();
+      (a.selectedWords || []).forEach(w => { if (w && w.hanzi) wordMap.set(w.hanzi, w); });
+      (b.selectedWords || []).forEach(w => { if (w && w.hanzi) wordMap.set(w.hanzi, w); });
+      base.selectedWords = Array.from(wordMap.values());
+      base.thumbnail = a.thumbnail || b.thumbnail || '';
+      return base;
+    }
+
+    function mhMergeVslLessonsArray(existingList, incomingList) {
+      const deletedSet = new Set((vslDeletedLessonIds || []).map(String));
+      const map = new Map();
+      const order = [];
+      for (const item of (existingList || [])) {
+        if (!item || !item.id || deletedSet.has(String(item.id))) continue;
+        const k = String(item.id);
+        map.set(k, item);
+        order.push(k);
+      }
+      for (const item of (incomingList || [])) {
+        if (!item || !item.id || deletedSet.has(String(item.id))) continue;
+        const k = String(item.id);
+        if (map.has(k)) {
+          const merged = mhMergeSingleVslLesson(map.get(k), item);
+          // Mutate existing object reference in-place so any active studio or background job stays in sync!
+          Object.assign(map.get(k), merged);
+        } else {
+          map.set(k, item);
+          order.push(k);
+        }
+      }
+      return order.map(k => map.get(k)).sort((x, y) => (Number(y.createdAt) || 0) - (Number(x.createdAt) || 0));
+    }
+
+    function loadVslLessonsFromStorage(forceReload = false) {
+      if (vslLessonsInitialized && !forceReload && Array.isArray(vslLessons) && vslLessons.length > 0) {
+        return;
+      }
       try {
         const raw = localStorage.getItem(VSL_STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) vslLessons = parsed;
+          if (Array.isArray(parsed)) {
+            vslLessons = mhMergeVslLessonsArray(vslLessons, parsed);
+          }
         }
-      } catch (e) {
-        vslLessons = [];
-      }
+      } catch (e) {}
+      vslLessonsInitialized = true;
     }
 
-    function saveVslLessonsToStorage() {
+    let mhVslCloudSyncTimer = null;
+    const mhDirtyVslLessonIds = new Set();
+
+    function saveVslLessonsToStorage(changedLessonId = null) {
+      vslLessonsInitialized = true;
+      const now = Date.now();
+      if (changedLessonId) {
+        const target = findVslLessonById(changedLessonId);
+        if (target) target.updatedAt = now;
+        mhDirtyVslLessonIds.add(String(changedLessonId));
+      } else {
+        (vslLessons || []).forEach(l => {
+          if (l && l.id) mhDirtyVslLessonIds.add(String(l.id));
+        });
+      }
+
+      // 1. Always save full lessons to unlimited IndexedDB
+      mhIdbPutKv('vsl_lessons', vslLessons);
+
+      // 2. Save to localStorage (with automatic fallback stripping heavy thumbnails if 5MB quota is tight)
       try {
         localStorage.setItem(VSL_STORAGE_KEY, JSON.stringify(vslLessons));
       } catch (e) {
-        console.warn('saveVslLessonsToStorage quota warning:', e);
+        try {
+          const lightLessons = (vslLessons || []).map(l => ({ ...l, thumbnail: '' }));
+          localStorage.setItem(VSL_STORAGE_KEY, JSON.stringify(lightLessons));
+        } catch (e2) {}
+      }
+
+      // 3. Debounced push to Supabase (nbexbqzuqcsqirpepdju)
+      if (mhVslCloudSyncTimer) clearTimeout(mhVslCloudSyncTimer);
+      mhVslCloudSyncTimer = setTimeout(() => {
+        mhFlushVslLessonsToCloud();
+      }, 450);
+    }
+
+    async function mhFlushVslLessonsToCloud() {
+      try {
+        const idsToPush = Array.from(mhDirtyVslLessonIds);
+        mhDirtyVslLessonIds.clear();
+        for (const id of idsToPush) {
+          const lesson = findVslLessonById(id);
+          if (lesson) {
+            await mhPersonalSupaUpsert(`vsl_lesson_${id}`, lesson);
+          }
+        }
+        await mhPersonalSupaUpsert('vsl_lessons_index', {
+          lessonIds: (vslLessons || []).map(l => String(l.id)),
+          deletedLessonIds: vslDeletedLessonIds || [],
+          updatedAt: Date.now()
+        });
+      } catch (e) {
+        console.warn('mhFlushVslLessonsToCloud error:', e);
+      }
+    }
+
+    async function mhEnsureLocalMp4UploadedToCloud(id) {
+      try {
+        const db = await vslOpenIdb();
+        const localBlob = await new Promise((resolve) => {
+          const tx = db.transaction(VSL_IDB_STORE, 'readonly');
+          const req = tx.objectStore(VSL_IDB_STORE).get(String(id));
+          req.onsuccess = () => resolve(req.result ? req.result.blob : null);
+          req.onerror = () => resolve(null);
+        });
+        if (localBlob && localBlob.size > 0) {
+          await mhUploadMp4BlobToCloud(id, localBlob);
+        }
+      } catch (e) {}
+    }
+
+    async function mhHydrateAndSyncVslVault() {
+      loadVslLessonsFromStorage();
+      // 1. Hydrate from local IndexedDB
+      const idbLessons = await mhIdbGetKv('vsl_lessons');
+      if (Array.isArray(idbLessons) && idbLessons.length > 0) {
+        vslLessons = mhMergeVslLessonsArray(vslLessons, idbLessons);
+      }
+      // 2. Sync from Supabase cloud vault (nbexbqzuqcsqirpepdju)
+      try {
+        const idxData = await mhPersonalSupaGet('vsl_lessons_index');
+        if (idxData && Array.isArray(idxData.deletedLessonIds)) {
+          const mergedDel = new Set([...(vslDeletedLessonIds || []).map(String), ...idxData.deletedLessonIds.map(String)]);
+          vslDeletedLessonIds = Array.from(mergedDel);
+          try { localStorage.setItem('hsk_vsl_deleted_ids_v1', JSON.stringify(vslDeletedLessonIds)); } catch (e) {}
+        }
+        if (idxData && Array.isArray(idxData.lessonIds) && idxData.lessonIds.length > 0) {
+          const deletedSet = new Set((vslDeletedLessonIds || []).map(String));
+          const cloudLessons = [];
+          for (const lid of idxData.lessonIds) {
+            if (deletedSet.has(String(lid))) continue;
+            const cLesson = await mhPersonalSupaGet(`vsl_lesson_${lid}`);
+            if (cLesson && cLesson.id) cloudLessons.push(cLesson);
+          }
+          if (cloudLessons.length > 0) {
+            vslLessons = mhMergeVslLessonsArray(vslLessons, cloudLessons);
+            mhIdbPutKv('vsl_lessons', vslLessons);
+          }
+        }
+        // Push any local lessons that aren't in cloud index yet, and ensure local MP4 blobs are backed up to Supabase sequentially
+        const remoteIdSet = new Set((idxData && Array.isArray(idxData.lessonIds)) ? idxData.lessonIds.map(String) : []);
+        let anyNewLocal = false;
+        for (const l of (vslLessons || [])) {
+          if (!l || !l.id) continue;
+          if (!remoteIdSet.has(String(l.id))) {
+            mhDirtyVslLessonIds.add(String(l.id));
+            anyNewLocal = true;
+          }
+        }
+        if (anyNewLocal) await mhFlushVslLessonsToCloud();
+        // Backup local MP4s in background one by one
+        (async () => {
+          for (const l of (vslLessons || [])) {
+            if (l && l.id && l.sourceType !== 'youtube') {
+              await mhEnsureLocalMp4UploadedToCloud(l.id);
+            }
+          }
+        })();
+      } catch (e) {
+        console.warn('mhHydrateAndSyncVslVault error:', e);
+      }
+    }
+
+    let mhReadingVaultTimer = null;
+
+    function mhQueueReadingAndNewsCloudSync() {
+      if (mhReadingVaultTimer) clearTimeout(mhReadingVaultTimer);
+      mhReadingVaultTimer = setTimeout(() => {
+        mhSyncReadingAndNewsToVault();
+      }, 600);
+    }
+
+    async function mhSyncReadingAndNewsToVault() {
+      try {
+        const deletedSet = new Set((deletedReadingArticleIds || []).map(String));
+        const cleanArticles = (readingArticles || [])
+          .filter(a => a && a.id && !deletedSet.has(String(a.id)))
+          .map(art => {
+            if (art && art.audioUrl && art.audioUrl.length > 500) {
+              const { audioUrl, ...rest } = art;
+              return rest;
+            }
+            return art;
+          });
+        await mhIdbPutKv('reading_articles', cleanArticles);
+        await mhPersonalSupaUpsert('reading_articles_data', {
+          readingArticles: cleanArticles,
+          deletedReadingArticleIds: deletedReadingArticleIds || [],
+          updatedAt: Date.now()
+        });
+        if (typeof hskPinnedNewsList !== 'undefined' && Array.isArray(hskPinnedNewsList)) {
+          await mhIdbPutKv('pinned_hsk_news', hskPinnedNewsList);
+          await mhPersonalSupaUpsert('pinned_hsk_news_data', {
+            pinnedHskNews: hskPinnedNewsList,
+            updatedAt: Date.now()
+          });
+        }
+      } catch (e) {
+        console.warn('mhSyncReadingAndNewsToVault error:', e);
+      }
+    }
+
+    async function mhHydrateReadingAndNewsFromVault() {
+      try {
+        // 1. Hydrate from local IndexedDB first
+        const idbArts = await mhIdbGetKv('reading_articles');
+        if (Array.isArray(idbArts) && idbArts.length > (readingArticles || []).length) {
+          const delSet = new Set((deletedReadingArticleIds || []).map(String));
+          readingArticles = idbArts.filter(a => a && !delSet.has(String(a.id)));
+        }
+        // 2. Sync from Supabase personal vault (nbexbqzuqcsqirpepdju)
+        const remoteReading = await mhPersonalSupaGet('reading_articles_data');
+        if (remoteReading && typeof remoteReading === 'object') {
+          if (Array.isArray(remoteReading.deletedReadingArticleIds)) {
+            const mergedDel = new Set([...(deletedReadingArticleIds || []).map(String), ...remoteReading.deletedReadingArticleIds.map(String)]);
+            deletedReadingArticleIds = Array.from(mergedDel);
+            try { localStorage.setItem('hsk_deleted_article_ids', JSON.stringify(deletedReadingArticleIds)); } catch (e) {}
+          }
+          const delSet = new Set((deletedReadingArticleIds || []).map(String));
+          if (Array.isArray(remoteReading.readingArticles) && remoteReading.readingArticles.length > 0) {
+            const merged = [...remoteReading.readingArticles.filter(a => a && !delSet.has(String(a.id)))];
+            for (const localArt of (readingArticles || [])) {
+              if (!localArt || delSet.has(String(localArt.id))) continue;
+              const idx = merged.findIndex(ca => String(ca.id) === String(localArt.id));
+              if (idx === -1) {
+                merged.unshift(localArt);
+              } else {
+                const cloudArt = merged[idx];
+                const cSet = new Set((cloudArt.selectedWords || []).map(w => w.hanzi));
+                (localArt.selectedWords || []).forEach(lw => {
+                  if (lw && lw.hanzi && !cSet.has(lw.hanzi)) {
+                    if (!cloudArt.selectedWords) cloudArt.selectedWords = [];
+                    cloudArt.selectedWords.push(lw);
+                  }
+                });
+              }
+            }
+            readingArticles = merged;
+            mhIdbPutKv('reading_articles', readingArticles);
+            try { localStorage.setItem('hsk_reading_articles', JSON.stringify(readingArticles)); } catch (e) {}
+          } else if ((readingArticles || []).length > 0) {
+            mhSyncReadingAndNewsToVault();
+          }
+        } else if ((readingArticles || []).length > 0) {
+          mhSyncReadingAndNewsToVault();
+        }
+
+        const remoteNews = await mhPersonalSupaGet('pinned_hsk_news_data');
+        if (remoteNews && Array.isArray(remoteNews.pinnedHskNews) && remoteNews.pinnedHskNews.length > 0) {
+          if (typeof hskPinnedNewsList !== 'undefined') {
+            const map = new Map();
+            remoteNews.pinnedHskNews.forEach(n => { if (n && (n.id || n.title)) map.set(String(n.id || n.title), n); });
+            (hskPinnedNewsList || []).forEach(n => { if (n && (n.id || n.title)) map.set(String(n.id || n.title), n); });
+            hskPinnedNewsList = Array.from(map.values());
+            try { localStorage.setItem(HSK_PINNED_NEWS_KEY, JSON.stringify(hskPinnedNewsList)); } catch (e) {}
+            if (typeof updatePinnedNewsCountUI === 'function') updatePinnedNewsCountUI();
+          }
+        }
+      } catch (e) {
+        console.warn('mhHydrateReadingAndNewsFromVault error:', e);
       }
     }
 
@@ -15123,6 +15633,11 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       const modal = document.getElementById('videoLearningModal');
       if (modal) modal.classList.add('active');
       vslShowDashboardView();
+      mhHydrateAndSyncVslVault().then(() => {
+        if (modal && modal.classList.contains('active') && !modal.classList.contains('studio-mode')) {
+          renderVslVideoGrid();
+        }
+      });
     }
 
     let vslActiveCreationCount = 0;
@@ -15248,9 +15763,16 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 
     async function deleteVslLesson(lessonId) {
       if (!confirm('Bạn có chắc muốn xóa bài học video này? (Từ vựng đã lưu trong Nhóm tự tạo vẫn được giữ nguyên)')) return;
-      vslLessons = vslLessons.filter(item => String(item.id) !== String(lessonId));
+      const strId = String(lessonId);
+      vslEnrichRunMap.delete(strId);
+      if (!vslDeletedLessonIds.includes(strId)) {
+        vslDeletedLessonIds.push(strId);
+        try { localStorage.setItem('hsk_vsl_deleted_ids_v1', JSON.stringify(vslDeletedLessonIds)); } catch (e) {}
+      }
+      vslLessons = vslLessons.filter(item => String(item.id) !== strId);
+      mhPersonalSupaDelete(`vsl_lesson_${strId}`);
       saveVslLessonsToStorage();
-      await deleteVideoBlobFromIdb(lessonId);
+      await deleteVideoBlobFromIdb(strId);
       renderVslVideoGrid();
       showToast('🗑️ Đã xóa video thành công!');
     }
@@ -15638,7 +16160,7 @@ Quy tắc bắt buộc:
       return _vslZhWordSegmenter;
     }
 
-    // Check if a subtitle's token array is structurally broken (missing Pinyin or unsegmented >=10 char clauses)
+    // Check if a subtitle's token array is structurally broken (empty or unsegmented >=12 char clause without meaning)
     function vslTokensNeedLocalRebuild(tokens) {
       if (!Array.isArray(tokens) || tokens.length === 0) return true;
       for (let i = 0; i < tokens.length; i++) {
@@ -15647,14 +16169,16 @@ Quy tắc bắt buộc:
         if (!h) continue;
         const hasHan = /[\u4e00-\u9fff]/.test(h);
         if (!hasHan) continue;
-        if (!t.pinyin || !String(t.pinyin).trim()) return true;
-        if (/[，。！？；：、“”‘’（）《》【】,.!?;:]/.test(h)) return true;
-        if (h.length >= 10) return true;
+        if (h.length >= 12 && !(t && t.vietnamese && String(t.vietnamese).trim())) return true;
       }
       return false;
     }
 
-    // Check if a subtitle needs AI proofreading/segmentation (including sentences where tokens were split into single chars without Vietnamese meanings)
+    function vslIsSubtitleAiDone(s) {
+      return !!(s && s._aiProofreadV2 && Array.isArray(s.tokens) && s.tokens.length > 0 && String(s.vietnamese || s.vi || s.vi_text || '').trim());
+    }
+
+    // Check if a subtitle needs AI proofreading/segmentation
     function vslNeedsTokenRepair(tokens) {
       if (vslTokensNeedLocalRebuild(tokens)) return true;
       let missingViCount = 0;
@@ -15672,7 +16196,8 @@ Quy tắc bắt buộc:
         const hasDict = Boolean(
           (typeof FIXED_COMPOUND_PHRASES !== 'undefined' && FIXED_COMPOUND_PHRASES[h]) ||
           (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[h]) ||
-          (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[h])
+          (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[h]) ||
+          (typeof window !== 'undefined' && window.HSK_DICTIONARY && window.HSK_DICTIONARY[h])
         );
         if (!hasVi && !hasDict && !particles.has(h)) {
           missingViCount++;
@@ -15688,7 +16213,7 @@ Quy tắc bắt buộc:
           consecutiveSingleMissing = 0;
         }
       }
-      return maxConsecutiveSingleMissing >= 2 || missingViCount >= 3;
+      return maxConsecutiveSingleMissing >= 3 || missingViCount >= 4;
     }
 
     // Segment a Chinese sentence into clean words using dictionary compounds + Intl.Segmenter('zh-CN')
@@ -15765,7 +16290,7 @@ Quy tắc bắt buộc:
     function vslNormalizeRawSegments(rawSegments) {
       const cleaned = (rawSegments || [])
         .map(s => {
-          const hasValidTokens = Array.isArray(s.tokens) && s.tokens.length > 0 && !vslNeedsTokenRepair(s.tokens);
+          const hasValidTokens = Array.isArray(s.tokens) && s.tokens.length > 0 && !vslTokensNeedLocalRebuild(s.tokens);
           const isProofreadV2 = !!(s._aiProofreadV2 && hasValidTokens && (s.vietnamese || s.vi || s.vi_text));
           return {
             start: Number(s.start) || 0,
@@ -15850,12 +16375,13 @@ Quy tắc bắt buộc:
     function vslBuildLocalFallbackSubtitleItem(seg) {
       const finalSentenceText = toSimplifiedChinese(String((seg && seg.text) || '').replace(/\s+/g, ' ').trim());
       if (seg && Array.isArray(seg.tokens) && seg.tokens.length > 0 && !vslTokensNeedLocalRebuild(seg.tokens)) {
-        const isProofread = !!(seg._aiProofreadV2 && !vslNeedsTokenRepair(seg.tokens));
+        const viStr = String(seg.vietnamese || seg.vi || seg.vi_text || '').trim();
+        const isProofread = !!(seg._aiProofreadV2 && viStr);
         return {
           start: Number(seg.start) || 0,
           end: Math.max((Number(seg.start) || 0) + 0.6, Number(seg.end) || ((Number(seg.start) || 0) + 2.2)),
           text: finalSentenceText,
-          vietnamese: String(seg.vietnamese || seg.vi || seg.vi_text || '').trim(),
+          vietnamese: viStr,
           tokens: mergeFixedCompoundTokensInList(seg.tokens.map(normalizeAiTokenItem).filter(Boolean)),
           _aiEnriched: isProofread,
           _aiProofreadV2: isProofread
@@ -15889,20 +16415,26 @@ Quy tắc bắt buộc:
       for (let i = 0; i < lesson.subtitles.length; i++) {
         const sub = lesson.subtitles[i];
         if (!sub) continue;
+        // Never wipe _aiProofreadV2 if the sentence has already been proofread by AI!
+        if (vslIsSubtitleAiDone(sub)) {
+          for (let j = 0; j < sub.tokens.length; j++) {
+            const t = sub.tokens[j];
+            if (t && t.hanzi && /[\u4e00-\u9fff]/.test(t.hanzi) && (!t.pinyin || !t.vietnamese)) {
+              const meta = lookupDictMetaForToken(t.hanzi);
+              if (!t.pinyin && meta.pinyin) { t.pinyin = meta.pinyin; changed = true; }
+              if (!t.vietnamese && meta.vietnamese) { t.vietnamese = meta.vietnamese; changed = true; }
+            }
+          }
+          continue;
+        }
         if (vslTokensNeedLocalRebuild(sub.tokens)) {
           const rebuilt = vslBuildLocalFallbackSubtitleItem({ ...sub, tokens: null, _aiEnriched: false, _aiProofreadV2: false });
           sub.tokens = rebuilt.tokens;
-          sub._aiEnriched = false;
-          sub._aiProofreadV2 = false;
-          changed = true;
-        } else if (sub._aiProofreadV2 && vslNeedsTokenRepair(sub.tokens)) {
-          sub._aiEnriched = false;
-          sub._aiProofreadV2 = false;
           changed = true;
         }
       }
       if (changed) {
-        saveVslLessonsToStorage();
+        saveVslLessonsToStorage(lesson.id);
       }
       return changed;
     }
@@ -16026,9 +16558,12 @@ QUY TẮC:
           if (hasAiText && tokens.length > 0) enrichedOk = true;
         }
 
-        const viText = (aiItem && aiItem.vietnamese)
+        let viText = (aiItem && aiItem.vietnamese)
           ? String(aiItem.vietnamese).trim()
           : String(orig.vietnamese || orig.vi || '').trim();
+        if (!viText && hasAiText && tokens.length > 0) {
+          viText = tokens.map(t => t && t.vietnamese ? String(t.vietnamese).split(/[;,/]/)[0].trim() : '').filter(Boolean).join(' ') || finalSentenceText;
+        }
 
         const isProofread = !!(hasAiText && enrichedOk && viText);
         outBatch.push({
@@ -16058,7 +16593,7 @@ QUY TẮC:
         btn.style.opacity = '1';
         return;
       }
-      const doneCount = subs.filter(s => s && s._aiProofreadV2 && !vslNeedsTokenRepair(s.tokens)).length;
+      const doneCount = subs.filter(vslIsSubtitleAiDone).length;
       btn.innerHTML = `⏳ Sửa ${doneCount}/${subs.length}`;
       btn.style.background = '#e6dcf5';
       btn.style.borderColor = '#cbb8e8';
@@ -16081,7 +16616,7 @@ QUY TẮC:
           s._aiEnriched = false;
         }
       });
-      saveVslLessonsToStorage();
+      saveVslLessonsToStorage(lesson.id);
       vslUpdateReproofreadBtnUI(lesson, true);
       showToast('✨ Đang dùng AI sửa ngay câu đang xem và toàn bộ phụ đề...');
       await vslEnrichLessonSubtitlesInBackground(lesson, true);
@@ -16091,10 +16626,15 @@ QUY TẮC:
       if (!lesson || !lesson.id || !Array.isArray(lesson.subtitles) || lesson.subtitles.length === 0) return;
       if (!isManualTrigger && vslEnrichRunMap.has(lesson.id)) return;
 
-      const needsAi = (s) => !s || !s._aiProofreadV2 || !s.vietnamese || vslNeedsTokenRepair(s.tokens);
+      const needsAi = (s) => !vslIsSubtitleAiDone(s);
       if (!lesson.subtitles.some(needsAi)) {
         vslUpdateReproofreadBtnUI(lesson, false);
         return;
+      }
+
+      // Stop any background enrichment on other inactive videos so only 1 video runs at a time
+      for (const otherId of Array.from(vslEnrichRunMap.keys())) {
+        if (otherId !== lesson.id) vslEnrichRunMap.delete(otherId);
       }
 
       const runId = Date.now() + Math.random();
@@ -16105,11 +16645,11 @@ QUY TẮC:
       let isFirstWave = true;
 
       try {
-        const subs = lesson.subtitles;
-        const fullOverviewText = subs.map(s => s.text).join(' ').slice(0, 1800);
+        const fullOverviewText = lesson.subtitles.map(s => s.text).join(' ').slice(0, 1800);
 
         while (vslEnrichRunMap.get(lesson.id) === runId) {
-          // Dynamically prioritize sentences starting from activeVslSubIndex so whichever part of the video the user is watching is proofread first!
+          const liveLesson = findVslLessonById(lesson.id) || lesson;
+          const subs = liveLesson.subtitles;
           const pivot = (activeVslLessonId === lesson.id && activeVslSubIndex >= 0 && activeVslSubIndex < subs.length)
             ? activeVslSubIndex
             : 0;
@@ -16123,7 +16663,6 @@ QUY TẮC:
           }
           if (orderedPending.length === 0) break;
 
-          // Wave 1 uses a fast micro-batch of 3 sentences centered at the currently viewed subtitle so it repairs on screen in ~1.5s!
           const waveChunks = [];
           if (isFirstWave && (isManualTrigger || orderedPending[0] === pivot)) {
             isFirstWave = false;
@@ -16147,7 +16686,7 @@ QUY TẮC:
             const lastIdx = idxList[idxList.length - 1];
             const prevLine = firstIdx > 0 && subs[firstIdx - 1] ? subs[firstIdx - 1].text : '';
             const nextLine = lastIdx + 1 < subs.length && subs[lastIdx + 1] ? subs[lastIdx + 1].text : '';
-            const analyzed = await vslAnalyzeSingleBatchWithAi(batchItems, prevLine, nextLine, fullOverviewText, lesson.title || '');
+            const analyzed = await vslAnalyzeSingleBatchWithAi(batchItems, prevLine, nextLine, fullOverviewText, liveLesson.title || '');
             if (vslEnrichRunMap.get(lesson.id) !== runId) return;
 
             let anySuccess = false;
@@ -16158,10 +16697,10 @@ QUY TẮC:
                 if (analyzed[k]._aiProofreadV2) anySuccess = true;
               }
             }
-            saveVslLessonsToStorage();
-            if (activeVslLessonId === lesson.id) {
-              vslUpdateReproofreadBtnUI(lesson, true);
-              vslComputeLessonHskStats(lesson);
+            saveVslLessonsToStorage(liveLesson.id);
+            if (activeVslLessonId === liveLesson.id) {
+              vslUpdateReproofreadBtnUI(liveLesson, true);
+              vslComputeLessonHskStats(liveLesson);
               vslRenderCurrentSubtitleCard();
               if (isManualTrigger && anySuccess && !toastedFirstBatch) {
                 toastedFirstBatch = true;
@@ -16172,8 +16711,10 @@ QUY TẮC:
         }
 
         if (vslEnrichRunMap.get(lesson.id) === runId) {
-          if (lesson.sourceType === 'youtube' && lesson.youtubeId) {
-            vslSaveSharedMacSubtitles(lesson.youtubeId, lesson.subtitles);
+          const liveLesson = findVslLessonById(lesson.id) || lesson;
+          saveVslLessonsToStorage(liveLesson.id);
+          if (liveLesson.sourceType === 'youtube' && liveLesson.youtubeId) {
+            vslSaveSharedMacSubtitles(liveLesson.youtubeId, liveLesson.subtitles);
           }
           if (isManualTrigger && activeVslLessonId === lesson.id) {
             showToast('🎉 Đã hoàn tất hiệu đính AI cho toàn bộ phụ đề video!');
@@ -16184,7 +16725,7 @@ QUY TẮC:
       } finally {
         if (vslEnrichRunMap.get(lesson.id) === runId) {
           vslEnrichRunMap.delete(lesson.id);
-          vslUpdateReproofreadBtnUI(lesson, false);
+          vslUpdateReproofreadBtnUI(findVslLessonById(lesson.id) || lesson, false);
         }
       }
     }
@@ -16197,7 +16738,7 @@ QUY TẮC:
       if (cleanSegments.length === 0) return [];
 
       // If cached segments have already passed v2 AI ASR proofreading & translation, return immediately!
-      const allAlreadyAnalyzed = cleanSegments.every(s => s._aiProofreadV2 && Array.isArray(s.tokens) && s.tokens.length > 0 && !vslNeedsTokenRepair(s.tokens) && s.vietnamese);
+      const allAlreadyAnalyzed = cleanSegments.every(vslIsSubtitleAiDone);
       if (allAlreadyAnalyzed) {
         if (typeof onProgress === 'function') onProgress(100);
         return cleanSegments.map(s => vslBuildLocalFallbackSubtitleItem({ ...s, _aiEnriched: true, _aiProofreadV2: true }));
@@ -17669,10 +18210,10 @@ QUY TẮC:
       const lookup = srsGetLookup();
       const savedSet = new Set((lesson.selectedWords || []).map(w => w.hanzi));
 
-      if (vslTokensNeedLocalRebuild(sub.tokens)) {
+      if (!Array.isArray(sub.tokens) || sub.tokens.length === 0) {
         sub.tokens = vslBuildLocalFallbackSubtitleItem({ ...sub, tokens: null, _aiEnriched: false, _aiProofreadV2: false }).tokens;
       }
-      if ((!sub._aiProofreadV2 || vslNeedsTokenRepair(sub.tokens)) && !vslEnrichRunMap.has(lesson.id)) {
+      if (!vslIsSubtitleAiDone(sub) && !vslEnrichRunMap.has(lesson.id)) {
         vslEnrichLessonSubtitlesInBackground(lesson);
       }
       const tokens = sub.tokens;
