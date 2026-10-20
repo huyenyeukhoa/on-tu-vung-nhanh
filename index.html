@@ -8659,7 +8659,7 @@ Lưu ý:
           'X-Title': 'HSK Vocab App'
         },
         body: JSON.stringify({
-          model: 'google/gemini-3.8-flash',
+          model: forceRefresh ? 'google/gemini-3.8-flash' : 'google/gemini-2.5-flash',
           reasoning: { enabled: false },
           messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
         })
@@ -9733,7 +9733,7 @@ Lưu ý:
             'X-Title': 'HSK Vocab App'
           },
           body: JSON.stringify({
-            model: 'google/gemini-3.8-flash',
+            model: 'google/gemini-2.5-flash',
             reasoning: { enabled: false },
             messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
@@ -10574,6 +10574,20 @@ Lưu ý:
         return;
       }
 
+      if (rawHanziInput && /[\u4e00-\u9fff]/.test(rawHanziInput)) {
+        const cleanH = toSimplified(rawHanziInput);
+        const lookup = typeof srsGetLookup === 'function' ? srsGetLookup() : null;
+        const localW = (lookup && lookup.get(cleanH)) || (aiCache && aiCache[cleanH]);
+        if (localW && localW.pinyin && (localW.vietnamese || localW.vi || localW.meaning)) {
+          inputCustomHanzi.value = cleanH;
+          inputCustomPinyin.value = localW.pinyin;
+          inputCustomPos.value = localW.pos || 'từ vựng';
+          inputCustomVi.value = localW.vietnamese || localW.vi || localW.meaning;
+          showToast('✨ Đã tự điền tức thì từ Từ điển HSK trong máy!');
+          return;
+        }
+      }
+
       const apiKey = localStorage.getItem('openrouter_api_key');
       if (!apiKey) {
         apiKeyModal.classList.add('active');
@@ -10622,7 +10636,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
             'X-Title': 'HSK Vocab App'
           },
           body: JSON.stringify({
-            model: 'google/gemini-3.8-flash',
+            model: 'google/gemini-2.5-flash',
             reasoning: { enabled: false },
             messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
@@ -11495,7 +11509,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       let aiAutoTitle = customTitle;
 
       const targetRuleText = targetWordsHanzi.length > 0
-        ? `\n0) TÁCH RIÊNG CÁC TỪ VỰNG MỤC TIÊU (${targetWordsHanzi.join(', ')}):\n   - Khi gặp bất kỳ từ nào trong danh sách (${targetWordsHanzi.join(', ')}), BẮT BUỘC giữ nguyên từ đó thành 1 token độc lập đúng mặt chữ (isVocab: true, đầy đủ pinyin và vietnamese).\n`
+        ? `\n0) TỪ VỰNG MỤC TIÊU (${targetWordsHanzi.join(', ')}):\n   - Nếu đoạn văn có chứa bất kỳ từ nào trong (${targetWordsHanzi.join(', ')}), hãy đưa từ đó vào mảng "phrases" với đầy đủ pinyin và nghĩa tiếng Việt sát ngữ cảnh.\n`
         : '';
 
       for (let i = 0; i < chunks.length; i++) {
@@ -11507,75 +11521,41 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
         const prompt = `Bạn là chuyên gia ngôn ngữ Tiếng Trung và biên tập viên dịch thuật cao cấp. Hãy phân tích đoạn văn tiếng Trung sau (phần ${i + 1}/${chunks.length}):
 ${targetRuleText}
-1) QUY TẮC VÀNG PHÂN BIỆT "TỪ ĐỘC LẬP (TÁCH)" VÀ "CỤM QUÁN DỤNG / LY HỢP (GỘP)" (CỰC KỲ QUAN TRỌNG):
-   - **A. TÁCH RIÊNG đối với Tổ hợp tự do (Nghĩa cộng gộp 1 + 1 = 2)**:
-     + Khi động từ cảm xúc/nhận thức hoặc phó từ ghép với từ vựng độc lập đứng sau mà mỗi từ vẫn giữ nguyên nghĩa từ điển của nó, BẮT BUỘC tách thành từng từ vựng chuẩn (2–4 chữ) để người học bấm tra/lưu đúng từ cần học.
-     + Ví dụ tách chuẩn: tách "感到" + "害怕" (KHÔNG gộp thành "感到害怕"), tách "产生" + "共鸣", tách "显得" + "局促不安", tách "非常" + "感兴趣", tách "首次" + "会面".
-   - **B. GỘP TRỌN CẢ CỤM đối với Cụm danh từ cố định, Phòng ban/Chức danh, Cụm quán dụng, Động từ ly hợp, Cử chỉ/Biểu cảm & Thành ngữ**:
-     + Các cụm danh từ cố định, thuật ngữ công sở/chuyên môn, phòng ban, chức danh (như "项目评审会", "高层领导", "资源配置", "生产部", "供应商", "备用供应商", "技术负责人", "生产车间", "产品质量", "研发流程", "核心零件", "全体员工", "紧急会议", "王经理", "李总监", "邻居们", "同事们") BẮT BUỘC gộp trọn thành 1 token duy nhất kèm nghĩa tiếng Việt hoàn chỉnh, KHÔNG tách lẻ khiến người đọc phải tự ghép nghĩa!
-     + Các cụm quán dụng, động từ ly hợp, cụm cử chỉ/biểu cảm/lời nói, thành ngữ 4 chữ (như "皱起眉头", "皱着眉头", "点了点头", "摇了摇头", "松了口气", "叹了口气", "笑着说", "接着说", "小声说", "刚起了一个头", "头也不回地", "捏了一把汗", "吃了一惊", "有所触动", "莫名其妙", "一落千丈", "硬生生", "怼了回去") BẮT BUỘC gom trọn thành 1 token!
-   - **C. TUYỆT ĐỐI KHÔNG xé lẻ từ ghép 2 âm tiết hoặc tách hậu tố đơn ("部", "商", "会", "员", "室", "们", "着") thành chữ đơn**:
-     + Các từ 2 âm tiết chuẩn (như "感到", "害怕", "触动", "故事", "气愤") và từ có hậu tố ("生产部", "供应商", "评审会", "邻居们") luôn giữ nguyên cả từ, tuyệt đối không cắt vụn thành 1 chữ đơn ("部", "商", "会", "所", "起", "们", "着").
+1) CHUẨN HÓA VĂN BẢN GỐC ("text") & DỊCH NGHĨA ĐOẠN ("vietnamese"):
+   - Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo ngắt đoạn gốc.
+   - Trong "text": Giữ nguyên nội dung chữ Hán giản thể của đoạn, bổ sung/chuẩn hóa dấu câu tiếng Trung (，, 。, ！, ？, ：“”, 《》) nếu bài gốc thiếu, và sửa lỗi trợ từ "地" / "的" trước động từ (ví dụ: "气愤地说着", "头也不回地走了").
+   - Trong "vietnamese": Dịch toàn bộ đoạn văn đó sang TIẾNG VIỆT mượt mà, tự nhiên, chuẩn ngữ cảnh.
 
-2) QUY TẮC NGHĨA VIỆT CỦA TOKEN:
-   - Trong mảng tokens, trường "vietnamese" BẮT BUỘC dịch ĐÚNG SÁT NGHĨA CỦA CHÍNH TỪ / CỤM TỪ HÁN ĐÓ!
-   - Tuyệt đối không thêm các từ ngữ cảnh ở xa ngoài phạm vi token đó vào nghĩa tiếng Việt.
-   - **Ví dụ**:
-     - Token "感到" ➔ vietnamese: "cảm thấy" | Token "害怕" ➔ vietnamese: "sợ hãi"
-     - Token "刚起了一个头" ➔ vietnamese: "vừa mới mở đầu" (dịch chuẩn nghĩa bóng cả cụm ly hợp)
-     - Token "头也不回地" ➔ vietnamese: "không ngoảnh đầu lại"
+2) TRÍCH XUẤT CỤM TỪ ĐẶC BIỆT / CỐ ĐỊNH / TÊN RIÊNG ("phrases"):
+   - Hệ thống đã có sẵn từ điển HSK cho các từ vựng phổ thông (như 看着, 感到, 害怕, 故事, 然后, 气愤, 非常...), dấu câu và trợ từ (的, 地, 得, 了). Bạn KHÔNG CẦN liệt kê các từ phổ thông đó!
+   - Trong mảng "phrases", BẮT BUỘC liệt kê theo định dạng "Chữ Hán|pinyin|nghĩa tiếng Việt" cho:
+     + Tên riêng, nhân vật, địa danh, chức danh, phòng ban (vd: "柯南|kē nán|Conan", "玉田儿|yù tián ér|Tam Điền Nhi", "王经理|wáng jīng lǐ|giám đốc Vương", "生产部|shēng chǎn bù|phòng sản xuất", "项目评审会|xiàng mù píng shěn huì|cuộc họp thẩm định dự án").
+     + Cụm danh từ cố định, thuật ngữ chuyên ngành/báo chí, thành ngữ 4 chữ (成语), quán dụng ngữ, động từ ly hợp, cụm cử chỉ/biểu cảm (vd: "刚起了一个头|gāng qǐ le yī gè tóu|vừa mới mở đầu", "怼了回去|duì le huí qù|bật lại / cãi lại", "头也不回地|tóu yě bù huí de|không ngoảnh đầu lại", "皱起眉头|zhòu qǐ méi tóu|nhíu mày", "松了口气|sōng le kǒu qì|thở phào nhẹ nhõm").
+     + Các từ ghép ngoài HSK hoặc từ đa nghĩa có nghĩa đặc biệt trong ngữ cảnh đoạn văn.
+   - TUYỆT ĐỐI KHÔNG gộp các tổ hợp tự do 1+1=2 (như KHÔNG gộp "感到害怕", KHÔNG gộp "产生共鸣").
 
-3) QUY TẮC VỀ TRỢ TỪ "的", "地" VÀ LIÊN TỪ "与":
-   - Trợ từ "的" nối định ngữ và danh từ thông thường (như "半年以来" + "的" + "首次" + "会面", hoặc "大小姐" + "的" + "故事"), hãy tách chữ "的" thành 1 token riêng (isVocab: false).
-   - Trợ từ "地" đứng sau tính từ 2 âm tiết thông thường (như "和蔼" + "地", "气愤" + "地", "高兴" + "地"), hãy tách chữ "地" thành 1 token riêng để người học lưu được từ gốc chuẩn ("和蔼", "气愤"). Chỉ gộp "地" khi thuộc cụm quán dụng/thành ngữ cố định (như "头也不回地").
-   - KHÔNG ghép liên từ "与" vào đầu từ B trong "A 与 B" (Ví dụ: tách "大小姐", "与", "佐野").
-
-4) TỰ ĐỘNG SỬA LỖI GRAMMAR "地" / "的":
-   - Trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (như "头也不回地走了", "气愤地说着", "高兴地笑"), nếu bài gốc viết sai thành chữ "地", bạn BẮT BUỘC sửa thành "地" đúng chuẩn ngữ pháp!
-
-5) CHỈNH SỬA & CHUẨN HÓA DẤU CÂU:
-   - BẮT BUỘC bổ sung và chuẩn hóa dấu câu tiếng Trung (，, 。, ！, ？, ：“”, 《》) nếu bài gốc thiếu hoặc dính liền chữ.
-   - Giữ lại đầy đủ mọi dấu câu trong mảng tokens (với dấu câu set "isVocab": false, "pinyin": "", "vietnamese": "").
-   - Không dùng dấu ngoặc kép thẳng " bên trong chuỗi tiếng Việt (nếu cần trích dẫn hãy dùng dấu nháy đơn ').
-
-${isFirstChunk && !customTitle ? `6) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ (3 đến 6 từ).` : ''}
-${isFirstChunk && !customTitle ? '7)' : '6)'} Chia văn bản thành các ĐOẠN VĂN (paragraphs) theo ngắt đoạn gốc:
-   - Dịch toàn bộ đoạn đó sang TIẾNG VIỆT mượt mà, chuẩn ngữ cảnh.
-   - Phân tách thành chuỗi các TỪ / CỤM QUÁN DỤNG / DẤU CÂU nối tiếp nhau hoàn chỉnh thành đoạn văn.
+${isFirstChunk && !customTitle ? `3) BẮT BUỘC TỰ ĐẶT MỘT TIÊU ĐỀ TIẾNG VIỆT TỰ NHIÊN, MƯỢT MÀ (3 đến 6 từ) vào trường "title".` : ''}
 
 Đoạn văn gốc:
 """
 ${chunkText}
 """
 
-Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown). Để phản hồi cực nhanh, mỗi phần tử trong mảng "tokens" dùng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt" (với dấu câu hoặc trợ từ "的", "地" chỉ cần ghi chính ký tự đó, ví dụ "，", "的", "地"):
+Trả về JSON thuần tuý (KHÔNG bọc trong markdown):
 {
   ${isFirstChunk && !customTitle ? '"title": "Tiêu đề tiếng Việt tự nhiên mượt mà",' : ''}
   "paragraphs": [
     {
-      "vietnamese": "Dịch nghĩa tiếng Việt mượt mà đầy đủ của đoạn",
-      "tokens": [
-        "看着|kàn zhe|nhìn thấy",
+      "text": "看着柯南感到害怕，大小姐的故事刚起了一个头就被玉田儿硬生生怼了回去，然后气愤地头也不回地走了。",
+      "vietnamese": "Nhìn thấy Conan cảm thấy sợ hãi, câu chuyện của tiểu thư vừa mới mở đầu đã bị Tam Điền Nhi thẳng thừng bật lại, sau đó tức giận bỏ đi một mạch không ngoảnh đầu lại.",
+      "phrases": [
         "柯南|kē nán|Conan",
-        "感到|gǎn dào|cảm thấy",
-        "害怕|hài pà|sợ hãi",
-        "，",
         "大小姐|dà xiǎo jiě|tiểu thư",
-        "的",
-        "故事|gù shi|câu chuyện",
         "刚起了一个头|gāng qǐ le yī gè tóu|vừa mới mở đầu",
-        "就|jiù|thì",
-        "被|bèi|bị",
         "玉田儿|yù tián ér|Tam Điền Nhi",
-        "硬生生|yìng shēng shēng|cứng rắn",
+        "硬生生|yìng shēng shēng|thẳng thừng / cứng rắn",
         "怼了回去|duì le huí qù|bật lại / cãi lại",
-        "，",
-        "然后|rán hòu|sau đó",
-        "气愤|qì fèn|tức giận",
-        "地",
-        "头也不回地|tóu yě bù huí de|không ngoảnh đầu lại",
-        "走了|zǒu le|bỏ đi",
-        "。"
+        "头也不回地|tóu yě bù huí de|không ngoảnh đầu lại"
       ]
     }
   ]
@@ -11593,7 +11573,7 @@ ${chunkText}
                 'X-Title': 'HSK Vocab App'
               },
               body: JSON.stringify({
-                model: options.model || 'google/gemini-3.8-flash',
+                model: options.model || 'google/gemini-2.5-flash',
                 reasoning: { enabled: false },
                 messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
               })
@@ -11621,14 +11601,29 @@ ${chunkText}
               }
 
               if (chunkParagraphs.length > 0) {
+                const builtParas = [];
                 chunkParagraphs.forEach(p => {
-                  if (Array.isArray(p.tokens)) {
+                  if (!p) return;
+                  if (Array.isArray(p.tokens) && p.tokens.length > 0) {
                     p.tokens = p.tokens.map(normalizeAiTokenItem).filter(Boolean);
+                  } else {
+                    const pText = toSimplified(String(p.text || p.hanzi || '').trim());
+                    if (pText) {
+                      p.tokens = vslBuildSubtitleTokensWithAiPhrases(pText, p.phrases);
+                    }
+                  }
+                  if (Array.isArray(p.tokens) && p.tokens.length > 0) {
                     allTokens = allTokens.concat(p.tokens);
+                    builtParas.push({
+                      vietnamese: String(p.vietnamese || '').trim(),
+                      tokens: p.tokens
+                    });
                   }
                 });
-                allParagraphs = allParagraphs.concat(chunkParagraphs);
-                chunkSuccess = true;
+                if (builtParas.length > 0) {
+                  allParagraphs = allParagraphs.concat(builtParas);
+                  chunkSuccess = true;
+                }
               }
             }
           } catch (chunkErr) {
@@ -11637,7 +11632,10 @@ ${chunkText}
         }
 
         if (!chunkSuccess) {
-          allParagraphs.push({ vietnamese: '', tokens: [{ hanzi: chunkText, pinyin: '', vietnamese: '', isVocab: false }] });
+          const fallbackTokens = typeof vslBuildSubtitleTokensWithAiPhrases === 'function'
+            ? vslBuildSubtitleTokensWithAiPhrases(chunkText, [])
+            : [{ hanzi: chunkText, pinyin: '', vietnamese: '', isVocab: false }];
+          allParagraphs.push({ vietnamese: '', tokens: fallbackTokens });
         }
       }
 
@@ -12890,7 +12888,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
             'X-Title': 'HSK Vocab App'
           },
           body: JSON.stringify({
-            model: 'google/gemini-3.8-flash',
+            model: 'google/gemini-2.5-flash',
             reasoning: { enabled: false },
             messages: [
               { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
@@ -13114,44 +13112,50 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       const fullText = (fullParagraphs || []).join('\n').trim();
       const hanziCount = (fullText.match(/[\u4e00-\u9fff]/g) || []).length;
 
-      // If the original article is already right in the ~420-560 char sweet spot and has 2-4 paragraphs, use it directly
-      if (hanziCount >= 420 && hanziCount <= 560 && fullParagraphs.length >= 2 && fullParagraphs.length <= 4) {
-        return fullText;
-      }
-
       if (loadingTextEl) {
-        loadingTextEl.textContent = '🦋 AI đang tóm tắt & biên tập trọn vẹn bài báo gốc thành bài đọc ~500 chữ (đủ ý Mở - Thân - Kết)...';
+        loadingTextEl.textContent = '🦋 AI đang biên tập bài báo chuẩn HSK 7-9 (~500 chữ), dịch nghĩa & tách từ...';
       }
 
-      const condensePrompt = `Bạn là Chuyên gia Biên tập Ngữ liệu Đề thi Đọc hiểu HSK 7-9 (Cao cấp).
+      const condensePrompt = `Bạn là Chuyên gia Biên tập Ngữ liệu Đề thi Đọc hiểu HSK 7-9 (Cao cấp) và Dịch giả cao cấp.
 Dưới đây là TOÀN BỘ NỘI DUNG BÀI BÁO GỐC từ báo chính thống Trung Quốc (${item.source || '人民日报'}):
 - Tiêu đề: ${item.title}
 - Nội dung toàn bài báo gốc (${hanziCount} chữ Hán):
 ${fullText.slice(0, 4200)}
 
-【NHIỆM VỤ BẮT BUỘC — CÔ ĐỌNG TRỌN VẸN TOÀN BÀI THÀNH ~500 CHỮ HÁN】:
-Hãy tóm tắt, cô đọng và biên tập lại (缩写与精编) TOÀN BỘ bài báo gốc trên thành một bài đọc hoàn chỉnh chuẩn đề thi Đọc hiểu HSK 7-9, đảm bảo nghiêm ngặt:
-1. **ĐỘ DÀI CHUẨN (~480 – 550 CHỮ HÁN)**:
-   - Toàn bài sau khi biên tập phải dài khoảng **480 – 550 chữ Hán (简体中文)**, chia thành **3 hoặc 4 đoạn văn (段落)** cân đối, mạch lạc.
-2. **ĐẦY ĐỦ TRỌN VẸN NỘI DUNG TỪ ĐẦU ĐẾN CUỐI (TUYỆT ĐỐI KHÔNG THIẾU Ý)**:
-   - Phải bao quát toàn bộ mạch ý chính của cả bài báo gốc từ đầu đến cuối:
+【NHIỆM VỤ BẮT BUỘC — CÔ ĐỌNG THÀNH ~500 CHỮ HÁN + DỊCH NGHĨA + TRÍCH CỤM TỪ TRONG 1 BƯỚC】:
+1. **CÔ ĐỌNG TRỌN VẸN TOÀN BÀI (~480 – 550 CHỮ HÁN, 3–4 ĐOẠN VĂN)**:
+   - Biên tập lại toàn bộ bài báo gốc thành **3 hoặc 4 đoạn văn (段落)** cân đối (~480 – 550 chữ Hán giản thể), bao quát trọn vẹn mạch ý từ đầu đến cuối:
      + **Đoạn 1 (Mở đầu)**: Bối cảnh, sự kiện, hiện tượng hoặc phát minh mở đầu bài báo.
-     + **Đoạn 2 (& Đoạn 3) (Thân bài)**: Đầy đủ các luận điểm chính, nguyên nhân, cơ chế hoạt động, số liệu/dẫn chứng thực tế quan trọng xuyên suốt phần thân bài gốc.
-     + **Đoạn cuối (Kết bài)**: Ý nghĩa thực tiễn, nhận định của chuyên gia, giải pháp hoặc thông điệp kết luận ở cuối bài báo gốc.
-3. **GIỮ NGUYÊN VĂN PHONG BÁO CHÍ CHÍNH THỐNG & TỪ VỰNG HSK 7-9 ĐẮT GIÁ**:
-   - Giữ lại tối đa các từ vựng cao cấp HSK 6 / HSK 7-9, thành ngữ 4 chữ (成语), thuật ngữ chuyên môn và các câu văn báo chí/nghị luận đắt giá có trong bài báo gốc.
-   - 100% viết bằng Chữ Hán Giản Thể (简体中文), tuyệt đối không chèn tiếng Việt hay lời bình ngoài lề.
+     + **Đoạn 2 (& Đoạn 3) (Thân bài)**: Đầy đủ các luận điểm chính, nguyên nhân, cơ chế hoạt động, số liệu/dẫn chứng thực tế quan trọng.
+     + **Đoạn cuối (Kết bài)**: Ý nghĩa thực tiễn, nhận định của chuyên gia, giải pháp hoặc thông điệp kết luận.
+   - Giữ lại tối đa các từ vựng cao cấp HSK 6 / HSK 7-9, thành ngữ 4 chữ (成语), thuật ngữ chuyên môn và các câu văn báo chí/nghị luận đắt giá.
+2. **DỊCH TIẾNG VIỆT MƯỢT MÀ TỪNG ĐOẠN ("vietnamese")**:
+   - Với mỗi đoạn văn vừa biên tập, dịch sang tiếng Việt chuẩn xác, tự nhiên, đúng văn phong báo chí.
+3. **TRÍCH XUẤT CỤM TỪ CHUYÊN NGÀNH / THÀNH NGỮ / TÊN RIÊNG ("phrases")**:
+   - Với mỗi đoạn, liệt kê trong mảng "phrases" theo định dạng "Chữ Hán|pinyin|nghĩa tiếng Việt" các thuật ngữ báo chí/khoa học, cụm danh từ cố định, tên riêng/cơ quan, thành ngữ 4 chữ, quán dụng ngữ hoặc từ vựng HSK 7-9 đặc sắc xuất hiện trong đoạn đó (không cần liệt kê từ phổ thông).
 
 Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 {
   "paragraphs": [
-    "Đoạn 1 (chữ Hán giản thể)...",
-    "Đoạn 2 (chữ Hán giản thể)...",
-    "Đoạn 3 (chữ Hán giản thể)..."
+    {
+      "text": "Đoạn 1 (chữ Hán giản thể)...",
+      "vietnamese": "Bản dịch tiếng Việt mượt mà của đoạn 1...",
+      "phrases": ["Thuật ngữ/Thành ngữ|pinyin|nghĩa tiếng Việt"]
+    },
+    {
+      "text": "Đoạn 2 (chữ Hán giản thể)...",
+      "vietnamese": "Bản dịch tiếng Việt mượt mà của đoạn 2...",
+      "phrases": ["Thuật ngữ/Thành ngữ|pinyin|nghĩa tiếng Việt"]
+    },
+    {
+      "text": "Đoạn 3 (chữ Hán giản thể)...",
+      "vietnamese": "Bản dịch tiếng Việt mượt mà của đoạn 3...",
+      "phrases": ["Thuật ngữ/Thành ngữ|pinyin|nghĩa tiếng Việt"]
+    }
   ]
 }`;
 
-      const modelsToTry = ['google/gemini-3.8-flash', 'deepseek/deepseek-v4.1-flash'];
+      const modelsToTry = ['google/gemini-3.8-flash', 'google/gemini-2.5-flash'];
       for (let mIdx = 0; mIdx < modelsToTry.length; mIdx++) {
         const modelName = modelsToTry[mIdx];
         try {
@@ -13177,12 +13181,34 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           const contentStr = data.choices?.[0]?.message?.content || '{}';
           const parsed = deepToSimplified(safeParseJSON(contentStr) || {});
           if (Array.isArray(parsed.paragraphs) && parsed.paragraphs.length > 0) {
-            const cleanOut = parsed.paragraphs
-              .map(p => toSimplified(String(p || '').trim()))
-              .filter(p => (p.match(/[\u4e00-\u9fff]/g) || []).length >= 25);
-            const joined = cleanOut.join('\n');
+            const builtParas = [];
+            const rawLines = [];
+            parsed.paragraphs.forEach(p => {
+              if (!p) return;
+              const pText = toSimplified(String(typeof p === 'string' ? p : (p.text || p.hanzi || '')).trim());
+              if ((pText.match(/[\u4e00-\u9fff]/g) || []).length < 25) return;
+              rawLines.push(pText);
+              const pVi = typeof p === 'object' ? String(p.vietnamese || '').trim() : '';
+              const pPhrases = typeof p === 'object' && Array.isArray(p.phrases) ? p.phrases : [];
+              const pTokens = typeof vslBuildSubtitleTokensWithAiPhrases === 'function'
+                ? vslBuildSubtitleTokensWithAiPhrases(pText, pPhrases)
+                : [];
+              if (pVi && pTokens.length > 0) {
+                builtParas.push({ vietnamese: pVi, tokens: pTokens });
+              }
+            });
+            const joined = rawLines.join('\n');
             if ((joined.match(/[\u4e00-\u9fff]/g) || []).length >= 260) {
-              return joined;
+              if (builtParas.length === rawLines.length && builtParas.length > 0) {
+                const isolated = isolateTargetWordsInParagraphs(builtParas, []);
+                return {
+                  rawText: joined,
+                  paragraphs: isolated.paragraphs,
+                  tokens: isolated.tokens,
+                  singlePassDone: true
+                };
+              }
+              return { rawText: joined, singlePassDone: false };
             }
           }
         } catch (e) {
@@ -13191,7 +13217,10 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       }
 
       // Fallback if AI condensation fails: use optimal excerpt
-      return selectOptimalReadingExcerptParagraphs(fullParagraphs, item.summary).join('\n');
+      return {
+        rawText: selectOptimalReadingExcerptParagraphs(fullParagraphs, item.summary).join('\n'),
+        singlePassDone: false
+      };
     }
 
     async function openHskNewsArticleInReader(newsKeyOrIndex) {
@@ -13251,23 +13280,31 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         }
 
         pctCtrl.setFloor(26);
-        pctCtrl.glideTo(56, 300);
-        const rawText = await condenseFullNewsToHskPassage(fullParas, item, apiKey, loadingText);
+        pctCtrl.glideTo(92, 300);
+        const condensed = await condenseFullNewsToHskPassage(fullParas, item, apiKey, loadingText);
+        const rawText = typeof condensed === 'string' ? condensed : (condensed.rawText || '');
 
-        pctCtrl.setFloor(58);
-        pctCtrl.glideTo(94, 300);
-        if (loadingText) loadingText.textContent = '🦋 Đang tách từ HSK 7-9 & dịch nghĩa từng đoạn...';
-
-        const result = await parsePassageChunksWithAi(rawText, apiKey, {
-          customTitle: item.title,
-          targetWords: [],
-          onProgress: (pct) => {
-            const mapped = Math.round(58 + (pct * 0.39));
-            pctCtrl.setFloor(mapped);
-            pctCtrl.glideTo(Math.min(97, mapped + 8), 320);
-            if (loadingText) loadingText.textContent = `🦋 Đang tách từ HSK 7-9 & tạo bài đọc ${pct}%...`;
-          }
-        });
+        let result;
+        if (condensed && condensed.singlePassDone && Array.isArray(condensed.paragraphs) && condensed.paragraphs.length > 0) {
+          result = {
+            paragraphs: condensed.paragraphs,
+            tokens: condensed.tokens
+          };
+        } else {
+          pctCtrl.setFloor(68);
+          pctCtrl.glideTo(95, 300);
+          if (loadingText) loadingText.textContent = '🦋 Đang tách từ HSK 7-9 & dịch nghĩa từng đoạn...';
+          result = await parsePassageChunksWithAi(rawText, apiKey, {
+            customTitle: item.title,
+            targetWords: [],
+            onProgress: (pct) => {
+              const mapped = Math.round(68 + (pct * 0.29));
+              pctCtrl.setFloor(mapped);
+              pctCtrl.glideTo(Math.min(97, mapped + 6), 320);
+              if (loadingText) loadingText.textContent = `🦋 Đang tách từ HSK 7-9 & tạo bài đọc ${pct}%...`;
+            }
+          });
+        }
         pctCtrl.stop(100);
 
         const newArticleId = 'news_' + Date.now();
