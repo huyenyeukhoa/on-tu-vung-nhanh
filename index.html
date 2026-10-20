@@ -5105,14 +5105,14 @@
           <!-- Inline Edit Box for correcting video subtitle token -->
           <div id="vslTokenEditBox" style="display: none; background: #f8f5fc; border: 1.3px solid #dfd3ef; border-radius: 12px; padding: 9px 10px; margin-bottom: 10px;">
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-              <input type="text" id="vslEditTokenHanziInput" oninput="vslOnEditTokenHanziInput(this.value)" placeholder="Chữ Hán đúng..." style="width: 42%; padding: 6px 8px; font-family: var(--font-hanzi); font-size: 17px; color: #111827; background: #ffffff; border: 1.2px solid #d4c5e8; border-radius: 8px; outline: none;" />
-              <input type="text" id="vslEditTokenPinyinInput" placeholder="Pinyin..." style="flex: 1; min-width: 0; padding: 6px 8px; font-size: 12.5px; font-weight: 700; color: #684e92; background: #ffffff; border: 1.2px solid #d4c5e8; border-radius: 8px; outline: none;" />
-              <button type="button" id="vslBtnAiFillToken" onclick="vslAiFillEditedToken()" style="padding: 6px 9px; font-family: var(--font-mali); font-size: 11px; font-weight: 800; color: #684e92; background: #ede4f9; border: 1.2px solid #cbb6e8; border-radius: 8px; cursor: pointer; white-space: nowrap; flex-shrink: 0;" title="Dùng AI tự điền Pinyin & nghĩa tiếng Việt theo ngữ cảnh câu">✨ AI</button>
+              <input type="text" id="vslEditTokenHanziInput" oninput="vslOnEditTokenHanziInput(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();vslSaveEditedVideoToken();}" placeholder="Chữ Hán đúng..." style="width: 42%; padding: 6px 8px; font-family: var(--font-hanzi); font-size: 17px; color: #111827; background: #ffffff; border: 1.2px solid #d4c5e8; border-radius: 8px; outline: none;" />
+              <input type="text" id="vslEditTokenPinyinInput" onkeydown="if(event.key==='Enter'){event.preventDefault();vslSaveEditedVideoToken();}" placeholder="Pinyin..." style="flex: 1; min-width: 0; padding: 6px 8px; font-size: 12.5px; font-weight: 700; color: #684e92; background: #ffffff; border: 1.2px solid #d4c5e8; border-radius: 8px; outline: none;" />
+              <button type="button" id="vslBtnAiFillToken" onpointerdown="event.preventDefault();vslAiFillEditedToken();" onclick="vslAiFillEditedToken()" style="padding: 6px 9px; font-family: var(--font-mali); font-size: 11px; font-weight: 800; color: #684e92; background: #ede4f9; border: 1.2px solid #cbb6e8; border-radius: 8px; cursor: pointer; white-space: nowrap; flex-shrink: 0;" title="Dùng AI tự điền Pinyin & nghĩa tiếng Việt theo ngữ cảnh câu">✨ AI</button>
             </div>
             <div style="display: flex; align-items: center; gap: 6px;">
               <input type="text" id="vslEditTokenViInput" placeholder="Nghĩa tiếng Việt..." onkeydown="if(event.key==='Enter'){event.preventDefault();vslSaveEditedVideoToken();}" style="flex: 1; min-width: 0; padding: 6px 8px; font-size: 12.5px; color: #111827; background: #ffffff; border: 1.2px solid #d4c5e8; border-radius: 8px; outline: none;" />
-              <button type="button" onclick="vslToggleTokenEditBox(false)" style="padding: 6px 9px; font-family: var(--font-mali); font-size: 11.5px; font-weight: 700; color: #6b7280; background: #ffffff; border: 1px solid #d1d5db; border-radius: 8px; cursor: pointer; white-space: nowrap; flex-shrink: 0;">Hủy</button>
-              <button type="button" id="vslBtnSaveEditedToken" onclick="vslSaveEditedVideoToken()" style="padding: 6px 11px; font-family: var(--font-mali); font-size: 11.5px; font-weight: 800; color: #ffffff; background: #766299; border: 1px solid #684e92; border-radius: 8px; cursor: pointer; white-space: nowrap; flex-shrink: 0;">💾 Lưu</button>
+              <button type="button" onpointerdown="event.preventDefault();vslToggleTokenEditBox(false);" onclick="vslToggleTokenEditBox(false)" style="padding: 6px 9px; font-family: var(--font-mali); font-size: 11.5px; font-weight: 700; color: #6b7280; background: #ffffff; border: 1px solid #d1d5db; border-radius: 8px; cursor: pointer; white-space: nowrap; flex-shrink: 0;">Hủy</button>
+              <button type="button" id="vslBtnSaveEditedToken" onpointerdown="event.preventDefault();vslSaveEditedVideoToken();" onclick="vslSaveEditedVideoToken()" style="padding: 6px 11px; font-family: var(--font-mali); font-size: 11.5px; font-weight: 800; color: #ffffff; background: #766299; border: 1px solid #684e92; border-radius: 8px; cursor: pointer; white-space: nowrap; flex-shrink: 0;">💾 Lưu</button>
             </div>
           </div>
 
@@ -18394,27 +18394,84 @@ QUY TẮC:
 
     let vslActiveTokenRef = null;
 
-    function vslLookupWordMetaFast(hanzi) {
-      const h = toSimplifiedChinese(String(hanzi || '').trim());
-      if (!h) return { pinyin: '', vietnamese: '' };
-      const fixed = FIXED_COMPOUND_PHRASES[h];
+    const VSL_COMMON_CHAR_GLOSS = {
+      '人': 'người', '和': 'và', '与': 'và', '或': 'hoặc', '事': 'sự việc', '物': 'vật',
+      '的': 'của', '地': 'một cách', '得': 'đến mức', '了': 'rồi', '着': 'đang', '过': 'từng',
+      '在': 'ở, đang', '是': 'là', '有': 'có', '没': 'không', '不': 'không', '很': 'rất',
+      '太': 'quá', '更': 'hơn', '最': 'nhất', '都': 'đều', '也': 'cũng', '还': 'vẫn, còn',
+      '就': 'liền, thì', '才': 'mới', '又': 'lại', '再': 'lại', '把': 'đem', '被': 'bị, được',
+      '给': 'cho', '对': 'đối với', '向': 'hướng về', '从': 'từ', '到': 'đến', '里': 'trong',
+      '上': 'trên', '下': 'dưới', '前': 'trước', '后': 'sau', '中': 'trong, giữa', '内': 'trong',
+      '外': 'ngoài', '大': 'lớn', '小': 'nhỏ', '多': 'nhiều', '少': 'ít', '好': 'tốt',
+      '新': 'mới', '老': 'cũ, già', '高': 'cao', '低': 'thấp', '长': 'dài', '短': 'ngắn',
+      '快': 'nhanh', '慢': 'chậm', '早': 'sớm', '晚': 'muộn', '看': 'xem, nhìn', '听': 'nghe',
+      '说': 'nói', '走': 'đi', '来': 'đến', '去': 'đi', '做': 'làm', '想': 'nghĩ, muốn',
+      '要': 'cần, muốn', '能': 'có thể', '会': 'biết, sẽ', '让': 'khiến, để', '叫': 'gọi',
+      '我': 'tôi', '你': 'bạn', '他': 'anh ấy', '她': 'cô ấy', '它': 'nó', '们': 'các',
+      '这': 'này', '那': 'đó', '哪': 'nào', '谁': 'ai', '什': 'gì', '么': 'gì'
+    };
+
+    function vslLookupSingleUnitMeta(unit) {
+      const fixed = FIXED_COMPOUND_PHRASES[unit];
       if (fixed && (fixed.pinyin || fixed.vietnamese)) {
         return { pinyin: fixed.pinyin || '', vietnamese: fixed.vietnamese || '' };
       }
       const lookup = srsGetLookup();
-      const lw = lookup.get(h);
-      const meta = lookupDictMetaForToken(h);
-      const cached = aiCache && aiCache[h] ? aiCache[h] : null;
+      const lw = lookup.get(unit);
+      const meta = lookupDictMetaForToken(unit);
+      const cached = aiCache && aiCache[unit] ? aiCache[unit] : null;
       const py = (lw && lw.pinyin)
         || (meta && meta.pinyin)
         || (cached && cached.pinyin)
-        || (typeof getLocalTokenPinyin === 'function' ? getLocalTokenPinyin(h) : '')
+        || (typeof getLocalTokenPinyin === 'function' ? getLocalTokenPinyin(unit) : '')
         || '';
       const vi = (lw && (lw.vietnamese || lw.vi || lw.meaning))
         || (meta && meta.vietnamese)
         || (cached && cached.vietnamese)
+        || VSL_COMMON_CHAR_GLOSS[unit]
         || '';
       return { pinyin: py, vietnamese: vi };
+    }
+
+    function vslLookupWordMetaFast(hanzi) {
+      const h = toSimplifiedChinese(String(hanzi || '').trim());
+      if (!h) return { pinyin: '', vietnamese: '' };
+      const exact = vslLookupSingleUnitMeta(h);
+      if (exact.vietnamese) return exact;
+
+      // Compositional lookup for multi-character phrases (e.g. "人和事" -> "người" + "và" + "sự việc")
+      if (h.length > 1) {
+        const subMeanings = [];
+        let i = 0;
+        while (i < h.length) {
+          let matched = false;
+          for (let len = Math.min(4, h.length - i); len >= 2; len--) {
+            const sub = h.slice(i, i + len);
+            const subMeta = vslLookupSingleUnitMeta(sub);
+            if (subMeta.vietnamese) {
+              subMeanings.push(String(subMeta.vietnamese).split(/[;,/]/)[0].trim());
+              i += len;
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            const ch = h[i];
+            const chMeta = vslLookupSingleUnitMeta(ch);
+            if (chMeta.vietnamese) {
+              subMeanings.push(String(chMeta.vietnamese).split(/[;,/]/)[0].trim());
+            }
+            i += 1;
+          }
+        }
+        if (subMeanings.length > 0) {
+          return {
+            pinyin: exact.pinyin || (typeof getLocalTokenPinyin === 'function' ? getLocalTokenPinyin(h) : ''),
+            vietnamese: subMeanings.join(' ')
+          };
+        }
+      }
+      return exact;
     }
 
     function vslToggleTokenEditBox(forceState) {
@@ -18464,10 +18521,11 @@ QUY TẮC:
 
     async function vslAiFillEditedToken() {
       if (!vslActiveTokenRef) return null;
+      const btnAi = document.getElementById('vslBtnAiFillToken');
+      if (btnAi && btnAi.disabled) return null;
       const editH = document.getElementById('vslEditTokenHanziInput');
       const editP = document.getElementById('vslEditTokenPinyinInput');
       const editV = document.getElementById('vslEditTokenViInput');
-      const btnAi = document.getElementById('vslBtnAiFillToken');
       const newHanzi = toSimplifiedChinese(String((editH && editH.value) || '').trim());
       if (!newHanzi) {
         showToast('⚠️ Vui lòng nhập chữ Hán cần sửa trước!');
@@ -18485,18 +18543,20 @@ QUY TẮC:
         btnAi.disabled = true;
       }
       try {
-        const prompt = `Cho câu tiếng Trung: "${previewSentence}".
-Từ cần tra trong câu này là: "${newHanzi}".
-Trả về DUY NHẤT một JSON hợp lệ (chữ Hán giản thể, nghĩa tiếng Việt ngắn gọn tự nhiên đúng ngữ cảnh câu trên, và câu dịch tiếng Việt đầy đủ cho cả câu):
-{"pinyin": "pinyin có dấu thanh", "vietnamese": "nghĩa ngắn gọn (2-5 chữ)", "sentenceVi": "dịch cả câu sang tiếng Việt tự nhiên"}`;
-        for (const modelName of FETCH_AI_MODELS) {
+        const prompt = `Câu tiếng Trung: "${previewSentence}". Từ cần tra: "${newHanzi}".
+Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa ngắn gọn 2-5 chữ đúng ngữ cảnh","sentenceVi":"dịch cả câu sang tiếng Việt"}`;
+        // Prioritize gemini-2.5-flash with thinking disabled for sub-second response
+        const fastModels = ['google/gemini-2.5-flash', 'google/gemini-2.0-flash-001'];
+        for (const modelName of fastModels) {
           try {
             const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
               method: 'POST',
               headers: getOpenRouterHeaders(),
               body: JSON.stringify({
                 model: modelName,
-                temperature: 0.1,
+                temperature: 0,
+                max_tokens: 160,
+                reasoning: { exclude: true, effort: 'none' },
                 messages: [
                   { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
                   { role: 'user', content: prompt }
@@ -18511,7 +18571,7 @@ Trả về DUY NHẤT một JSON hợp lệ (chữ Hán giản thể, nghĩa ti�
             if (parsed && (parsed.pinyin || parsed.vietnamese)) {
               if (editP && parsed.pinyin) editP.value = String(parsed.pinyin).trim();
               if (editV && parsed.vietnamese) editV.value = String(parsed.vietnamese).trim();
-              if (parsed.sentenceVi) vslActiveTokenRef.pendingSentenceVi = String(parsed.sentenceVi).trim();
+              if (parsed.sentenceVi && vslActiveTokenRef) vslActiveTokenRef.pendingSentenceVi = String(parsed.sentenceVi).trim();
               return parsed;
             }
           } catch (e) {}
@@ -18525,8 +18585,10 @@ Trả về DUY NHẤT một JSON hợp lệ (chữ Hán giản thể, nghĩa ti�
       return null;
     }
 
-    async function vslSaveEditedVideoToken() {
-      if (!vslActiveTokenRef) return;
+    // Instantaneous (0ms) Save for Edited Video Subtitle Token — never blocks UI on network!
+    function vslSaveEditedVideoToken() {
+      const box = document.getElementById('vslTokenEditBox');
+      if (!vslActiveTokenRef || (box && box.style.display === 'none')) return;
       const lesson = findVslLessonById(vslActiveTokenRef.lessonId);
       if (!lesson || !Array.isArray(lesson.subtitles)) return;
       const sub = lesson.subtitles[vslActiveTokenRef.subIdx];
@@ -18535,7 +18597,6 @@ Trả về DUY NHẤT một JSON hợp lệ (chữ Hán giản thể, nghĩa ti�
       const editH = document.getElementById('vslEditTokenHanziInput');
       const editP = document.getElementById('vslEditTokenPinyinInput');
       const editV = document.getElementById('vslEditTokenViInput');
-      const btnSave = document.getElementById('vslBtnSaveEditedToken');
 
       const newHanzi = toSimplifiedChinese(String((editH && editH.value) || '').trim());
       if (!newHanzi) {
@@ -18547,6 +18608,7 @@ Trả về DUY NHẤT một JSON hợp lệ (chữ Hán giản thể, nghĩa ti�
       let newVi = String((editV && editV.value) || '').trim();
       const origHanzi = vslActiveTokenRef.origHanzi;
       const hanziChanged = newHanzi !== origHanzi;
+      let needsBgAiRefine = false;
 
       if (hanziChanged && (!newPinyin || !newVi || newVi === vslActiveTokenRef.origVi)) {
         const fastMeta = vslLookupWordMetaFast(newHanzi);
@@ -18556,21 +18618,7 @@ Trả về DUY NHẤT một JSON hợp lệ (chữ Hán giản thể, nghĩa ti�
         if (!newVi || newVi === vslActiveTokenRef.origVi) {
           newVi = fastMeta.vietnamese || '';
         }
-        if (!newVi || !newPinyin) {
-          if (btnSave) {
-            btnSave.textContent = '⏳...';
-            btnSave.disabled = true;
-          }
-          const aiRes = await vslAiFillEditedToken();
-          if (btnSave) {
-            btnSave.textContent = '💾 Lưu';
-            btnSave.disabled = false;
-          }
-          if (aiRes) {
-            if (aiRes.pinyin) newPinyin = String(aiRes.pinyin).trim();
-            if (aiRes.vietnamese) newVi = String(aiRes.vietnamese).trim();
-          }
-        }
+        if (!newVi) needsBgAiRefine = true;
       }
 
       let targetTokIdx = vslActiveTokenRef.tokIdx;
@@ -18645,21 +18693,18 @@ Trả về DUY NHẤT một JSON hợp lệ (chữ Hán giản thể, nghĩa ti�
         }
       }
 
-      saveVslLessonsToStorage(lesson.id);
-      if (lesson.sourceType === 'youtube' && lesson.youtubeId) {
-        vslSaveSharedMacSubtitles(lesson.youtubeId, lesson.subtitles);
-      }
-
+      const savedSubIdx = vslActiveTokenRef.subIdx;
+      vslToggleTokenEditBox(false);
       vslComputeLessonHskStats(lesson);
       vslRenderCurrentSubtitleCard();
 
-      // Keep the edited token highlighted & update the drawer display
-      const newTokenEl = document.querySelector(`#vslSubtitleTokensBox .reading-token[data-sub-idx="${vslActiveTokenRef.subIdx}"][data-tok-idx="${targetTokIdx}"]`);
+      // Keep the edited token highlighted & update the drawer display immediately
+      const newTokenEl = document.querySelector(`#vslSubtitleTokensBox .reading-token[data-sub-idx="${savedSubIdx}"][data-tok-idx="${targetTokIdx}"]`);
       if (newTokenEl) newTokenEl.classList.add('active-token');
 
       vslActiveTokenRef = {
         lessonId: lesson.id,
-        subIdx: vslActiveTokenRef.subIdx,
+        subIdx: savedSubIdx,
         tokIdx: targetTokIdx,
         origHanzi: tok.hanzi,
         origPinyin: tok.pinyin,
@@ -18682,8 +18727,30 @@ Trả về DUY NHẤT một JSON hợp lệ (chữ Hán giản thể, nghĩa ti�
       if (btnToggleSave) btnToggleSave.onclick = () => toggleWordInVideoLesson(lesson.id, tok);
       vslUpdateDrawerButtonState((lesson.selectedWords || []).some(w => w.hanzi === tok.hanzi));
 
-      vslToggleTokenEditBox(false);
-      showToast(`✅ Đã sửa thành "${tok.hanzi}" (${tok.pinyin}: ${tok.vietnamese})`);
+      showToast(`✅ Đã lưu "${tok.hanzi}" (${tok.pinyin}: ${tok.vietnamese})`);
+
+      // Persist asynchronously in background
+      saveVslLessonsToStorage(lesson.id);
+      if (lesson.sourceType === 'youtube' && lesson.youtubeId) {
+        vslSaveSharedMacSubtitles(lesson.youtubeId, lesson.subtitles);
+      }
+
+      // If the new word wasn't in the local dictionary at all, refine meaning silently in background
+      if (needsBgAiRefine) {
+        vslAiFillEditedToken().then((aiRes) => {
+          if (!aiRes || !aiRes.vietnamese) return;
+          tok.vietnamese = String(aiRes.vietnamese).trim();
+          if (aiRes.pinyin) tok.pinyin = String(aiRes.pinyin).trim();
+          if (aiRes.sentenceVi) sub.vietnamese = String(aiRes.sentenceVi).trim();
+          saveVslLessonsToStorage(lesson.id);
+          if (activeVslLessonId === lesson.id && activeVslSubIndex === savedSubIdx) {
+            vslRenderCurrentSubtitleCard();
+            if (dMeaning && vslActiveTokenRef && vslActiveTokenRef.tokIdx === targetTokIdx) {
+              dMeaning.textContent = `Nghĩa: ${tok.vietnamese}`;
+            }
+          }
+        }).catch(() => {});
+      }
     }
 
     function vslUpdateDrawerButtonState(isSelected) {
