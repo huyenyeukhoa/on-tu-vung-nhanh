@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hsk-vocab-cache-v202';
+const CACHE_NAME = 'hsk-vocab-cache-v203';
 const ASSETS = [
   './',
   './index.html',
@@ -42,10 +42,36 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Network-First strategy for HTML and JS to ensure F5 gets latest updates immediately
+// Hybrid strategy:
+// - Skip cross-origin APIs (Supabase, OpenRouter, etc.) and Netlify functions
+// - Cache-First (0ms) for heavy static assets (3.1MB font, 1.2MB dictionaries, GIFs/PNGs/WebPs)
+// - Network-First for HTML, manifest, and sw.js so F5 always gets the latest version immediately
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  if (event.request.url.includes('/.netlify/')) return;
+  const reqUrl = new URL(event.request.url);
+  if (reqUrl.origin !== self.location.origin) return;
+  if (reqUrl.pathname.includes('/.netlify/')) return;
+
+  const isStaticAsset = /\.(otf|ttf|woff2?|png|gif|webp|jpe?g|svg)$/i.test(reqUrl.pathname)
+    || /\/(hsk_dictionary|opencc_t2cn|hanviet_dict|pinyin_dict)\.js$/i.test(reqUrl.pathname);
+
+  if (isStaticAsset) {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) return cachedResponse;
+        return fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return networkResponse;
+        });
+      })
+    );
+    return;
+  }
 
   event.respondWith(
     fetch(event.request, { cache: 'no-cache' })

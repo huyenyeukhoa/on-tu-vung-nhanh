@@ -25,14 +25,13 @@
   <script src="./opencc_t2cn.js"></script>
   <script src="./hanviet_dict.js"></script>
   <script src="./pinyin_dict.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     /* Custom OTF Font for Hanzi */
     @font-face {
       font-family: 'HanYiZhengYuan';
-      src: url('file:///Users/nguyenthimyhuyen/Downloads/HanYiZhengYuan-55W/HYZhengYuan-55W-2.otf') format('opentype'),
-           url('./fonts/HYZhengYuan-55W-2.otf') format('opentype');
+      src: url('./fonts/HYZhengYuan-55W-2.otf') format('opentype');
       font-weight: normal;
       font-style: normal;
       font-display: swap;
@@ -5564,7 +5563,7 @@
     let deletedReadingArticleIds = safeGetJSON('hsk_deleted_article_ids', []);
     if (!Array.isArray(deletedReadingArticleIds)) deletedReadingArticleIds = [];
 
-    function saveReadingArticlesToStorage() {
+    function saveReadingArticlesToStorage(options = {}) {
       const cleanArticles = (readingArticles || []).map(art => {
         if (art && art.audioUrl && art.audioUrl.length > 500) {
           const { audioUrl, ...rest } = art;
@@ -5575,7 +5574,7 @@
       if (typeof mhIdbPutKv === 'function') {
         mhIdbPutKv('reading_articles', cleanArticles);
       }
-      if (typeof mhQueueReadingAndNewsCloudSync === 'function') {
+      if (!options.skipCloudSync && typeof mhQueueReadingAndNewsCloudSync === 'function') {
         mhQueueReadingAndNewsCloudSync();
       }
       try {
@@ -5588,7 +5587,7 @@
 
     // Automatically strip heavy audioUrl strings from localStorage readingArticles to free up quota
     if (readingArticles.some(a => a && a.audioUrl && a.audioUrl.length > 500)) {
-      saveReadingArticlesToStorage();
+      saveReadingArticlesToStorage({ skipCloudSync: true });
     }
 
     // User Learning Progress mapped by Hanzi safely in localStorage
@@ -5822,8 +5821,8 @@
       try {
         localStorage.setItem('hsk_user_progress', JSON.stringify(userProgress));
       } catch (e) {}
-      if (typeof saveToCloud === 'function') {
-        saveToCloud(false);
+      if (typeof triggerDebouncedCloudSave === 'function') {
+        triggerDebouncedCloudSave();
       }
     }
 
@@ -5911,7 +5910,10 @@
     // Word lookup for SRS (HSK6 + HSK7-9 + custom groups; upgrade group excluded)
     let srsLookupCache = null;
     let srsLookupStamp = 0;
-    function srsInvalidateLookup() { srsLookupCache = null; }
+    function srsInvalidateLookup() {
+      srsLookupCache = null;
+      if (typeof dictMetaMemoCache !== 'undefined' && dictMetaMemoCache) dictMetaMemoCache.clear();
+    }
     function srsGetLookup() {
       const now = Date.now();
       if (srsLookupCache && now - srsLookupStamp < 1500) return srsLookupCache;
@@ -6513,10 +6515,24 @@
     function triggerDebouncedCloudSave() {
       if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
       cloudSyncTimer = setTimeout(() => {
+        cloudSyncTimer = null;
         saveToCloud(false);
-      }, 1200);
+      }, 5000);
     }
     window.triggerDebouncedCloudSave = triggerDebouncedCloudSave;
+
+    // Ensure any pending 5s debounced cloud save is flushed immediately if user hides tab or closes page
+    function flushPendingDebouncedCloudSave() {
+      if (cloudSyncTimer) {
+        clearTimeout(cloudSyncTimer);
+        cloudSyncTimer = null;
+        saveToCloud(false);
+      }
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) flushPendingDebouncedCloudSave();
+    });
+    window.addEventListener('pagehide', flushPendingDebouncedCloudSave);
 
     async function loadFromCloud(isManual = false) {
       updateCloudStatusBadge('🟡 Đang tải...', false);
@@ -6596,7 +6612,7 @@
               }
             });
             readingArticles = mergedArticles.filter(a => !deletedSet.has(String(a.id)));
-            saveReadingArticlesToStorage();
+            saveReadingArticlesToStorage({ skipCloudSync: true });
           }
 
           // Sync upgrade words from cloud cleanly
@@ -6655,7 +6671,7 @@
             else refreshStudyMain();
           }
 
-          migrateStoredDataToSimplified();
+          migrateStoredDataToSimplified(false);
           updateCustomLevelTabCount();
           updateGroupWordsState();
           renderGroupDropdown();
@@ -6684,7 +6700,7 @@
       // Sync AI explanations and Personal Vault (Reading, News, Video Subtitles & MP4s on nbexbqzuqcsqirpepdju)
       if (typeof syncAiCacheWithCloud === 'function') syncAiCacheWithCloud();
       if (typeof mhHydrateReadingAndNewsFromVault === 'function') mhHydrateReadingAndNewsFromVault();
-      if (typeof mhHydrateAndSyncVslVault === 'function') mhHydrateAndSyncVslVault();
+      if (isManual && typeof mhHydrateAndSyncVslVault === 'function') mhHydrateAndSyncVslVault(true);
     }
 
     // ==========================================
@@ -8412,16 +8428,47 @@
     }
     window.toSimplified = toSimplified;
 
-    // One-time migration: convert any Traditional characters already stored in AI cache / reading articles
+    const simplifiedVerifiedObjects = new WeakSet();
+    function deepMutateSimplified(obj, ignoreKey = null) {
+      if (!obj || typeof obj !== 'object') return false;
+      if (simplifiedVerifiedObjects.has(obj)) return false;
+      let mutated = false;
+      if (Array.isArray(obj)) {
+        for (let i = 0; i < obj.length; i++) {
+          const val = obj[i];
+          if (typeof val === 'string') {
+            const conv = toSimplified(val);
+            if (conv !== val) { obj[i] = conv; mutated = true; }
+          } else if (val && typeof val === 'object') {
+            if (deepMutateSimplified(val, ignoreKey)) mutated = true;
+          }
+        }
+      } else {
+        const keys = Object.keys(obj);
+        for (let i = 0; i < keys.length; i++) {
+          const k = keys[i];
+          if (k === ignoreKey) continue;
+          const val = obj[k];
+          if (typeof val === 'string') {
+            const conv = toSimplified(val);
+            if (conv !== val) { obj[k] = conv; mutated = true; }
+          } else if (val && typeof val === 'object') {
+            if (deepMutateSimplified(val, ignoreKey)) mutated = true;
+          }
+        }
+      }
+      simplifiedVerifiedObjects.add(obj);
+      return mutated;
+    }
+
+    // Fast in-place migration: convert any Traditional characters without heavy JSON.stringify or re-scanning verified items
     function migrateStoredDataToSimplified(syncCloud = true) {
       try {
         let changed = false;
         const changedAiKeys = [];
         Object.keys(aiCache || {}).forEach(k => {
-          const before = JSON.stringify(aiCache[k]);
-          const converted = deepToSimplified(aiCache[k]);
-          if (JSON.stringify(converted) !== before) {
-            aiCache[k] = converted;
+          const entry = aiCache[k];
+          if (entry && typeof entry === 'object' && deepMutateSimplified(entry)) {
             changedAiKeys.push(k);
           }
         });
@@ -8430,36 +8477,33 @@
           changed = true;
         }
         if (Array.isArray(readingArticles) && readingArticles.length > 0) {
-          const beforeArts = JSON.stringify(readingArticles);
-          const newArts = readingArticles.map(art => {
-            if (!art || typeof art !== 'object') return art;
-            const { audioUrl, ...rest } = art;
-            const conv = deepToSimplified(rest);
-            if (audioUrl !== undefined) conv.audioUrl = audioUrl;
-            return conv;
-          });
-          if (JSON.stringify(newArts) !== beforeArts) {
-            readingArticles = newArts;
-            if (typeof saveReadingArticlesToStorage === 'function') saveReadingArticlesToStorage();
+          let artsChanged = false;
+          for (let i = 0; i < readingArticles.length; i++) {
+            const art = readingArticles[i];
+            if (art && typeof art === 'object' && deepMutateSimplified(art, 'audioUrl')) {
+              artsChanged = true;
+            }
+          }
+          if (artsChanged) {
+            if (typeof saveReadingArticlesToStorage === 'function') saveReadingArticlesToStorage({ skipCloudSync: !syncCloud });
             changed = true;
           }
         }
         const migrateWordList = (list) => {
           let listChanged = false;
-          const newList = (list || []).map(w => {
-            if (!w || typeof w !== 'object') return w;
-            const conv = deepToSimplified(w);
-            if (JSON.stringify(conv) !== JSON.stringify(w)) {
+          (list || []).forEach(w => {
+            if (!w || typeof w !== 'object') return;
+            const origHanzi = w.hanzi;
+            if (deepMutateSimplified(w)) {
               listChanged = true;
-              if (w.hanzi && conv.hanzi && w.hanzi !== conv.hanzi && userProgress[w.hanzi] !== undefined) {
-                if (userProgress[conv.hanzi] === undefined) userProgress[conv.hanzi] = userProgress[w.hanzi];
-                delete userProgress[w.hanzi];
+              if (origHanzi && w.hanzi && origHanzi !== w.hanzi && userProgress[origHanzi] !== undefined) {
+                if (userProgress[w.hanzi] === undefined) userProgress[w.hanzi] = userProgress[origHanzi];
+                delete userProgress[origHanzi];
                 localStorage.setItem('hsk_user_progress', JSON.stringify(userProgress));
               }
             }
-            return conv;
           });
-          return { listChanged, newList };
+          return listChanged;
         };
         if (Array.isArray(customGroups)) {
           let groupsChanged = false;
@@ -8467,8 +8511,7 @@
             if (!g) return;
             const newName = toSimplified(g.name);
             if (newName !== g.name) { g.name = newName; groupsChanged = true; }
-            const r = migrateWordList(g.words);
-            if (r.listChanged) { g.words = r.newList; groupsChanged = true; }
+            if (migrateWordList(g.words)) groupsChanged = true;
           });
           if (groupsChanged) {
             localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
@@ -8476,14 +8519,12 @@
           }
         }
         if (Array.isArray(upgradeList)) {
-          const r = migrateWordList(upgradeList);
-          if (r.listChanged) {
-            upgradeList = r.newList;
+          if (migrateWordList(upgradeList)) {
             localStorage.setItem('hsk_upgrade_words', JSON.stringify(upgradeList));
             changed = true;
           }
         }
-        if (changed && syncCloud && typeof saveToCloud === 'function') saveToCloud(false);
+        if (changed && syncCloud && typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
         return changed;
       } catch (e) {
         console.warn('Simplified migration warning:', e);
@@ -10463,8 +10504,8 @@ Lưu ý:
             });
             saveReadingArticlesToStorage();
             localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-            if (typeof saveToCloud === 'function') {
-              saveToCloud(false);
+            if (typeof triggerDebouncedCloudSave === 'function') {
+              triggerDebouncedCloudSave();
             }
             updateCustomLevelTabCount();
             renderCustomGroupSelect();
@@ -10497,8 +10538,8 @@ Lưu ý:
               }
             }
             localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-            if (typeof saveToCloud === 'function') {
-              saveToCloud(false);
+            if (typeof triggerDebouncedCloudSave === 'function') {
+              triggerDebouncedCloudSave();
             }
             updateCustomLevelTabCount();
             renderCustomGroupSelect();
@@ -10524,8 +10565,8 @@ Lưu ý:
           onConfirm: () => {
             upgradeList.splice(index, 1);
             localStorage.setItem('hsk_upgrade_words', JSON.stringify(upgradeList));
-            if (typeof saveToCloud === 'function') {
-              saveToCloud(false);
+            if (typeof triggerDebouncedCloudSave === 'function') {
+              triggerDebouncedCloudSave();
             }
             updateCustomLevelTabCount();
             renderUpgradeGroupWords();
@@ -10560,8 +10601,8 @@ Lưu ý:
           }
           currentCustomGroupId = customGroups[0].id;
           localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-          if (typeof saveToCloud === 'function') {
-            saveToCloud(false);
+          if (typeof triggerDebouncedCloudSave === 'function') {
+            triggerDebouncedCloudSave();
           }
           updateCustomLevelTabCount();
           renderCustomGroupSelect();
@@ -11455,16 +11496,24 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       return { pinyin: '', vietnamese: '' };
     }
 
+    const dictMetaMemoCache = new Map();
+
     function lookupDictMetaForToken(hanziStr) {
       if (!hanziStr) return { pinyin: '', vietnamese: '' };
       const s = String(hanziStr).trim();
       if (!s) return { pinyin: '', vietnamese: '' };
+
+      const cachedMemo = dictMetaMemoCache.get(s);
+      if (cachedMemo && (cachedMemo.vietnamese || !(typeof aiCache !== 'undefined' && aiCache && aiCache[s]))) {
+        return cachedMemo;
+      }
 
       const direct = lookupSingleDictEntryMeta(s);
       if (direct.vietnamese) {
         if (!direct.pinyin && typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function') {
           direct.pinyin = window.getInstantPinyin(s) || '';
         }
+        dictMetaMemoCache.set(s, direct);
         return direct;
       }
 
@@ -11498,14 +11547,18 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           }
         }
         if (subMeanings.length > 0) {
-          return {
+          const res = {
             pinyin: fallbackPy || '',
             vietnamese: subMeanings.join(' ')
           };
+          dictMetaMemoCache.set(s, res);
+          return res;
         }
       }
 
-      return { pinyin: fallbackPy || '', vietnamese: '' };
+      const fallbackRes = { pinyin: fallbackPy || '', vietnamese: '' };
+      dictMetaMemoCache.set(s, fallbackRes);
+      return fallbackRes;
     }
 
     async function parsePassageChunksWithAi(rawText, apiKey, options = {}) {
@@ -13443,7 +13496,19 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
     let activeParagraphToggles = {};
 
     function toggleParagraphTranslation(pIdx) {
-      activeParagraphToggles[pIdx] = !activeParagraphToggles[pIdx];
+      const nextState = !activeParagraphToggles[pIdx];
+      activeParagraphToggles[pIdx] = nextState;
+      const zhBox = document.getElementById('readingParaBox_' + pIdx);
+      const viBox = document.getElementById('readingParaViBox_' + pIdx);
+      if (zhBox && viBox) {
+        zhBox.style.display = nextState ? 'none' : 'block';
+        viBox.style.display = nextState ? 'block' : 'none';
+        if (currentPlayingParaIdx === pIdx) {
+          zhBox.classList.toggle('active-playing-para', !nextState);
+          viBox.classList.toggle('active-playing-para', nextState);
+        }
+        return;
+      }
       const art = findReadingArticleById(activeReadingArticleId);
       if (art) renderReadingPassageContent(art);
     }
@@ -14057,7 +14122,9 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 
       // Visual highlight
       document.querySelectorAll('.active-playing-para').forEach(el => el.classList.remove('active-playing-para'));
-      const targetBox = document.getElementById('readingParaBox_' + pIdx) || document.getElementById('readingParaViBox_' + pIdx);
+      const targetBox = activeParagraphToggles[pIdx]
+        ? (document.getElementById('readingParaViBox_' + pIdx) || document.getElementById('readingParaBox_' + pIdx))
+        : (document.getElementById('readingParaBox_' + pIdx) || document.getElementById('readingParaViBox_' + pIdx));
       if (targetBox) {
         targetBox.classList.add('active-playing-para');
         const modalBody = document.getElementById('readingViewModalBody');
@@ -14070,19 +14137,18 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         }
       }
 
-      // Reset all buttons and activate current
-      document.querySelectorAll('.tiny-para-audio-btn').forEach(btn => {
+      // Reset currently playing buttons and activate current paragraph buttons
+      document.querySelectorAll('.tiny-para-audio-btn.playing').forEach(btn => {
         btn.classList.remove('playing');
         btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle; flex-shrink: 0;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
         btn.title = 'Chạm: Đọc riêng đoạn này | Giữ 0.5s: Đọc tiếp từ đoạn này đến hết';
       });
 
-      const activeBtn = document.getElementById('btnParaAudio_' + pIdx);
-      if (activeBtn) {
+      document.querySelectorAll(`.tiny-para-audio-btn[data-pidx="${pIdx}"]`).forEach(activeBtn => {
         activeBtn.classList.add('playing');
         activeBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#5e438c" style="vertical-align: middle; flex-shrink: 0;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
         activeBtn.title = 'Đang phát - Chạm để dừng';
-      }
+      });
 
       const speed = getReadingAudioSpeed();
       const utter = new SpeechSynthesisUtterance(text);
@@ -14500,57 +14566,52 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 
       const paragraphsHTML = paragraphs.map((para, pIdx) => {
         const isToggledVi = !!activeParagraphToggles[pIdx];
-        const btnTitle = isToggledVi ? 'Bấm để chuyển về chữ Hán gốc' : 'Bấm để xem dịch Tiếng Việt đoạn này';
-
-        const translateIconSVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${isToggledVi ? '#5e438c' : '#8772a8'}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; flex-shrink: 0;"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>`;
-        const tinyBtnBg = isToggledVi ? 'background: rgba(135, 114, 168, 0.18); border-radius: 5px;' : '';
-        const tinyBtnHTML = `<button class="tiny-para-toggle-btn" onclick="toggleParagraphTranslation(${pIdx})" style="${tinyBtnBg}" title="${btnTitle}">${translateIconSVG}</button>`;
         const purpleSpeakerSVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle; flex-shrink: 0;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
-        const tinyAudioBtnHTML = `<button class="tiny-para-audio-btn" data-pidx="${pIdx}" id="btnParaAudio_${pIdx}" title="Chạm: Đọc riêng đoạn này | Giữ 0.5s: Đọc tiếp từ đoạn này đến hết">${purpleSpeakerSVG}</button>`;
+        const tinyAudioBtnZhHTML = `<button class="tiny-para-audio-btn" data-pidx="${pIdx}" id="btnParaAudio_${pIdx}" title="Chạm: Đọc riêng đoạn này | Giữ 0.5s: Đọc tiếp từ đoạn này đến hết">${purpleSpeakerSVG}</button>`;
+        const tinyAudioBtnViHTML = `<button class="tiny-para-audio-btn" data-pidx="${pIdx}" title="Chạm: Đọc riêng đoạn này | Giữ 0.5s: Đọc tiếp từ đoạn này đến hết">${purpleSpeakerSVG}</button>`;
 
-        if (isToggledVi) {
-          overallTokenIdx += (para.tokens || []).length;
-          const viText = para.vietnamese || (paragraphs.length === 1 && art.translation ? art.translation : 'Đoạn này chưa có bản dịch.');
-          return `
-            <div style="margin-bottom: 14px; line-height: 1.65;">
-              <div class="reading-para-vi-box" data-pidx="${pIdx}" id="readingParaViBox_${pIdx}" style="display: block; text-indent: 0; background: #f3eef9; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2d8ef; font-size: 15.5px; color: #4b3b66; font-style: normal; font-weight: 500; font-family: var(--font-mali) !important; word-break: normal !important; overflow-wrap: break-word !important; word-wrap: break-word !important; line-height: 1.65; transition: all 0.25s ease;">
-                <span style="display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; margin-right: 6px; text-indent: 0;">${tinyBtnHTML}${tinyAudioBtnHTML}</span>${viText}
-              </div>
-            </div>
-          `;
-        } else {
-          const paraTokensHTML = (para.tokens || []).map(tok => {
-            const globalIdx = overallTokenIdx++;
-            if (!tok.isVocab) {
-              const cleanedPunct = (tok.hanzi || '').replace(/[ \t\u00a0\u3000]+/g, '');
-              if (!cleanedPunct) return '';
-              const formattedPunct = cleanedPunct.replace(/\n/g, '<br/>');
-              return `<span class="reading-punct">${formattedPunct}</span>`;
-            }
+        const translateIconZhSVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8772a8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; flex-shrink: 0;"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>`;
+        const translateIconViSVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5e438c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; flex-shrink: 0;"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>`;
 
-            const isSelected = selectedMap.has(tok.hanzi) || fallbackCompoundSelectedSet.has(tok.hanzi);
-            const selectedClass = isSelected ? 'selected' : '';
-            const segs = segmentTokenForHsk(tok.hanzi);
-            const hskWords = segs.filter(s => s.level).map(s => `${s.text}: ${s.level === 'hsk6' ? 'HSK 6' : 'HSK 7-9'}`);
-            const hskTitle = hskWords.length ? ` (${hskWords.join(', ')})` : '';
-            const innerHTML = segs.map(s => s.level
-              ? `<span class="hsk-seg ${s.level === 'hsk6' ? 'hsk-seg-6' : 'hsk-seg-79'}">${s.text}</span>`
-              : s.text
-            ).join('');
+        const tinyBtnZhHTML = `<button class="tiny-para-toggle-btn" onclick="toggleParagraphTranslation(${pIdx})" title="Bấm để xem dịch Tiếng Việt đoạn này">${translateIconZhSVG}</button>`;
+        const tinyBtnViHTML = `<button class="tiny-para-toggle-btn" onclick="toggleParagraphTranslation(${pIdx})" style="background: rgba(135, 114, 168, 0.18); border-radius: 5px;" title="Bấm để chuyển về chữ Hán gốc">${translateIconViSVG}</button>`;
 
-            const rawMeaning = resolveTokenMeaning(tok);
-            const shortMeaning = getShortGloss(rawMeaning);
-            const glossHTML = shortMeaning ? `<span class="token-vi-gloss">${shortMeaning}</span>` : '';
+        const paraTokensHTML = (para.tokens || []).map(tok => {
+          const globalIdx = overallTokenIdx++;
+          if (!tok.isVocab) {
+            const cleanedPunct = (tok.hanzi || '').replace(/[ \t\u00a0\u3000]+/g, '');
+            if (!cleanedPunct) return '';
+            const formattedPunct = cleanedPunct.replace(/\n/g, '<br/>');
+            return `<span class="reading-punct">${formattedPunct}</span>`;
+          }
 
-            return `<span class="reading-token ${selectedClass}" data-index="${globalIdx}" data-hanzi="${tok.hanzi}" title="${tok.hanzi}${hskTitle}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)"><span class="token-text">${innerHTML}</span>${glossHTML}</span>`;
-          }).join('');
+          const isSelected = selectedMap.has(tok.hanzi) || fallbackCompoundSelectedSet.has(tok.hanzi);
+          const selectedClass = isSelected ? 'selected' : '';
+          const segs = segmentTokenForHsk(tok.hanzi);
+          const hskWords = segs.filter(s => s.level).map(s => `${s.text}: ${s.level === 'hsk6' ? 'HSK 6' : 'HSK 7-9'}`);
+          const hskTitle = hskWords.length ? ` (${hskWords.join(', ')})` : '';
+          const innerHTML = segs.map(s => s.level
+            ? `<span class="hsk-seg ${s.level === 'hsk6' ? 'hsk-seg-6' : 'hsk-seg-79'}">${s.text}</span>`
+            : s.text
+          ).join('');
 
-          return `
-            <div class="reading-para-box" data-pidx="${pIdx}" id="readingParaBox_${pIdx}" style="margin-bottom: 14px; position: relative;">
-              <span style="display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; margin-right: 4px; text-indent: 0;">${tinyBtnHTML}${tinyAudioBtnHTML}</span>${paraTokensHTML}
-            </div>
-          `;
-        }
+          const rawMeaning = resolveTokenMeaning(tok);
+          const shortMeaning = getShortGloss(rawMeaning);
+          const glossHTML = shortMeaning ? `<span class="token-vi-gloss">${shortMeaning}</span>` : '';
+
+          return `<span class="reading-token ${selectedClass}" data-index="${globalIdx}" data-hanzi="${tok.hanzi}" title="${tok.hanzi}${hskTitle}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)"><span class="token-text">${innerHTML}</span>${glossHTML}</span>`;
+        }).join('');
+
+        const viText = para.vietnamese || (paragraphs.length === 1 && art.translation ? art.translation : 'Đoạn này chưa có bản dịch.');
+
+        return `
+          <div class="reading-para-box" data-pidx="${pIdx}" id="readingParaBox_${pIdx}" style="display: ${isToggledVi ? 'none' : 'block'}; margin-bottom: 14px; position: relative;">
+            <span style="display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; margin-right: 4px; text-indent: 0;">${tinyBtnZhHTML}${tinyAudioBtnZhHTML}</span>${paraTokensHTML}
+          </div>
+          <div class="reading-para-vi-box" data-pidx="${pIdx}" id="readingParaViBox_${pIdx}" style="display: ${isToggledVi ? 'block' : 'none'}; margin-bottom: 14px; text-indent: 0; background: #f3eef9; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2d8ef; font-size: 15.5px; color: #4b3b66; font-style: normal; font-weight: 500; font-family: var(--font-mali) !important; word-break: normal !important; overflow-wrap: break-word !important; word-wrap: break-word !important; line-height: 1.65; transition: all 0.25s ease;">
+            <span style="display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; margin-right: 6px; text-indent: 0;">${tinyBtnViHTML}${tinyAudioBtnViHTML}</span>${viText}
+          </div>
+        `;
       }).join('');
 
       let newsHeaderHTML = '';
@@ -14917,7 +14978,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       }
 
       // Update active token highlight in passage DOM
-      document.querySelectorAll('#readingPassageContainer .reading-token').forEach(el => {
+      document.querySelectorAll('#readingPassageContainer .reading-token.active-token').forEach(el => {
         el.classList.remove('active-token');
       });
       if (targetEl) {
@@ -15035,8 +15096,8 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
       if (typeof updateCustomLevelTabCount === 'function') updateCustomLevelTabCount();
       if (typeof renderCustomGroupSelect === 'function') renderCustomGroupSelect();
-      if (typeof saveToCloud === 'function') {
-        saveToCloud(false);
+      if (typeof triggerDebouncedCloudSave === 'function') {
+        triggerDebouncedCloudSave();
       }
 
       const isStillTarget = (art.targetWords || []).some(w => w.hanzi === tok.hanzi);
@@ -15090,8 +15151,8 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
       if (typeof updateCustomLevelTabCount === 'function') updateCustomLevelTabCount();
       if (typeof renderCustomGroupSelect === 'function') renderCustomGroupSelect();
-      if (typeof saveToCloud === 'function') {
-        saveToCloud(false);
+      if (typeof triggerDebouncedCloudSave === 'function') {
+        triggerDebouncedCloudSave();
       }
 
       renderReadingPassageContent(art);
@@ -15116,8 +15177,8 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         saveReadingArticlesToStorage();
       }
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-      if (typeof saveToCloud === 'function') {
-        saveToCloud(false);
+      if (typeof triggerDebouncedCloudSave === 'function') {
+        triggerDebouncedCloudSave();
       }
 
       currentLevel = 'custom';
@@ -15158,9 +15219,9 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         localStorage.setItem('hsk_reading_scroll_map', JSON.stringify(scrollMap));
       } catch(e) {}
 
-      // Trigger cloud save immediately so Supabase updates right away
-      if (typeof saveToCloud === 'function') {
-        saveToCloud(false);
+      // Queue debounced cloud save so Supabase updates smoothly
+      if (typeof triggerDebouncedCloudSave === 'function') {
+        triggerDebouncedCloudSave();
       }
 
       renderSavedReadingArticles();
@@ -18654,22 +18715,12 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
     };
 
     function vslLookupSingleUnitMeta(unit) {
-      const fixed = FIXED_COMPOUND_PHRASES[unit];
-      if (fixed && (fixed.pinyin || fixed.vietnamese)) {
-        return { pinyin: fixed.pinyin || '', vietnamese: fixed.vietnamese || '' };
-      }
-      const lookup = srsGetLookup();
-      const lw = lookup.get(unit);
+      if (!unit) return { pinyin: '', vietnamese: '' };
       const meta = lookupDictMetaForToken(unit);
-      const cached = aiCache && aiCache[unit] ? aiCache[unit] : null;
-      const py = (lw && lw.pinyin)
-        || (meta && meta.pinyin)
-        || (cached && cached.pinyin)
+      const py = (meta && meta.pinyin)
         || (typeof getLocalTokenPinyin === 'function' ? getLocalTokenPinyin(unit) : '')
         || '';
-      const vi = (lw && (lw.vietnamese || lw.vi || lw.meaning))
-        || (meta && meta.vietnamese)
-        || (cached && cached.vietnamese)
+      const vi = (meta && meta.vietnamese)
         || VSL_COMMON_CHAR_GLOSS[unit]
         || '';
       return { pinyin: py, vietnamese: vi };
@@ -18678,42 +18729,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
     function vslLookupWordMetaFast(hanzi) {
       const h = toSimplifiedChinese(String(hanzi || '').trim());
       if (!h) return { pinyin: '', vietnamese: '' };
-      const exact = vslLookupSingleUnitMeta(h);
-      if (exact.vietnamese) return exact;
-
-      // Compositional lookup for multi-character phrases (e.g. "人和事" -> "người" + "và" + "sự việc")
-      if (h.length > 1) {
-        const subMeanings = [];
-        let i = 0;
-        while (i < h.length) {
-          let matched = false;
-          for (let len = Math.min(4, h.length - i); len >= 2; len--) {
-            const sub = h.slice(i, i + len);
-            const subMeta = vslLookupSingleUnitMeta(sub);
-            if (subMeta.vietnamese) {
-              subMeanings.push(String(subMeta.vietnamese).split(/[;,/]/)[0].trim());
-              i += len;
-              matched = true;
-              break;
-            }
-          }
-          if (!matched) {
-            const ch = h[i];
-            const chMeta = vslLookupSingleUnitMeta(ch);
-            if (chMeta.vietnamese) {
-              subMeanings.push(String(chMeta.vietnamese).split(/[;,/]/)[0].trim());
-            }
-            i += 1;
-          }
-        }
-        if (subMeanings.length > 0) {
-          return {
-            pinyin: exact.pinyin || (typeof getLocalTokenPinyin === 'function' ? getLocalTokenPinyin(h) : ''),
-            vietnamese: subMeanings.join(' ')
-          };
-        }
-      }
-      return exact;
+      return vslLookupSingleUnitMeta(h);
     }
 
     function vslToggleTokenEditBox(forceState) {
@@ -19048,11 +19064,11 @@ Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa ngắn gọn 2-
         vslUpdateDrawerButtonState(true);
       }
 
-      saveVslLessonsToStorage();
+      saveVslLessonsToStorage(lessonId);
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
       if (typeof updateCustomLevelTabCount === 'function') updateCustomLevelTabCount();
       if (typeof renderCustomGroupSelect === 'function') renderCustomGroupSelect();
-      if (typeof saveToCloud === 'function') saveToCloud(false);
+      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
 
       document.querySelectorAll('#vslSubtitleTokensBox .reading-token').forEach(el => {
         if (el.getAttribute('data-hanzi') === tok.hanzi) {
@@ -19076,9 +19092,9 @@ Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa ngắn gọn 2-
         lesson.selectedWords = [...(group.words || [])];
       }
 
-      saveVslLessonsToStorage();
+      saveVslLessonsToStorage(lesson.id);
       localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups));
-      if (typeof saveToCloud === 'function') saveToCloud(false);
+      if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
 
       closeVideoLearningModal();
       if (readingViewModal) readingViewModal.classList.remove('active');
