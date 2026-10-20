@@ -9302,7 +9302,7 @@ Viết bằng tiếng Việt, đúng chính tả, không dùng chữ phồn th�
     }
     window.getHanViet = getHanViet;
 
-    // Fetch Single AI Explanation from OpenRouter (gemini-3.8-flash by default, gemini-2.5-flash for group preload) - Returns cached or newly fetched data
+    // Fetch Single AI Explanation from OpenRouter (gemini-2.5-flash on normal tap/preload, gemini-3.8-flash on regenerate)
     async function fetchSingleAiExplanation(hanzi, pinyin, forceRefresh = false, modelOverride = null) {
       if (!forceRefresh) {
         if (aiCache[hanzi] && aiCache[hanzi].context && aiCache[hanzi].context.includes('important-highlight')) {
@@ -9339,7 +9339,7 @@ Lưu ý quan trọng:
 - Viết hoa chữ cái đầu tiên của câu và đầu tiêu đề theo đúng chuẩn chính tả tiếng Việt.
 - Tuyệt đối KHÔNG thêm icon loa 🔊 hay emoji âm thanh vào cuối câu chữ Hán, pinyin hoặc tiếng Việt.`;
 
-      const targetModel = modelOverride || 'google/gemini-3.8-flash';
+      const targetModel = modelOverride || (forceRefresh ? 'google/gemini-3.8-flash' : 'google/gemini-2.5-flash');
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
