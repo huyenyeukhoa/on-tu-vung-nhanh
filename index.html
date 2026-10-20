@@ -5121,6 +5121,8 @@
           <!-- Compact Playback Controls -->
           <div class="vsl-ctrl-bar">
             <div style="display: inline-flex; align-items: center; gap: 4px;">
+              <button type="button" class="vsl-ctrl-btn" id="vslBtnFirstSub" onclick="vslRestartFromFirstSubtitle()" title="Xem lại từ câu đầu tiên (Câu 1)">↺ Câu 1</button>
+              <button type="button" class="vsl-ctrl-btn" id="vslBtnResumeSavedSub" onclick="vslResumeLastSavedSubtitle()" style="display: none; background: #ede4f9; border-color: #c5b1e6; color: #5c4385;" title="Quay lại câu đang xem dở lúc thoát trước">📍 Câu dở</button>
               <button type="button" class="vsl-ctrl-btn" onclick="vslPrevSubtitle()" title="Câu trước">⏮</button>
               <button type="button" class="vsl-ctrl-btn primary-play" id="vslBtnPlayPause" onclick="vslTogglePlayPause()" title="Phát / Tạm dừng">▶ Phát</button>
               <button type="button" class="vsl-ctrl-btn" onclick="vslNextSubtitle()" title="Câu tiếp">⏭</button>
@@ -16278,6 +16280,15 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       (b.selectedWords || []).forEach(w => { if (w && w.hanzi) wordMap.set(w.hanzi, w); });
       base.selectedWords = Array.from(wordMap.values());
       base.thumbnail = a.thumbnail || b.thumbnail || '';
+      const aSubUpd = Number(a.lastSubUpdatedAt) || 0;
+      const bSubUpd = Number(b.lastSubUpdatedAt) || 0;
+      if (bSubUpd >= aSubUpd && typeof b.lastSubIndex === 'number') {
+        base.lastSubIndex = b.lastSubIndex;
+        base.lastSubUpdatedAt = bSubUpd;
+      } else if (typeof a.lastSubIndex === 'number') {
+        base.lastSubIndex = a.lastSubIndex;
+        base.lastSubUpdatedAt = aSubUpd;
+      }
       return base;
     }
 
@@ -16665,6 +16676,51 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       return `${m}:${r < 10 ? '0' : ''}${r}`;
     }
 
+    const VSL_LAST_SUB_PROGRESS_KEY = 'hsk_vsl_last_sub_idx_v1';
+    const vslLastSubProgressMap = safeGetJSON(VSL_LAST_SUB_PROGRESS_KEY, {}) || {};
+    const vslBookmarkBeforeRestartMap = {};
+
+    function vslGetLessonSavedSubIndex(lesson) {
+      if (!lesson || !lesson.id) return 0;
+      const subCount = Array.isArray(lesson.subtitles) ? lesson.subtitles.length : 0;
+      if (subCount <= 1) return 0;
+      const sId = String(lesson.id);
+      const localRec = vslLastSubProgressMap[sId];
+      const localIdx = (localRec && typeof localRec.subIdx === 'number') ? localRec.subIdx : -1;
+      const localUpd = (localRec && Number(localRec.updatedAt)) || 0;
+      const lessonIdx = typeof lesson.lastSubIndex === 'number' ? lesson.lastSubIndex : -1;
+      const lessonUpd = Number(lesson.lastSubUpdatedAt) || 0;
+      const rawIdx = (localIdx >= 0 && localUpd >= lessonUpd) ? localIdx : (lessonIdx >= 0 ? lessonIdx : localIdx);
+      if (rawIdx <= 0) return 0;
+      return Math.min(subCount - 1, Math.max(0, Math.floor(rawIdx)));
+    }
+
+    function vslSaveLessonSubProgress(lessonId, subIdx, persistToLesson = false) {
+      if (!lessonId) return;
+      const lesson = findVslLessonById(lessonId);
+      const subCount = (lesson && Array.isArray(lesson.subtitles)) ? lesson.subtitles.length : 0;
+      const clamped = subCount > 0 ? Math.min(subCount - 1, Math.max(0, Number(subIdx) || 0)) : Math.max(0, Number(subIdx) || 0);
+      const now = Date.now();
+      const sId = String(lessonId);
+      vslLastSubProgressMap[sId] = { subIdx: clamped, updatedAt: now };
+      try {
+        localStorage.setItem(VSL_LAST_SUB_PROGRESS_KEY, JSON.stringify(vslLastSubProgressMap));
+      } catch (e) {}
+      if (lesson) {
+        lesson.lastSubIndex = clamped;
+        lesson.lastSubUpdatedAt = now;
+        if (persistToLesson) {
+          saveVslLessonsToStorage(lesson.id);
+        }
+      }
+    }
+
+    window.addEventListener('beforeunload', () => {
+      if (activeVslLessonId && typeof activeVslSubIndex === 'number') {
+        vslSaveLessonSubProgress(activeVslLessonId, activeVslSubIndex, false);
+      }
+    });
+
     function renderVslVideoGrid() {
       loadVslLessonsFromStorage();
       const grid = document.getElementById('vslVideoGrid');
@@ -16688,19 +16744,28 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           : (lesson.sourceType === 'local' ? '📱 Máy' : '▶ YouTube');
         const subCount = (lesson.subtitles || []).length;
         const savedWordsCount = (lesson.selectedWords || []).length;
+        const savedSubIdx = vslGetLessonSavedSubIndex(lesson);
         const durText = vslFormatDuration(lesson.duration || 0);
         const safeTitle = escapeHtml(lesson.title || 'Video tiếng Trung');
+        const safeId = escapeHtml(lesson.id);
         const thumbHtml = lesson.thumbnail
           ? `<img src="${escapeHtml(lesson.thumbnail)}" alt="${safeTitle}" loading="lazy" onerror="this.style.display='none'" />`
           : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;background:linear-gradient(135deg,#4b3b66,#766299);color:#fff;">🎬</div>`;
 
+        const resumeRowHtml = (savedSubIdx > 0 && subCount > 1)
+          ? `<div style="display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap;">
+               <button type="button" onclick="event.stopPropagation(); openVslLessonStudio('${safeId}', 'resume')" style="background:#ede4f9;border:1px solid #cbb6e8;color:#5c4385;font-family:var(--font-mali);font-size:10.5px;font-weight:800;padding:2.5px 8px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:3px;" title="Xem tiếp câu đang xem dở lúc thoát trước">📍 Tiếp câu ${savedSubIdx + 1}/${subCount}</button>
+               <button type="button" onclick="event.stopPropagation(); openVslLessonStudio('${safeId}', 'restart')" style="background:#f8f5fc;border:1px solid #dfd3ef;color:#766299;font-family:var(--font-mali);font-size:10.5px;font-weight:800;padding:2.5px 8px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:3px;" title="Xem lại từ câu đầu tiên">↺ Từ câu 1</button>
+             </div>`
+          : '';
+
         return `
-          <div class="vsl-video-card" onclick="openVslLessonStudio('${escapeHtml(lesson.id)}')">
+          <div class="vsl-video-card" onclick="openVslLessonStudio('${safeId}', 'auto')">
             <div class="vsl-video-thumb-wrap">
               ${thumbHtml}
               <span class="vsl-source-badge">${sourceTag}</span>
               <span class="vsl-duration-badge">${durText}</span>
-              <button type="button" class="vsl-delete-card-btn" onclick="event.stopPropagation(); deleteVslLesson('${escapeHtml(lesson.id)}')" title="Xóa video này">✕</button>
+              <button type="button" class="vsl-delete-card-btn" onclick="event.stopPropagation(); deleteVslLesson('${safeId}')" title="Xóa video này">✕</button>
             </div>
             <div class="vsl-video-card-body">
               <div class="vsl-video-card-title">${safeTitle}</div>
@@ -16708,6 +16773,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
                 <span>💬 ${subCount} câu</span>
                 <span>⭐ ${savedWordsCount} từ lưu</span>
               </div>
+              ${resumeRowHtml}
             </div>
           </div>
         `;
@@ -18543,6 +18609,9 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
     }
 
     function vslStopPlayers() {
+      if (activeVslLessonId && typeof activeVslSubIndex === 'number') {
+        vslSaveLessonSubProgress(activeVslLessonId, activeVslSubIndex, true);
+      }
       if (vslSyncTimer) {
         clearInterval(vslSyncTimer);
         vslSyncTimer = null;
@@ -18667,14 +18736,57 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       btn.innerHTML = playing ? '⏸ Dừng' : '▶ Phát';
     }
 
-    async function openVslLessonStudio(lessonId) {
+    function vslUpdateResumeButtonUI() {
+      const btnResume = document.getElementById('vslBtnResumeSavedSub');
+      if (!btnResume) return;
+      const lesson = findVslLessonById(activeVslLessonId);
+      if (!lesson || !Array.isArray(lesson.subtitles) || lesson.subtitles.length <= 1) {
+        btnResume.style.display = 'none';
+        return;
+      }
+      const sId = String(lesson.id);
+      const bookmarkedIdx = typeof vslBookmarkBeforeRestartMap[sId] === 'number'
+        ? vslBookmarkBeforeRestartMap[sId]
+        : 0;
+      if (bookmarkedIdx > 0 && bookmarkedIdx < lesson.subtitles.length && activeVslSubIndex !== bookmarkedIdx) {
+        btnResume.style.display = 'inline-flex';
+        btnResume.innerHTML = `📍 Câu ${bookmarkedIdx + 1}`;
+        btnResume.title = `Quay lại câu ${bookmarkedIdx + 1}/${lesson.subtitles.length} đang xem dở trước đó`;
+      } else {
+        btnResume.style.display = 'none';
+      }
+    }
+
+    async function openVslLessonStudio(lessonId, startMode = 'auto') {
       const lesson = findVslLessonById(lessonId);
       if (!lesson) return;
 
+      const prevSavedSubIdx = vslGetLessonSavedSubIndex(lesson);
       vslStopPlayers();
       activeVslLessonId = lesson.id;
-      activeVslSubIndex = 0;
+
+      const subCount = Array.isArray(lesson.subtitles) ? lesson.subtitles.length : 0;
+      const sId = String(lesson.id);
+      if (startMode === 'restart') {
+        if (prevSavedSubIdx > 0) {
+          vslBookmarkBeforeRestartMap[sId] = prevSavedSubIdx;
+        }
+        activeVslSubIndex = 0;
+        vslSaveLessonSubProgress(lesson.id, 0, false);
+      } else if (prevSavedSubIdx > 0 && prevSavedSubIdx < subCount) {
+        activeVslSubIndex = prevSavedSubIdx;
+        vslBookmarkBeforeRestartMap[sId] = prevSavedSubIdx;
+      } else {
+        activeVslSubIndex = 0;
+      }
       vslAutoPausedForIndex = -1;
+
+      const initialSeekSec = (activeVslSubIndex > 0 && lesson.subtitles && lesson.subtitles[activeVslSubIndex])
+        ? Math.max(0, Number(lesson.subtitles[activeVslSubIndex].start) || 0)
+        : 0;
+      if (initialSeekSec > 0) {
+        vslSeekLockUntil = Date.now() + 1500;
+      }
 
       const modal = document.getElementById('videoLearningModal');
       if (modal) modal.classList.add('studio-mode');
@@ -18707,6 +18819,13 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       vslComputeLessonHskStats(lesson);
       vslUpdateDisplayToggleButtonsUI();
       vslRenderCurrentSubtitleCard();
+      vslUpdateResumeButtonUI();
+
+      if (activeVslSubIndex > 0 && subCount > 1) {
+        vslShowGesturePill(`📍 Tiếp tục câu ${activeVslSubIndex + 1}/${subCount}`);
+      } else if (startMode === 'restart') {
+        vslShowGesturePill(`↺ Xem từ câu 1/${subCount || 1}`);
+      }
 
       // Enrich any remaining un-translated / fallback subtitles in the background
       vslEnrichLessonSubtitlesInBackground(lesson);
@@ -18720,7 +18839,12 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
           try {
             const iframe = vslYtPlayer.getIframe();
             if (iframe && document.body.contains(iframe)) {
-              vslYtPlayer.loadVideoById(lesson.youtubeId);
+              if (initialSeekSec > 0) {
+                vslSeekLockUntil = Date.now() + 1500;
+                vslYtPlayer.loadVideoById({ videoId: lesson.youtubeId, startSeconds: initialSeekSec });
+              } else {
+                vslYtPlayer.loadVideoById(lesson.youtubeId);
+              }
               vslYtPlayer.setPlaybackRate(vslPlaybackRate);
               reusedPlayer = true;
             }
@@ -18744,11 +18868,16 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
               playsinline: 1,
               rel: 0,
               modestbranding: 1,
-              cc_load_policy: 0
+              cc_load_policy: 0,
+              start: initialSeekSec > 0 ? Math.floor(initialSeekSec) : 0
             },
             events: {
               onReady: (e) => {
                 try { e.target.setPlaybackRate(vslPlaybackRate); } catch (err) {}
+                if (initialSeekSec > 0) {
+                  vslSeekLockUntil = Date.now() + 1500;
+                  try { e.target.seekTo(initialSeekSec, true); } catch (err) {}
+                }
                 try { e.target.playVideo(); } catch (err) {}
               },
               onStateChange: (e) => {
@@ -18767,6 +18896,14 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
             vslActiveObjectUrl = URL.createObjectURL(blob);
             html5Vid.src = vslActiveObjectUrl;
             html5Vid.playbackRate = vslPlaybackRate;
+            if (initialSeekSec > 0) {
+              const applyLocalSeek = () => {
+                vslSeekLockUntil = Date.now() + 1000;
+                try { html5Vid.currentTime = initialSeekSec; } catch (e) {}
+              };
+              if (html5Vid.readyState >= 1) applyLocalSeek();
+              else html5Vid.addEventListener('loadedmetadata', applyLocalSeek, { once: true });
+            }
             html5Vid.onplay = () => vslUpdatePlayPauseButtonUI(true);
             html5Vid.onpause = () => vslUpdatePlayPauseButtonUI(false);
             html5Vid.onended = () => vslUpdatePlayPauseButtonUI(false);
@@ -18804,7 +18941,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         return;
       }
 
-      // Wait for programmatic seek (Prev / Next / Replay) to settle before auto-matching timestamps
+      // Wait for programmatic seek (Prev / Next / Replay / Resume) to settle before auto-matching timestamps
       if (now < vslSeekLockUntil) return;
 
       // 3. Find matching subtitle index for current timestamp
@@ -18826,7 +18963,9 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
 
       if (matchedIdx !== -1 && matchedIdx !== activeVslSubIndex) {
         activeVslSubIndex = matchedIdx;
+        vslSaveLessonSubProgress(lesson.id, activeVslSubIndex, false);
         vslRenderCurrentSubtitleCard();
+        vslUpdateResumeButtonUI();
       }
     }
 
@@ -18859,13 +18998,51 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       });
     }
 
+    function vslRestartFromFirstSubtitle() {
+      const lesson = findVslLessonById(activeVslLessonId);
+      if (!lesson || !lesson.subtitles || !lesson.subtitles.length) return;
+      const drawer = document.getElementById('vslTokenDrawer');
+      if (drawer) drawer.style.display = 'none';
+      if (activeVslSubIndex > 0) {
+        vslBookmarkBeforeRestartMap[String(lesson.id)] = activeVslSubIndex;
+      }
+      activeVslSubIndex = 0;
+      vslSaveLessonSubProgress(lesson.id, 0, false);
+      vslRenderCurrentSubtitleCard();
+      vslUpdateResumeButtonUI();
+      vslSeekTo(lesson.subtitles[0].start, true);
+      vslAnimateSubtitleSlide(-26);
+      vslShowGesturePill(`↺ Câu 1/${lesson.subtitles.length}`);
+    }
+
+    function vslResumeLastSavedSubtitle() {
+      const lesson = findVslLessonById(activeVslLessonId);
+      if (!lesson || !lesson.subtitles || !lesson.subtitles.length) return;
+      const sId = String(lesson.id);
+      const targetIdx = typeof vslBookmarkBeforeRestartMap[sId] === 'number'
+        ? vslBookmarkBeforeRestartMap[sId]
+        : vslGetLessonSavedSubIndex(lesson);
+      if (!targetIdx || targetIdx <= 0 || targetIdx >= lesson.subtitles.length) return;
+      const drawer = document.getElementById('vslTokenDrawer');
+      if (drawer) drawer.style.display = 'none';
+      activeVslSubIndex = targetIdx;
+      vslSaveLessonSubProgress(lesson.id, activeVslSubIndex, false);
+      vslRenderCurrentSubtitleCard();
+      vslUpdateResumeButtonUI();
+      vslSeekTo(lesson.subtitles[activeVslSubIndex].start, true);
+      vslAnimateSubtitleSlide(26);
+      vslShowGesturePill(`📍 Tiếp tục câu ${activeVslSubIndex + 1}/${lesson.subtitles.length}`);
+    }
+
     function vslPrevSubtitle(fromSwipe = false) {
       const lesson = findVslLessonById(activeVslLessonId);
       if (!lesson || !lesson.subtitles || !lesson.subtitles.length) return;
       const drawer = document.getElementById('vslTokenDrawer');
       if (drawer) drawer.style.display = 'none';
       activeVslSubIndex = Math.max(0, activeVslSubIndex - 1);
+      vslSaveLessonSubProgress(lesson.id, activeVslSubIndex, false);
       vslRenderCurrentSubtitleCard();
+      vslUpdateResumeButtonUI();
       vslSeekTo(lesson.subtitles[activeVslSubIndex].start, true);
       if (fromSwipe) {
         vslAnimateSubtitleSlide(-26);
@@ -18879,7 +19056,9 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       const drawer = document.getElementById('vslTokenDrawer');
       if (drawer) drawer.style.display = 'none';
       activeVslSubIndex = Math.min(lesson.subtitles.length - 1, activeVslSubIndex + 1);
+      vslSaveLessonSubProgress(lesson.id, activeVslSubIndex, false);
       vslRenderCurrentSubtitleCard();
+      vslUpdateResumeButtonUI();
       vslSeekTo(lesson.subtitles[activeVslSubIndex].start, true);
       if (fromSwipe) {
         vslAnimateSubtitleSlide(26);
