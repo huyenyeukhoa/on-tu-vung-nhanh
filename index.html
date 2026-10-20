@@ -11568,44 +11568,205 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
     }
 
     const COMMON_SINGLE_CHAR_GLOSS = {
-      '人': 'người', '和': 'và', '与': 'và', '或': 'hoặc', '事': 'sự việc', '物': 'vật',
-      '的': 'của', '地': 'một cách', '得': 'đến mức', '了': 'rồi', '着': 'đang', '过': 'từng',
-      '在': 'ở, đang', '是': 'là', '有': 'có', '没': 'không', '不': 'không', '很': 'rất',
+      '人': 'người', '和': 'và, với', '与': 'và, cùng', '或': 'hoặc', '事': 'sự việc', '物': 'vật',
+      '的': 'của', '地': 'một cách', '得': 'được, phải', '了': 'rồi', '着': 'đang', '过': 'từng, qua',
+      '在': 'ở, đang', '是': 'là', '有': 'có', '没': 'không, chưa', '不': 'không', '很': 'rất',
       '太': 'quá', '更': 'hơn', '最': 'nhất', '都': 'đều', '也': 'cũng', '还': 'vẫn, còn',
       '就': 'liền, thì', '才': 'mới', '又': 'lại', '再': 'lại', '把': 'đem', '被': 'bị, được',
-      '给': 'cho', '对': 'đối với', '向': 'hướng về', '从': 'từ', '到': 'đến', '里': 'trong',
-      '上': 'trên', '下': 'dưới', '前': 'trước', '后': 'sau', '中': 'trong, giữa', '内': 'trong',
-      '外': 'ngoài', '大': 'lớn', '小': 'nhỏ', '多': 'nhiều', '少': 'ít', '好': 'tốt',
-      '新': 'mới', '老': 'cũ, già', '高': 'cao', '低': 'thấp', '长': 'dài', '短': 'ngắn',
-      '快': 'nhanh', '慢': 'chậm', '早': 'sớm', '晚': 'muộn', '看': 'xem, nhìn', '听': 'nghe',
-      '说': 'nói', '走': 'đi', '来': 'đến', '去': 'đi', '做': 'làm', '想': 'nghĩ, muốn',
-      '要': 'cần, muốn', '能': 'có thể', '会': 'biết, sẽ', '让': 'khiến, để', '叫': 'gọi',
+      '给': 'cho', '对': 'đối với, đúng', '向': 'hướng về', '从': 'từ', '到': 'đến', '里': 'trong',
+      '上': 'trên, lên', '下': 'dưới, xuống', '前': 'trước', '后': 'sau', '中': 'trong, giữa', '内': 'trong',
+      '外': 'ngoài', '大': 'lớn', '小': 'nhỏ', '多': 'nhiều', '少': 'ít', '好': 'tốt, rất',
+      '新': 'mới', '老': 'cũ, già', '高': 'cao', '低': 'thấp', '长': 'dài, lớn lên', '短': 'ngắn',
+      '快': 'nhanh', '慢': 'chậm', '早': 'sớm', '晚': 'muộn, tối', '看': 'xem, nhìn', '听': 'nghe',
+      '说': 'nói', '讲': 'nói, kể', '走': 'đi', '来': 'đến, có', '去': 'đi', '做': 'làm', '想': 'nghĩ, muốn',
+      '要': 'cần, muốn', '能': 'có thể', '会': 'biết, sẽ', '让': 'khiến, để', '叫': 'gọi, bảo',
       '我': 'tôi', '你': 'bạn', '他': 'anh ấy', '她': 'cô ấy', '它': 'nó', '们': 'các',
-      '这': 'này', '那': 'đó', '哪': 'nào', '谁': 'ai', '什': 'gì', '么': 'gì',
-      '个': 'cái, người', '位': 'vị', '次': 'lần', '年': 'năm', '月': 'tháng', '日': 'ngày',
+      '这': 'này', '那': 'đó', '哪': 'nào', '谁': 'ai', '什': 'gì', '么': 'gì', '此': 'này, đây',
+      '个': 'cái, người', '位': 'vị', '次': 'lần', '年': 'năm', '月': 'tháng, trăng', '日': 'ngày',
       '天': 'trời, ngày', '时': 'lúc, giờ', '分': 'phút, phần', '点': 'giờ, điểm', '家': 'nhà, gia đình',
       '国': 'nước', '水': 'nước', '火': 'lửa', '风': 'gió', '雨': 'mưa', '山': 'núi',
       '路': 'đường', '车': 'xe', '门': 'cửa', '手': 'tay', '心': 'lòng, tim', '头': 'đầu',
       '眼': 'mắt', '口': 'miệng', '声': 'tiếng', '话': 'lời nói', '书': 'sách', '字': 'chữ',
       '钱': 'tiền', '吃': 'ăn', '喝': 'uống', '睡': 'ngủ', '买': 'mua', '卖': 'bán',
-      '开': 'mở', '关': 'đóng', '坐': 'ngồi', '站': 'đứng, trạm', '住': 'ở, sống', '等': 'đợi',
+      '开': 'mở', '关': 'đóng, liên quan', '坐': 'ngồi', '站': 'đứng, trạm', '住': 'ở, sống', '等': 'đợi',
       '找': 'tìm', '用': 'dùng', '拿': 'cầm, lấy', '放': 'đặt, để', '带': 'mang theo', '送': 'tặng, tiễn',
       '问': 'hỏi', '答': 'trả lời', '笑': 'cười', '哭': 'khóc', '怕': 'sợ', '爱': 'yêu, thích',
-      '真': 'thật', '假': 'giả', '对': 'đúng, đối với', '错': 'sai', '难': 'khó', '易': 'dễ',
+      '真': 'thật', '假': 'giả, kỳ nghỉ', '错': 'sai', '难': 'khó', '易': 'dễ',
       '远': 'xa', '近': 'gần', '深': 'sâu', '浅': 'nông', '重': 'nặng', '轻': 'nhẹ',
       '满': 'đầy', '空': 'trống', '白': 'trắng', '黑': 'đen', '红': 'đỏ', '美': 'đẹp',
-      '但': 'nhưng', '却': 'lại, nhưng', '而': 'mà, còn', '因': 'vì', '为': 'vì, làm', '若': 'nếu',
+      '但': 'nhưng', '却': 'nhưng lại', '而': 'mà, còn', '因': 'vì', '为': 'vì, làm', '若': 'nếu',
       '如': 'như, nếu', '虽': 'tuy', '然': 'nhưng, vậy', '便': 'liền', '已': 'đã', '曾': 'từng',
       '正': 'đang, chính', '将': 'sẽ, đem', '刚': 'vừa mới', '先': 'trước', '只': 'chỉ', '光': 'ánh sáng, chỉ',
       '别': 'đừng, khác', '莫': 'đừng', '非': 'không phải', '无': 'không có', '未': 'chưa',
-      '吗': 'không (nghi vấn)', '呢': 'đấy, nhỉ', '吧': 'nhé, đi', '啊': 'à, ôi', '呀': 'à, ôi', '哦': 'ồ'
+      '吗': 'không (nghi vấn)', '呢': 'đấy, nhỉ', '吧': 'nhé, đi', '啊': 'à, ôi', '呀': 'à, ôi', '哦': 'ồ',
+      '女': 'nữ, cô gái', '男': 'nam, con trai', '孩': 'đứa trẻ, con', '子': 'con, hạt', '母': 'mẹ', '父': 'cha',
+      '亲': 'thân, người thân', '友': 'bạn', '师': 'thầy', '生': 'sinh, sống, lạ', '病': 'bệnh', '怪': 'lạ, trách',
+      '医': 'y, bác sĩ', '药': 'thuốc', '痛': 'đau', '疼': 'đau, thương', '身': 'thân thể', '体': 'cơ thể',
+      '知': 'biết', '识': 'biết, kiến thức', '懂': 'hiểu', '明': 'rõ, sáng', '意': 'ý, nghĩa', '思': 'nghĩ',
+      '感': 'cảm thấy', '觉': 'cảm giác, ngủ', '情': 'tình cảm, việc', '况': 'tình hình', '理': 'lý lẽ, quản',
+      '性': 'tính chất, giới', '相': 'lẫn nhau, tướng', '连': 'ngay cả, nối', '接': 'nhận, tiếp', '触': 'chạm, tiếp xúc',
+      '以': 'lấy, để, vì', '自': 'tự, từ', '己': 'bản thân', '第': 'thứ (số thứ tự)', '一': 'một', '二': 'hai',
+      '三': 'ba', '四': 'bốn', '五': 'năm', '六': 'sáu', '七': 'bảy', '八': 'tám', '九': 'chín', '十': 'mười',
+      '百': 'trăm', '千': 'nghìn', '万': 'vạn, mười nghìn', '两': 'hai', '半': 'một nửa', '每': 'mỗi',
+      '各': 'mỗi, các', '某': 'nào đó', '另': 'khác', '其': 'của nó, đó', '他': 'anh ấy, khác', '她': 'cô ấy',
+      '例': 'thông lệ, ví dụ', '期': 'kỳ, thời hạn', '间': 'giữa, phòng', '房': 'phòng, nhà', '屋': 'nhà, phòng',
+      '床': 'giường', '桌': 'bàn', '椅': 'ghế', '衣': 'áo, quần áo', '服': 'quần áo, phục', '穿': 'mặc, xuyên',
+      '戴': 'đội, đeo', '洗': 'rửa, giặt', '打': 'đánh, gọi', '玩': 'chơi', '跑': 'chạy', '跳': 'nhảy',
+      '飞': 'bay', '游': 'bơi, du lịch', '学': 'học', '习': 'tập, quen', '教': 'dạy', '读': 'đọc',
+      '写': 'viết', '画': 'vẽ, tranh', '唱': 'hát', '歌': 'bài hát', '跳': 'nhảy', '舞': 'múa',
+      '工': 'công việc', '作': 'làm, tác phẩm', '业': 'nghề, nghiệp', '司': 'công ty, quản', '店': 'cửa hàng',
+      '院': 'viện, sân', '校': 'trường học', '班': 'lớp, ca làm', '课': 'bài học, tiết học', '考': 'thi, kiểm tra',
+      '试': 'thử, thi', '题': 'đề, câu hỏi', '成': 'thành, trở thành', '功': 'công sức, thành công', '败': 'thua, bại',
+      '赢': 'thắng', '输': 'thua', '帮': 'giúp', '助': 'giúp đỡ', '救': 'cứu', '护': 'bảo vệ',
+      '害': 'hại, sợ', '死': 'chết', '活': 'sống, công việc', '命': 'mạng sống, lệnh', '运': 'vận mệnh, chở',
+      '动': 'động, cử động', '静': 'yên tĩnh', '变': 'thay đổi', '化': 'hóa, biến đổi', '发': 'phát, gửi, tóc',
+      '现': 'hiện tại, hiện ra', '实': 'thật, thực tế', '定': 'quyết định, chắc', '决': 'quyết', '选': 'chọn',
+      '择': 'chọn lựa', '留': 'ở lại, giữ lại', '离': 'rời khỏi, cách', '回': 'về, lần', '归': 'trở về',
+      '进': 'vào, tiến', '出': 'ra', '入': 'vào', '起': 'dậy, bắt đầu', '始': 'bắt đầu', '终': 'cuối cùng',
+      '完': 'xong, hoàn thành', '结': 'kết thúc, kết', '束': 'bó, kết thúc', '停': 'dừng lại', '止': 'dừng, chỉ',
+      '继续': 'tiếp tục', '跟': 'cùng, theo', '随': 'theo, tùy', '陪': 'đi cùng, bầu bạn', '靠': 'dựa vào, gần',
+      '比': 'so với', '赛': 'thi đấu', '像': 'giống như', '似': 'giống như', '同': 'cùng, giống', '异': 'khác',
+      '合': 'hợp, gộp', '并': 'và, вовсе', '且': 'mà còn, tạm', '况': 'huống hồ, tình hình', '哪怕': 'dù cho',
+      '于': 'ở, tại, với', '乎': 'dường như, ư', '之': 'của, nó', '者': 'người, kẻ', '所': 'nơi, sở',
+      '被': 'bị, được', '叫': 'gọi, khiến', '使': 'khiến, dùng', '令': 'khiến, lệnh', '由': 'do, từ',
+      '据': 'theo, căn cứ', '按': 'theo, ấn', '照': 'chiếu theo, chụp', '朝': 'hướng về, triều', '往': 'đi về phía',
+      '除': 'trừ ra', '免': 'miễn, tránh', '缺': 'thiếu', '少': 'ít, thiếu', '够': 'đủ', '足': 'đủ, chân'
     };
+
+    const COMMON_CHINESE_COMPOUNDS = {
+      '因为': 'bởi vì, do', '所以': 'cho nên, vì vậy', '虽然': 'tuy rằng, mặc dù', '但是': 'nhưng, thế nhưng',
+      '如果': 'nếu như', '要是': 'nếu như', '不仅': 'không những', '而且': 'mà còn', '或者': 'hoặc là',
+      '还是': 'hay là, vẫn là', '不过': 'nhưng mà, có điều', '其实': 'thực ra, kỳ thực', '原来': 'hóa ra, ban đầu',
+      '已经': 'đã', '正在': 'đang', '曾经': 'đã từng', '从来': 'từ trước đến nay', '从没': 'chưa từng, chưa bao giờ',
+      '从未': 'chưa từng', '此前': 'trước đó, trước đây', '此后': 'sau đó, từ đó về sau', '之前': 'trước đây, trước khi',
+      '之后': 'sau đó, sau khi', '以前': 'trước đây', '以后': 'sau này', '目前': 'hiện tại, trước mắt',
+      '现在': 'bây giờ, hiện tại', '当时': 'lúc đó, đương thời', '刚才': 'vừa nãy', '马上': 'ngay lập tức',
+      '立刻': 'lập tức', '突然': 'đột nhiên, bỗng nhiên', '忽然': 'bỗng nhiên', '居然': 'lại có thể, không ngờ',
+      '竟然': 'vậy mà lại, không ngờ', '果然': 'quả nhiên', '当然': 'đương nhiên, tất nhiên', '自然': 'tự nhiên, tất nhiên',
+      '依然': 'vẫn như cũ', '仍然': 'vẫn, vẫn còn', '简直': 'quả là, thật sự là', '甚至': 'thậm chí',
+      '尤其': 'đặc biệt là, nhất là', '特别': 'đặc biệt, vô cùng', '非常': 'vô cùng, rất', '十分': 'vô cùng, hết sức',
+      '相当': 'khá là, tương đương', '比较': 'tương đối, khá', '稍微': 'hơi, một chút', '几乎': 'hầu như, gần như',
+      '差不多': 'gần như, xấp xỉ', '一共': 'tổng cộng', '一起': 'cùng nhau', '一直': 'luôn, suốt, thẳng',
+      '一定': 'nhất định, chắc chắn', '一般': 'thông thường, bình thường', '一样': 'giống nhau', '一边': 'vừa... vừa..., một bên',
+      '自己': 'bản thân, mình', '大家': 'mọi người', '别人': 'người khác', '人们': 'mọi người',
+      '我们': 'chúng tôi, chúng ta', '你们': 'các bạn', '他们': 'họ, bọn họ', '她们': 'họ (nữ)', '它们': 'chúng nó',
+      '这个': 'cái này, người này', '那个': 'cái đó, người đó', '这些': 'những thứ này', '那些': 'những thứ đó',
+      '这里': 'ở đây, nơi này', '那里': 'ở đó, nơi đó', '这儿': 'ở đây', '那儿': 'ở đó', '哪里': 'ở đâu',
+      '什么': 'cái gì, gì', '怎么': 'thế nào, làm sao', '怎样': 'như thế nào', '怎么样': 'như thế nào',
+      '为什么': 'tại sao, vì sao', '多少': 'bao nhiêu', '几个': 'mấy cái, mấy người', '第一': 'thứ nhất, đầu tiên',
+      '第一次': 'lần đầu tiên', '最后': 'cuối cùng', '最近': 'gần đây, dạo này', '将来': 'tương lai, sau này',
+      '未来': 'tương lai', '过去': 'quá khứ, đi qua', '女孩': 'cô gái, bé gái', '女孩子': 'cô gái, con gái',
+      '男孩': 'cậu bé, con trai', '男孩子': 'cậu bé, con trai', '女人': 'phụ nữ', '男人': 'đàn ông',
+      '女性': 'nữ giới, phụ nữ', '男性': 'nam giới', '女生': 'nữ sinh, con gái', '男生': 'nam sinh, con trai',
+      '女儿': 'con gái', '儿子': 'con trai', '孩子': 'đứa trẻ, con cái', '儿童': 'trẻ em, nhi đồng',
+      '父母': 'cha mẹ', '父亲': 'cha, bố', '母亲': 'mẹ, mẫu thân', '爸爸': 'bố, ba', '妈妈': 'mẹ, má',
+      '哥哥': 'anh trai', '姐姐': 'chị gái', '弟弟': 'em trai', '妹妹': 'em gái', '爷爷': 'ông nội',
+      '奶奶': 'bà nội', '外公': 'ông ngoại', '外婆': 'bà ngoại', '丈夫': 'chồng', '妻子': 'vợ',
+      '老婆': 'vợ, bà xã', '老公': 'chồng, ông xã', '朋友': 'bạn bè', '男朋友': 'bạn trai', '女朋友': 'bạn gái',
+      '同学': 'bạn học', '同事': 'đồng nghiệp', '老师': 'giáo viên, thầy cô', '学生': 'học sinh, sinh viên',
+      '医生': 'bác sĩ', '护士': 'y tá', '病人': 'bệnh nhân', '患者': 'bệnh nhân', '警察': 'cảnh sát',
+      '司机': 'tài xế', '老板': 'ông chủ, sếp', '经理': 'giám đốc, quản lý', '客人': 'khách', '邻居': 'hàng xóm',
+      '亲戚': 'họ hàng, thân thích', '家人': 'người nhà, gia đình', '家庭': 'gia đình', '身体': 'cơ thể, sức khỏe',
+      '健康': 'khỏe mạnh, sức khỏe', '生病': 'bị ốm, mắc bệnh', '得病': 'mắc bệnh', '得了': 'mắc phải, đạt được',
+      '怪病': 'bệnh lạ', '疾病': 'bệnh tật', '感冒': 'cảm cúm', '发烧': 'bị sốt', '头疼': 'đau đầu',
+      '头痛': 'đau đầu', '肚子': 'bụng', '生理': 'sinh lý', '心理': 'tâm lý', '例假': 'kỳ kinh nguyệt',
+      '来例假': 'có kinh nguyệt', '月经': 'kinh nguyệt', '怀孕': 'mang thai', '医院': 'bệnh viện',
+      '检查': 'kiểm tra, khám', '治疗': 'điều trị, chữa trị', '吃药': 'uống thuốc', '休息': 'nghỉ ngơi',
+      '睡觉': 'ngủ', '起床': 'thức dậy', '吃饭': 'ăn cơm', '喝水': 'uống nước', '工作': 'công việc, làm việc',
+      '上班': 'đi làm', '下班': 'tan làm', '学习': 'học tập', '上学': 'đi học', '放学': 'tan học',
+      '考试': 'thi cử, kiểm tra', '读书': 'đọc sách, đi học', '看书': 'đọc sách', '写字': 'viết chữ',
+      '说话': 'nói chuyện', '讲话': 'nói chuyện, phát biểu', '讲过': 'đã kể, đã nói qua', '说过': 'đã từng nói',
+      '告诉': 'nói cho biết, bảo', '通知': 'thông báo', '解释': 'giải thích', '说明': 'thuyết minh, chứng tỏ',
+      '讨论': 'thảo luận', '交流': 'giao lưu, trao đổi', '沟通': 'giao tiếp, trao đổi', '联系': 'liên hệ, liên lạc',
+      '接触': 'tiếp xúc', '接触过': 'từng tiếp xúc', '认识': 'quen biết, nhận thức', '了解': 'hiểu rõ, tìm hiểu',
+      '知道': 'biết', '明白': 'hiểu rõ', '理解': 'hiểu, thông cảm', '以为': 'tưởng rằng, cứ ngỡ',
+      '认为': 'cho rằng', '觉得': 'cảm thấy', '感觉': 'cảm giác, cảm thấy', '感受': 'cảm nhận',
+      '发现': 'phát hiện, nhận ra', '发觉': 'phát giác, nhận ra', '注意': 'chú ý', '关心': 'quan tâm',
+      '担心': 'lo lắng', '害怕': 'sợ hãi', '恐惧': 'sợ hãi, kinh hãi', '紧张': 'căng thẳng, hồi hộp',
+      '激动': 'xúc động, kích động', '兴奋': 'hưng phấn, hào hứng', '高兴': 'vui vẻ, vui mừng', '开心': 'vui vẻ',
+      '快乐': 'vui vẻ, hạnh phúc', '幸福': 'hạnh phúc', '满意': 'hài lòng', '难过': 'buồn bã, khó chịu',
+      '伤心': 'đau lòng, buồn', '痛苦': 'đau khổ', '失望': 'thất vọng', '绝望': 'tuyệt vọng',
+      '生气': 'tức giận', '愤怒': 'phẫn nộ, tức giận', '委屈': 'ấm ức, tủi thân', '尴尬': 'ngượng ngùng, khó xử',
+      '害羞': 'ngại ngùng, xấu hổ', '后悔': 'hối hận', '羡慕': 'ngưỡng mộ, ghen tị', '嫉妒': 'đố kỵ, ghen ghét',
+      '骄傲': 'kiêu ngạo, tự hào', '自豪': 'tự hào', '惊讶': 'kinh ngạc, ngạc nhiên', '吃惊': 'ngạc nhiên, giật mình',
+      '奇怪': 'kỳ lạ', '好奇': 'tò mò, hiếu kỳ', '怀疑': 'nghi ngờ', '相信': 'tin tưởng', '信任': 'tin cậy',
+      '希望': 'hy vọng', '盼望': 'mong mỏi', '期待': 'mong đợi, kỳ vọng', '需要': 'cần', '必须': 'bắt buộc, phải',
+      '应该': 'nên, cần phải', '可以': 'có thể, được', '能够': 'có thể, đủ khả năng', '可能': 'có lẽ, khả năng',
+      '也许': 'có lẽ', '大概': 'đại khái, có lẽ', '恐怕': 'e rằng, sợ là', '打算': 'dự định',
+      '准备': 'chuẩn bị', '决定': 'quyết định', '选择': 'lựa chọn', '放弃': 'từ bỏ', '坚持': 'kiên trì',
+      '努力': 'nỗ lực, cố gắng', '加油': 'cố lên', '成功': 'thành công', '失败': 'thất bại',
+      '开始': 'bắt đầu', '继续': 'tiếp tục', '停止': 'dừng lại', '结束': 'kết thúc', '完成': 'hoàn thành',
+      '解决': 'giải quyết', '处理': 'xử lý', '面对': 'đối mặt', '接受': 'chấp nhận, tiếp nhận',
+      '拒绝': 'từ chối', '同意': 'đồng ý', '反对': 'phản đối', '支持': 'ủng hộ', '帮助': 'giúp đỡ',
+      '帮忙': 'giúp đỡ', '照顾': 'chăm sóc', '保护': 'bảo vệ', '影响': 'ảnh hưởng', '改变': 'thay đổi',
+      '变化': 'biến đổi, thay đổi', '发展': 'phát triển', '提高': 'nâng cao', '增加': 'tăng thêm',
+      '减少': 'giảm bớt', '出现': 'xuất hiện', '消失': 'biến mất', '发生': 'xảy ra', '存在': 'tồn tại',
+      '属于': 'thuộc về', '关于': 'về, liên quan đến', '对于': 'đối với', '由于': 'do, bởi vì',
+      '根据': 'căn cứ theo', '按照': 'dựa theo, chiếu theo', '通过': 'thông qua', '经过': 'trải qua, đi qua',
+      '随着': 'cùng với, theo đà', '为了': 'để, vì', '除了': 'ngoài... ra', '就连': 'ngay cả',
+      '哪怕': 'dù cho, cho dù', '无论': 'bất luận, dù cho', '不管': 'bất kể, mặc kệ', '只要': 'chỉ cần',
+      '只有': 'chỉ có', '既然': 'đã... thì', '相关': 'liên quan', '关系': 'mối quan hệ, liên quan',
+      '知识': 'kiến thức', '经验': 'kinh nghiệm', '方法': 'phương pháp', '办法': 'cách, biện pháp',
+      '原因': 'nguyên nhân', '理由': 'lý do', '结果': 'kết quả', '后果': 'hậu quả', '目的': 'mục đích',
+      '目标': 'mục tiêu', '计划': 'kế hoạch', '秘密': 'bí mật', '真相': 'sự thật, chân tướng',
+      '事实': 'sự thật', '情况': 'tình hình', '事情': 'sự việc, chuyện', '问题': 'vấn đề, câu hỏi',
+      '机会': 'cơ hội', '条件': 'điều kiện', '环境': 'môi trường, hoàn cảnh', '社会': 'xã hội',
+      '世界': 'thế giới', '国家': 'quốc gia, đất nước', '城市': 'thành phố', '农村': 'nông thôn',
+      '学校': 'trường học', '公司': 'công ty', '房间': 'căn phòng', '家里': 'trong nhà, ở nhà',
+      '外面': 'bên ngoài', '里面': 'bên trong', '上面': 'bên trên', '下面': 'bên dưới',
+      '前面': 'phía trước', '后面': 'phía sau', '左边': 'bên trái', '右边': 'bên phải',
+      '中间': 'ở giữa', '旁边': 'bên cạnh', '附近': 'gần đây, lân cận', '周围': 'xung quanh',
+      '地方': 'nơi, chỗ', '位置': 'vị trí', '方向': 'phương hướng', '时间': 'thời gian',
+      '时候': 'lúc, khi', '今天': 'hôm nay', '明天': 'ngày mai', '昨天': 'hôm qua',
+      '今年': 'năm nay', '明年': 'năm sau', '去年': 'năm ngoái', '早上': 'buổi sáng',
+      '上午': 'buổi sáng', '中午': 'buổi trưa', '下午': 'buổi chiều', '晚上': 'buổi tối',
+      '半夜': 'nửa đêm', '每天': 'mỗi ngày', '每次': 'mỗi lần', '平时': 'bình thường, ngày thường',
+      '终于': 'cuối cùng cũng', '到底': 'rốt cuộc', '究竟': 'rốt cuộc', '完全': 'hoàn toàn',
+      '全部': 'toàn bộ', '所有': 'tất cả', '一切': 'tất cả, mọi thứ', '任何': 'bất kỳ',
+      '看到': 'nhìn thấy', '看见': 'nhìn thấy', '听到': 'nghe thấy', '听见': 'nghe thấy',
+      '想到': 'nghĩ đến', '找到': 'tìm thấy', '得到': 'đạt được, nhận được', '遇到': 'gặp phải, bắt gặp',
+      '碰到': 'bắt gặp, va phải', '回到': 'trở về', '来到': 'đến', '走到': 'đi đến',
+      '出来': 'đi ra, ra ngoài', '进来': 'đi vào', '回来': 'trở về', '起来': 'đứng dậy, lên',
+      '出去': 'đi ra ngoài', '进去': 'đi vào trong', '回去': 'quay về', '下去': 'tiếp tục, đi xuống',
+      '上来': 'đi lên', '下来': 'đi xuống', '过来': 'lại đây, qua đây', '过去': 'qua đó, quá khứ',
+      '喜欢': 'thích', '讨厌': 'ghét', '热爱': 'yêu tha thiết', '爱情': 'tình yêu', '感情': 'tình cảm',
+      '结婚': 'kết hôn', '离婚': 'ly hôn', '分手': 'chia tay', '约会': 'hẹn hò',
+      '生活': 'cuộc sống, sinh hoạt', '生命': 'sinh mạng, sự sống', '人生': 'đời người, nhân sinh',
+      '故事': 'câu chuyện', '电影': 'bộ phim', '电视': 'ti vi, truyền hình', '音乐': 'âm nhạc',
+      '新闻': 'tin tức, thời sự', '消息': 'tin tức', '信息': 'thông tin, tin nhắn', '电话': 'điện thoại',
+      '手机': 'điện thoại di động', '电脑': 'máy tính', '网络': 'mạng internet', '视频': 'video',
+      '照片': 'bức ảnh', '图片': 'hình ảnh', '声音': 'âm thanh, giọng nói', '表情': 'biểu cảm',
+      '眼神': 'ánh mắt', '笑容': 'nụ cười', '眼泪': 'nước mắt', '衣服': 'quần áo',
+      '礼物': 'món quà', '东西': 'đồ đạc, thứ', '食物': 'thức ăn', '水果': 'trái cây',
+      '咖啡': 'cà phê', '牛奶': 'sữa bò', '面包': 'bánh mì', '米饭': 'cơm',
+      '天气': 'thời tiết', '太阳': 'mặt trời', '月亮': 'mặt trăng', '空气': 'không khí',
+      '容易': 'dễ dàng', '困难': 'khó khăn', '简单': 'đơn giản', '复杂': 'phức tạp',
+      '重要': 'quan trọng', '主要': 'chủ yếu', '必要': 'cần thiết', '正常': 'bình thường',
+      '普通': 'phổ thông, bình thường', '特殊': 'đặc thù, đặc biệt', '真正': 'thực sự, chân chính',
+      '直接': 'trực tiếp', '清楚': 'rõ ràng', '明显': 'rõ rệt, hiển nhiên', '安全': 'an toàn',
+      '危险': 'nguy hiểm', '严重': 'nghiêm trọng', '厉害': 'lợi hại, ghê gớm', '温柔': 'dịu dàng',
+      '善良': 'lương thiện, tốt bụng', '聪明': 'thông minh', '勇敢': 'dũng cảm', '漂亮': 'xinh đẹp',
+      '美丽': 'tươi đẹp, xinh đẹp', '帅气': 'đẹp trai', '可爱': 'đáng yêu, dễ thương',
+      '安静': 'yên tĩnh', '热闹': 'náo nhiệt', '干净': 'sạch sẽ', '整齐': 'gọn gàng, ngăn nắp'
+    };
+
+    function isKnownChineseCompound(w) {
+      if (!w || w.length < 2) return false;
+      return Boolean(
+        (typeof FIXED_COMPOUND_PHRASES !== 'undefined' && FIXED_COMPOUND_PHRASES[w]) ||
+        COMMON_CHINESE_COMPOUNDS[w] ||
+        (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[w]) ||
+        (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[w]) ||
+        (typeof window !== 'undefined' && window.HSK_DICTIONARY && window.HSK_DICTIONARY[w]) ||
+        (typeof window !== 'undefined' && window.PINYIN_POLYPHONES && window.PINYIN_POLYPHONES[w])
+      );
+    }
 
     function lookupSingleDictEntryMeta(s) {
       if (!s) return { pinyin: '', vietnamese: '' };
       if (typeof FIXED_COMPOUND_PHRASES !== 'undefined' && FIXED_COMPOUND_PHRASES[s]) {
         return {
-          pinyin: FIXED_COMPOUND_PHRASES[s].pinyin || '',
+          pinyin: FIXED_COMPOUND_PHRASES[s].pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(s) : ''),
           vietnamese: FIXED_COMPOUND_PHRASES[s].vietnamese || ''
         };
       }
@@ -11637,6 +11798,12 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         return {
           pinyin: entry.p || entry.py || entry.pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(s) : ''),
           vietnamese: entry.v || entry.vi || entry.vietnamese || entry.meaning || ''
+        };
+      }
+      if (COMMON_CHINESE_COMPOUNDS[s]) {
+        return {
+          pinyin: (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function') ? window.getInstantPinyin(s) : '',
+          vietnamese: COMMON_CHINESE_COMPOUNDS[s]
         };
       }
       if (typeof aiCache !== 'undefined' && aiCache && aiCache[s] && (aiCache[s].meaning || aiCache[s].vietnamese)) {
@@ -12008,7 +12175,10 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown):
       '轻声说': { pinyin: 'qīng shēng shuō', vietnamese: 'nhẹ giọng nói' },
       '李总监': { pinyin: 'lǐ zǒng jiān', vietnamese: 'giám đốc Lý' },
       '王总监': { pinyin: 'wáng zǒng jiān', vietnamese: 'giám đốc Vương' },
-      '张总监': { pinyin: 'zhāng zǒng jiān', vietnamese: 'giám đốc Trương' }
+      '张总监': { pinyin: 'zhāng zǒng jiān', vietnamese: 'giám đốc Trương' },
+      '得了': { pinyin: 'dé le', vietnamese: 'mắc phải, bị (bệnh)' },
+      '来例假': { pinyin: 'lái lìjià', vietnamese: 'có kinh nguyệt' },
+      '例假': { pinyin: 'lìjià', vietnamese: 'kỳ kinh nguyệt' }
     };
 
     const CHINESE_SURNAMES_MAP = {
@@ -12106,7 +12276,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown):
         }
       }
 
-      // 3. Greedy sliding window (length 4 down to 2) to merge FIXED_COMPOUND_PHRASES
+      // 3. Greedy sliding window (length 4 down to 2) to merge FIXED_COMPOUND_PHRASES and split dictionary compounds
       const merged = [];
       let idx = 0;
       while (idx < titleFixed.length) {
@@ -12119,8 +12289,30 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown):
           if (FIXED_COMPOUND_PHRASES[combined]) {
             matched = {
               hanzi: combined,
-              pinyin: FIXED_COMPOUND_PHRASES[combined].pinyin,
+              pinyin: FIXED_COMPOUND_PHRASES[combined].pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(combined) : ''),
               vietnamese: FIXED_COMPOUND_PHRASES[combined].vietnamese,
+              isVocab: true
+            };
+            matchLen = len;
+            break;
+          }
+          const isLexicalCompound = Boolean(
+            COMMON_CHINESE_COMPOUNDS[combined] ||
+            (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[combined]) ||
+            (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[combined]) ||
+            (typeof window !== 'undefined' && window.HSK_DICTIONARY && window.HSK_DICTIONARY[combined])
+          );
+          const allSingleChars = slice.every(t => t.hanzi.length === 1 && /^[\u4e00-\u9fff]$/.test(t.hanzi));
+          if (
+            combined.length <= 4 &&
+            slice.every(t => /^[\u4e00-\u9fff]+$/.test(t.hanzi)) &&
+            (isLexicalCompound || (allSingleChars && isKnownChineseCompound(combined)))
+          ) {
+            const meta = lookupDictMetaForToken(combined);
+            matched = {
+              hanzi: combined,
+              pinyin: meta.pinyin || '',
+              vietnamese: meta.vietnamese || '',
               isVocab: true
             };
             matchLen = len;
@@ -12133,9 +12325,13 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown):
         } else {
           const tok = titleFixed[idx];
           if (tok && FIXED_COMPOUND_PHRASES[tok.hanzi]) {
-            tok.pinyin = FIXED_COMPOUND_PHRASES[tok.hanzi].pinyin;
+            tok.pinyin = FIXED_COMPOUND_PHRASES[tok.hanzi].pinyin || tok.pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(tok.hanzi) : '');
             tok.vietnamese = FIXED_COMPOUND_PHRASES[tok.hanzi].vietnamese;
             tok.isVocab = true;
+          } else if (tok && tok.hanzi && /[\u4e00-\u9fff]/.test(tok.hanzi) && (!tok.pinyin || !tok.vietnamese)) {
+            const meta = lookupDictMetaForToken(tok.hanzi);
+            if (!tok.pinyin && meta.pinyin) tok.pinyin = meta.pinyin;
+            if (!tok.vietnamese && meta.vietnamese) tok.vietnamese = meta.vietnamese;
           }
           merged.push(tok);
           idx++;
@@ -12299,8 +12495,14 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown):
       if (typeof item === 'string') {
         const parts = item.split('|').map(s => s.trim());
         let rawH = parts[0] || '';
-        let rawP = parts[1] || '';
-        let rawV = parts[2] || '';
+        let rawP = '';
+        let rawV = '';
+        if (parts.length === 2) {
+          rawV = parts[1] || '';
+        } else {
+          rawP = parts[1] || '';
+          rawV = parts.slice(2).join(', ').trim();
+        }
         if (!/[\u4e00-\u9fff]/.test(rawH)) {
           if (/[\u4e00-\u9fff]/.test(rawV)) {
             const tmp = rawH;
@@ -16713,12 +16915,12 @@ ${contextHint ? `Ngữ cảnh tham khảo: ${contextHint}\n` : ''}Trả về DUY
     "end": 2.8,
     "text": "Câu chữ Hán giản thể chuẩn xác 1",
     "vietnamese": "Bản dịch tiếng Việt mượt mà của câu 1",
-    "phrases": ["Tên riêng/thành ngữ/từ khó (nếu có)|pinyin|nghĩa Việt"]
+    "phrases": ["Từ ghép 2-4 chữ hoặc cụm từ/tên riêng|nghĩa Việt ngắn gọn"]
   }
 ]
 Quy tắc bắt buộc:
 1. Tự động suy luận ngữ cảnh để dùng đúng chữ Hán chuẩn xác (tránh nhầm từ đồng âm như 的/地/得, 在/再, 做/作, viết đúng tên nhân vật, địa danh, thành ngữ 4 chữ).
-2. Trường "phrases" CHỈ liệt kê tên riêng, thành ngữ 4 chữ hoặc cụm từ đặc thù trong câu đó theo dạng "Chữ Hán|pinyin|nghĩa Việt" (nếu câu toàn từ thông dụng thì để [] hoặc lược bỏ).
+2. Trường "phrases" liệt kê TẤT CẢ các từ ghép (từ 2 chữ Hán trở lên), tên riêng, thành ngữ xuất hiện trong câu theo định dạng gọn "Chữ Hán|nghĩa tiếng Việt ngắn gọn" (ví dụ: ["因为|vì", "此前|trước đây", "从未|chưa từng", "接触|tiếp xúc", "女性|phụ nữ", "生理|sinh lý", "相关|liên quan", "知识|kiến thức", "母亲|mẹ", "女孩|cô gái", "第一次|lần đầu tiên", "例假|kỳ kinh nguyệt", "以为|tưởng rằng", "自己|bản thân", "怪病|bệnh lạ"]) để hệ thống tuyệt đối không tách rời từng chữ đơn.
 3. Chỉ dùng chữ Hán giản thể (Simplified Chinese), thêm dấu câu (，。？！) tự nhiên. Nếu đoạn âm thanh chỉ có nhạc nền hoặc im lặng, trả về [].`;
 
         let windowSegs = null;
@@ -16837,10 +17039,8 @@ Quy tắc bắt buộc:
         }
         const hasVi = Boolean(t && t.vietnamese && String(t.vietnamese).trim());
         const hasDict = Boolean(
-          (typeof FIXED_COMPOUND_PHRASES !== 'undefined' && FIXED_COMPOUND_PHRASES[h]) ||
-          (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[h]) ||
-          (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[h]) ||
-          (typeof window !== 'undefined' && window.HSK_DICTIONARY && window.HSK_DICTIONARY[h])
+          (typeof isKnownChineseCompound === 'function' && isKnownChineseCompound(h)) ||
+          (typeof COMMON_SINGLE_CHAR_GLOSS !== 'undefined' && COMMON_SINGLE_CHAR_GLOSS[h])
         );
         if (!hasVi && !hasDict && !particles.has(h)) {
           missingViCount++;
@@ -16865,6 +17065,8 @@ Quy tắc bắt buộc:
       if (!s) return [];
 
       const hasCompound = (w) =>
+        (typeof isKnownChineseCompound === 'function' && isKnownChineseCompound(w)) ||
+        (typeof COMMON_CHINESE_COMPOUNDS !== 'undefined' && COMMON_CHINESE_COMPOUNDS[w]) ||
         (typeof FIXED_COMPOUND_PHRASES !== 'undefined' && FIXED_COMPOUND_PHRASES[w]) ||
         (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[w]) ||
         (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[w]) ||
@@ -16875,12 +17077,12 @@ Quy tắc bắt buộc:
         const rawParts = Array.from(segmenter.segment(s))
           .map(x => x.segment)
           .filter(x => x && x.trim().length > 0);
-        // Merge adjacent short segments if they form a known 2-4 char HSK/fixed compound
+        // Merge adjacent short segments if they form a known 2-4 char HSK/common/fixed compound
         const merged = [];
         let i = 0;
         while (i < rawParts.length) {
           let matched = false;
-          for (let span = Math.min(3, rawParts.length - i); span >= 2; span--) {
+          for (let span = Math.min(4, rawParts.length - i); span >= 2; span--) {
             const candidate = rawParts.slice(i, i + span).join('');
             if (candidate.length <= 4 && /^[\u4e00-\u9fff]+$/.test(candidate) && hasCompound(candidate)) {
               merged.push(candidate);
@@ -17012,7 +17214,7 @@ Quy tắc bắt buộc:
             end: Math.max((Number(s.start) || 0) + 0.6, Number(s.end) || ((Number(s.start) || 0) + 2.2)),
             text: toSimplifiedChinese(String(s.text || '').replace(/\s+/g, ' ').trim()),
             vietnamese: viStr,
-            tokens: hasValidTokens ? s.tokens : null,
+            tokens: hasValidTokens ? mergeFixedCompoundTokensInList(s.tokens) : null,
             _aiEnriched: isProofreadV2,
             _aiProofreadV2: isProofreadV2
           };
@@ -17122,20 +17324,27 @@ Quy tắc bắt buộc:
       for (let i = 0; i < lesson.subtitles.length; i++) {
         const sub = lesson.subtitles[i];
         if (!sub) continue;
+        // Always merge any split compound words (e.g. 因+为 -> 因为, 此+前 -> 此前, 女+孩 -> 女孩, 第+一+次 -> 第一次)
+        if (Array.isArray(sub.tokens) && sub.tokens.length > 0) {
+          const beforeSig = sub.tokens.map(t => `${(t && t.hanzi) || ''}:${(t && t.vietnamese) || ''}`).join('|');
+          sub.tokens = mergeFixedCompoundTokensInList(sub.tokens);
+          for (let j = 0; j < sub.tokens.length; j++) {
+            const t = sub.tokens[j];
+            if (t && t.hanzi && /[\u4e00-\u9fff]/.test(t.hanzi) && (!t.pinyin || !t.vietnamese)) {
+              const meta = lookupDictMetaForToken(t.hanzi);
+              if (!t.pinyin && meta.pinyin) t.pinyin = meta.pinyin;
+              if (!t.vietnamese && meta.vietnamese) t.vietnamese = meta.vietnamese;
+            }
+          }
+          const afterSig = sub.tokens.map(t => `${(t && t.hanzi) || ''}:${(t && t.vietnamese) || ''}`).join('|');
+          if (beforeSig !== afterSig) changed = true;
+        }
         // Fill any missing Pinyin/Vietnamese locally ($0 cost) and mark done if translation is present
         if (vslIsSubtitleAiDone(sub)) {
           if (!sub._aiProofreadV2) {
             sub._aiProofreadV2 = true;
             sub._aiEnriched = true;
             changed = true;
-          }
-          for (let j = 0; j < sub.tokens.length; j++) {
-            const t = sub.tokens[j];
-            if (t && t.hanzi && /[\u4e00-\u9fff]/.test(t.hanzi) && (!t.pinyin || !t.vietnamese)) {
-              const meta = lookupDictMetaForToken(t.hanzi);
-              if (!t.pinyin && meta.pinyin) { t.pinyin = meta.pinyin; changed = true; }
-              if (!t.vietnamese && meta.vietnamese) { t.vietnamese = meta.vietnamese; changed = true; }
-            }
           }
           continue;
         }
@@ -17166,7 +17375,7 @@ Các câu phụ đề dưới đây được tách từ giọng nói tự độn
 Hãy đối chiếu TIÊU ĐỀ VIDEO ("${videoTitle || 'Video tiếng Trung'}"), mạch bài ("${fullOverviewText}")${prevLine ? `, câu trước ("${prevLine}")` : ''}${nextLine ? `, câu sau ("${nextLine}")` : ''} để:
 1. SỬA TRIỆT ĐỂ MỌI LỖI ĐỒNG ÂM ASR sang chữ Hán giản thể chuẩn xác 100% và thêm dấu câu tự nhiên.
 2. DỊCH CÂU ĐÃ SỬA sang tiếng Việt mượt mà, tự nhiên, chuẩn xác.
-3. Trong mảng "phrases", CHỈ liệt kê các TÊN RIÊNG (nhân vật, tổ chức, địa danh), THÀNH NGỮ 4 CHỮ hoặc CỤM TỪ ĐẶC THÙ khó tra từ điển xuất hiện trong câu theo định dạng "Chữ Hán|pinyin|nghĩa tiếng Việt ngắn gọn" (các từ thông thường KHÔNG cần liệt kê để phản hồi cực nhanh; nếu câu không có từ đặc thù thì để "phrases": []).
+3. Trong mảng "phrases", liệt kê TẤT CẢ các từ ghép (từ 2 chữ Hán trở lên), tên riêng, thành ngữ xuất hiện trong câu theo định dạng gọn "Chữ Hán|nghĩa tiếng Việt ngắn gọn" (ví dụ: ["因为|vì", "此前|trước đây", "从未|chưa từng", "接触|tiếp xúc", "女性|phụ nữ", "生理|sinh lý", "相关|liên quan", "知识|kiến thức", "母亲|mẹ", "女孩|cô gái", "第一次|lần đầu tiên", "例假|kỳ kinh nguyệt", "以为|tưởng rằng", "自己|bản thân", "怪病|bệnh lạ"]) để hệ thống gộp đúng từ ghép và không bao giờ tách rời từng chữ đơn.
 
 Danh sách ${batch.length} câu cần hiệu đính & dịch:
 ${linesJson}
@@ -17177,7 +17386,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
     "idx": 0,
     "text": "Câu chữ Hán giản thể ĐÃ SỬA SẠCH lỗi đồng âm ASR",
     "vietnamese": "Bản dịch tiếng Việt mượt mà, tự nhiên của câu",
-    "phrases": ["日卖电视台|rìmài diànshìtái|Đài truyền hình Nichiuri", "敬而远之|jìng ér yuǎn zhī|kính nhi viễn chi"]
+    "phrases": ["因为|vì", "此前|trước đây", "日卖电视台|Đài truyền hình Nichiuri"]
   }
 ]`;
 
@@ -18952,6 +19161,8 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
 
       if (!Array.isArray(sub.tokens) || sub.tokens.length === 0) {
         sub.tokens = vslBuildLocalFallbackSubtitleItem({ ...sub, tokens: null, _aiEnriched: false, _aiProofreadV2: false }).tokens;
+      } else {
+        sub.tokens = mergeFixedCompoundTokensInList(sub.tokens);
       }
       if (!vslIsSubtitleAiDone(sub) && !vslEnrichRunMap.has(lesson.id)) {
         vslEnrichLessonSubtitlesInBackground(lesson);
@@ -19157,22 +19368,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
 
     let vslActiveTokenRef = null;
 
-    const VSL_COMMON_CHAR_GLOSS = {
-      '人': 'người', '和': 'và', '与': 'và', '或': 'hoặc', '事': 'sự việc', '物': 'vật',
-      '的': 'của', '地': 'một cách', '得': 'đến mức', '了': 'rồi', '着': 'đang', '过': 'từng',
-      '在': 'ở, đang', '是': 'là', '有': 'có', '没': 'không', '不': 'không', '很': 'rất',
-      '太': 'quá', '更': 'hơn', '最': 'nhất', '都': 'đều', '也': 'cũng', '还': 'vẫn, còn',
-      '就': 'liền, thì', '才': 'mới', '又': 'lại', '再': 'lại', '把': 'đem', '被': 'bị, được',
-      '给': 'cho', '对': 'đối với', '向': 'hướng về', '从': 'từ', '到': 'đến', '里': 'trong',
-      '上': 'trên', '下': 'dưới', '前': 'trước', '后': 'sau', '中': 'trong, giữa', '内': 'trong',
-      '外': 'ngoài', '大': 'lớn', '小': 'nhỏ', '多': 'nhiều', '少': 'ít', '好': 'tốt',
-      '新': 'mới', '老': 'cũ, già', '高': 'cao', '低': 'thấp', '长': 'dài', '短': 'ngắn',
-      '快': 'nhanh', '慢': 'chậm', '早': 'sớm', '晚': 'muộn', '看': 'xem, nhìn', '听': 'nghe',
-      '说': 'nói', '走': 'đi', '来': 'đến', '去': 'đi', '做': 'làm', '想': 'nghĩ, muốn',
-      '要': 'cần, muốn', '能': 'có thể', '会': 'biết, sẽ', '让': 'khiến, để', '叫': 'gọi',
-      '我': 'tôi', '你': 'bạn', '他': 'anh ấy', '她': 'cô ấy', '它': 'nó', '们': 'các',
-      '这': 'này', '那': 'đó', '哪': 'nào', '谁': 'ai', '什': 'gì', '么': 'gì'
-    };
+    const VSL_COMMON_CHAR_GLOSS = COMMON_SINGLE_CHAR_GLOSS;
 
     function vslLookupSingleUnitMeta(unit) {
       if (!unit) return { pinyin: '', vietnamese: '' };
