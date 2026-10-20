@@ -1778,6 +1778,67 @@
       display: block !important;
     }
 
+    /* Inline Pinyin layer above token for Quick Lookup mode in Reading Passage */
+    .reading-token .token-pinyin {
+      display: none;
+      font-family: var(--font-mali), cursive, sans-serif !important;
+      font-size: 9.5px !important;
+      font-weight: 700 !important;
+      color: #684e92 !important;
+      line-height: 1.15 !important;
+      letter-spacing: -0.25px;
+      word-spacing: -1.5px;
+      margin-bottom: 1px;
+      padding: 0 0.5px;
+      white-space: nowrap !important;
+      pointer-events: none !important;
+    }
+
+    #readingPassageContainer.quick-lookup-mode .reading-para-box {
+      line-height: 2.38;
+    }
+
+    #readingPassageContainer.quick-lookup-mode .reading-token.active-token {
+      display: inline-flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      vertical-align: middle !important;
+      background: rgba(135, 114, 168, 0.28) !important;
+      color: #4b3b66 !important;
+      border-radius: 5px !important;
+      padding: 2px 4px !important;
+      margin: -10px 1px !important;
+      line-height: 1.15 !important;
+      z-index: 6 !important;
+    }
+
+    #readingPassageContainer.quick-lookup-mode .reading-token.selected.active-token {
+      background: #d8c6ee !important;
+      color: #3f2b5e !important;
+      box-shadow: inset 0 0 0 1.2px #9c82c4 !important;
+    }
+
+    #readingPassageContainer.quick-lookup-mode .reading-token.active-token .token-pinyin {
+      display: block !important;
+      position: static !important;
+      transform: none !important;
+    }
+
+    #readingPassageContainer.quick-lookup-mode .reading-token.active-token .token-vi-gloss {
+      display: block !important;
+      position: static !important;
+      transform: none !important;
+      margin-top: 1px !important;
+      font-size: 9.5px !important;
+      font-weight: 700 !important;
+      line-height: 1.1 !important;
+      color: #000000 !important;
+      text-shadow: none !important;
+      white-space: nowrap !important;
+      max-width: none !important;
+    }
+
     /* ===== Settings Modal (purple card system) ===== */
     .st-group-label {
       font-size: 10.5px;
@@ -4206,6 +4267,27 @@
     #vslSubtitleTokensBox.show-vi-gloss .reading-token.active-token .token-vi-gloss {
       display: block !important;
     }
+    /* Quick Lookup Mode in Video Studio: always show both Pinyin above & Nghĩa TV below on tapped active token */
+    #vslSubtitleTokensBox.quick-lookup-mode .reading-token.active-token {
+      padding: 2px 4px !important;
+      border-radius: 5px !important;
+    }
+    #vslSubtitleTokensBox.quick-lookup-mode .reading-token.selected.active-token {
+      background: #d8c6ee !important;
+      color: #3f2b5e !important;
+      box-shadow: inset 0 0 0 1.2px #9c82c4 !important;
+    }
+    #vslSubtitleTokensBox.quick-lookup-mode .reading-token.active-token .vsl-tok-pinyin,
+    #vslSubtitleTokensBox.quick-lookup-mode .reading-token.active-token .token-pinyin {
+      display: block !important;
+    }
+    #vslSubtitleTokensBox.quick-lookup-mode .reading-token.active-token .token-vi-gloss {
+      display: block !important;
+    }
+    #vslSubtitleTokensBox.quick-lookup-mode .reading-token.active-token .token-text,
+    #vslSubtitleTokensBox.quick-lookup-mode .reading-token.active-token .token-hanzi {
+      filter: none !important;
+    }
     .vsl-vi-box {
       margin-top: 10px;
       padding: 7px 11px;
@@ -5065,10 +5147,11 @@
               </span>
             </div>
             <div style="display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0;">
-              <button type="button" id="vslBtnTogglePinyin" onclick="toggleVslPinyin()" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; font-family: var(--font-mali); white-space: nowrap;">Pinyin</button>
-              <button type="button" id="vslBtnToggleHanzi" onclick="toggleVslHanzi()" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; font-family: var(--font-mali); white-space: nowrap;">Chữ Hán</button>
-              <button type="button" id="vslBtnToggleViLine" onclick="toggleVslViLine()" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; font-family: var(--font-mali); white-space: nowrap;">Dịch câu</button>
-              <button type="button" id="vslBtnToggleGloss" onclick="toggleVslGloss()" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; font-family: var(--font-mali); white-space: nowrap;">Nghĩa TV</button>
+              <button type="button" id="vslBtnToggleQuickLookup" onclick="toggleVslQuickLookup()" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 5.5px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; font-family: var(--font-mali); white-space: nowrap;" title="Tra nhanh: Chạm 1 lần hiện Pinyin + Nghĩa tại chỗ (ẩn bảng dưới), chạm lần 2 để Lưu/Bỏ lưu từ, giữ 0.5s mở bảng Sửa/AI">Tra nhanh</button>
+              <button type="button" id="vslBtnTogglePinyin" onclick="toggleVslPinyin()" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 5.5px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; font-family: var(--font-mali); white-space: nowrap;">Pinyin</button>
+              <button type="button" id="vslBtnToggleHanzi" onclick="toggleVslHanzi()" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 5.5px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; font-family: var(--font-mali); white-space: nowrap;">Chữ Hán</button>
+              <button type="button" id="vslBtnToggleViLine" onclick="toggleVslViLine()" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 5.5px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; font-family: var(--font-mali); white-space: nowrap;">Dịch câu</button>
+              <button type="button" id="vslBtnToggleGloss" onclick="toggleVslGloss()" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 5.5px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; font-family: var(--font-mali); white-space: nowrap;">Nghĩa TV</button>
             </div>
           </div>
 
@@ -5176,6 +5259,9 @@
             </span>
           </div>
           <div style="display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; flex-wrap: nowrap !important;">
+            <button id="btnToggleReadingQuickLookup" onclick="toggleReadingQuickLookup()" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0; white-space: nowrap !important;" title="Tra nhanh: Chạm 1 lần hiện Pinyin + Nghĩa tại chỗ (ẩn bảng dưới), chạm lần 2 để Lưu/Bỏ lưu từ, giữ 0.5s mở bảng tra cứu AI">
+              <span id="quickLookupToggleText">Tra nhanh</span>
+            </button>
             <button id="btnToggleReadingGloss" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0; white-space: nowrap !important;" title="Chạm để ẩn hoặc hiện nghĩa Tiếng Việt dưới các từ đã lưu (highlight)">
               <span id="glossToggleText">Nghĩa TV</span>
             </button>
@@ -14389,14 +14475,19 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
     let readingScrollSaveTimeout = null;
     let readingTokenOpenedScrollTop = 0;
     let readingTokenOpenedAt = 0;
+    let isQuickLookupModeActive = localStorage.getItem('hsk_quick_lookup_mode') === '1';
+    let readingLastLongPressAt = 0;
+    let vslLastLongPressAt = 0;
 
     function hideReadingTokenDrawerOnScroll() {
       const drawer = document.getElementById('readingTokenDrawer');
       if (drawer && drawer.style.display !== 'none') {
         drawer.style.display = 'none';
-        document.querySelectorAll('#readingPassageContainer .reading-token.active-token').forEach(el => {
-          el.classList.remove('active-token');
-        });
+        if (!isQuickLookupModeActive) {
+          document.querySelectorAll('#readingPassageContainer .reading-token.active-token').forEach(el => {
+            el.classList.remove('active-token');
+          });
+        }
       }
     }
 
@@ -14542,15 +14633,32 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       }
     }
 
+    function formatShortGlossPlain(meaning) {
+      if (!meaning) return '';
+      let s = String(meaning).replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, '').trim();
+      let first = s.split(/[;/。]/)[0].trim();
+      if (!first) first = s;
+      if (first.length > 18 && first.includes(',')) {
+        first = first.split(',')[0].trim();
+      }
+      if (first.length > 22) {
+        first = first.slice(0, 20) + '…';
+      }
+      return first;
+    }
+
     // Render interactive HTML passage content with 2-character Chinese paragraph indentation & paragraph translation toggles
     function renderReadingPassageContent(art) {
       if (!readingPassageContainer) return;
 
+      const lookup = srsGetLookup();
       const combinedHighlightWords = [...(art.targetWords || []), ...(art.selectedWords || [])];
       const selectedMap = new Set(combinedHighlightWords.map(w => w.hanzi));
       const selectedMeaningMap = new Map(combinedHighlightWords.map(w => [w.hanzi, w.vietnamese || w.meaning || '']));
+      const selectedPinyinMap = new Map(combinedHighlightWords.map(w => [w.hanzi, w.pinyin || '']));
       const customGroup = customGroups.find(g => g.id === 'custom_' + art.id);
       const customGroupWordMap = new Map((customGroup && customGroup.words ? customGroup.words : []).map(w => [w.hanzi, w.vietnamese || '']));
+      const customGroupPinyinMap = new Map((customGroup && customGroup.words ? customGroup.words : []).map(w => [w.hanzi, w.pinyin || '']));
 
       function resolveTokenMeaning(tok) {
         if (FIXED_COMPOUND_PHRASES[tok.hanzi] && FIXED_COMPOUND_PHRASES[tok.hanzi].vietnamese) {
@@ -14563,24 +14671,32 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         if (customGroupWordMap.has(tok.hanzi) && customGroupWordMap.get(tok.hanzi)) {
           return customGroupWordMap.get(tok.hanzi);
         }
-        const lookup = srsGetLookup();
         const lw = lookup.get(tok.hanzi);
         if (lw && (lw.vietnamese || lw.vi || lw.meaning)) return lw.vietnamese || lw.vi || lw.meaning;
         if (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].vietnamese) return aiCache[tok.hanzi].vietnamese;
         return '';
       }
 
+      function resolveTokenPinyin(tok) {
+        if (FIXED_COMPOUND_PHRASES[tok.hanzi] && FIXED_COMPOUND_PHRASES[tok.hanzi].pinyin) {
+          return FIXED_COMPOUND_PHRASES[tok.hanzi].pinyin;
+        }
+        if (tok.pinyin) return tok.pinyin;
+        if (selectedPinyinMap.has(tok.hanzi) && selectedPinyinMap.get(tok.hanzi)) {
+          return selectedPinyinMap.get(tok.hanzi);
+        }
+        if (customGroupPinyinMap.has(tok.hanzi) && customGroupPinyinMap.get(tok.hanzi)) {
+          return customGroupPinyinMap.get(tok.hanzi);
+        }
+        const lw = lookup.get(tok.hanzi);
+        if (lw && lw.pinyin) return lw.pinyin;
+        if (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].pinyin) return aiCache[tok.hanzi].pinyin;
+        return '';
+      }
+
       function getShortGloss(meaning) {
-        if (!meaning) return '';
-        let s = String(meaning).replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, '').trim();
-        let first = s.split(/[;/。]/)[0].trim();
-        if (!first) first = s;
-        if (first.length > 18 && first.includes(',')) {
-          first = first.split(',')[0].trim();
-        }
-        if (first.length > 22) {
-          first = first.slice(0, 20) + '…';
-        }
+        const first = formatShortGlossPlain(meaning);
+        if (!first) return '';
         return first
           .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
@@ -14667,11 +14783,13 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
             : s.text
           ).join('');
 
+          const rawPinyin = resolveTokenPinyin(tok);
+          const pinyinHTML = `<span class="token-pinyin">${escapeHtml(rawPinyin)}</span>`;
           const rawMeaning = resolveTokenMeaning(tok);
           const shortMeaning = getShortGloss(rawMeaning);
-          const glossHTML = shortMeaning ? `<span class="token-vi-gloss">${shortMeaning}</span>` : '';
+          const glossHTML = `<span class="token-vi-gloss">${shortMeaning}</span>`;
 
-          return `<span class="reading-token ${selectedClass}" data-index="${globalIdx}" data-hanzi="${tok.hanzi}" title="${tok.hanzi}${hskTitle}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)"><span class="token-text">${innerHTML}</span>${glossHTML}</span>`;
+          return `<span class="reading-token ${selectedClass}" data-index="${globalIdx}" data-hanzi="${tok.hanzi}" title="${tok.hanzi}${hskTitle}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)">${pinyinHTML}<span class="token-text">${innerHTML}</span>${glossHTML}</span>`;
         }).join('');
 
         const viText = para.vietnamese || (paragraphs.length === 1 && art.translation ? art.translation : 'Đoạn này chưa có bản dịch.');
@@ -14784,6 +14902,47 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         if (!isNaN(pIdx)) attachParaAudioPress(btn, pIdx);
       });
 
+      // Delegated long-press (0.45s) on reading tokens to open bottom drawer when Quick Lookup mode is ON
+      if (!readingPassageContainer.dataset.quickLongPressBound) {
+        readingPassageContainer.dataset.quickLongPressBound = 'true';
+        let lpTimer = null;
+        let lpStartX = 0;
+        let lpStartY = 0;
+        const clearLp = () => {
+          if (lpTimer) {
+            clearTimeout(lpTimer);
+            lpTimer = null;
+          }
+        };
+        readingPassageContainer.addEventListener('pointerdown', (e) => {
+          if (!isQuickLookupModeActive) return;
+          const tokEl = e.target && e.target.closest ? e.target.closest('.reading-token') : null;
+          if (!tokEl) return;
+          lpStartX = e.clientX || 0;
+          lpStartY = e.clientY || 0;
+          clearLp();
+          lpTimer = setTimeout(() => {
+            lpTimer = null;
+            const idx = parseInt(tokEl.getAttribute('data-index'), 10);
+            if (!isNaN(idx) && activeReadingArticleId) {
+              readingLastLongPressAt = Date.now();
+              if (navigator.vibrate) {
+                try { navigator.vibrate(35); } catch (err) {}
+              }
+              handleReadingTokenClick(activeReadingArticleId, idx, { currentTarget: tokEl }, true);
+            }
+          }, 460);
+        }, { passive: true });
+        readingPassageContainer.addEventListener('pointermove', (e) => {
+          if (!lpTimer) return;
+          if (Math.hypot((e.clientX || 0) - lpStartX, (e.clientY || 0) - lpStartY) > 10) {
+            clearLp();
+          }
+        }, { passive: true });
+        readingPassageContainer.addEventListener('pointerup', clearLp, { passive: true });
+        readingPassageContainer.addEventListener('pointercancel', clearLp, { passive: true });
+      }
+
       // Restore active playing highlight if an utterance is currently playing
       if (currentPlayingParaIdx !== null) {
         const activeBox = document.getElementById('readingParaBox_' + currentPlayingParaIdx) || document.getElementById('readingParaViBox_' + currentPlayingParaIdx);
@@ -14805,6 +14964,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       if (statCountH79El) statCountH79El.textContent = stats.h79Count;
 
       updateReadingHskLevelHighlightUI();
+      updateReadingQuickLookupToggleUI();
       updateReadingGlossToggleUI();
       updateReadingReviewToggleUI();
 
@@ -14818,6 +14978,89 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       if (btnToggleReview && !btnToggleReview.dataset.bound) {
         btnToggleReview.addEventListener('click', toggleReadingReview);
         btnToggleReview.dataset.bound = 'true';
+      }
+    }
+
+    function updateReadingQuickLookupToggleUI() {
+      const btn = document.getElementById('btnToggleReadingQuickLookup');
+      const container = document.getElementById('readingPassageContainer');
+      if (container) {
+        container.classList.toggle('quick-lookup-mode', isQuickLookupModeActive);
+      }
+      if (btn) {
+        if (isQuickLookupModeActive) {
+          btn.style.background = '#766299';
+          btn.style.color = '#ffffff';
+          btn.style.border = '1.2px solid #5e438c';
+          btn.title = 'Tra nhanh đang BẬT: Chạm lần 1 xem Pinyin + Nghĩa tại chỗ, chạm lần 2 để Lưu/Bỏ lưu từ (Giữ 0.5s mở bảng tra cứu AI)';
+        } else {
+          btn.style.background = '#f3eef9';
+          btn.style.color = '#766299';
+          btn.style.border = '1.2px solid #dfd3ef';
+          btn.title = 'Chạm để bật Tra nhanh (hiện Pinyin + Nghĩa tại chỗ & ẩn bảng dưới)';
+        }
+      }
+    }
+
+    function toggleQuickLookupMode() {
+      isQuickLookupModeActive = !isQuickLookupModeActive;
+      localStorage.setItem('hsk_quick_lookup_mode', isQuickLookupModeActive ? '1' : '0');
+      if (isQuickLookupModeActive) {
+        const rDrawer = document.getElementById('readingTokenDrawer');
+        if (rDrawer) rDrawer.style.display = 'none';
+        const vDrawer = document.getElementById('vslTokenDrawer');
+        if (vDrawer) vDrawer.style.display = 'none';
+        showToast('⚡ Tra nhanh: Chạm 1 lần hiện Pinyin + Nghĩa, chạm lần 2 để Lưu từ!');
+      } else {
+        showToast('📖 Đã tắt chế độ Tra nhanh');
+      }
+      updateReadingQuickLookupToggleUI();
+      if (typeof vslUpdateDisplayToggleButtonsUI === 'function') {
+        vslUpdateDisplayToggleButtonsUI();
+      }
+    }
+    window.toggleReadingQuickLookup = toggleQuickLookupMode;
+    window.toggleVslQuickLookup = toggleQuickLookupMode;
+
+    async function quickLookupFillMissingTokenMeaning(tok, targetEl) {
+      if (!tok || !tok.hanzi || tok._quickAiPending) return;
+      const apiKey = localStorage.getItem('openrouter_api_key') || '';
+      if (!apiKey) return;
+      tok._quickAiPending = true;
+      try {
+        const prompt = `Từ tiếng Trung: "${tok.hanzi}". Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa ngắn gọn 2-4 chữ"}`;
+        const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: getOpenRouterHeaders(),
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            temperature: 0,
+            max_tokens: 80,
+            reasoning: { exclude: true, effort: 'none' },
+            messages: [
+              { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
+              { role: 'user', content: prompt }
+            ]
+          })
+        });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const raw = data.choices?.[0]?.message?.content || '';
+        const cleaned = String(raw).replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        const parsed = typeof safeParseJSON === 'function' ? safeParseJSON(cleaned) : JSON.parse(cleaned);
+        if (parsed && (parsed.pinyin || parsed.vietnamese)) {
+          if (parsed.pinyin && !tok.pinyin) tok.pinyin = String(parsed.pinyin).trim();
+          if (parsed.vietnamese && !tok.vietnamese) tok.vietnamese = String(parsed.vietnamese).trim();
+          if (targetEl) {
+            const pyEl = targetEl.querySelector('.vsl-tok-pinyin, .token-pinyin');
+            if (pyEl && tok.pinyin) pyEl.textContent = tok.pinyin;
+            const glEl = targetEl.querySelector('.token-vi-gloss');
+            if (glEl && tok.vietnamese) glEl.textContent = formatShortGlossPlain(tok.vietnamese);
+          }
+        }
+      } catch (e) {
+      } finally {
+        delete tok._quickAiPending;
       }
     }
 
@@ -15001,7 +15244,8 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
     }
 
     // Token clicked inside Interactive Reader
-    function handleReadingTokenClick(articleId, tokenIndex, event) {
+    function handleReadingTokenClick(articleId, tokenIndex, event, forceOpenDrawer = false) {
+      if (!forceOpenDrawer && Date.now() - readingLastLongPressAt < 450) return;
       const art = findReadingArticleById(articleId);
       if (!art || !art.tokens || !art.tokens[tokenIndex]) return;
 
@@ -15011,6 +15255,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       const targetEl = event && event.currentTarget
         ? event.currentTarget
         : document.querySelector(`#readingPassageContainer .reading-token[data-index="${tokenIndex}"]`);
+      const wasAlreadyActive = Boolean(targetEl && targetEl.classList.contains('active-token'));
       const isSelected = (art.selectedWords || []).some(w => w.hanzi === tok.hanzi);
       const isTargetWord = (art.targetWords || []).some(w => w.hanzi === tok.hanzi);
 
@@ -15049,14 +15294,6 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         }
       }
 
-      // Update active token highlight in passage DOM
-      document.querySelectorAll('#readingPassageContainer .reading-token.active-token').forEach(el => {
-        el.classList.remove('active-token');
-      });
-      if (targetEl) {
-        targetEl.classList.add('active-token');
-      }
-
       const lookup = srsGetLookup();
       const lw = lookup.get(tok.hanzi);
       const selWord = (art.selectedWords || []).find(w => w.hanzi === tok.hanzi)
@@ -15065,12 +15302,16 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       const cgWord = customGroup && customGroup.words ? customGroup.words.find(w => w.hanzi === tok.hanzi) : null;
 
       const fixedCompound = FIXED_COMPOUND_PHRASES[tok.hanzi];
+      const meta = (!tok.pinyin || !tok.vietnamese) ? lookupDictMetaForToken(tok.hanzi) : { pinyin: '', vietnamese: '' };
+
       const resolvedMeaning = (fixedCompound && fixedCompound.vietnamese)
         || (selWord && (selWord.vietnamese || selWord.meaning))
         || tok.vietnamese
         || (cgWord && (cgWord.vietnamese || cgWord.meaning))
         || (lw && (lw.vietnamese || lw.vi || lw.meaning))
+        || meta.vietnamese
         || (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].vietnamese)
+        || (typeof VSL_COMMON_CHAR_GLOSS !== 'undefined' && VSL_COMMON_CHAR_GLOSS[tok.hanzi])
         || '';
 
       const resolvedPinyin = (fixedCompound && fixedCompound.pinyin)
@@ -15078,11 +15319,66 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         || (selWord && selWord.pinyin)
         || (cgWord && cgWord.pinyin)
         || (lw && lw.pinyin)
+        || meta.pinyin
         || (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].pinyin)
+        || (typeof getLocalTokenPinyin === 'function' ? getLocalTokenPinyin(tok.hanzi) : '')
         || '';
 
       if (!tok.pinyin && resolvedPinyin) tok.pinyin = resolvedPinyin;
       if (!tok.vietnamese && resolvedMeaning) tok.vietnamese = resolvedMeaning;
+
+      if (targetEl) {
+        let pyEl = targetEl.querySelector('.token-pinyin');
+        if (!pyEl) {
+          pyEl = document.createElement('span');
+          pyEl.className = 'token-pinyin';
+          targetEl.insertBefore(pyEl, targetEl.firstChild);
+        }
+        if (resolvedPinyin) pyEl.textContent = resolvedPinyin;
+
+        let glEl = targetEl.querySelector('.token-vi-gloss');
+        if (!glEl) {
+          glEl = document.createElement('span');
+          glEl.className = 'token-vi-gloss';
+          targetEl.appendChild(glEl);
+        }
+        if (resolvedMeaning) {
+          glEl.textContent = formatShortGlossPlain(resolvedMeaning);
+        }
+      }
+
+      // Quick Lookup Mode:
+      // - 1st tap: show Pinyin above + Nghĩa TV below inline, hide bottom drawer, speak word
+      // - 2nd tap on the same active word: Save / Unsave word in review list
+      if (isQuickLookupModeActive && !forceOpenDrawer) {
+        if (readingTokenDrawer) readingTokenDrawer.style.display = 'none';
+        if (wasAlreadyActive) {
+          toggleWordInReadingArticle(articleId, tok);
+          if (targetEl) targetEl.classList.add('active-token');
+          return;
+        }
+        document.querySelectorAll('#readingPassageContainer .reading-token.active-token').forEach(el => {
+          el.classList.remove('active-token');
+        });
+        if (targetEl) {
+          targetEl.classList.add('active-token');
+        }
+        if (!resolvedMeaning) {
+          quickLookupFillMissingTokenMeaning(tok, targetEl);
+        }
+        if (autoSpeakOnTick && tok.hanzi) {
+          speakChinese(tok.hanzi);
+        }
+        return;
+      }
+
+      // Standard Mode (or Long-Press in Quick Lookup Mode): highlight token & open bottom drawer
+      document.querySelectorAll('#readingPassageContainer .reading-token.active-token').forEach(el => {
+        el.classList.remove('active-token');
+      });
+      if (targetEl) {
+        targetEl.classList.add('active-token');
+      }
 
       drawerHanzi.textContent = tok.hanzi;
       drawerPinyin.textContent = resolvedPinyin;
@@ -18229,6 +18525,14 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       let lastTapX = 0;
       let lastTapY = 0;
       let wasPlayingBeforeFirstTap = false;
+      let vslLpTimer = null;
+
+      const clearVslLp = () => {
+        if (vslLpTimer) {
+          clearTimeout(vslLpTimer);
+          vslLpTimer = null;
+        }
+      };
 
       const isInteractiveDrawerControl = (target) => {
         if (!target || !target.closest) return false;
@@ -18248,6 +18552,24 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         if (Date.now() - lastTapTime > 360) {
           wasPlayingBeforeFirstTap = vslIsPlaying();
         }
+        clearVslLp();
+        if (isQuickLookupModeActive) {
+          const tokEl = e.target && e.target.closest ? e.target.closest('.reading-token') : null;
+          if (tokEl) {
+            vslLpTimer = setTimeout(() => {
+              vslLpTimer = null;
+              const sIdx = parseInt(tokEl.getAttribute('data-sub-idx'), 10);
+              const tIdx = parseInt(tokEl.getAttribute('data-tok-idx'), 10);
+              if (!isNaN(sIdx) && !isNaN(tIdx)) {
+                vslLastLongPressAt = Date.now();
+                if (navigator.vibrate) {
+                  try { navigator.vibrate(35); } catch (err) {}
+                }
+                handleVideoTokenClick(sIdx, tIdx, { currentTarget: tokEl }, true);
+              }
+            }, 460);
+          }
+        }
       };
 
       const onTouchMove = (e) => {
@@ -18255,6 +18577,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         const t = e.touches[0];
         const dx = t.clientX - touchStartX;
         const dy = t.clientY - touchStartY;
+        if (Math.hypot(dx, dy) > 10) clearVslLp();
 
         if (!isSwipingH && !isSwipingDown && !isScrollingV) {
           if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.2) {
@@ -18286,6 +18609,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       };
 
       const onTouchEnd = (e) => {
+        clearVslLp();
         if (isInteractiveDrawerControl(e.target)) return;
         const inner = document.getElementById('vslSubtitleInner');
         const t = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
@@ -18333,6 +18657,12 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         const tapDist = Math.hypot(t.clientX - lastTapX, t.clientY - lastTapY);
         const hitToken = Boolean(e.target && e.target.closest && e.target.closest('.reading-token'));
 
+        // In Quick Lookup mode, 2nd tap on a token saves/unsaves the word instead of toggling video Play/Pause
+        if (isQuickLookupModeActive && hitToken) {
+          lastTapTime = 0;
+          return;
+        }
+
         if (dt > 35 && dt <= 360 && tapDist < (hitToken ? 38 : 60)) {
           if (e.cancelable) e.preventDefault();
           vslLastDoubleTapAt = now;
@@ -18361,6 +18691,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       };
 
       const onTouchCancel = () => {
+        clearVslLp();
         isSwipingH = false;
         isSwipingDown = false;
         isScrollingV = false;
@@ -18387,6 +18718,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       stage.addEventListener('dblclick', (e) => {
         if (Date.now() - vslLastDoubleTapAt < 500) return;
         if (isInteractiveDrawerControl(e.target)) return;
+        if (isQuickLookupModeActive && e.target && e.target.closest && e.target.closest('.reading-token')) return;
         e.preventDefault();
         vslLastDoubleTapAt = Date.now();
         const tokenDrawer = document.getElementById('vslTokenDrawer');
@@ -18409,8 +18741,24 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         mouseDown = true;
         mouseStartX = e.clientX;
         mouseStartY = e.clientY;
+        clearVslLp();
+        if (isQuickLookupModeActive) {
+          const tokEl = e.target && e.target.closest ? e.target.closest('.reading-token') : null;
+          if (tokEl) {
+            vslLpTimer = setTimeout(() => {
+              vslLpTimer = null;
+              const sIdx = parseInt(tokEl.getAttribute('data-sub-idx'), 10);
+              const tIdx = parseInt(tokEl.getAttribute('data-tok-idx'), 10);
+              if (!isNaN(sIdx) && !isNaN(tIdx)) {
+                vslLastLongPressAt = Date.now();
+                handleVideoTokenClick(sIdx, tIdx, { currentTarget: tokEl }, true);
+              }
+            }, 460);
+          }
+        }
       });
       window.addEventListener('mouseup', (e) => {
+        clearVslLp();
         if (!mouseDown) return;
         mouseDown = false;
         const dx = e.clientX - mouseStartX;
@@ -18536,6 +18884,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       const tokBox = document.getElementById('vslSubtitleTokensBox');
       const viBox = document.getElementById('vslSubtitleViBox');
       if (tokBox) {
+        tokBox.classList.toggle('quick-lookup-mode', isQuickLookupModeActive);
         tokBox.classList.toggle('hide-pinyin', !vslShowPinyin);
         tokBox.classList.toggle('hide-vsl-pinyin', !vslShowPinyin);
         tokBox.classList.toggle('hide-hanzi', !vslShowHanzi);
@@ -18558,6 +18907,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         btn.style.color = active ? '#ffffff' : '#766299';
         btn.style.borderColor = active ? '#5e438c' : '#dfd3ef';
       };
+      styleToggle('vslBtnToggleQuickLookup', isQuickLookupModeActive);
       styleToggle('vslBtnTogglePinyin', vslShowPinyin);
       styleToggle('vslBtnToggleHanzi', vslShowHanzi);
       styleToggle('vslBtnToggleViLine', vslShowViLine);
@@ -18630,11 +18980,13 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
           || tok.pinyin
           || (lw && lw.pinyin)
           || meta.pinyin
+          || (typeof getLocalTokenPinyin === 'function' ? getLocalTokenPinyin(h) : '')
           || '';
         const rawGloss = (fixedCompound && fixedCompound.vietnamese)
           || tok.vietnamese
           || (lw && (lw.vietnamese || lw.vi || lw.meaning))
           || meta.vietnamese
+          || (typeof VSL_COMMON_CHAR_GLOSS !== 'undefined' && VSL_COMMON_CHAR_GLOSS[h])
           || '';
         const shortGloss = String(rawGloss).split(/[;,/]/)[0].trim();
 
@@ -18664,8 +19016,8 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
     }
 
     // Token clicked inside Video Subtitle Stage -> Uses 100% Reading Mode lookup & saving mechanism!
-    function handleVideoTokenClick(subIdx, tokIdx, event) {
-      if (Date.now() - vslLastSwipeAt < 380 || Date.now() - vslLastDoubleTapAt < 380) return;
+    function handleVideoTokenClick(subIdx, tokIdx, event, forceOpenDrawer = false) {
+      if (!forceOpenDrawer && (Date.now() - vslLastSwipeAt < 380 || Date.now() - vslLastDoubleTapAt < 380 || Date.now() - vslLastLongPressAt < 450)) return;
       const lesson = findVslLessonById(activeVslLessonId);
       if (!lesson || !lesson.subtitles || !lesson.subtitles[subIdx]) return;
       const sub = lesson.subtitles[subIdx];
@@ -18675,12 +19027,10 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       // Pause video automatically when user taps a word to look it up
       vslPauseVideo();
 
-      document.querySelectorAll('#vslSubtitleTokensBox .reading-token').forEach(el => {
-        el.classList.remove('active-token');
-      });
-      if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active-token');
-      }
+      const targetEl = (event && event.currentTarget)
+        ? event.currentTarget
+        : document.querySelector(`#vslSubtitleTokensBox .reading-token[data-sub-idx="${subIdx}"][data-tok-idx="${tokIdx}"]`);
+      const wasAlreadyActive = Boolean(targetEl && targetEl.classList.contains('active-token'));
 
       const lookup = srsGetLookup();
       const lw = lookup.get(tok.hanzi);
@@ -18698,6 +19048,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         || (lw && (lw.vietnamese || lw.vi || lw.meaning))
         || meta.vietnamese
         || (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].vietnamese)
+        || (typeof VSL_COMMON_CHAR_GLOSS !== 'undefined' && VSL_COMMON_CHAR_GLOSS[tok.hanzi])
         || '';
 
       const resolvedPinyin = (fixedCompound && fixedCompound.pinyin)
@@ -18707,17 +19058,69 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         || (lw && lw.pinyin)
         || meta.pinyin
         || (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].pinyin)
+        || (typeof getLocalTokenPinyin === 'function' ? getLocalTokenPinyin(tok.hanzi) : '')
         || '';
 
       if (!tok.pinyin && resolvedPinyin) tok.pinyin = resolvedPinyin;
       if (!tok.vietnamese && resolvedMeaning) tok.vietnamese = resolvedMeaning;
+
+      if (targetEl) {
+        const pyEl = targetEl.querySelector('.vsl-tok-pinyin, .token-pinyin');
+        if (pyEl && resolvedPinyin) pyEl.textContent = resolvedPinyin;
+        const glEl = targetEl.querySelector('.token-vi-gloss');
+        if (glEl && resolvedMeaning) glEl.textContent = String(resolvedMeaning).split(/[;,/]/)[0].trim();
+      }
+
+      // Store reference for inline token editing in Video Studio
+      vslActiveTokenRef = {
+        lessonId: lesson.id,
+        subIdx,
+        tokIdx,
+        origHanzi: tok.hanzi,
+        origPinyin: resolvedPinyin,
+        origVi: resolvedMeaning,
+        pendingSentenceVi: ''
+      };
+
+      const drawer = document.getElementById('vslTokenDrawer');
+
+      // Quick Lookup Mode:
+      // - 1st tap: show Pinyin above + Nghĩa TV below inline, hide bottom drawer, speak word
+      // - 2nd tap on the same active word: Save / Unsave word in review list
+      if (isQuickLookupModeActive && !forceOpenDrawer) {
+        if (drawer) drawer.style.display = 'none';
+        if (wasAlreadyActive) {
+          toggleWordInVideoLesson(lesson.id, tok);
+          if (targetEl) targetEl.classList.add('active-token');
+          return;
+        }
+        document.querySelectorAll('#vslSubtitleTokensBox .reading-token').forEach(el => {
+          el.classList.remove('active-token');
+        });
+        if (targetEl) {
+          targetEl.classList.add('active-token');
+        }
+        if (!resolvedMeaning) {
+          quickLookupFillMissingTokenMeaning(tok, targetEl);
+        }
+        if (autoSpeakOnTick && tok.hanzi) {
+          speakChinese(tok.hanzi);
+        }
+        return;
+      }
+
+      document.querySelectorAll('#vslSubtitleTokensBox .reading-token').forEach(el => {
+        el.classList.remove('active-token');
+      });
+      if (targetEl) {
+        targetEl.classList.add('active-token');
+      }
 
       const dHanzi = document.getElementById('vslDrawerHanzi');
       const dPinyin = document.getElementById('vslDrawerPinyin');
       const dMeaning = document.getElementById('vslDrawerMeaning');
       const btnSpeak = document.getElementById('vslBtnSpeakDrawerWord');
       const btnToggleSave = document.getElementById('vslBtnToggleWordInReviewList');
-      const drawer = document.getElementById('vslTokenDrawer');
 
       if (dHanzi) {
         dHanzi.textContent = tok.hanzi;
@@ -18731,16 +19134,6 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         btnSpeak.onclick = () => speakChinese(tok.hanzi);
       }
 
-      // Store reference for inline token editing in Video Studio
-      vslActiveTokenRef = {
-        lessonId: lesson.id,
-        subIdx,
-        tokIdx,
-        origHanzi: tok.hanzi,
-        origPinyin: resolvedPinyin,
-        origVi: resolvedMeaning,
-        pendingSentenceVi: ''
-      };
       vslToggleTokenEditBox(false);
       const editH = document.getElementById('vslEditTokenHanziInput');
       const editP = document.getElementById('vslEditTokenPinyinInput');
