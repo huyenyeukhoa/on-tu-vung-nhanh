@@ -1324,13 +1324,17 @@
       flex-direction: column;
     }
 
-    /* Foldable Inner Screen (e.g. OPPO Find N5 8.12" ~600px-960px): Full-screen edge-to-edge with spacious layout */
-    @media (min-width: 580px) and (max-width: 980px) {
+    /* Foldable Inner Screen (e.g. OPPO Find N5 8.12" ~580px-739px): Full-screen edge-to-edge with spacious layout */
+    @media (min-width: 580px) and (max-width: 739px), (min-width: 580px) and (max-width: 1024px) and (orientation: landscape) {
       .app-header {
         padding: 11px 18px !important;
       }
       .top-collapsible-panel {
-        padding: 10px 18px 12px 18px !important;
+        padding: 0 !important;
+      }
+      .compact-study-row,
+      .controls-bar {
+        padding: 8px 18px !important;
       }
       .vocab-container {
         padding: 12px 18px calc(52px + env(safe-area-inset-bottom, 0px)) 18px !important;
@@ -1356,7 +1360,7 @@
       }
       #aiModal .modal-card,
       #readingInputModal .modal-card,
-      #customGroupModal .modal-card,
+      #customGroupsModal .modal-card,
       #aiStoryModal .modal-card,
       #libraryModal .modal-card {
         max-width: min(680px, 92vw) !important;
@@ -1366,16 +1370,16 @@
       }
     }
 
-    /* Desktop (> 980px): keep full-viewport background, center content nicely */
-    @media (min-width: 981px) {
-      body {
+    /* Desktop Landscape (> 1024px): keep full-viewport background, center content nicely */
+    @media (min-width: 1025px) and (orientation: landscape) {
+      body:not(.s10-ultra-portrait) {
         max-width: 860px;
         box-shadow: 0 0 30px rgba(0,0,0,0.12);
       }
-      #readingViewModal {
+      body:not(.s10-ultra-portrait) #readingViewModal {
         padding: 16px !important;
       }
-      #readingViewModal .modal-card {
+      body:not(.s10-ultra-portrait) #readingViewModal .modal-card {
         max-width: 820px !important;
         max-height: 94vh !important;
         height: auto !important;
@@ -1383,6 +1387,525 @@
         margin: 0 auto !important;
         box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
         border: 1px solid #e5e7eb !important;
+      }
+    }
+
+    /* ==========================================================================
+       SAMSUNG GALAXY TAB S10 ULTRA 14.6 INCH (PORTRAIT / DỌC) AUTO-ADAPTIVE UI
+       Automatically activates on large portrait tablets (width >= 740px in portrait
+       or detected via body.s10-ultra-portrait)
+       ========================================================================== */
+    @media (min-width: 740px) and (orientation: portrait), (min-width: 680px) and (min-height: 1050px) and (orientation: portrait) {
+      body {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100dvh !important;
+        box-shadow: none !important;
+      }
+      .app-header {
+        padding: 14px 24px !important;
+        gap: 12px !important;
+      }
+      .header-left {
+        gap: 10px !important;
+      }
+      .header-title {
+        font-size: 21px !important;
+      }
+      .streak-chip {
+        height: 34px !important;
+        padding: 0 13px 0 10px !important;
+        font-size: 14.5px !important;
+        gap: 5px !important;
+      }
+      .streak-chip .streak-chip-flame {
+        font-size: 16px !important;
+      }
+      .header-right {
+        gap: 8px !important;
+      }
+      .icon-action-btn {
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 17px !important;
+      }
+      .srs-bell-count {
+        min-width: 20px !important;
+        height: 20px !important;
+        font-size: 11px !important;
+      }
+      .top-collapsible-panel {
+        padding: 0 !important;
+        max-height: 340px;
+      }
+      .compact-study-row {
+        padding: 10px 24px !important;
+        gap: 10px !important;
+      }
+      .compact-bar-btn,
+      .compact-study-row .custom-group-select-btn,
+      .custom-group-select-btn.compact-bar-btn {
+        height: 44px !important;
+        padding: 0 16px !important;
+        font-size: 14.5px !important;
+        border-radius: 14px !important;
+        gap: 6px !important;
+      }
+      .compact-bar-btn .dropdown-chevron,
+      .custom-group-select-btn .select-arrow {
+        font-size: 11px !important;
+      }
+      .compact-dropdown-menu {
+        min-width: 230px !important;
+        padding: 8px !important;
+        border-radius: 16px !important;
+      }
+      .dropdown-menu-item {
+        padding: 11px 14px !important;
+        font-size: 14.5px !important;
+        border-radius: 11px !important;
+      }
+      .dropdown-item-count {
+        font-size: 13px !important;
+      }
+      .compact-search-box {
+        height: 44px !important;
+        flex: 0 0 190px !important;
+        min-width: 140px !important;
+        max-width: 260px !important;
+        border-radius: 14px !important;
+        padding: 0 28px 0 34px !important;
+      }
+      .compact-search-box:focus-within {
+        flex: 0 0 240px !important;
+      }
+      .compact-search-icon {
+        left: 11px !important;
+        font-size: 14px !important;
+      }
+      .compact-search-input {
+        font-size: 14.5px !important;
+      }
+      .compact-search-input::placeholder {
+        font-size: 13.5px !important;
+      }
+      .compact-search-clear {
+        right: 7px !important;
+        width: 20px !important;
+        height: 20px !important;
+        font-size: 11px !important;
+      }
+      .controls-bar {
+        padding: 10px 24px !important;
+        gap: 10px !important;
+      }
+      .control-btn {
+        height: 46px !important;
+        font-size: 20px !important;
+        border-radius: 13px !important;
+      }
+      #swapIcon {
+        font-size: 21px !important;
+      }
+      #btnToggleTapMode img {
+        width: 26px !important;
+        height: 26px !important;
+      }
+      #btnAutoPlayList img {
+        width: 30px !important;
+        height: 30px !important;
+      }
+      /* Main 2-Column Vocabulary List */
+      .vocab-container {
+        padding: 16px 24px calc(76px + env(safe-area-inset-bottom, 0px)) 24px !important;
+      }
+      .vocab-list {
+        border-radius: 22px !important;
+      }
+      .vocab-item {
+        padding: 18px 24px !important;
+      }
+      .col-main {
+        padding-right: 14px !important;
+        min-height: 36px !important;
+      }
+      .hanzi-text {
+        font-size: 26px !important;
+        line-height: 1.35 !important;
+      }
+      .pinyin-text {
+        font-size: 15.5px !important;
+        margin-bottom: 3px !important;
+      }
+      .vietnamese-text {
+        font-size: 17.5px !important;
+        line-height: 1.42 !important;
+      }
+      .srs-dot {
+        width: 10px !important;
+        height: 10px !important;
+        margin-right: 9px !important;
+      }
+      .search-level-badge {
+        font-size: 11.5px !important;
+        padding: 2px 7px !important;
+      }
+      .actions-cell {
+        gap: 10px !important;
+        padding-left: 8px !important;
+      }
+      body.left-hand-mode .vocab-item > .actions-cell {
+        padding-right: 16px !important;
+      }
+      .btn-circle {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 15px !important;
+      }
+      /* SRS Banner on Main Screen */
+      .srs-banner {
+        padding: 14px 20px !important;
+        border-radius: 18px !important;
+        margin-bottom: 16px !important;
+      }
+      .srs-banner-title {
+        font-size: 16.5px !important;
+      }
+      .srs-banner-sub {
+        font-size: 14px !important;
+      }
+      .srs-mini-btn,
+      .srs-mini-btn.srs-story-btn,
+      .srs-mini-btn.srs-secondary-btn {
+        font-size: 14px !important;
+        padding: 8px 14px !important;
+        border-radius: 12px !important;
+      }
+      /* Bottom Counter Bar */
+      .bottom-bar {
+        left: 24px !important;
+        right: 24px !important;
+        bottom: max(14px, env(safe-area-inset-bottom, 14px)) !important;
+        height: 62px !important;
+        border-radius: 28px !important;
+      }
+      .counter-badge {
+        font-size: 15.5px !important;
+        padding: 7px 14px !important;
+      }
+      .icon-badge {
+        width: 21px !important;
+        height: 21px !important;
+        font-size: 12px !important;
+      }
+      /* Reading Passage Full-Screen View */
+      #readingViewModal {
+        padding: 0 !important;
+      }
+      #readingViewModal .modal-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+      }
+      #readingViewModal .modal-header {
+        padding: 12px 22px !important;
+        gap: 10px !important;
+      }
+      #readingViewModal #btnCustomArticleSelect {
+        font-size: 18.5px !important;
+      }
+      .reading-audio-btn {
+        font-size: 24px !important;
+        padding: 5px 8px !important;
+      }
+      .reading-playing-gif {
+        width: 36px !important;
+        height: 36px !important;
+      }
+      #btnPrevReadingArticle,
+      #btnNextReadingArticle {
+        font-size: 14px !important;
+        width: 34px !important;
+        height: 34px !important;
+      }
+      #btnOpenStudyGroupFromReading {
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 10px !important;
+      }
+      #btnOpenStudyGroupFromReading svg {
+        width: 21px !important;
+        height: 21px !important;
+      }
+      .modal-close-btn {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 18px !important;
+      }
+      #readingViewModal .modal-body {
+        padding: 12px 22px 18px 22px !important;
+      }
+      #readingVocabStatsBar {
+        margin-bottom: 12px !important;
+        gap: 8px !important;
+      }
+      #btnToggleHighlightH6,
+      #btnToggleHighlightH79 {
+        font-size: 13px !important;
+        padding: 4px 10px !important;
+        border-radius: 9px !important;
+      }
+      #readingVocabStatsBar .tiny-underline-toggle-btn {
+        font-size: 13px !important;
+        padding: 5px 12px !important;
+        border-radius: 9px !important;
+      }
+      .reading-passage-box {
+        padding: 26px 30px 105px 30px !important;
+        font-size: 26px !important;
+        line-height: 2.25 !important;
+        border-radius: 22px !important;
+      }
+      .reading-para-box {
+        line-height: 2.25 !important;
+        margin-bottom: 18px !important;
+      }
+      #readingPassageContainer.show-vi-gloss .reading-para-box {
+        line-height: 2.62 !important;
+      }
+      #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-para-box {
+        line-height: 2.55 !important;
+      }
+      .tiny-para-toggle-btn,
+      .tiny-para-audio-btn {
+        font-size: 17px !important;
+        padding: 2px 5px !important;
+      }
+      .reading-token .token-pinyin {
+        font-size: 13px !important;
+      }
+      .reading-token .token-vi-gloss {
+        font-size: 13px !important;
+        max-width: 185px !important;
+      }
+      .reading-token .token-vi-gloss.is-long-gloss {
+        width: 150px !important;
+        max-width: 150px !important;
+      }
+      #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-vi-gloss {
+        font-size: 13px !important;
+      }
+      #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token.has-long-gloss,
+      #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token:has(.token-vi-gloss.is-long-gloss) {
+        min-width: 156px !important;
+      }
+      .reading-para-vi-box {
+        font-size: 18.5px !important;
+        padding: 14px 18px !important;
+        border-radius: 16px !important;
+        line-height: 1.72 !important;
+      }
+      /* AI Story Target Words Card in Reading View */
+      .story-reader-vocab-card {
+        padding: 16px 18px !important;
+        border-radius: 18px !important;
+      }
+      .story-reader-vocab-card > div:first-child {
+        font-size: 15px !important;
+        margin-bottom: 8px !important;
+      }
+      .story-reader-vocab-item {
+        padding: 10px 14px !important;
+        border-radius: 12px !important;
+        margin-top: 8px !important;
+      }
+      .story-reader-vocab-item > div > span:first-child {
+        font-size: 21px !important;
+      }
+      .story-reader-vocab-item > div > span:nth-child(2) {
+        font-size: 14.5px !important;
+      }
+      .story-reader-vocab-item > div > div {
+        font-size: 15px !important;
+        margin-top: 3px !important;
+      }
+      .story-reader-vocab-item .icon-action-btn {
+        width: 34px !important;
+        height: 34px !important;
+      }
+      .story-reader-vocab-item .icon-action-btn img {
+        width: 30px !important;
+        height: 30px !important;
+      }
+      .story-reader-footer .ai-story-act-btn {
+        padding: 13px 14px !important;
+        font-size: 15px !important;
+        border-radius: 14px !important;
+      }
+      #btnReadingScrollToTop {
+        bottom: 28px !important;
+        right: 26px !important;
+        padding: 8px 16px !important;
+        font-size: 13.5px !important;
+      }
+      /* Bottom Word Inspector Drawers */
+      #readingTokenDrawer,
+      #vslTokenDrawer {
+        padding: 20px 26px 24px 26px !important;
+        border-top-left-radius: 26px !important;
+        border-top-right-radius: 26px !important;
+      }
+      #drawerHanzi,
+      #vslDrawerHanzi {
+        font-size: 30px !important;
+      }
+      #drawerPinyin,
+      #vslDrawerPinyin {
+        font-size: 16.5px !important;
+      }
+      #drawerMeaning,
+      #vslDrawerMeaning {
+        font-size: 16.5px !important;
+        margin-bottom: 14px !important;
+      }
+      #btnToggleWordInReviewList,
+      #vslBtnToggleWordInReviewList {
+        padding: 13px !important;
+        font-size: 15.5px !important;
+        border-radius: 14px !important;
+      }
+      /* Dialog & Feature Modals on 14.6" Portrait */
+      #aiModal .modal-card,
+      #readingInputModal .modal-card,
+      #customGroupsModal .modal-card,
+      #aiStoryModal .modal-card,
+      #libraryModal .modal-card,
+      #hskNewsModal .modal-card,
+      #videoLearningModal:not(.studio-mode) .modal-card,
+      #groupPickerModal .modal-card,
+      #readingArticlePickerModal .modal-card,
+      #apiKeyModal .modal-card,
+      #srsStatsModal .modal-card,
+      #preloadAiModal .modal-card,
+      .af-modal-card {
+        max-width: min(740px, 90vw) !important;
+        border-radius: 26px !important;
+      }
+      .modal-title,
+      .af-title {
+        font-size: 19px !important;
+      }
+      .modal-body {
+        font-size: 16px !important;
+      }
+      /* AI Word Explanation & Flashcards */
+      .ai-word-title {
+        font-size: 36px !important;
+      }
+      .ai-word-pinyin {
+        font-size: 18px !important;
+      }
+      .ai-section {
+        padding: 18px 20px !important;
+        border-radius: 18px !important;
+      }
+      .ai-section-title {
+        font-size: 16px !important;
+      }
+      .example-hanzi,
+      .af-example-hanzi {
+        font-size: 21px !important;
+      }
+      .example-pinyin,
+      .af-example-pinyin {
+        font-size: 15px !important;
+      }
+      .example-vietnamese,
+      .af-example-vi {
+        font-size: 15.5px !important;
+      }
+      .af-hanzi {
+        font-size: 46px !important;
+      }
+      .af-pinyin {
+        font-size: 19px !important;
+      }
+      .af-meaning {
+        font-size: 18px !important;
+      }
+      .af-ctrl-btn {
+        padding: 12px 12px !important;
+        font-size: 15px !important;
+      }
+      /* AI Story Setup Modal */
+      .ai-story-body {
+        padding: 18px 22px 24px !important;
+      }
+      .ai-story-sec-title {
+        font-size: 15.5px !important;
+      }
+      .ai-story-btn-dice {
+        font-size: 13.5px !important;
+        padding: 6px 14px !important;
+      }
+      .ai-story-chips-list {
+        max-height: 260px !important;
+        gap: 9px !important;
+        padding: 14px !important;
+      }
+      .ai-story-chip {
+        font-size: 14.5px !important;
+        padding: 7px 14px !important;
+      }
+      .ai-story-chip .chip-hanzi {
+        font-size: 17.5px !important;
+      }
+      #btnStartGenerateStory {
+        padding: 15px !important;
+        font-size: 16px !important;
+        border-radius: 15px !important;
+      }
+      /* Video Learning Studio Full-Screen */
+      #videoLearningModal.studio-mode {
+        padding: 0 !important;
+      }
+      #videoLearningModal.studio-mode .modal-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+      }
+      #vslStudioView > .modal-header {
+        padding: 12px 22px !important;
+      }
+      #vslStudioView > .modal-body {
+        padding: 12px 22px 18px 22px !important;
+      }
+      .vsl-player-screen {
+        max-height: 36vh !important;
+      }
+      .vsl-ctrl-btn {
+        font-size: 14px !important;
+        padding: 7px 12px !important;
+      }
+      #vslSubtitleTokensBox {
+        font-size: 26px !important;
+      }
+      #vslSubtitleTokensBox .vsl-tok-pinyin,
+      #vslSubtitleTokensBox .token-pinyin,
+      #vslSubtitleTokensBox .reading-token .token-vi-gloss {
+        font-size: 13px !important;
+      }
+      .vsl-vi-box {
+        font-size: 16.5px !important;
+        padding: 10px 16px !important;
       }
     }
 
@@ -3838,11 +4361,11 @@
       backdrop-filter: blur(14px) !important;
       -webkit-backdrop-filter: blur(14px) !important;
     }
-    @media (min-width: 981px) {
-      #videoLearningModal.studio-mode {
+    @media (min-width: 1025px) and (orientation: landscape) {
+      body:not(.s10-ultra-portrait) #videoLearningModal.studio-mode {
         padding: 16px !important;
       }
-      #videoLearningModal.studio-mode .modal-card {
+      body:not(.s10-ultra-portrait) #videoLearningModal.studio-mode .modal-card {
         max-width: 820px !important;
         height: 94vh !important;
         max-height: 94vh !important;
@@ -5450,6 +5973,25 @@
   <audio id="audioPlayer" style="display:none;"></audio>
 
   <script>
+    // Auto-detect Samsung Galaxy Tab S10 Ultra 14.6" (Portrait) & large portrait tablets
+    function syncLargeTabletPortraitMode() {
+      try {
+        const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+        const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+        const isPortrait = vh > vw || (window.matchMedia && window.matchMedia('(orientation: portrait)').matches);
+        const isLargePortrait = isPortrait && (vw >= 740 || (vw >= 680 && vh >= 1050));
+        if (document.body) {
+          document.body.classList.toggle('s10-ultra-portrait', Boolean(isLargePortrait));
+        }
+      } catch (e) {}
+    }
+    syncLargeTabletPortraitMode();
+    window.addEventListener('resize', syncLargeTabletPortraitMode, { passive: true });
+    window.addEventListener('orientationchange', () => setTimeout(syncLargeTabletPortraitMode, 60), { passive: true });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', syncLargeTabletPortraitMode, { passive: true });
+    }
+
     // Safe LocalStorage Helper Functions
     function safeGetStorage(key, defaultValue) {
       try {
