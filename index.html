@@ -1370,8 +1370,8 @@
       }
     }
 
-    /* Desktop Landscape (> 1024px): keep full-viewport background, center content nicely */
-    @media (min-width: 1025px) and (orientation: landscape) {
+    /* Desktop Landscape (> 1100px, non-touch mouse/trackpad monitor only): keep full-viewport background, center content nicely */
+    @media (min-width: 1100px) and (orientation: landscape) and (hover: hover) and (pointer: fine) and (any-pointer: fine) {
       body:not(.s10-ultra-portrait) {
         max-width: 860px;
         box-shadow: 0 0 30px rgba(0,0,0,0.12);
@@ -1395,7 +1395,7 @@
        Automatically activates on large portrait tablets (width >= 740px in portrait
        or detected via body.s10-ultra-portrait)
        ========================================================================== */
-    @media (min-width: 740px) and (orientation: portrait), (min-width: 680px) and (min-height: 1050px) and (orientation: portrait) {
+    @media (min-width: 740px) and (orientation: portrait), (min-width: 680px) and (min-height: 1050px) and (orientation: portrait), (min-width: 740px) and (any-pointer: coarse) {
       body {
         width: 100% !important;
         max-width: 100% !important;
@@ -1654,14 +1654,17 @@
         gap: 8px !important;
       }
       #btnToggleHighlightH6,
-      #btnToggleHighlightH79 {
+      #btnToggleHighlightH79,
+      #btnVslHighlightH6,
+      #btnVslHighlightH79 {
         font-size: 13px !important;
         padding: 4px 10px !important;
         border-radius: 9px !important;
       }
-      #readingVocabStatsBar .tiny-underline-toggle-btn {
+      #readingVocabStatsBar .tiny-underline-toggle-btn,
+      #vslStudioView .tiny-underline-toggle-btn {
         font-size: 13px !important;
-        padding: 5px 12px !important;
+        padding: 5px 11px !important;
         border-radius: 9px !important;
       }
       .reading-passage-box {
@@ -1896,15 +1899,17 @@
         padding: 7px 12px !important;
       }
       #vslSubtitleTokensBox {
-        font-size: 26px !important;
+        font-size: var(--vsl-hanzi-size, 26px) !important;
       }
-      #vslSubtitleTokensBox .vsl-tok-pinyin,
-      #vslSubtitleTokensBox .token-pinyin,
+      #vslSubtitleTokensBox .reading-token .vsl-tok-pinyin,
+      #vslSubtitleTokensBox .reading-token .token-pinyin {
+        font-size: var(--vsl-pinyin-size, 14px) !important;
+      }
       #vslSubtitleTokensBox .reading-token .token-vi-gloss {
-        font-size: 13px !important;
+        font-size: var(--vsl-gloss-size, 13.5px) !important;
       }
       .vsl-vi-box {
-        font-size: 16.5px !important;
+        font-size: var(--vsl-vi-line-size, 17.5px) !important;
         padding: 10px 16px !important;
       }
     }
@@ -4361,7 +4366,7 @@
       backdrop-filter: blur(14px) !important;
       -webkit-backdrop-filter: blur(14px) !important;
     }
-    @media (min-width: 1025px) and (orientation: landscape) {
+    @media (min-width: 1100px) and (orientation: landscape) and (hover: hover) and (pointer: fine) and (any-pointer: fine) {
       body:not(.s10-ultra-portrait) #videoLearningModal.studio-mode {
         padding: 16px !important;
       }
@@ -4771,7 +4776,7 @@
     }
     #vslSubtitleTokensBox {
       line-height: 1.58;
-      font-size: 20px;
+      font-size: var(--vsl-hanzi-size, 21px) !important;
       font-family: var(--font-hanzi);
       text-indent: 0 !important;
       line-break: strict;
@@ -4803,23 +4808,24 @@
       padding: 0 !important;
       line-height: 1.2 !important;
     }
-    #vslSubtitleTokensBox .vsl-tok-pinyin,
-    #vslSubtitleTokensBox .token-pinyin {
-      font-family: var(--font-mali);
-      font-size: 10.5px;
-      font-weight: 700;
-      color: #766299;
-      line-height: 1.15;
+    #vslSubtitleTokensBox .reading-token .vsl-tok-pinyin,
+    #vslSubtitleTokensBox .reading-token .token-pinyin {
+      display: block !important;
+      font-family: var(--font-mali), cursive, sans-serif !important;
+      font-size: var(--vsl-pinyin-size, 11.3px) !important;
+      font-weight: 700 !important;
+      color: #766299 !important;
+      line-height: 1.15 !important;
       letter-spacing: -0.25px;
       word-spacing: -1.5px;
       margin-bottom: 1px;
       padding: 0 0.5px;
-      white-space: nowrap;
+      white-space: nowrap !important;
     }
-    #vslSubtitleTokensBox.hide-vsl-pinyin .vsl-tok-pinyin,
-    #vslSubtitleTokensBox.hide-vsl-pinyin .token-pinyin,
-    #vslSubtitleTokensBox.hide-pinyin .vsl-tok-pinyin,
-    #vslSubtitleTokensBox.hide-pinyin .token-pinyin {
+    #vslSubtitleTokensBox.hide-vsl-pinyin .reading-token .vsl-tok-pinyin,
+    #vslSubtitleTokensBox.hide-vsl-pinyin .reading-token .token-pinyin,
+    #vslSubtitleTokensBox.hide-pinyin .reading-token .vsl-tok-pinyin,
+    #vslSubtitleTokensBox.hide-pinyin .reading-token .token-pinyin {
       display: none !important;
     }
     #vslSubtitleTokensBox.hide-vsl-hanzi .token-text,
@@ -4849,7 +4855,7 @@
       transform: none !important;
       margin-top: 1px;
       font-family: var(--font-mali), cursive, sans-serif !important;
-      font-size: 10.5px !important;
+      font-size: var(--vsl-gloss-size, 11px) !important;
       font-weight: 700 !important;
       line-height: 1.1 !important;
       color: #000000 !important;
@@ -4888,7 +4894,7 @@
       border: 1px solid #e2d8ef;
       color: #4b3b66;
       font-family: var(--font-mali);
-      font-size: 13.5px;
+      font-size: var(--vsl-vi-line-size, 14.5px) !important;
       font-weight: 600;
       line-height: 1.45;
       max-width: 100%;
@@ -5731,6 +5737,8 @@
                 <span style="width: 7px; height: 2.5px; background: #b08968; border-radius: 2px; display: inline-block;"></span>
                 H7-9: <b id="vslStatCountH79">0</b>
               </span>
+              <button type="button" id="vslBtnFontDec" onclick="vslChangeSubFontSize(-2)" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 800; padding: 2px 5.5px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #5e438c; cursor: pointer; font-family: var(--font-mali); white-space: nowrap;" title="Giảm cỡ chữ phụ đề (Chữ Hán, Pinyin &amp; Nghĩa TV cùng giảm theo)">A-</button>
+              <button type="button" id="vslBtnFontInc" onclick="vslChangeSubFontSize(2)" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 800; padding: 2px 5.5px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #5e438c; cursor: pointer; font-family: var(--font-mali); white-space: nowrap;" title="Tăng cỡ chữ phụ đề (Chữ Hán, Pinyin &amp; Nghĩa TV cùng tăng theo)">A+</button>
             </div>
             <div style="display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0;">
               <button type="button" id="vslBtnToggleQuickLookup" onclick="toggleVslQuickLookup()" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 5.5px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; font-family: var(--font-mali); white-space: nowrap;" title="Tra nhanh: Chạm 1 lần hiện Pinyin + Nghĩa tại chỗ (ẩn bảng dưới), chạm lần 2 để Lưu/Bỏ lưu từ, giữ 0.5s mở bảng Sửa/AI">Tra nhanh</button>
@@ -20146,6 +20154,75 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       if (el79) el79.textContent = String(h79Set.size);
     }
 
+    function getLocalTokenPinyin(hanziStr) {
+      const s = String(hanziStr || '').trim();
+      if (!s) return '';
+      if (typeof FIXED_COMPOUND_PHRASES !== 'undefined' && FIXED_COMPOUND_PHRASES[s] && FIXED_COMPOUND_PHRASES[s].pinyin) {
+        return FIXED_COMPOUND_PHRASES[s].pinyin;
+      }
+      if (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function') {
+        return window.getInstantPinyin(s) || '';
+      }
+      return '';
+    }
+
+    const VSL_SUB_FONT_SIZE_KEY = 'hsk_vsl_sub_font_size';
+    let vslSubFontSize = (() => {
+      try {
+        const raw = localStorage.getItem(VSL_SUB_FONT_SIZE_KEY);
+        const n = raw ? parseInt(raw, 10) : NaN;
+        return (!isNaN(n) && n >= 15 && n <= 44) ? n : null;
+      } catch (e) {
+        return null;
+      }
+    })();
+
+    function vslApplySubFontSize() {
+      const studioEl = document.getElementById('vslStudioView');
+      const stageEl = document.getElementById('vslSubtitleStage');
+      const targets = [studioEl, stageEl].filter(Boolean);
+      if (!targets.length) return;
+      if (typeof vslSubFontSize !== 'number' || isNaN(vslSubFontSize)) {
+        targets.forEach(el => {
+          el.style.removeProperty('--vsl-hanzi-size');
+          el.style.removeProperty('--vsl-pinyin-size');
+          el.style.removeProperty('--vsl-gloss-size');
+          el.style.removeProperty('--vsl-vi-line-size');
+        });
+        return;
+      }
+      const hanziPx = Math.max(15, Math.min(44, vslSubFontSize));
+      const pinyinPx = Math.round(hanziPx * 0.54 * 10) / 10;
+      const glossPx = Math.round(hanziPx * 0.52 * 10) / 10;
+      const viLinePx = Math.round(hanziPx * 0.68 * 10) / 10;
+      targets.forEach(el => {
+        el.style.setProperty('--vsl-hanzi-size', `${hanziPx}px`);
+        el.style.setProperty('--vsl-pinyin-size', `${pinyinPx}px`);
+        el.style.setProperty('--vsl-gloss-size', `${glossPx}px`);
+        el.style.setProperty('--vsl-vi-line-size', `${viLinePx}px`);
+      });
+    }
+
+    function vslChangeSubFontSize(delta) {
+      let currentPx = vslSubFontSize;
+      if (typeof currentPx !== 'number' || isNaN(currentPx)) {
+        const tokBox = document.getElementById('vslSubtitleTokensBox');
+        const computed = tokBox ? parseFloat(window.getComputedStyle(tokBox).fontSize) : NaN;
+        if (!isNaN(computed) && computed > 10) {
+          currentPx = Math.round(computed);
+        } else {
+          currentPx = document.documentElement.classList.contains('is-large-tablet-portrait') ? 26 : 22;
+        }
+      }
+      const nextPx = Math.max(15, Math.min(44, currentPx + (Number(delta) || 0)));
+      vslSubFontSize = nextPx;
+      try {
+        localStorage.setItem(VSL_SUB_FONT_SIZE_KEY, String(nextPx));
+      } catch (e) {}
+      vslApplySubFontSize();
+      showToast(`🔠 Cỡ chữ phụ đề: ${nextPx}px`);
+    }
+
     function toggleVslHskHighlight(level) {
       if (level === 'hsk6') vslHighlightH6 = !vslHighlightH6;
       if (level === 'hsk79') vslHighlightH79 = !vslHighlightH79;
@@ -20154,6 +20231,21 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
 
     function toggleVslPinyin() {
       vslShowPinyin = !vslShowPinyin;
+      if (vslShowPinyin) {
+        const tokBox = document.getElementById('vslSubtitleTokensBox');
+        if (tokBox) {
+          tokBox.querySelectorAll('.reading-token').forEach(tokEl => {
+            const pyEl = tokEl.querySelector('.vsl-tok-pinyin, .token-pinyin');
+            if (pyEl && !String(pyEl.textContent || '').trim()) {
+              const h = tokEl.getAttribute('data-hanzi') || '';
+              if (h) {
+                const meta = lookupDictMetaForToken(h);
+                pyEl.textContent = (meta && meta.pinyin) || getLocalTokenPinyin(h) || '';
+              }
+            }
+          });
+        }
+      }
       vslUpdateDisplayToggleButtonsUI();
     }
 
@@ -20173,6 +20265,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
     }
 
     function vslUpdateDisplayToggleButtonsUI() {
+      vslApplySubFontSize();
       const tokBox = document.getElementById('vslSubtitleTokensBox');
       const viBox = document.getElementById('vslSubtitleViBox');
       if (tokBox) {
@@ -20269,17 +20362,19 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
 
         const fixedCompound = FIXED_COMPOUND_PHRASES[h];
         const lw = lookup.get(h);
-        const meta = (!tok.pinyin || !tok.vietnamese) ? lookupDictMetaForToken(h) : { pinyin: '', vietnamese: '' };
-        const resolvedPinyin = (tok._userEdited && tok.pinyin)
+        const cleanTokPy = String(tok.pinyin || '').trim();
+        const cleanTokVi = String(tok.vietnamese || '').trim();
+        const meta = (!cleanTokPy || !cleanTokVi) ? lookupDictMetaForToken(h) : { pinyin: '', vietnamese: '' };
+        const resolvedPinyin = (tok._userEdited && cleanTokPy)
           || (fixedCompound && fixedCompound.pinyin)
-          || tok.pinyin
+          || cleanTokPy
           || (lw && lw.pinyin)
           || meta.pinyin
-          || (typeof getLocalTokenPinyin === 'function' ? getLocalTokenPinyin(h) : '')
+          || getLocalTokenPinyin(h)
           || '';
-        const rawGloss = (tok._userEdited && tok.vietnamese)
+        const rawGloss = (tok._userEdited && cleanTokVi)
           || (fixedCompound && fixedCompound.vietnamese)
-          || tok.vietnamese
+          || cleanTokVi
           || (lw && (lw.vietnamese || lw.vi || lw.meaning))
           || meta.vietnamese
           || (typeof VSL_COMMON_CHAR_GLOSS !== 'undefined' && VSL_COMMON_CHAR_GLOSS[h])
@@ -20977,6 +21072,7 @@ Hãy trả về DUY NHẤT một đối tượng JSON hợp lệ (không bọc m
     window.toggleVslHanzi = toggleVslHanzi;
     window.toggleVslViLine = toggleVslViLine;
     window.toggleVslGloss = toggleVslGloss;
+    window.vslChangeSubFontSize = vslChangeSubFontSize;
     window.handleVideoTokenClick = handleVideoTokenClick;
     window.openStudyGroupFromActiveVideo = openStudyGroupFromActiveVideo;
     window.vslForceReproofreadCurrentVideo = vslForceReproofreadCurrentVideo;
