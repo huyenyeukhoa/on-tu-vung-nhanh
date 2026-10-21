@@ -18166,7 +18166,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
       if (!Array.isArray(s.tokens) || s.tokens.length === 0) return false;
       const hasVi = Boolean(String(s.vietnamese || s.vi || s.vi_text || '').trim());
       if (!hasVi) return false;
-      return Boolean(s._aiProofreadV4);
+      return Boolean(s._aiProofreadV4 || s._aiProofreadV2);
     }
 
     // Check if a subtitle needs AI proofreading/segmentation
@@ -18354,17 +18354,17 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
         .map(s => {
           const hasValidTokens = Array.isArray(s.tokens) && s.tokens.length > 0 && !vslTokensNeedLocalRebuild(s.tokens);
           const viStr = String(s.vietnamese || s.vi || s.vi_text || '').trim();
-          const isProofreadV4 = Boolean(!s._forceReproofread && s._aiProofreadV4 && hasValidTokens && viStr);
+          const isProofread = Boolean(!s._forceReproofread && (s._aiProofreadV4 || s._aiProofreadV2) && hasValidTokens && viStr);
           return {
             start: Number(s.start) || 0,
             end: Math.max((Number(s.start) || 0) + 0.6, Number(s.end) || ((Number(s.start) || 0) + 2.2)),
             text: toSimplifiedChinese(String(s.text || '').replace(/\s+/g, ' ').trim()),
             vietnamese: viStr,
             tokens: hasValidTokens ? mergeFixedCompoundTokensInList(s.tokens) : null,
-            _aiEnriched: isProofreadV4,
-            _aiProofreadV2: isProofreadV4,
-            _aiSegmentedV3: Boolean(isProofreadV4 && s._aiSegmentedV3),
-            _aiProofreadV4: isProofreadV4
+            _aiEnriched: isProofread,
+            _aiProofreadV2: isProofread,
+            _aiSegmentedV3: Boolean(isProofread && s._aiSegmentedV3),
+            _aiProofreadV4: isProofread
           };
         })
         .filter(s => s.text.length > 0);
@@ -18441,7 +18441,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
       const finalSentenceText = toSimplifiedChinese(String((seg && seg.text) || '').replace(/\s+/g, ' ').trim());
       if (seg && Array.isArray(seg.tokens) && seg.tokens.length > 0 && !vslTokensNeedLocalRebuild(seg.tokens)) {
         const viStr = String(seg.vietnamese || seg.vi || seg.vi_text || '').trim();
-        const isProofread = Boolean(!seg._forceReproofread && seg._aiProofreadV4 && viStr);
+        const isProofread = Boolean(!seg._forceReproofread && (seg._aiProofreadV4 || seg._aiProofreadV2) && viStr);
         return {
           start: Number(seg.start) || 0,
           end: Math.max((Number(seg.start) || 0) + 0.6, Number(seg.end) || ((Number(seg.start) || 0) + 2.2)),
@@ -18456,7 +18456,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
       }
       const tokens = vslBuildSubtitleTokensWithAiPhrases(finalSentenceText, seg && seg.phrases);
       const viStr = String((seg && (seg.vietnamese || seg.vi || seg.vi_text)) || '').trim();
-      const isProofread = Boolean(seg && !seg._forceReproofread && seg._aiProofreadV4 && viStr && tokens.length > 0);
+      const isProofread = Boolean(seg && !seg._forceReproofread && (seg._aiProofreadV4 || seg._aiProofreadV2) && viStr && tokens.length > 0);
       return {
         start: Number(seg && seg.start) || 0,
         end: Math.max((Number(seg && seg.start) || 0) + 0.6, Number(seg && seg.end) || ((Number(seg && seg.start) || 0) + 2.2)),
@@ -18537,6 +18537,9 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
       }
       if (changed) {
         saveVslLessonsToStorage(lesson.id);
+        if (lesson.sourceType === 'youtube' && lesson.youtubeId) {
+          vslSaveSharedMacSubtitles(lesson.youtubeId, lesson.subtitles);
+        }
       }
       return changed;
     }
@@ -18808,7 +18811,9 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
             if (activeVslLessonId === liveLesson.id) {
               vslUpdateReproofreadBtnUI(liveLesson, true);
               vslComputeLessonHskStats(liveLesson);
-              vslRenderCurrentSubtitleCard();
+              if (idxList.includes(activeVslSubIndex)) {
+                vslRenderCurrentSubtitleCard();
+              }
               if (isManualTrigger && anySuccess && !toastedFirstBatch) {
                 toastedFirstBatch = true;
                 showToast('✅ Đã sửa xong câu đang xem! Đang tiếp tục hoàn thiện các câu còn lại...');
@@ -19038,7 +19043,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         }
         if (Array.isArray(val) && val.length >= 2) {
           return val.map(s => {
-            const isProofread = !!(s._aiProofreadV4 && Array.isArray(s.tokens) && s.tokens.length > 0 && (s.vietnamese || s.vi));
+            const isProofread = !!((s._aiProofreadV4 || s._aiProofreadV2) && Array.isArray(s.tokens) && s.tokens.length > 0 && (s.vietnamese || s.vi));
             return {
               start: Number(s.start) || 0,
               end: s.end ? Number(s.end) : Number((Number(s.start || 0) + Math.max(0.8, Number(s.dur) || 2.5)).toFixed(2)),
@@ -19062,19 +19067,22 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       if (!ytId || !Array.isArray(subtitles) || subtitles.length < 2) return;
       try {
         const key = `dict_video_learning_subtitles_${ytId}`;
-        const value = subtitles.map(s => ({
-          start: Number(s.start) || 0,
-          end: Number(s.end) || Number((Number(s.start || 0) + 2.5).toFixed(2)),
-          text: String(s.text || '').trim(),
-          ipa: s.tokens ? s.tokens.map(t => t.pinyin).filter(Boolean).join(' ') : (s.ipa || ''),
-          vi: s.vietnamese || s.vi || '',
-          vi_text: s.vietnamese || s.vi_text || '',
-          tokens: Array.isArray(s.tokens) && s.tokens.length > 0 ? s.tokens : undefined,
-          _aiEnriched: !!s._aiProofreadV4,
-          _aiProofreadV2: !!s._aiProofreadV4,
-          _aiSegmentedV3: !!s._aiProofreadV4,
-          _aiProofreadV4: !!s._aiProofreadV4
-        }));
+        const value = subtitles.map(s => {
+          const isDone = !!(s._aiProofreadV4 || s._aiProofreadV2);
+          return {
+            start: Number(s.start) || 0,
+            end: Number(s.end) || Number((Number(s.start || 0) + 2.5).toFixed(2)),
+            text: String(s.text || '').trim(),
+            ipa: s.tokens ? s.tokens.map(t => t.pinyin).filter(Boolean).join(' ') : (s.ipa || ''),
+            vi: s.vietnamese || s.vi || '',
+            vi_text: s.vietnamese || s.vi_text || '',
+            tokens: Array.isArray(s.tokens) && s.tokens.length > 0 ? s.tokens : undefined,
+            _aiEnriched: isDone,
+            _aiProofreadV2: isDone,
+            _aiSegmentedV3: isDone,
+            _aiProofreadV4: isDone
+          };
+        });
         await fetch(`${VSL_MAC_SUPA_URL}/rest/v1/app_settings?on_conflict=key`, {
           method: 'POST',
           headers: vslGetMacSupaHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
@@ -19607,6 +19615,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
     }
 
     let vslSeekLockUntil = 0;
+    let vslPauseLockUntil = 0;
     let vslPendingSeekTarget = null;
     let vslPendingAutoPlay = false;
 
@@ -19618,6 +19627,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       vslPendingSeekTarget = target;
       vslPendingAutoPlay = Boolean(autoPlay);
       vslSeekLockUntil = Date.now() + 1800;
+      if (autoPlay) vslPauseLockUntil = 0;
 
       if (lesson.sourceType === 'youtube') {
         if (vslYtPlayer && typeof vslYtPlayer.seekTo === 'function') {
@@ -19660,6 +19670,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
     }
 
     function vslIsPlaying() {
+      if (Date.now() < vslPauseLockUntil) return false;
       const lesson = findVslLessonById(activeVslLessonId);
       if (!lesson) return false;
       if (lesson.sourceType === 'youtube') {
@@ -19673,6 +19684,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
     }
 
     function vslPauseVideo() {
+      vslPauseLockUntil = Date.now() + 650;
       const lesson = findVslLessonById(activeVslLessonId);
       if (!lesson) return;
       if (lesson.sourceType === 'youtube') {
@@ -19689,6 +19701,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
     }
 
     function vslPlayVideo() {
+      vslPauseLockUntil = 0;
       const lesson = findVslLessonById(activeVslLessonId);
       if (!lesson) return;
       vslAutoPausedForIndex = -1;
@@ -20617,6 +20630,10 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       if (activeVslSubIndex < 0) activeVslSubIndex = 0;
       if (activeVslSubIndex >= subs.length) activeVslSubIndex = subs.length - 1;
 
+      const prevActiveEl = tokBox.querySelector(`.reading-token.active-token[data-sub-idx="${activeVslSubIndex}"]`);
+      const prevActiveTokIdx = prevActiveEl ? prevActiveEl.getAttribute('data-tok-idx') : null;
+      const prevActiveHanzi = prevActiveEl ? prevActiveEl.getAttribute('data-hanzi') : null;
+
       const sub = subs[activeVslSubIndex];
       if (progBadge) progBadge.textContent = `${activeVslSubIndex + 1}/${subs.length}`;
 
@@ -20691,6 +20708,23 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         }
       }
       tokBox.innerHTML = finalTokensHtml;
+
+      if (prevActiveEl) {
+        let restoredEl = null;
+        if (prevActiveTokIdx !== null) {
+          const cand = tokBox.querySelector(`.reading-token[data-sub-idx="${activeVslSubIndex}"][data-tok-idx="${prevActiveTokIdx}"]`);
+          if (cand && (!prevActiveHanzi || cand.getAttribute('data-hanzi') === prevActiveHanzi)) {
+            restoredEl = cand;
+          }
+        }
+        if (!restoredEl && prevActiveHanzi) {
+          restoredEl = Array.from(tokBox.querySelectorAll(`.reading-token[data-sub-idx="${activeVslSubIndex}"]`))
+            .find(el => el.getAttribute('data-hanzi') === prevActiveHanzi) || null;
+        }
+        if (restoredEl) {
+          restoredEl.classList.add('active-token');
+        }
+      }
 
       const viLineText = String(sub.vietnamese || sub.vi || sub.vi_text || '').trim();
       viBox.textContent = viLineText;
