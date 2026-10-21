@@ -12930,364 +12930,50 @@ ${chunkText}
     function mergeFixedCompoundTokensInList(tokens) {
       if (!Array.isArray(tokens) || tokens.length === 0) return tokens;
 
-      // 0. Detach any leading/trailing punctuation accidentally glued to a word token (e.g. "，邻居" -> "，" + "邻居")
-      const unglued = [];
+      // Only detach accidental leading/trailing punctuation and fill missing fallback fields;
+      // NEVER merge adjacent tokens or overwrite Gemini AI's contextual Pinyin & Vietnamese meaning.
+      const cleaned = [];
       const leadPunctRe = /^([，。！？；：、“”‘’（）《》【】…—,.!?;:"'()\[\]\-]+)(.+)$/;
       const trailPunctRe = /^(.+?)([，。！？；：、“”‘’（）《》【】…—,.!?;:"'()\[\]\-]+)$/;
+
+      const finalizeSingleToken = (rawTok) => {
+        const tok = healCorruptedLegacyToken(rawTok);
+        if (!tok || !tok.hanzi) return null;
+        if (/[\u4e00-\u9fff]/.test(tok.hanzi)) {
+          const hasPy = Boolean(tok.pinyin && String(tok.pinyin).trim());
+          const hasVi = Boolean(tok.vietnamese && String(tok.vietnamese).trim());
+          if (!hasPy || !hasVi) {
+            const meta = lookupDictMetaForToken(tok.hanzi);
+            if (!hasPy) tok.pinyin = meta.pinyin || '';
+            if (!hasVi) tok.vietnamese = meta.vietnamese || '';
+          }
+        }
+        return tok;
+      };
+
       for (let i = 0; i < tokens.length; i++) {
-        let tok = healCorruptedLegacyToken(tokens[i]);
+        let tok = tokens[i];
         if (!tok || !tok.hanzi) continue;
         if (!AI_PUNCT_TEST_RE.test(tok.hanzi)) {
           const mLead = tok.hanzi.match(leadPunctRe);
           if (mLead && /[\u4e00-\u9fff]/.test(mLead[2])) {
-            unglued.push({ hanzi: mLead[1], pinyin: '', vietnamese: '', isVocab: false });
+            cleaned.push({ hanzi: mLead[1], pinyin: '', vietnamese: '', isVocab: false });
             tok = Object.assign({}, tok, { hanzi: mLead[2], isVocab: true });
           }
           const mTrail = tok.hanzi.match(trailPunctRe);
           if (mTrail && /[\u4e00-\u9fff]/.test(mTrail[1])) {
             const trailP = mTrail[2];
-            tok = Object.assign({}, tok, { hanzi: mTrail[1], isVocab: true });
-            unglued.push(tok);
-            unglued.push({ hanzi: trailP, pinyin: '', vietnamese: '', isVocab: false });
+            const cleanWord = finalizeSingleToken(Object.assign({}, tok, { hanzi: mTrail[1], isVocab: true }));
+            if (cleanWord) cleaned.push(cleanWord);
+            cleaned.push({ hanzi: trailP, pinyin: '', vietnamese: '', isVocab: false });
             continue;
           }
         }
-        unglued.push(tok);
+        const finalTok = finalizeSingleToken(tok);
+        if (finalTok) cleaned.push(finalTok);
       }
 
-      // 1. Pre-normalize broken glued tokens from legacy splits (e.g. "部经理", "经理王", "王宣布", "会上" after "评审")
-      const expanded = [];
-      for (let i = 0; i < unglued.length; i++) {
-        const tok = unglued[i];
-        if (!tok || !tok.hanzi) continue;
-        const prevH = expanded.length > 0 ? expanded[expanded.length - 1].hanzi : '';
-        if (tok.hanzi === '部经理') {
-          expanded.push({ hanzi: '部', pinyin: 'bù', vietnamese: 'bộ phận / phòng', isVocab: true });
-          expanded.push({ hanzi: '经理', pinyin: 'jīng lǐ', vietnamese: 'giám đốc / quản lý', isVocab: true });
-        } else if (tok.hanzi === '经理王') {
-          expanded.push({ hanzi: '王经理', pinyin: 'wáng jīng lǐ', vietnamese: 'giám đốc Vương', isVocab: true });
-        } else if (tok.hanzi === '王宣布' && (prevH === '经理' || prevH.endsWith('经理'))) {
-          expanded.push({ hanzi: '王', pinyin: 'wáng', vietnamese: 'Vương', isVocab: true });
-          expanded.push({ hanzi: '宣布', pinyin: 'xuān bù', vietnamese: 'tuyên bố', isVocab: true });
-        } else if (tok.hanzi === '会上' && (prevH === '评审' || prevH === '项目评审')) {
-          expanded.push({ hanzi: '会', pinyin: 'huì', vietnamese: 'cuộc họp', isVocab: true });
-          expanded.push({ hanzi: '上', pinyin: 'shàng', vietnamese: 'trên / trong', isVocab: true });
-        } else if (tok.hanzi === '项目评审会上') {
-          expanded.push({ hanzi: '项目评审会', pinyin: 'xiàng mù píng shěn huì', vietnamese: 'cuộc họp thẩm định dự án', isVocab: true });
-          expanded.push({ hanzi: '上', pinyin: 'shàng', vietnamese: 'trên / trong', isVocab: true });
-        } else {
-          expanded.push(tok);
-        }
-      }
-
-      // 2. Fix "[1-char Surname] + [Title]" OR inverted "[Title] + [1-char Surname]" -> "[Surname][Title]"
-      const titleFixed = [];
-      for (let i = 0; i < expanded.length; i++) {
-        const cur = expanded[i];
-        const nxt = expanded[i + 1];
-        if (cur && nxt && CHINESE_SURNAMES_MAP[cur.hanzi] && CHINESE_TITLES_MAP[nxt.hanzi]) {
-          const sInfo = CHINESE_SURNAMES_MAP[cur.hanzi];
-          const tInfo = CHINESE_TITLES_MAP[nxt.hanzi];
-          titleFixed.push({
-            hanzi: cur.hanzi + nxt.hanzi,
-            pinyin: `${sInfo.py} ${tInfo.py}`,
-            vietnamese: `${tInfo.vi} ${sInfo.vi}`,
-            isVocab: true
-          });
-          i++; // skip nxt
-        } else if (cur && nxt && CHINESE_TITLES_MAP[cur.hanzi] && CHINESE_SURNAMES_MAP[nxt.hanzi]) {
-          const sInfo = CHINESE_SURNAMES_MAP[nxt.hanzi];
-          const tInfo = CHINESE_TITLES_MAP[cur.hanzi];
-          titleFixed.push({
-            hanzi: nxt.hanzi + cur.hanzi,
-            pinyin: `${sInfo.py} ${tInfo.py}`,
-            vietnamese: `${tInfo.vi} ${sInfo.vi}`,
-            isVocab: true
-          });
-          i++; // skip nxt
-        } else {
-          titleFixed.push(cur);
-        }
-      }
-
-      // 3. Greedy sliding window (length 4 down to 2) to merge FIXED_COMPOUND_PHRASES and un-translated fallback single chars
-      // IMPORTANT: Never overwrite tokens that already have contextual meanings from Gemini AI with ambiguous HSK dictionary nouns!
-      const merged = [];
-      let idx = 0;
-      while (idx < titleFixed.length) {
-        let matched = null;
-        let matchLen = 0;
-        for (let len = Math.min(4, titleFixed.length - idx); len >= 2; len--) {
-          const slice = titleFixed.slice(idx, idx + len);
-          if (slice.some(t => !t || !t.hanzi || AI_PUNCT_TEST_RE.test(t.hanzi))) continue;
-          const combined = slice.map(t => t.hanzi).join('');
-          if (FIXED_COMPOUND_PHRASES[combined] && !AMBIGUOUS_GRAMMAR_COMPOUND_SET.has(combined)) {
-            matched = {
-              hanzi: combined,
-              pinyin: FIXED_COMPOUND_PHRASES[combined].pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(combined) : ''),
-              vietnamese: FIXED_COMPOUND_PHRASES[combined].vietnamese,
-              isVocab: true
-            };
-            matchLen = len;
-            break;
-          }
-          const allSingleChars = slice.every(t => t.hanzi.length === 1 && /^[\u4e00-\u9fff]$/.test(t.hanzi));
-          const alreadyHasAiMeaning = slice.some(t => t.vietnamese && String(t.vietnamese).trim() && t.pinyin && String(t.pinyin).trim());
-          // Only merge dictionary compounds when single characters lacked AI meanings (or are in COMMON_CHINESE_COMPOUNDS) and are NOT ambiguous grammar collisions
-          if (
-            allSingleChars &&
-            combined.length <= 4 &&
-            !AMBIGUOUS_GRAMMAR_COMPOUND_SET.has(combined) &&
-            (!alreadyHasAiMeaning ? isKnownChineseCompound(combined) : Boolean(COMMON_CHINESE_COMPOUNDS[combined]))
-          ) {
-            const meta = lookupDictMetaForToken(combined);
-            matched = {
-              hanzi: combined,
-              pinyin: meta.pinyin || '',
-              vietnamese: meta.vietnamese || '',
-              isVocab: true
-            };
-            matchLen = len;
-            break;
-          }
-        }
-        if (matched) {
-          merged.push(matched);
-          idx += matchLen;
-        } else {
-          const tok = healCorruptedLegacyToken(titleFixed[idx]);
-          if (tok && tok.hanzi && /[\u4e00-\u9fff]/.test(tok.hanzi)) {
-            const hasPy = Boolean(tok.pinyin && String(tok.pinyin).trim());
-            const hasVi = Boolean(tok.vietnamese && String(tok.vietnamese).trim());
-            if (!hasPy || !hasVi) {
-              const fixedMeta = FIXED_COMPOUND_PHRASES[tok.hanzi];
-              const meta = lookupDictMetaForToken(tok.hanzi);
-              if (!hasPy) tok.pinyin = (fixedMeta && fixedMeta.pinyin) || meta.pinyin || '';
-              if (!hasVi) tok.vietnamese = (fixedMeta && fixedMeta.vietnamese) || meta.vietnamese || '';
-            }
-          }
-          merged.push(tok);
-          idx++;
-        }
-      }
-
-      // 4. Merge remaining general "[Noun] + 群(+里)", "[Noun] + 们", "[Verb] + 着 + 说/问/道", and "[1-char Verb] + 着" patterns
-      const speechVerbsMap = {
-        '说': { py: 'shuō', vi: 'nói' },
-        '问': { py: 'wèn', vi: 'hỏi' },
-        '道': { py: 'dào', vi: 'nói' },
-        '喊': { py: 'hǎn', vi: 'hét' },
-        '叫': { py: 'jiào', vi: 'gọi / hét' }
-      };
-      const nonVerbSingleChars = new Set([
-        '我', '你', '他', '她', '它', '这', '那', '哪', '谁', '的', '地', '得',
-        '和', '与', '或', '而', '但', '却', '又', '也', '都', '就', '才', '还',
-        '只', '很', '太', '最', '更', '真', '好', '不', '没', '被', '把', '给',
-        '在', '从', '向', '往', '对', '跟', '比', '上', '下', '里', '外', '前', '后'
-      ]);
-      const finalMerged = [];
-      let k = 0;
-      while (k < merged.length) {
-        const cur = merged[k];
-        const nxt = merged[k + 1];
-        const nxt2 = merged[k + 2];
-
-        // Case 0A: [1-3 char Noun] + "群" + "里" (3 tokens, e.g. "社区" + "群" + "里" -> "社区群里")
-        if (
-          cur && nxt && nxt2 &&
-          cur.isVocab && nxt.hanzi === '群' && nxt2.hanzi === '里' &&
-          cur.hanzi.length >= 1 && cur.hanzi.length <= 3 && !nonVerbSingleChars.has(cur.hanzi) && !AI_PUNCT_TEST_RE.test(cur.hanzi)
-        ) {
-          const combinedH = cur.hanzi + '群里';
-          const fixed = FIXED_COMPOUND_PHRASES[combinedH];
-          finalMerged.push({
-            hanzi: combinedH,
-            pinyin: (fixed && fixed.pinyin) || `${cur.pinyin || ''} qún lǐ`.trim(),
-            vietnamese: (fixed && fixed.vietnamese) || (cur.vietnamese ? `trong nhóm ${cur.vietnamese}` : 'trong nhóm'),
-            isVocab: true
-          });
-          k += 3;
-          continue;
-        }
-
-        // Case 0B: [1-3 char Noun] + "群里" (2 tokens, e.g. "社区" + "群里" -> "社区群里")
-        if (
-          cur && nxt &&
-          cur.isVocab && nxt.hanzi === '群里' &&
-          cur.hanzi.length >= 1 && cur.hanzi.length <= 3 && !nonVerbSingleChars.has(cur.hanzi) && !AI_PUNCT_TEST_RE.test(cur.hanzi)
-        ) {
-          const combinedH = cur.hanzi + '群里';
-          const fixed = FIXED_COMPOUND_PHRASES[combinedH];
-          finalMerged.push({
-            hanzi: combinedH,
-            pinyin: (fixed && fixed.pinyin) || `${cur.pinyin || ''} qún lǐ`.trim(),
-            vietnamese: (fixed && fixed.vietnamese) || (cur.vietnamese ? `trong nhóm ${cur.vietnamese}` : 'trong nhóm'),
-            isVocab: true
-          });
-          k += 2;
-          continue;
-        }
-
-        // Case 0C: [1-3 char Noun] + "群" (2 tokens, e.g. "社区" + "群" -> "社区群")
-        if (
-          cur && nxt &&
-          cur.isVocab && nxt.hanzi === '群' &&
-          cur.hanzi.length >= 1 && cur.hanzi.length <= 3 && !nonVerbSingleChars.has(cur.hanzi) && !AI_PUNCT_TEST_RE.test(cur.hanzi)
-        ) {
-          const combinedH = cur.hanzi + '群';
-          const fixed = FIXED_COMPOUND_PHRASES[combinedH];
-          finalMerged.push({
-            hanzi: combinedH,
-            pinyin: (fixed && fixed.pinyin) || `${cur.pinyin || ''} qún`.trim(),
-            vietnamese: (fixed && fixed.vietnamese) || (cur.vietnamese ? `nhóm ${cur.vietnamese}` : 'nhóm'),
-            isVocab: true
-          });
-          k += 2;
-          continue;
-        }
-
-        // Case A: [1-2 char Verb] + "着" + [说/问/道/喊/叫] (3 tokens)
-        if (
-          cur && nxt && nxt2 &&
-          cur.isVocab && nxt.hanzi === '着' && speechVerbsMap[nxt2.hanzi] &&
-          cur.hanzi.length >= 1 && cur.hanzi.length <= 2 && !nonVerbSingleChars.has(cur.hanzi)
-        ) {
-          const combinedH = cur.hanzi + '着' + nxt2.hanzi;
-          const fixed = FIXED_COMPOUND_PHRASES[combinedH];
-          const spInfo = speechVerbsMap[nxt2.hanzi];
-          finalMerged.push({
-            hanzi: combinedH,
-            pinyin: (fixed && fixed.pinyin) || `${cur.pinyin || ''} zhe ${spInfo.py}`.trim(),
-            vietnamese: (fixed && fixed.vietnamese) || (cur.vietnamese ? `vừa ${cur.vietnamese} vừa ${spInfo.vi}` : spInfo.vi),
-            isVocab: true
-          });
-          k += 3;
-          continue;
-        }
-
-        // Case B: [Verb ending with 着] + [说/问/道/喊/叫] (2 tokens, e.g. "笑着" + "说")
-        if (
-          cur && nxt &&
-          cur.isVocab && cur.hanzi.length >= 2 && cur.hanzi.endsWith('着') && speechVerbsMap[nxt.hanzi]
-        ) {
-          const combinedH = cur.hanzi + nxt.hanzi;
-          const fixed = FIXED_COMPOUND_PHRASES[combinedH];
-          const spInfo = speechVerbsMap[nxt.hanzi];
-          finalMerged.push({
-            hanzi: combinedH,
-            pinyin: (fixed && fixed.pinyin) || `${cur.pinyin || ''} ${spInfo.py}`.trim(),
-            vietnamese: (fixed && fixed.vietnamese) || (cur.vietnamese ? `${cur.vietnamese} ${spInfo.vi}` : spInfo.vi),
-            isVocab: true
-          });
-          k += 2;
-          continue;
-        }
-
-        // Case C: [1-3 char Noun/Pronoun] + "们" -> e.g. "邻居" + "们" -> "邻居们"
-        if (
-          cur && nxt &&
-          cur.isVocab && nxt.hanzi === '们' &&
-          cur.hanzi.length >= 1 && cur.hanzi.length <= 3 && !AI_PUNCT_TEST_RE.test(cur.hanzi)
-        ) {
-          const combinedH = cur.hanzi + '们';
-          const fixed = FIXED_COMPOUND_PHRASES[combinedH];
-          const dictMeta = lookupDictMetaForToken(combinedH);
-          finalMerged.push({
-            hanzi: combinedH,
-            pinyin: (fixed && fixed.pinyin) || dictMeta.pinyin || `${cur.pinyin || ''} men`.trim(),
-            vietnamese: (fixed && fixed.vietnamese) || dictMeta.vietnamese || (cur.vietnamese ? `các ${cur.vietnamese}` : 'mọi người'),
-            isVocab: true
-          });
-          k += 2;
-          continue;
-        }
-
-        // Case D: [1-char Verb] + standalone "着" -> e.g. "笑" + "着" -> "笑着" (never use noun chuānzhuó from dict)
-        if (
-          cur && nxt &&
-          cur.isVocab && cur.hanzi.length === 1 && !nonVerbSingleChars.has(cur.hanzi) &&
-          nxt.hanzi === '着'
-        ) {
-          const combinedH = cur.hanzi + '着';
-          const fixed = FIXED_COMPOUND_PHRASES[combinedH];
-          finalMerged.push({
-            hanzi: combinedH,
-            pinyin: (fixed && fixed.pinyin) || `${cur.pinyin || ''} zhe`.trim(),
-            vietnamese: (fixed && fixed.vietnamese) || (cur.vietnamese ? `đang ${cur.vietnamese}` : ''),
-            isVocab: true
-          });
-          k += 2;
-          continue;
-        }
-
-        finalMerged.push(cur);
-        k++;
-      }
-
-      // 5. Auto-correct adverbial "的" -> "地" before prepositions/verbs/adverbs (e.g. "满脸哀求" + "的" + "向" -> "地")
-      const nonAdverbialBeforeDe = new Set([
-        '我', '你', '他', '她', '它', '您', '这', '那', '哪', '谁', '别人', '大家', '人们',
-        '自己', '我们', '你们', '他们', '她们', '它们', '所有人', '其他人', '女人', '男人',
-        '女孩', '男孩', '孩子', '母亲', '父亲', '妈妈', '爸爸', '老师', '同学', '同学们',
-        '朋友', '朋友们', '同事', '同事们', '邻居', '邻居们', '医生', '警察', '老板',
-        '今天', '昨天', '明天', '现在', '以前', '以后', '刚才', '此前', '当时', '后来',
-        '这里', '那里', '哪里', '家里', '屋里', '心里', '手里', '眼里', '群里', '脸上', '身上', '头上', '桌上', '地上',
-        '是', '有', '在', '去', '来', '到', '给', '让', '叫', '被', '把', '对', '向', '往', '从', '跟', '和', '与',
-        '说', '问', '看', '听', '想', '买', '卖', '吃', '喝', '穿', '戴', '拿', '找', '用', '做', '写', '读'
-      ]);
-      const adverbialActionFollowRe = /^(向|往|朝|朝着|向着|对|对着|跟|跟着|替|为|给|把|被|将|从|在|用|拿|带|带着|怀着|抱|抱着|握|握着|抓|抓住|拉|拉着|牵|牵着|推|推开|看|看着|望|望着|盯|盯着|瞪|瞪着|瞥|笑|笑着|哭|哭着|喊|喊着|叫|叫着|说|说着|说道|问|问道|回答|答道|讲|诉说|解释|宣布|表示|走|走了|走去|走进|走出|走来|跑|跑去|跑来|冲|冲去|退|退后|转身|回头|低头|抬头|点头|摇头|叹气|叹了口气|松了口气|皱眉|皱起眉头|站|站起|坐|坐下|蹲|蹲下|躺|跪|扑|扑向|躲|躲避|逃|离开|回|回到|回去|回来|来|来到|去|进|进入|出|出去|出来|上|下|寻求|寻找|请求|祈求|哀求|央求|要求|乞求|呼喊|呼救|掙扎|挣扎|反抗|颤抖|发抖|闪烁|思考|思索|工作|学习|生活|奔跑|跳跃|飞|飞翔|游|游泳|吃|喝|睡|穿|戴|写|读|听|讨论|研究|检查|观察|分析|处理|解决|完成|开始|继续|停止|放弃|坚持|努力|拼命|立刻|马上|赶紧|连忙|急忙|悄悄|默默|静静|慢慢|缓缓|渐渐|纷纷|不断|不停|一步步|一点点|一动不动)/;
-
-      for (let m = 0; m < finalMerged.length; m++) {
-        const tok = finalMerged[m];
-        if (!tok) continue;
-        if (tok.hanzi === '地') {
-          tok.pinyin = 'de';
-          tok.vietnamese = 'một cách';
-          tok.isVocab = false;
-          continue;
-        }
-        if (tok.hanzi === '的' && m > 0 && m + 1 < finalMerged.length) {
-          const prevTok = finalMerged[m - 1];
-          const nextTok = finalMerged[m + 1];
-          const prevH = prevTok && prevTok.hanzi ? prevTok.hanzi.trim() : '';
-          const nextH = nextTok && nextTok.hanzi ? nextTok.hanzi.trim() : '';
-          if (
-            prevH && nextH &&
-            /^[\u4e00-\u9fff]+$/.test(prevH) &&
-            /^[\u4e00-\u9fff]+$/.test(nextH) &&
-            !nonAdverbialBeforeDe.has(prevH) &&
-            !prevH.endsWith('们') &&
-            !prevH.endsWith('里') &&
-            !prevH.endsWith('上') &&
-            !prevH.endsWith('下') &&
-            !prevH.endsWith('中') &&
-            !prevH.endsWith('内') &&
-            !prevH.endsWith('外') &&
-            !prevH.endsWith('前') &&
-            !prevH.endsWith('后') &&
-            !prevH.endsWith('员') &&
-            !prevH.endsWith('师') &&
-            !prevH.endsWith('生') &&
-            !prevH.endsWith('长') &&
-            !prevH.endsWith('家') &&
-            !prevH.endsWith('者') &&
-            !prevH.endsWith('人') &&
-            !prevH.endsWith('部') &&
-            !prevH.endsWith('会') &&
-            !prevH.endsWith('店') &&
-            !prevH.endsWith('馆') &&
-            (prevH.length >= 2 || /^(慢|快|静|轻|重|紧|暗|冷|热|笑|哭|怒)$/.test(prevH)) &&
-            adverbialActionFollowRe.test(nextH)
-          ) {
-            tok.hanzi = '地';
-            tok.pinyin = 'de';
-            tok.vietnamese = 'một cách';
-            tok.isVocab = false;
-          }
-        }
-      }
-
-      return finalMerged;
+      return cleaned;
     }
 
     function healReadingArticleFixedCompounds(art) {
