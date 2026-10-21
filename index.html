@@ -12700,11 +12700,15 @@ ${chunkText}
         changed = true;
       }
 
+      const hasTargetWords = Array.isArray(art.targetWords) && art.targetWords.length > 0;
       const allTokens = [];
       art.paragraphs.forEach(p => {
         if (!Array.isArray(p.tokens)) return;
         const beforeSig = p.tokens.map(t => `${(t && t.hanzi) || ''}:${(t && t.vietnamese) || ''}`).join('|');
         p.tokens = mergeFixedCompoundTokensInList(p.tokens);
+        if (hasTargetWords) {
+          p.tokens = splitTargetWordsInTokenArray(p.tokens, art.targetWords);
+        }
         const afterSig = p.tokens.map(t => `${(t && t.hanzi) || ''}:${(t && t.vietnamese) || ''}`).join('|');
         if (beforeSig !== afterSig) changed = true;
         allTokens.push(...p.tokens);
@@ -12777,8 +12781,123 @@ ${chunkText}
       return null;
     }
 
-    function isolateTargetWordsInParagraphs(allParagraphs, targetWords = [], options = {}) {
+    const DETACHABLE_PARTICLE_META = {
+      '了': { pinyin: 'le', vietnamese: 'rồi / đã', isVocab: true },
+      '着': { pinyin: 'zhe', vietnamese: 'đang', isVocab: true },
+      '过': { pinyin: 'guò', vietnamese: 'từng / qua', isVocab: true },
+      '的': { pinyin: 'de', vietnamese: 'của', isVocab: false },
+      '地': { pinyin: 'de', vietnamese: 'một cách', isVocab: false },
+      '得': { pinyin: 'de', vietnamese: 'đến mức', isVocab: false },
+      '在': { pinyin: 'zài', vietnamese: 'ở / tại', isVocab: true },
+      '向': { pinyin: 'xiàng', vietnamese: 'hướng về', isVocab: true },
+      '对': { pinyin: 'duì', vietnamese: 'đối với', isVocab: true },
+      '把': { pinyin: 'bǎ', vietnamese: 'đem / lấy', isVocab: true },
+      '被': { pinyin: 'bèi', vietnamese: 'bị / được', isVocab: true },
+      '给': { pinyin: 'gěi', vietnamese: 'cho', isVocab: true },
+      '从': { pinyin: 'cóng', vietnamese: 'từ', isVocab: true },
+      '到': { pinyin: 'dào', vietnamese: 'đến', isVocab: true },
+      '去': { pinyin: 'qù', vietnamese: 'đi / đến', isVocab: true },
+      '来': { pinyin: 'lái', vietnamese: 'đến / lại', isVocab: true },
+      '和': { pinyin: 'hé', vietnamese: 'và', isVocab: true },
+      '与': { pinyin: 'yǔ', vietnamese: 'và / cùng', isVocab: false },
+      '或': { pinyin: 'huò', vietnamese: 'hoặc', isVocab: true },
+      '而': { pinyin: 'ér', vietnamese: 'mà / còn', isVocab: true },
+      '却': { pinyin: 'què', vietnamese: 'nhưng lại', isVocab: true },
+      '就': { pinyin: 'jiù', vietnamese: 'liền / thì', isVocab: true },
+      '都': { pinyin: 'dōu', vietnamese: 'đều', isVocab: true },
+      '也': { pinyin: 'yě', vietnamese: 'cũng', isVocab: true },
+      '还': { pinyin: 'hái', vietnamese: 'vẫn / còn', isVocab: true },
+      '只': { pinyin: 'zhǐ', vietnamese: 'chỉ', isVocab: true },
+      '正': { pinyin: 'zhèng', vietnamese: 'đang', isVocab: true },
+      '刚': { pinyin: 'gāng', vietnamese: 'vừa mới', isVocab: true },
+      '已': { pinyin: 'yǐ', vietnamese: 'đã', isVocab: true },
+      '又': { pinyin: 'yòu', vietnamese: 'lại', isVocab: true },
+      '再': { pinyin: 'zài', vietnamese: 'lại / thêm', isVocab: true },
+      '更': { pinyin: 'gèng', vietnamese: 'càng / hơn', isVocab: true },
+      '最': { pinyin: 'zuì', vietnamese: 'nhất', isVocab: true },
+      '很': { pinyin: 'hěn', vietnamese: 'rất', isVocab: true },
+      '太': { pinyin: 'tài', vietnamese: 'quá / lắm', isVocab: true },
+      '不': { pinyin: 'bù', vietnamese: 'không', isVocab: true },
+      '没': { pinyin: 'méi', vietnamese: 'chưa / không', isVocab: true },
+      '上': { pinyin: 'shàng', vietnamese: 'trên / lên', isVocab: true },
+      '下': { pinyin: 'xià', vietnamese: 'dưới / xuống', isVocab: true },
+      '里': { pinyin: 'lǐ', vietnamese: 'trong', isVocab: true },
+      '外': { pinyin: 'wài', vietnamese: 'ngoài', isVocab: true },
+      '前': { pinyin: 'qián', vietnamese: 'trước', isVocab: true },
+      '后': { pinyin: 'hòu', vietnamese: 'sau', isVocab: true },
+      '中': { pinyin: 'zhōng', vietnamese: 'trong / giữa', isVocab: true },
+      '内': { pinyin: 'nèi', vietnamese: 'trong', isVocab: true },
+      '时': { pinyin: 'shí', vietnamese: 'lúc / khi', isVocab: true },
+      '为': { pinyin: 'wèi', vietnamese: 'vì / cho', isVocab: true }
+    };
+
+    function splitTargetWordsInTokenArray(tokens, targetWords = []) {
+      if (!Array.isArray(tokens) || tokens.length === 0) return tokens || [];
       const targetWordsHanzi = (targetWords || []).map(w => (typeof w === 'string' ? w : (w && w.hanzi))).filter(Boolean);
+      if (targetWordsHanzi.length === 0) return tokens;
+      let currentTokens = tokens;
+      targetWordsHanzi.forEach(tHanzi => {
+        const newTokens = [];
+        currentTokens.forEach(tok => {
+          if (!tok || !tok.hanzi) return;
+          if (tok.hanzi.length > tHanzi.length && tok.hanzi.includes(tHanzi)) {
+            const esc = escapeRegex(tHanzi);
+            tok.hanzi = tok.hanzi.replace(new RegExp(`^[“"「『](${esc})[”"」』]$`), '$1');
+          }
+          const parts = (tok.isVocab && tok.hanzi && tok.hanzi !== tHanzi && tok.hanzi.includes(tHanzi))
+            ? tok.hanzi.split(tHanzi)
+            : null;
+          // Allow splitting when any 1-char remainder is a grammatical particle/preposition (e.g. 注入了 -> 注入 + 了, 广阔的 -> 广阔 + 的),
+          // while keeping bound noun compounds intact (e.g. 生产部, 供应商, 评审会)
+          const hasNonDetachableSingleChar = parts
+            ? parts.some(p => p && p.length === 1 && !DETACHABLE_PARTICLE_META[p])
+            : false;
+          const shouldKeepCompoundIntact = !parts
+            || Boolean(FIXED_COMPOUND_PHRASES[tok.hanzi])
+            || hasNonDetachableSingleChar;
+
+          if (!shouldKeepCompoundIntact && parts) {
+            parts.forEach((part, pIdx) => {
+              if (part) {
+                const pMeta = DETACHABLE_PARTICLE_META[part];
+                const fixedMeta = FIXED_COMPOUND_PHRASES[part];
+                const dictMeta = lookupDictMetaForToken(part);
+                newTokens.push({
+                  hanzi: part,
+                  pinyin: (pMeta && pMeta.pinyin) || (fixedMeta && fixedMeta.pinyin) || dictMeta.pinyin || '',
+                  vietnamese: (pMeta && pMeta.vietnamese) || (fixedMeta && fixedMeta.vietnamese) || dictMeta.vietnamese || '',
+                  isVocab: pMeta ? pMeta.isVocab : !(AI_PUNCT_TEST_RE.test(part) || part === '的' || part === '地' || part === '得' || part === '与')
+                });
+              }
+              if (pIdx < parts.length - 1) {
+                const twObj = targetWords.find(w => w && w.hanzi === tHanzi);
+                const meta = lookupDictMetaForToken(tHanzi);
+                newTokens.push({
+                  hanzi: tHanzi,
+                  pinyin: (twObj && twObj.pinyin) || meta.pinyin || '',
+                  vietnamese: (twObj && (twObj.vietnamese || twObj.meaning)) || meta.vietnamese || '',
+                  isVocab: true
+                });
+              }
+            });
+          } else {
+            if (tok.hanzi === tHanzi) {
+              tok.isVocab = true;
+              const twObj = targetWords.find(w => w && w.hanzi === tHanzi);
+              if (twObj) {
+                if (!tok.pinyin && twObj.pinyin) tok.pinyin = twObj.pinyin;
+                if (!tok.vietnamese && (twObj.vietnamese || twObj.meaning)) tok.vietnamese = twObj.vietnamese || twObj.meaning;
+              }
+            }
+            newTokens.push(tok);
+          }
+        });
+        currentTokens = newTokens;
+      });
+      return currentTokens;
+    }
+
+    function isolateTargetWordsInParagraphs(allParagraphs, targetWords = [], options = {}) {
       if (Array.isArray(allParagraphs)) {
         allParagraphs.forEach(para => {
           if (Array.isArray(para.tokens)) {
@@ -12806,69 +12925,12 @@ ${chunkText}
           tokens: combinedToks
         }];
       }
-      if (targetWordsHanzi.length > 0 && Array.isArray(allParagraphs) && allParagraphs.length > 0) {
-        targetWordsHanzi.forEach(tHanzi => {
-          allParagraphs.forEach(para => {
-            if (!Array.isArray(para.tokens)) return;
-            const newTokens = [];
-            para.tokens.forEach(tok => {
-              if (!tok || !tok.hanzi) return;
-              // Strip accidental quotes wrapping a target word
-              if (tok.hanzi.length > tHanzi.length && tok.hanzi.includes(tHanzi)) {
-                const esc = escapeRegex(tHanzi);
-                tok.hanzi = tok.hanzi.replace(new RegExp(`^[“"「『](${esc})[”"」』]$`), '$1');
-              }
-              const parts = (tok.isVocab && tok.hanzi && tok.hanzi !== tHanzi && tok.hanzi.includes(tHanzi))
-                ? tok.hanzi.split(tHanzi)
-                : null;
-              // Do NOT split fixed compound nouns or any compound where splitting leaves a 1-character prefix/suffix (e.g. 生产部, 供应商, 备用供应商, 项目评审会)
-              const shouldKeepCompoundIntact = !parts
-                || Boolean(FIXED_COMPOUND_PHRASES[tok.hanzi])
-                || parts.some(p => p && p.length === 1);
-
-              if (!shouldKeepCompoundIntact && parts) {
-                parts.forEach((part, pIdx) => {
-                  if (part) {
-                    const meta = lookupDictMetaForToken(part);
-                    newTokens.push({
-                      hanzi: part,
-                      pinyin: meta.pinyin || tok.pinyin || '',
-                      vietnamese: meta.vietnamese || tok.vietnamese || '',
-                      isVocab: true
-                    });
-                  }
-                  if (pIdx < parts.length - 1) {
-                    const twObj = targetWords.find(w => w && w.hanzi === tHanzi);
-                    const meta = lookupDictMetaForToken(tHanzi);
-                    newTokens.push({
-                      hanzi: tHanzi,
-                      pinyin: (twObj && twObj.pinyin) || meta.pinyin || '',
-                      vietnamese: (twObj && (twObj.vietnamese || twObj.meaning)) || meta.vietnamese || '',
-                      isVocab: true
-                    });
-                  }
-                });
-              } else {
-                if (tok.hanzi === tHanzi) {
-                  tok.isVocab = true;
-                  const twObj = targetWords.find(w => w && w.hanzi === tHanzi);
-                  if (twObj) {
-                    if (!tok.pinyin && twObj.pinyin) tok.pinyin = twObj.pinyin;
-                    if (!tok.vietnamese && (twObj.vietnamese || twObj.meaning)) tok.vietnamese = twObj.vietnamese || twObj.meaning;
-                  }
-                }
-                newTokens.push(tok);
-              }
-            });
-            para.tokens = newTokens;
-          });
-        });
-      }
 
       const allTokens = [];
       (allParagraphs || []).forEach(p => {
         if (Array.isArray(p.tokens)) {
           p.tokens = mergeFixedCompoundTokensInList(p.tokens);
+          p.tokens = splitTargetWordsInTokenArray(p.tokens, targetWords);
           allTokens.push(...p.tokens);
         }
       });
@@ -20746,54 +20808,57 @@ ${wordListPrompt}
 1. CHUẨN XÁC TUYỆT ĐỐI VỀ CỤM TỪ CỐ ĐỊNH, ĐỐI TƯỢNG KẾT HỢP & SẮC THÁI TỪ (精准固定搭配、适用对象与语体色彩 — CỰC KỲ QUAN TRỌNG):
    - Trước khi viết, BẮT BUỘC xác định **cụm từ cố định chuẩn bản xứ (标准搭配)**, **phạm vi đối tượng (搭配对象)** và **sắc thái trang trọng/khẩu ngữ (语体色彩)** của từng từ mục tiêu:
      + **Nhóm từ kỹ thuật / chuyên môn / trừu tượng** (như "传输", "催化", "折射", "赋能", "辐射"...): BẮT BUỘC đi với tân ngữ kỹ thuật/trừu tượng đúng chuẩn (ví dụ: ✅"传输高清数据 / 传输大文件 / 信号传输", TUYỆT ĐỐI CẤM dùng thay cho từ khẩu ngữ "发/转发" như ❌"在群里传输消息 / 传输公告").
-     + **Nhóm động từ trang trọng / quy mô lớn** (như "创立", "缔造", "颁布", "构建", "践行"...): BẮT BUỘC đi với chủ thể/tân ngữ có quy mô lớn hoặc trang trọng tương xứng (ví dụ: ✅"创立科技公司 / 创立个人品牌 / 创立学派", TUYỆT ĐỐI CẤM ghép với sự vật nhỏ lẻ đời thường như ❌"创立小区宠物俱乐部" — câu lạc bộ nhỏ phải dùng "成立").
+     + **Nhóm động từ ẩn dụ / truyền dẫn trừu tượng** (như "注入", "倾注", "赋予", "孕育", "焕发", "凝聚", "激发"...): Khi dùng nghĩa bóng, BẮT BUỘC đi với danh từ trừu tượng chỉ sức sống/tâm huyết/động lực/nguồn vốn/linh hồn (ví dụ: ✅"为作品注入心血 / 注入新的活力 / 注入强劲动力 / 注入大量资金 / 注入灵魂", hoặc nghĩa đen chất lỏng ✅"注入清水 / 注入药液"; TUYỆT ĐỐI CẤM ghép với danh từ thông tin cụ thể kiểu ❌"把见闻与数据注入新书" — viết sách phải nói "把见闻写进新书，为作品注入全部心血").
+     + **Nhóm động từ trang trọng / quy mô lớn** (như "创立", "缔造", "颁布", "构建", "践行", "访问"...): BẮT BUỘC đi với chủ thể/tân ngữ có quy mô lớn hoặc trang trọng tương xứng (ví dụ: ✅"创立科技公司 / 创立个人品牌 / 创立学派", ✅"访问学者 / 正式访问 / 访问知名高校 / 访问官方网站", TUYỆT ĐỐI CẤM ghép với sự vật nhỏ lẻ đời thường như ❌"创立小区宠物俱乐部" — câu lạc bộ nhỏ phải dùng "成立").
      + **Nhóm tính từ văn viết / vĩ mô** (như "广阔", "辽阔", "宏伟", "浩瀚", "深远"...): BẮT BUỘC bổ nghĩa cho danh từ mang tầm vóc rộng lớn/trừu tượng và PHẢI CÓ trợ từ "的" khi tính từ 2 âm tiết đứng trước danh từ thông thường (ví dụ: ✅"广阔的市场前景 / 广阔的天地 / 广阔的草原 / 广阔的视野", TUYỆT ĐỐI CẤM ghép thiếu "的" hoặc ghép với vật nhỏ hẹp như ❌"广阔草坪" — bãi cỏ khu dân cư chỉ nói "大草坪").
-     + **Nhóm thành ngữ 4 chữ (成语)**: BẮT BUỘC đặt đúng chức năng ngữ pháp trong câu (làm vị ngữ, trạng ngữ + 地, định ngữ + 的, hoặc bổ ngữ sau 得/去...). Ví dụ: ✅"去现场一探究竟", ✅"忙得不可开交", ✅"兴奋得直摇尾巴".
+     + **Nhóm thành ngữ 4 chữ (成语, như "冷嘲热讽", "若有所思", "一探究竟"...)**: BẮT BUỘC đặt đúng chức năng ngữ pháp trong câu (làm vị ngữ, trạng ngữ + 地, định ngữ + 的, hoặc bổ ngữ sau 得/去...). Ví dụ: ✅"面对旁人的冷嘲热讽", ✅"若有所思地点了点头", ✅"去现场一探究竟".
+     + **Chuẩn cách diễn đạt tự nhiên của người bản xứ**: Dùng ✅"通过网络 / 在网上" (KHÔNG viết ❌"用网络"); dùng ✅"初创企业 / 新兴企业 / 年轻团队" (KHÔNG viết ❌"年轻企业").
    - **THIẾT KẾ BỐI CẢNH THÔNG MINH (灵活设计合理场景，严禁生搬硬套)**:
-     + Nếu danh sách từ mục tiêu vừa có từ trang trọng/công nghệ/vĩ mô vừa có từ đời thường, hãy khéo léo dựng bối cảnh một nhân vật hiện đại (ví dụ: người trẻ khởi nghiệp, làm dự án sáng tạo, xem bản tin ngành nghề rồi chuyển sang tình huống đời sống) để **100% các từ mục tiêu đều xuất hiện trong cụm từ cố định chuẩn xác nhất của người bản xứ**, tuyệt đối KHÔNG ép các từ trang trọng/kỹ thuật vào chuyện vặt vãnh không hợp ngữ cảnh!
+     + Tự động chọn bối cảnh hiện đại hợp lý nhất để **100% các từ mục tiêu đều xuất hiện trong cụm từ cố định chuẩn xác nhất của người bản xứ**, tuyệt đối KHÔNG ép từ trang trọng/kỹ thuật/trừu tượng vào ngữ cảnh sai lệch!
 
 2. CHUẨN NGỮ PHÁP TRỢ TỪ "的 / 地 / 得" & CẤU TRÚC CÂU (严格遵守现代汉语语法):
    - **的**: Dùng sau định ngữ, trước danh từ/cụm danh từ (Đặc biệt: tính từ 2 âm tiết miêu tả tính chất như "广阔", "崭新", "重要" bổ nghĩa cho danh từ BẮT BUỘC phải có "的", ví dụ: "广阔的前景", "刚创立的品牌").
-   - **地**: Dùng sau trạng ngữ chỉ cách thức/trạng thái, đứng trước động từ (ví dụ: "仔细地核对", "兴奋地跑过去").
+   - **地**: Dùng sau trạng ngữ chỉ cách thức/trạng thái, đứng trước động từ (ví dụ: "若有所思地看着", "仔细地核对").
    - **得**: Dùng sau động từ/tính từ, đứng trước bổ ngữ chỉ kết quả/mức độ (ví dụ: "跑得太快", "激动得说不出话").
    - Câu chữ "把" và câu chữ "被" phải dùng đúng quy tắc chuyển tác/bị động tự nhiên.
 
-3. 100% CHỮ HÁN GIẢN THỂ & VIẾT LIỀN 1 ĐOẠN VĂN DUY NHẤT:
+3. 100% CHỮ HÁN GIẢN THỂ, VIẾT LIỀN 1 ĐOẠN VĂN & GIỮ NGUYÊN MẶT CHỮ TỪ MỤC TIÊU:
    - Toàn bộ câu chuyện gốc ("content"), tiêu đề ("title") và mọi từ trong "tokens" BẮT BUỘC PHẢI LÀ 100% CHỮ HÁN GIẢN THỂ (纯正简体中文汉字), viết liền mạch thành **1 ĐOẠN VĂN DUY NHẤT** (~120 - 150 chữ Hán, không xuống dòng \\n).
-   - Mỗi từ mục tiêu (${targetHanziList.join(', ')}) CHỈ DÙNG ĐÚNG 1 LẦN DUY NHẤT trong bài (【每个目标词汇在全文中只允许出现唯一 1 次】), giữ nguyên mặt chữ gốc (KHÔNG đặt ngoặc kép “ ” bao quanh từ mục tiêu, KHÔNG ghép thêm hậu tố làm biến đổi từ).
-   - Khi phân tách trong mảng "tokens", BẮT BUỘC giữ nguyên mỗi từ mục tiêu (${targetHanziList.join(', ')}) thành 1 token độc lập đúng mặt chữ.
-   - Xưng hô chức danh chuẩn bản xứ: [Họ + Chức danh/Xưng hô] (ví dụ: "王经理", "李总监", "张阿姨"), CẤM viết ngược "经理王".
+   - Mỗi từ mục tiêu (${targetHanziList.join(', ')}) CHỈ DÙNG ĐÚNG 1 LẦN DUY NHẤT trong bài (【每个目标词汇在全文中只允许出现唯一 1 次】), giữ nguyên đúng nghĩa và mặt chữ gốc:
+     + **TUYỆT ĐỐI CẤM tự ý ghép thêm chữ biến từ mục tiêu thành một từ ghép/thành ngữ khác làm lệch nghĩa gốc** (ví dụ: nếu từ mục tiêu là "两极" nghĩa là "hai cực", phải dùng đúng nghĩa "地球两极 / 南北两极", CẤM biến thành "两极分化").
+     + **Khi phân tách trong mảng "tokens"**: BẮT BUỘC tách mỗi từ mục tiêu (${targetHanziList.join(', ')}) thành **1 token độc lập đúng y hệt mặt chữ gốc**, TUYỆT ĐỐI CẤM dính liền trợ từ "了 / 着 / 过 / 的 / 地" vào cùng token với từ mục tiêu (ví dụ: nếu viết "注入了", trong "tokens" BẮT BUỘC tách thành 2 token riêng là \`"注入|zhù rù|rót vào / truyền vào"\` và \`"了|le|rồi"\`, CẤM gộp thành \`"注入了"\`).
+   - Xưng hô chức danh chuẩn bản xứ: [Họ + Chức danh/Xưng hô] (ví dụ: "王经理", "李总监", "张教授"), CẤM viết ngược "经理王".
 
 4. QUY TẮC GOM CỤM TỪ & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH TRONG MẢNG "tokens" (GIỐNG HỆT BÀI ĐỌC):
-   - **A. BẮT BUỘC GOM TRỌN CÁC CỤM TỪ GHÉP & CỤM DIỄN ĐẠT HOÀN CHỈNH**:
-     + Ngoài các từ mục tiêu giữ nguyên thành token độc lập, đối với các từ xung quanh, BẮT BUỘC gom trọn cụm danh từ, cụm phương vị (trong/trên/sau...), cụm động-tân ngắn, chức danh, phòng ban, động từ ly hợp, cụm cử chỉ/biểu cảm/lời nói, thành ngữ thành **1 token có nghĩa tự nhiên hoàn chỉnh**:
-       • Cụm nơi chốn / phương vị / thời gian: gom "社区群里" (trong nhóm khu dân cư), "微信群里" (trong nhóm WeChat), "展会现场" (hiện trường triển lãm), "半年以来" (nửa năm qua), "首次会面" (cuộc gặp đầu tiên).
-       • Cụm danh từ & xưng hô: gom "王经理" (giám đốc Vương), "科技工作室" (xưởng công nghệ / studio công nghệ), "高清视频数据" (dữ liệu video độ nét cao), "市场前景" (triển vọng thị trường), "项目评审会" (cuộc họp thẩm định dự án).
-       • Cụm động từ / biểu cảm / ngữ pháp: gom "深表关切" (bày tỏ sự quan tâm sâu sắc), "笑着说" (cười nói), "皱起眉头" (nhíu mày), "松了口气" (thở phào nhẹ nhõm), "点了点头" (gật đầu), "直摇尾巴" (vẫy đuôi lia lịa).
-   - **B. TUYỆT ĐỐI KHÔNG XÉ LẺ VỤN VẶT CHỮ ĐƠN HOẶC TÁCH RỜI HẬU TỐ**:
-     + CẤM tách lẻ các chữ đơn như "群", "里", "后", "上", "下", "部", "商", "会", "店", "馆", "牌", "们", "着", "了", "过" đứng bơ vơ một mình khi chúng thuộc về cụm danh từ/động từ phía trước!
+   - **A. BẮT BUỘC GOM TRỌN CÁC CỤM TỪ GHÉP XUNG QUANH (NGOÀI TỪ MỤC TIÊU)**:
+     + Ngoài các từ mục tiêu (${targetHanziList.join(', ')}) bắt buộc giữ nguyên thành token độc lập, đối với các từ thông thường xung quanh, hãy gom trọn cụm danh từ, cụm phương vị (trong/trên/sau...), cụm động-tân ngắn, chức danh, phòng ban, động từ ly hợp, cụm cử chỉ/biểu cảm/lời nói, thành ngữ thành **1 token có nghĩa tự nhiên hoàn chỉnh**:
+       • Cụm nơi chốn / phương vị / thời gian: gom "社区群里" (trong nhóm khu dân cư), "展会现场" (hiện trường triển lãm), "半年以来" (nửa năm qua), "地球两极" (hai cực Trái Đất, nếu "两极" không phải từ mục tiêu).
+       • Cụm danh từ & xưng hô: gom "王经理" (giám đốc Vương), "初创企业" (doanh nghiệp khởi nghiệp), "高清视频数据" (dữ liệu video độ nét cao), "市场前景" (triển vọng thị trường).
+       • Cụm động từ / biểu cảm / ngữ pháp (khi KHÔNG chứa từ mục tiêu): gom "深表关切" (bày tỏ sự quan tâm sâu sắc), "笑着说" (cười nói), "皱起眉头" (nhíu mày), "松了口气" (thở phào nhẹ nhõm), "点了点头" (gật đầu).
+   - **B. TUYỆT ĐỐI KHÔNG XÉ LẺ VỤN VẶT CHỮ ĐƠN CỦA TỪ THÔNG THƯỜNG**:
+     + Với các từ thông thường (không phải từ mục tiêu), CẤM tách lẻ các chữ đơn như "群", "里", "后", "上", "下", "部", "商", "会", "店", "馆", "牌", "们" đứng bơ vơ một mình khi chúng thuộc về cụm danh từ phía trước. Riêng nếu "了 / 着 / 过 / 的 / 地" đứng ngay sau **từ mục tiêu**, BẮT BUỘC tách riêng trợ từ đó ra để từ mục tiêu giữ nguyên mặt chữ gốc!
    - **C. TRỢ TỪ "的", "地" & ĐỊNH DẠNG MỖI TOKEN**:
      + Tách trợ từ "的", "地" thông thường thành token riêng (ví dụ: "广阔" + "的" + "市场前景").
      + Mỗi phần tử trong mảng "tokens" dùng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt sát ngữ cảnh" (với dấu câu hoặc trợ từ "的", "地" chỉ cần ghi chính ký tự đó, ví dụ "，", "的", "地").
 
-Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown). Mảng "paragraphs" CHỈ CÓ ĐÚNG 1 PHẦN TỬ DUY NHẤT:
+Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown, chỉ tham khảo cấu trúc JSON dưới đây và viết nội dung mới 100% theo danh sách từ mục tiêu ở trên). Mảng "paragraphs" CHỈ CÓ ĐÚNG 1 PHẦN TỬ DUY NHẤT:
 {
   "title": "纯中文标题 (3-6个汉字)",
   "titleVi": "Tiêu đề tiếng Việt tương ứng",
-  "content": "林哲去年创立了一家数字传媒工作室，今天他正用电脑向云端传输高清视频数据时，行业协会突然发布了一条重磅公告，称本次创新展将为年轻团队提供广阔的市场前景，他看后立刻决定去展会现场一探究竟……（全文100%纯简体中文，连成唯一1个自然段，不换行，约120-150个汉字）",
+  "content": "林哲去年创立了一家数字传媒工作室，今天他正通过电脑向云端传输高清视频数据时，行业协会突然发布了一条重磅公告，称本次创新展将为初创团队提供广阔的市场前景，为行业发展注入新的活力，他看后立刻决定去展会现场一探究竟。（全文100%纯简体中文，连成唯一1个自然段，不换行，约120-150个汉字）",
   "paragraphs": [
     {
       "tokens": [
         "林哲|lín zhé|Lâm Triết",
         "去年|qù nián|năm ngoái",
         "创立|chuàng lì|sáng lập",
-        "了|le|rồi",
+        "了|le|đã",
         "一家|yī jiā|một",
         "数字传媒工作室|shù zì chuán méi gōng zuò shì|studio truyền thông kỹ thuật số",
         "，",
         "今天|jīn tiān|hôm nay",
         "他|tā|anh ấy",
-        "正用电脑|zhèng yòng diàn nǎo|đang dùng máy tính",
+        "正通过电脑|zhèng tōng guò diàn nǎo|đang thông qua máy tính",
         "向云端|xiàng yún duān|lên đám mây",
         "传输|chuán shū|truyền tải",
         "高清视频数据|gāo qīng shì pín shù jù|dữ liệu video độ nét cao",
@@ -20801,19 +20866,23 @@ ${wordListPrompt}
         "，",
         "行业协会|háng yè xié huì|hiệp hội ngành nghề",
         "突然|tū rán|đột nhiên",
-        "发布了|fā bù le|đã công bố / đăng",
+        "发布了|fā bù le|đã công bố",
         "一条|yī tiáo|một",
-        "重磅|zhòng bàng|quan trọng / chấn động",
-        "公告|gōng gào|thông cáo / thông báo",
+        "重磅公告|zhòng bàng gōng gào|thông cáo quan trọng",
         "，",
-        "称|chēng|nêu rõ / cho biết",
+        "称|chēng|cho biết",
         "本次创新展|běn cì chuàng xīn zhǎn|triển lãm đổi mới sáng tạo lần này",
         "将为|jiāng wèi|sẽ dành cho",
-        "年轻团队|nián qīng tuán duì|đội ngũ trẻ",
-        "提供|tí gōng|cung cấp / mở ra",
+        "初创团队|chū chuàng tuán duì|đội ngũ khởi nghiệp",
+        "提供|tí gōng|mở ra / cung cấp",
         "广阔|guǎng kuò|rộng lớn / rộng mở",
         "的",
         "市场前景|shì chǎng qián jǐng|triển vọng thị trường",
+        "，",
+        "为|wèi|cho",
+        "行业发展|háng yè fā zhǎn|sự phát triển của ngành",
+        "注入|zhù rù|tiếp thêm / truyền vào",
+        "新的活力|xīn de huó lì|sức sống mới",
         "，",
         "他|tā|anh ấy",
         "看后|kàn hòu|sau khi xem xong",
@@ -20824,7 +20893,7 @@ ${wordListPrompt}
         "一探究竟|yī tàn jiū jìng|tìm hiểu thực hư",
         "。"
       ],
-      "vietnamese": "Năm ngoái Lâm Triết đã sáng lập một studio truyền thông kỹ thuật số, hôm nay khi anh đang dùng máy tính truyền tải dữ liệu video độ nét cao lên đám mây thì hiệp hội ngành nghề bất ngờ đăng tải một thông cáo quan trọng, cho biết triển lãm đổi mới sáng tạo lần này sẽ mở ra triển vọng thị trường rộng lớn cho các đội ngũ trẻ, xem xong anh lập tức quyết định đến hiện trường triển lãm để tìm hiểu thực hư..."
+      "vietnamese": "Năm ngoái Lâm Triết đã sáng lập một studio truyền thông kỹ thuật số, hôm nay khi anh đang thông qua máy tính truyền tải dữ liệu video độ nét cao lên đám mây thì hiệp hội ngành nghề bất ngờ công bố một thông cáo quan trọng, cho biết triển lãm đổi mới sáng tạo lần này sẽ mở ra triển vọng thị trường rộng lớn cho các đội ngũ khởi nghiệp và tiếp thêm sức sống mới cho sự phát triển của ngành, xem xong anh lập tức quyết định đến hiện trường triển lãm để tìm hiểu thực hư."
     }
   ]
 }`;
@@ -20896,7 +20965,7 @@ ${wordListPrompt}
                 messages: [
                   {
                     role: 'system',
-                    content: SIMPLIFIED_ONLY_SYSTEM_MSG + ' 特别注意：1. 故事正文(content)和分词数组(tokens)中的词语必须100%为纯简体中文汉字，连成唯一1个自然段，绝对禁止用越南语写故事正文！2. 严格遵守现代汉语母语者的固定搭配（Collocation）、语体色彩与适用对象（如“传输”仅限数据/信号/文件，严禁写“传输消息/公告”；“创立”仅限公司/品牌/学派，严禁写“创立小俱乐部”；双音节形容词如“广阔”修饰名词必须带“的”且搭配宏大对象如“广阔的市场/前景/天地”，严禁写“广阔草坪”），确保全文零语病、零中式生硬拼凑！'
+                    content: SIMPLIFIED_ONLY_SYSTEM_MSG + ' 特别注意：1. 故事正文(content)和分词数组(tokens)中的词语必须100%为纯简体中文汉字，连成唯一1个自然段，绝对禁止用越南语写故事正文！2. 严格遵守现代汉语母语者的固定搭配（Collocation）、语体色彩与适用对象（如“注入”比喻义仅限搭配抽象活力/心血/动力/资金/灵魂，严禁写“把数据/见闻注入新书”；“传输”仅限数据/信号/文件，严禁写“传输消息”；“创立”仅限公司/品牌/学派，严禁写“创立小俱乐部”；双音节形容词如“广阔”修饰名词必须带“的”且搭配宏大对象如“广阔的市场/前景”）；3. 严禁擅自给目标词加字变成另一个成语或词组（如目标词是“两极”表示南北两极时，严禁改成“两极分化”），且在tokens数组中每个目标词必须保持独立词条，严禁把“了/着/过/的”粘在目标词同一个token里！'
                   },
                   { role: 'user', content: storyPrompt }
                 ]
