@@ -1749,6 +1749,11 @@
     }
 
     /* Vietnamese gloss layer under highlighted words (invisible overlay layer) */
+    .reading-token .token-vi-gloss,
+    .reading-token .token-vi-gloss * {
+      font-family: var(--font-mali), cursive, sans-serif !important;
+    }
+
     .reading-token .token-vi-gloss {
       display: none;
       position: absolute;
@@ -1774,11 +1779,12 @@
     }
 
     .reading-token .token-vi-gloss.is-long-gloss {
-      max-width: 122px !important;
+      width: 112px !important;
+      max-width: 112px !important;
       overflow: hidden !important;
       text-align: left !important;
-      mask-image: linear-gradient(to right, transparent 0%, #000 6%, #000 94%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 6%, #000 94%, transparent 100%);
+      mask-image: linear-gradient(to right, #000 0%, #000 92%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, #000 0%, #000 92%, transparent 100%);
     }
 
     .token-vi-gloss-track {
@@ -1786,7 +1792,12 @@
       align-items: center !important;
       width: max-content !important;
       white-space: nowrap !important;
+      transform: translateX(0);
       will-change: transform;
+    }
+
+    #readingPassageContainer.show-vi-gloss:not(.reading-review-mode) .reading-token.selected .token-vi-gloss.is-long-gloss .token-vi-gloss-track,
+    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-vi-gloss.is-long-gloss .token-vi-gloss-track {
       animation: tokenGlossMarqueeLoop var(--gloss-dur, 10s) linear infinite;
     }
 
@@ -1794,13 +1805,14 @@
       display: inline-block !important;
       padding-right: 28px !important;
       white-space: nowrap !important;
+      font-family: var(--font-mali), cursive, sans-serif !important;
     }
 
     @keyframes tokenGlossMarqueeLoop {
-      0%, 15% {
+      0%, 14% {
         transform: translateX(0);
       }
-      100% {
+      95%, 100% {
         transform: translateX(-50%);
       }
     }
@@ -1811,6 +1823,11 @@
     }
 
     /* Inline Pinyin layer above token for Quick Lookup mode in Reading Passage */
+    .reading-token .token-pinyin,
+    .reading-token .token-pinyin * {
+      font-family: var(--font-mali), cursive, sans-serif !important;
+    }
+
     .reading-token .token-pinyin {
       display: none;
       font-family: var(--font-mali), cursive, sans-serif !important;
@@ -1871,9 +1888,14 @@
       max-width: none !important;
     }
 
+    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token.has-long-gloss,
+    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token:has(.token-vi-gloss.is-long-gloss) {
+      min-width: 118px !important;
+    }
+
     #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-vi-gloss.is-long-gloss {
       width: 100% !important;
-      min-width: 114px !important;
+      min-width: 0 !important;
       max-width: 100% !important;
       overflow: hidden !important;
       contain: inline-size !important;
@@ -15033,11 +15055,26 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       return `<span class="token-vi-gloss">${safe}</span>`;
     }
 
+    function restartReadingTokenGlossMarquee(rootEl) {
+      if (!rootEl) return;
+      const trackEl = rootEl.classList && rootEl.classList.contains('token-vi-gloss-track')
+        ? rootEl
+        : rootEl.querySelector('.token-vi-gloss-track');
+      if (!trackEl) return;
+      trackEl.style.animation = 'none';
+      trackEl.style.transform = 'translateX(0)';
+      void trackEl.offsetWidth;
+      trackEl.style.removeProperty('animation');
+      trackEl.style.removeProperty('transform');
+    }
+
     function applyReadingTokenGlossToEl(glEl, meaning) {
       if (!glEl) return;
+      const parentTokEl = glEl.parentElement;
       const plain = formatShortGlossPlain(meaning);
       if (!plain) {
         glEl.classList.remove('is-long-gloss');
+        if (parentTokEl) parentTokEl.classList.remove('has-long-gloss');
         glEl.style.removeProperty('--gloss-dur');
         glEl.textContent = '';
         return;
@@ -15046,10 +15083,13 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         const durSec = Math.max(8.5, Math.min(16, +(plain.length * 0.36).toFixed(1)));
         const safe = escapeHtml(plain);
         glEl.classList.add('is-long-gloss');
+        if (parentTokEl) parentTokEl.classList.add('has-long-gloss');
         glEl.style.setProperty('--gloss-dur', `${durSec}s`);
         glEl.innerHTML = `<span class="token-vi-gloss-track"><span class="token-vi-gloss-item">${safe}</span><span class="token-vi-gloss-item" aria-hidden="true">${safe}</span></span>`;
+        restartReadingTokenGlossMarquee(glEl);
       } else {
         glEl.classList.remove('is-long-gloss');
+        if (parentTokEl) parentTokEl.classList.remove('has-long-gloss');
         glEl.style.removeProperty('--gloss-dur');
         glEl.textContent = plain;
       }
@@ -15183,9 +15223,11 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           const rawPinyin = resolveTokenPinyin(tok);
           const pinyinHTML = `<span class="token-pinyin">${escapeHtml(rawPinyin)}</span>`;
           const rawMeaning = resolveTokenMeaning(tok);
+          const isLongMeaning = formatShortGlossPlain(rawMeaning).length > LONG_READING_GLOSS_CHAR_LIMIT;
+          const longGlossTokenClass = isLongMeaning ? 'has-long-gloss' : '';
           const glossHTML = buildReadingTokenGlossElementHtml(rawMeaning);
 
-          return `<span class="reading-token ${selectedClass}" data-index="${globalIdx}" data-hanzi="${tok.hanzi}" title="${tok.hanzi}${hskTitle}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)">${pinyinHTML}<span class="token-text">${innerHTML}</span>${glossHTML}</span>`;
+          return `<span class="reading-token ${selectedClass} ${longGlossTokenClass}" data-index="${globalIdx}" data-hanzi="${tok.hanzi}" title="${tok.hanzi}${hskTitle}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)">${pinyinHTML}<span class="token-text">${innerHTML}</span>${glossHTML}</span>`;
         }).join('');
 
         const viText = para.vietnamese || (paragraphs.length === 1 && art.translation ? art.translation : 'Đoạn này chưa có bản dịch.');
@@ -15516,7 +15558,12 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       const text = document.getElementById('glossToggleText');
 
       if (isReadingGlossVisible) {
-        if (container) container.classList.add('show-vi-gloss');
+        if (container) {
+          container.classList.add('show-vi-gloss');
+          container.querySelectorAll('.reading-token.selected .token-vi-gloss-track').forEach(el => {
+            restartReadingTokenGlossMarquee(el);
+          });
+        }
         if (btn) {
           btn.style.background = '#f3eef9';
           btn.style.color = '#766299';
@@ -15756,7 +15803,10 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         if (readingTokenDrawer) readingTokenDrawer.style.display = 'none';
         if (wasAlreadyActive) {
           toggleWordInReadingArticle(articleId, tok);
-          if (targetEl) targetEl.classList.add('active-token');
+          if (targetEl) {
+            targetEl.classList.add('active-token');
+            restartReadingTokenGlossMarquee(targetEl);
+          }
           return;
         }
         document.querySelectorAll('#readingPassageContainer .reading-token.active-token').forEach(el => {
@@ -15764,6 +15814,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         });
         if (targetEl) {
           targetEl.classList.add('active-token');
+          restartReadingTokenGlossMarquee(targetEl);
         }
         if (!resolvedMeaning) {
           quickLookupFillMissingTokenMeaning(tok, targetEl);
@@ -15780,6 +15831,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       });
       if (targetEl) {
         targetEl.classList.add('active-token');
+        restartReadingTokenGlossMarquee(targetEl);
       }
 
       drawerHanzi.textContent = tok.hanzi;
