@@ -18994,6 +18994,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         });
         if (!upResp.ok) {
           console.warn('vslRequestMacWorkerSubtitles upsert status:', upResp.status);
+          return null;
         }
 
         // 3. Poll for Mac worker completion (up to ~240 seconds)
@@ -19187,13 +19188,23 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
             );
             if (macSubs && macSubs.length >= 2) {
               rawSegments = macSubs;
-            } else if (data && data.audioBase64) {
+            } else if (data && (data.audioBase64 || data.audioJobId || data.audioDownloadUrl)) {
               // Chỉ gọi AI Cloud khi máy Mac không phản hồi
               try {
-                const bin = atob(data.audioBase64);
-                const bytes = new Uint8Array(bin.length);
-                for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-                const audioBuffer = bytes.buffer;
+                let audioBuffer = null;
+                if (data.audioBase64) {
+                  const bin = atob(data.audioBase64);
+                  const bytes = new Uint8Array(bin.length);
+                  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                  audioBuffer = bytes.buffer;
+                } else {
+                  audioBuffer = await vslFetchYoutubeSaveNowAudioBuffer(
+                    data.audioJobId || '',
+                    data.audioDownloadUrl || '',
+                    ytId,
+                    (p) => pctCtrl.setTarget(35 + Math.round(p * 0.13), 700)
+                  );
+                }
                 if (audioBuffer && audioBuffer.byteLength > 1000) {
                   const decoded = await vslDecodeAudioTo16kHz(audioBuffer);
                   if (!duration) duration = decoded.duration;
@@ -19203,7 +19214,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
                   }, title);
                 }
               } catch (audioErr) {
-                console.warn('Cloud audioBase64 decode error:', audioErr);
+                console.warn('Cloud audio decode error:', audioErr);
               }
             }
           }
