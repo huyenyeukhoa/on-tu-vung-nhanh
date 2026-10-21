@@ -1759,7 +1759,7 @@
       font-family: var(--font-mali), cursive, sans-serif !important;
       font-size: 10px !important;
       font-weight: 700 !important;
-      line-height: 1.1 !important;
+      line-height: 1.15 !important;
       color: #000000 !important;
       white-space: nowrap !important;
       pointer-events: none !important;
@@ -1773,8 +1773,40 @@
       letter-spacing: -0.2px;
     }
 
-    /* Only show gloss when toggle is ON AND token is selected (saved/highlighted) */
-    #readingPassageContainer.show-vi-gloss .reading-token.selected .token-vi-gloss {
+    .reading-token .token-vi-gloss.is-long-gloss {
+      max-width: 122px !important;
+      overflow: hidden !important;
+      text-align: left !important;
+      mask-image: linear-gradient(to right, transparent 0%, #000 6%, #000 94%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 6%, #000 94%, transparent 100%);
+    }
+
+    .token-vi-gloss-track {
+      display: inline-flex !important;
+      align-items: center !important;
+      width: max-content !important;
+      white-space: nowrap !important;
+      will-change: transform;
+      animation: tokenGlossMarqueeLoop var(--gloss-dur, 10s) linear infinite;
+    }
+
+    .token-vi-gloss-item {
+      display: inline-block !important;
+      padding-right: 28px !important;
+      white-space: nowrap !important;
+    }
+
+    @keyframes tokenGlossMarqueeLoop {
+      0%, 15% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+
+    /* Only show gloss when toggle is ON, Review Mode is OFF, AND token is selected (saved/highlighted) */
+    #readingPassageContainer.show-vi-gloss:not(.reading-review-mode) .reading-token.selected .token-vi-gloss {
       display: block !important;
     }
 
@@ -1794,11 +1826,11 @@
       pointer-events: none !important;
     }
 
-    #readingPassageContainer.quick-lookup-mode .reading-para-box {
+    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-para-box {
       line-height: 2.38;
     }
 
-    #readingPassageContainer.quick-lookup-mode .reading-token.active-token {
+    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token {
       display: inline-flex !important;
       flex-direction: column !important;
       align-items: center !important;
@@ -1813,30 +1845,45 @@
       z-index: 6 !important;
     }
 
-    #readingPassageContainer.quick-lookup-mode .reading-token.selected.active-token {
+    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.selected.active-token {
       background: #d8c6ee !important;
       color: #3f2b5e !important;
       box-shadow: inset 0 0 0 1.2px #9c82c4 !important;
     }
 
-    #readingPassageContainer.quick-lookup-mode .reading-token.active-token .token-pinyin {
+    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-pinyin {
       display: block !important;
       position: static !important;
       transform: none !important;
     }
 
-    #readingPassageContainer.quick-lookup-mode .reading-token.active-token .token-vi-gloss {
+    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-vi-gloss {
       display: block !important;
       position: static !important;
       transform: none !important;
       margin-top: 1px !important;
       font-size: 9.5px !important;
       font-weight: 700 !important;
-      line-height: 1.1 !important;
+      line-height: 1.15 !important;
       color: #000000 !important;
       text-shadow: none !important;
       white-space: nowrap !important;
       max-width: none !important;
+    }
+
+    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-vi-gloss.is-long-gloss {
+      width: 100% !important;
+      min-width: 114px !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
+      contain: inline-size !important;
+      text-align: left !important;
+    }
+
+    /* When Reading Review Mode (Ôn bài / Dò lại) is active, force-hide Pinyin and Vietnamese glosses */
+    #readingPassageContainer.reading-review-mode .reading-token .token-pinyin,
+    #readingPassageContainer.reading-review-mode .reading-token .token-vi-gloss {
+      display: none !important;
     }
 
     /* ===== Settings Modal (purple card system) ===== */
@@ -14967,13 +15014,45 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       let s = String(meaning).replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, '').trim();
       let first = s.split(/[;/。]/)[0].trim();
       if (!first) first = s;
-      if (first.length > 18 && first.includes(',')) {
+      if (first.length > 26 && first.includes(',')) {
         first = first.split(',')[0].trim();
       }
-      if (first.length > 22) {
-        first = first.slice(0, 20) + '…';
-      }
       return first;
+    }
+
+    const LONG_READING_GLOSS_CHAR_LIMIT = 16;
+
+    function buildReadingTokenGlossElementHtml(meaning) {
+      const plain = formatShortGlossPlain(meaning);
+      if (!plain) return `<span class="token-vi-gloss"></span>`;
+      const safe = escapeHtml(plain);
+      if (plain.length > LONG_READING_GLOSS_CHAR_LIMIT) {
+        const durSec = Math.max(8.5, Math.min(16, +(plain.length * 0.36).toFixed(1)));
+        return `<span class="token-vi-gloss is-long-gloss" style="--gloss-dur:${durSec}s;"><span class="token-vi-gloss-track"><span class="token-vi-gloss-item">${safe}</span><span class="token-vi-gloss-item" aria-hidden="true">${safe}</span></span></span>`;
+      }
+      return `<span class="token-vi-gloss">${safe}</span>`;
+    }
+
+    function applyReadingTokenGlossToEl(glEl, meaning) {
+      if (!glEl) return;
+      const plain = formatShortGlossPlain(meaning);
+      if (!plain) {
+        glEl.classList.remove('is-long-gloss');
+        glEl.style.removeProperty('--gloss-dur');
+        glEl.textContent = '';
+        return;
+      }
+      if (plain.length > LONG_READING_GLOSS_CHAR_LIMIT) {
+        const durSec = Math.max(8.5, Math.min(16, +(plain.length * 0.36).toFixed(1)));
+        const safe = escapeHtml(plain);
+        glEl.classList.add('is-long-gloss');
+        glEl.style.setProperty('--gloss-dur', `${durSec}s`);
+        glEl.innerHTML = `<span class="token-vi-gloss-track"><span class="token-vi-gloss-item">${safe}</span><span class="token-vi-gloss-item" aria-hidden="true">${safe}</span></span>`;
+      } else {
+        glEl.classList.remove('is-long-gloss');
+        glEl.style.removeProperty('--gloss-dur');
+        glEl.textContent = plain;
+      }
     }
 
     // Render interactive HTML passage content with 2-character Chinese paragraph indentation & paragraph translation toggles
@@ -15021,17 +15100,6 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         if (lw && lw.pinyin) return lw.pinyin;
         if (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].pinyin) return aiCache[tok.hanzi].pinyin;
         return '';
-      }
-
-      function getShortGloss(meaning) {
-        const first = formatShortGlossPlain(meaning);
-        if (!first) return '';
-        return first
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#39;');
       }
 
       // Standardize paragraphs array
@@ -15115,8 +15183,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           const rawPinyin = resolveTokenPinyin(tok);
           const pinyinHTML = `<span class="token-pinyin">${escapeHtml(rawPinyin)}</span>`;
           const rawMeaning = resolveTokenMeaning(tok);
-          const shortMeaning = getShortGloss(rawMeaning);
-          const glossHTML = `<span class="token-vi-gloss">${shortMeaning}</span>`;
+          const glossHTML = buildReadingTokenGlossElementHtml(rawMeaning);
 
           return `<span class="reading-token ${selectedClass}" data-index="${globalIdx}" data-hanzi="${tok.hanzi}" title="${tok.hanzi}${hskTitle}" onclick="handleReadingTokenClick('${art.id}', ${globalIdx}, event)">${pinyinHTML}<span class="token-text">${innerHTML}</span>${glossHTML}</span>`;
         }).join('');
@@ -15384,7 +15451,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
             const pyEl = targetEl.querySelector('.vsl-tok-pinyin, .token-pinyin');
             if (pyEl && tok.pinyin) pyEl.textContent = tok.pinyin;
             const glEl = targetEl.querySelector('.token-vi-gloss');
-            if (glEl && tok.vietnamese) glEl.textContent = formatShortGlossPlain(tok.vietnamese);
+            if (glEl && tok.vietnamese) applyReadingTokenGlossToEl(glEl, tok.vietnamese);
           }
         }
       } catch (e) {
@@ -15525,6 +15592,12 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       const art = findReadingArticleById(activeReadingArticleId);
       const highlightCount = new Set([...(art && art.targetWords || []), ...(art && art.selectedWords || [])].map(w => w.hanzi)).size;
 
+      const rDrawer = document.getElementById('readingTokenDrawer');
+      if (rDrawer) rDrawer.style.display = 'none';
+      document.querySelectorAll('#readingPassageContainer .reading-token.active-token').forEach(el => {
+        el.classList.remove('active-token');
+      });
+
       // If review mode is ON and user marked difficult words -> advance to next round with ONLY those words blurred!
       if (isReadingReviewModeActive && readingReviewRetrySet.size > 0) {
         const retryWords = new Set(readingReviewRetrySet);
@@ -15534,7 +15607,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 
         document.querySelectorAll('#readingPassageContainer .reading-token.selected').forEach(el => {
           const h = el.getAttribute('data-hanzi');
-          el.classList.remove('revealed', 'revealed-round2');
+          el.classList.remove('revealed', 'revealed-round2', 'active-token');
           if (h && retryWords.has(h)) {
             el.classList.remove('retry-passed');
             el.classList.add('retry-mark');
@@ -15556,7 +15629,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 
       if (isReadingReviewModeActive) {
         document.querySelectorAll('#readingPassageContainer .reading-token.selected').forEach(el => {
-          el.classList.remove('revealed', 'revealed-round2', 'retry-mark', 'retry-passed');
+          el.classList.remove('revealed', 'revealed-round2', 'retry-mark', 'retry-passed', 'active-token');
         });
 
         if (highlightCount === 0) {
@@ -15672,7 +15745,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           targetEl.appendChild(glEl);
         }
         if (resolvedMeaning) {
-          glEl.textContent = formatShortGlossPlain(resolvedMeaning);
+          applyReadingTokenGlossToEl(glEl, resolvedMeaning);
         }
       }
 
