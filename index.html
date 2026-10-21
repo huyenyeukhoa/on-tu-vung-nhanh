@@ -18939,34 +18939,35 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         const existing = await vslFetchSharedMacSubtitles(ytId);
         if (existing && existing.length >= 2) return existing;
 
-        // 2. Read current dict_video_learning_requests map & enqueue
+        // 2. Read current dict_video_learning_requests map & enqueue (NEVER delete existing student history)
         const reqKey = 'dict_video_learning_requests';
         let reqMap = {};
-        try {
-          const r = await fetch(`${VSL_MAC_SUPA_URL}/rest/v1/app_settings?key=eq.${reqKey}&select=value`, {
-            headers: vslGetMacSupaHeaders()
-          });
-          if (r.ok) {
-            const rows = await r.json();
-            let rawVal = rows && rows[0] ? rows[0].value : null;
-            if (typeof rawVal === 'string') {
-              try { rawVal = JSON.parse(rawVal); } catch (e) {}
+        let loadedExisting = false;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const r = await fetch(`${VSL_MAC_SUPA_URL}/rest/v1/app_settings?key=eq.${reqKey}&select=value`, {
+              headers: vslGetMacSupaHeaders()
+            });
+            if (r.ok) {
+              const rows = await r.json();
+              let rawVal = rows && rows[0] ? rows[0].value : null;
+              if (typeof rawVal === 'string') {
+                try { rawVal = JSON.parse(rawVal); } catch (e) {}
+              }
+              if (rawVal && typeof rawVal === 'object' && !Array.isArray(rawVal)) {
+                reqMap = rawVal;
+              }
+              loadedExisting = true;
+              break;
             }
-            if (rawVal && typeof rawVal === 'object' && !Array.isArray(rawVal)) {
-              reqMap = rawVal;
-            }
-          }
-        } catch (e) {}
-
-        // Clean up very old completed/error requests (> 12h) to keep map small
-        const now = Date.now();
-        for (const k of Object.keys(reqMap)) {
-          const item = reqMap[k];
-          if (!item || (now - (Number(item.createdAt) || 0) > 12 * 3600 * 1000)) {
-            delete reqMap[k];
-          }
+          } catch (e) {}
+        }
+        if (!loadedExisting) {
+          console.warn('vslRequestMacWorkerSubtitles: aborted upsert to avoid overwriting existing requests');
+          return null;
         }
 
+        const now = Date.now();
         reqMap[reqId] = {
           reqId,
           ytId,
