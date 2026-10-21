@@ -20742,9 +20742,9 @@ Hãy trả về DUY NHẤT một đối tượng JSON hợp lệ (không bọc m
       pctCtrl.glideTo(92, 280);
 
       const styleDescriptions = {
-        daily: '日常幽默生活故事 (mẩu chuyện đời thường gần gũi, dí dỏm, tình huống sinh động dễ nhớ)',
-        news: '现代社会新闻简讯 (bản tin ngắn thời sự - xã hội hiện đại, văn phong báo chí súc tích)',
-        work: '职场与商务实战情境 (tình huống công sở, phỏng vấn hoặc kinh doanh thực tế)',
+        daily: '现代都市生活与轻职场故事 (câu chuyện đời sống đô thị & công việc hiện đại tự nhiên, gần gũi, dí dỏm; linh hoạt kết hợp bối cảnh công việc/sáng tạo/công nghệ với đời sống để mọi từ vựng đều đúng ngữ cảnh bản xứ)',
+        news: '现代社会与科技财经简讯 (bản tin ngắn thời sự - xã hội - công nghệ hiện đại, văn phong báo chí chuẩn mực, súc tích)',
+        work: '职场与商务实战情境 (tình huống công sở, khởi nghiệp, dự án hoặc kinh doanh thực tế)',
         story: '悬疑反转精彩故事 (mẩu chuyện kịch tính, bất ngờ, cuốn hút người đọc)'
       };
       const styleDesc = styleDescriptions[aiStoryCurrentStyle] || styleDescriptions.daily;
@@ -20753,60 +20753,93 @@ Hãy trả về DUY NHẤT một đối tượng JSON hợp lệ (không bọc m
         .map(w => `- ${w.hanzi} (${w.pinyin || ''}): ${w.vietnamese || ''}`)
         .join('\n');
 
-      const storyPrompt = `你是一位精通HSK高级词汇教学的中国本土作家与中越双语专家。请用【100%纯正现代简体中文】编写一篇短文（约120 - 150个汉字），风格为：${styleDesc}。
-必须自然、地道地将以下所有目标中文词汇融入这篇纯中文故事中：
+      const storyPrompt = `你是一位精通现代汉语语法、词语搭配（Collocation）与HSK高级词汇教学的中国本土作家及中越双语专家。请用【100%纯正、地道、符合母语者语感的现代简体中文】编写一篇短文（约120 - 150个汉字），风格为：${styleDesc}。
+必须自然、地道、零语病地将以下所有目标中文词汇融入这篇纯中文短文中：
 ${wordListPrompt}
 
-【QUY TẮC BẮT BUỘC】:
-1. 100% CHỮ HÁN GIẢN THỂ & VIẾT LIỀN 1 ĐOẠN VĂN DUY NHẤT:
+【QUY TẮC NGỮ PHÁP & CÁCH DÙNG TỪ BẢN XỨ BẮT BUỘC (母语级搭配与语法铁律)】:
+1. CHUẨN XÁC TUYỆT ĐỐI VỀ CỤM TỪ CỐ ĐỊNH, ĐỐI TƯỢNG KẾT HỢP & SẮC THÁI TỪ (精准固定搭配、适用对象与语体色彩 — CỰC KỲ QUAN TRỌNG):
+   - Trước khi viết, BẮT BUỘC xác định **cụm từ cố định chuẩn bản xứ (标准搭配)**, **phạm vi đối tượng (搭配对象)** và **sắc thái trang trọng/khẩu ngữ (语体色彩)** của từng từ mục tiêu:
+     + **Nhóm từ kỹ thuật / chuyên môn / trừu tượng** (như "传输", "催化", "折射", "赋能", "辐射"...): BẮT BUỘC đi với tân ngữ kỹ thuật/trừu tượng đúng chuẩn (ví dụ: ✅"传输高清数据 / 传输大文件 / 信号传输", TUYỆT ĐỐI CẤM dùng thay cho từ khẩu ngữ "发/转发" như ❌"在群里传输消息 / 传输公告").
+     + **Nhóm động từ trang trọng / quy mô lớn** (như "创立", "缔造", "颁布", "构建", "践行"...): BẮT BUỘC đi với chủ thể/tân ngữ có quy mô lớn hoặc trang trọng tương xứng (ví dụ: ✅"创立科技公司 / 创立个人品牌 / 创立学派", TUYỆT ĐỐI CẤM ghép với sự vật nhỏ lẻ đời thường như ❌"创立小区宠物俱乐部" — câu lạc bộ nhỏ phải dùng "成立").
+     + **Nhóm tính từ văn viết / vĩ mô** (như "广阔", "辽阔", "宏伟", "浩瀚", "深远"...): BẮT BUỘC bổ nghĩa cho danh từ mang tầm vóc rộng lớn/trừu tượng và PHẢI CÓ trợ từ "的" khi tính từ 2 âm tiết đứng trước danh từ thông thường (ví dụ: ✅"广阔的市场前景 / 广阔的天地 / 广阔的草原 / 广阔的视野", TUYỆT ĐỐI CẤM ghép thiếu "的" hoặc ghép với vật nhỏ hẹp như ❌"广阔草坪" — bãi cỏ khu dân cư chỉ nói "大草坪").
+     + **Nhóm thành ngữ 4 chữ (成语)**: BẮT BUỘC đặt đúng chức năng ngữ pháp trong câu (làm vị ngữ, trạng ngữ + 地, định ngữ + 的, hoặc bổ ngữ sau 得/去...). Ví dụ: ✅"去现场一探究竟", ✅"忙得不可开交", ✅"兴奋得直摇尾巴".
+   - **THIẾT KẾ BỐI CẢNH THÔNG MINH (灵活设计合理场景，严禁生搬硬套)**:
+     + Nếu danh sách từ mục tiêu vừa có từ trang trọng/công nghệ/vĩ mô vừa có từ đời thường, hãy khéo léo dựng bối cảnh một nhân vật hiện đại (ví dụ: người trẻ khởi nghiệp, làm dự án sáng tạo, xem bản tin ngành nghề rồi chuyển sang tình huống đời sống) để **100% các từ mục tiêu đều xuất hiện trong cụm từ cố định chuẩn xác nhất của người bản xứ**, tuyệt đối KHÔNG ép các từ trang trọng/kỹ thuật vào chuyện vặt vãnh không hợp ngữ cảnh!
+
+2. CHUẨN NGỮ PHÁP TRỢ TỪ "的 / 地 / 得" & CẤU TRÚC CÂU (严格遵守现代汉语语法):
+   - **的**: Dùng sau định ngữ, trước danh từ/cụm danh từ (Đặc biệt: tính từ 2 âm tiết miêu tả tính chất như "广阔", "崭新", "重要" bổ nghĩa cho danh từ BẮT BUỘC phải có "的", ví dụ: "广阔的前景", "刚创立的品牌").
+   - **地**: Dùng sau trạng ngữ chỉ cách thức/trạng thái, đứng trước động từ (ví dụ: "仔细地核对", "兴奋地跑过去").
+   - **得**: Dùng sau động từ/tính từ, đứng trước bổ ngữ chỉ kết quả/mức độ (ví dụ: "跑得太快", "激动得说不出话").
+   - Câu chữ "把" và câu chữ "被" phải dùng đúng quy tắc chuyển tác/bị động tự nhiên.
+
+3. 100% CHỮ HÁN GIẢN THỂ & VIẾT LIỀN 1 ĐOẠN VĂN DUY NHẤT:
    - Toàn bộ câu chuyện gốc ("content"), tiêu đề ("title") và mọi từ trong "tokens" BẮT BUỘC PHẢI LÀ 100% CHỮ HÁN GIẢN THỂ (纯正简体中文汉字), viết liền mạch thành **1 ĐOẠN VĂN DUY NHẤT** (~120 - 150 chữ Hán, không xuống dòng \\n).
-2. CÁCH DÙNG TỪ MỤC TIÊU (${targetHanziList.join(', ')}):
-   - Mỗi từ mục tiêu CHỈ DÙNG ĐÚNG 1 LẦN DUY NHẤT trong bài (【每个目标词汇在全文中只允许出现唯一 1 次】).
-   - Dùng từ mục tiêu như một TỪ ĐỘC LẬP đúng nghĩa gốc (KHÔNG đặt dấu ngoặc kép “ ” bao quanh từ mục tiêu, KHÔNG ghép thêm hậu tố như "部", "商", "会" làm biến đổi từ mục tiêu).
+   - Mỗi từ mục tiêu (${targetHanziList.join(', ')}) CHỈ DÙNG ĐÚNG 1 LẦN DUY NHẤT trong bài (【每个目标词汇在全文中只允许出现唯一 1 次】), giữ nguyên mặt chữ gốc (KHÔNG đặt ngoặc kép “ ” bao quanh từ mục tiêu, KHÔNG ghép thêm hậu tố làm biến đổi từ).
    - Khi phân tách trong mảng "tokens", BẮT BUỘC giữ nguyên mỗi từ mục tiêu (${targetHanziList.join(', ')}) thành 1 token độc lập đúng mặt chữ.
-   - Xưng hô chức danh chuẩn bản xứ: [Họ + Chức danh/Xưng hô] (ví dụ: "王经理", "李总监", "王阿姨"), CẤM viết ngược "经理王".
-3. QUY TẮC GOM CỤM TỪ & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH TRONG MẢNG "tokens" (CỰC KỲ QUAN TRỌNG - GIỐNG HỆT BÀI ĐỌC):
+   - Xưng hô chức danh chuẩn bản xứ: [Họ + Chức danh/Xưng hô] (ví dụ: "王经理", "李总监", "张阿姨"), CẤM viết ngược "经理王".
+
+4. QUY TẮC GOM CỤM TỪ & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH TRONG MẢNG "tokens" (GIỐNG HỆT BÀI ĐỌC):
    - **A. BẮT BUỘC GOM TRỌN CÁC CỤM TỪ GHÉP & CỤM DIỄN ĐẠT HOÀN CHỈNH**:
-     + Ngoài các từ mục tiêu ở Mục 2, đối với mọi từ ngữ xung quanh trong câu chuyện, BẮT BUỘC gom trọn các cụm danh từ, cụm phương vị (trong/trên/sau...), cụm động-tân ngắn, chức danh, phòng ban, động từ ly hợp, cụm cử chỉ/biểu cảm/lời nói, thành ngữ thành **1 token có nghĩa tự nhiên hoàn chỉnh** để người học bấm vào hiểu ngay cả cụm!
-     + **Ví dụ gom cụm chuẩn bắt buộc**:
-       • Cụm nơi chốn / phương vị / thời gian: gom "社区群里" (trong nhóm khu dân cư — CẤM tách thành "社区" + "群" + "里"!), gom "微信群里" (trong nhóm WeChat), gom "走丢后" (sau khi đi lạc), gom "半年以来" (nửa năm qua), gom "首次会面" (cuộc gặp đầu tiên).
-       • Cụm danh từ & xưng hô: gom "王阿姨" (dì Vương), "王经理" (giám đốc Vương), "我家小狗" (chú chó nhỏ nhà tôi), "寻狗消息" (tin nhắn tìm chó), "手机定位" (định vị điện thoại), "项目评审会" (cuộc họp thẩm định dự án), "高层领导" (lãnh đạo cấp cao), "生产部" (phòng sản xuất), "供应商" (nhà cung cấp), "邻居们" (những người hàng xóm).
-       • Cụm động từ / biểu cảm / ngữ pháp: gom "深表关切" (bày tỏ sự quan tâm sâu sắc), "笑着说" (cười nói), "戴名牌" (đeo bảng tên), "找到了它" (tìm thấy nó), "皱起眉头" (nhíu mày), "松了口气" (thở phào nhẹ nhõm), "点了点头" (gật đầu), "很感兴趣的样子" (dáng vẻ rất hứng thú), "刚起了一个头" (vừa mới mở đầu), "头也不回地" (không ngoảnh đầu lại).
+     + Ngoài các từ mục tiêu giữ nguyên thành token độc lập, đối với các từ xung quanh, BẮT BUỘC gom trọn cụm danh từ, cụm phương vị (trong/trên/sau...), cụm động-tân ngắn, chức danh, phòng ban, động từ ly hợp, cụm cử chỉ/biểu cảm/lời nói, thành ngữ thành **1 token có nghĩa tự nhiên hoàn chỉnh**:
+       • Cụm nơi chốn / phương vị / thời gian: gom "社区群里" (trong nhóm khu dân cư), "微信群里" (trong nhóm WeChat), "展会现场" (hiện trường triển lãm), "半年以来" (nửa năm qua), "首次会面" (cuộc gặp đầu tiên).
+       • Cụm danh từ & xưng hô: gom "王经理" (giám đốc Vương), "科技工作室" (xưởng công nghệ / studio công nghệ), "高清视频数据" (dữ liệu video độ nét cao), "市场前景" (triển vọng thị trường), "项目评审会" (cuộc họp thẩm định dự án).
+       • Cụm động từ / biểu cảm / ngữ pháp: gom "深表关切" (bày tỏ sự quan tâm sâu sắc), "笑着说" (cười nói), "皱起眉头" (nhíu mày), "松了口气" (thở phào nhẹ nhõm), "点了点头" (gật đầu), "直摇尾巴" (vẫy đuôi lia lịa).
    - **B. TUYỆT ĐỐI KHÔNG XÉ LẺ VỤN VẶT CHỮ ĐƠN HOẶC TÁCH RỜI HẬU TỐ**:
      + CẤM tách lẻ các chữ đơn như "群", "里", "后", "上", "下", "部", "商", "会", "店", "馆", "牌", "们", "着", "了", "过" đứng bơ vơ một mình khi chúng thuộc về cụm danh từ/động từ phía trước!
    - **C. TRỢ TỪ "的", "地" & ĐỊNH DẠNG MỖI TOKEN**:
-     + Tách trợ từ "的", "地" thông thường thành token riêng (ví dụ: "上次" + "的" + "经验").
+     + Tách trợ từ "的", "地" thông thường thành token riêng (ví dụ: "广阔" + "的" + "市场前景").
      + Mỗi phần tử trong mảng "tokens" dùng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt sát ngữ cảnh" (với dấu câu hoặc trợ từ "的", "地" chỉ cần ghi chính ký tự đó, ví dụ "，", "的", "地").
 
 Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown). Mảng "paragraphs" CHỈ CÓ ĐÚNG 1 PHẦN TỬ DUY NHẤT:
 {
   "title": "纯中文标题 (3-6个汉字)",
   "titleVi": "Tiêu đề tiếng Việt tương ứng",
-  "content": "邻居王阿姨对我家小狗情深意重，昨天它走丢后，她深表关切，立刻在社区群里传输寻狗消息……（全文100%纯简体中文，连成唯一1个自然段，不换行，约120-150个汉字）",
+  "content": "林哲去年创立了一家数字传媒工作室，今天他正用电脑向云端传输高清视频数据时，行业协会突然发布了一条重磅公告，称本次创新展将为年轻团队提供广阔的市场前景，他看后立刻决定去展会现场一探究竟……（全文100%纯简体中文，连成唯一1个自然段，不换行，约120-150个汉字）",
   "paragraphs": [
     {
       "tokens": [
-        "邻居|lín jū|hàng xóm",
-        "王阿姨|wáng ā yí|dì Vương",
-        "对|duì|đối với",
-        "我家小狗|wǒ jiā xiǎo gǒu|chú chó nhỏ nhà tôi",
-        "情深意重|qíng shēn yì zhòng|tình sâu nghĩa nặng",
+        "林哲|lín zhé|Lâm Triết",
+        "去年|qù nián|năm ngoái",
+        "创立|chuàng lì|sáng lập",
+        "了|le|rồi",
+        "一家|yī jiā|một",
+        "数字传媒工作室|shù zì chuán méi gōng zuò shì|studio truyền thông kỹ thuật số",
         "，",
-        "昨天|zuó tiān|hôm qua",
-        "它|tā|nó",
-        "走丢后|zǒu diū hòu|sau khi đi lạc",
+        "今天|jīn tiān|hôm nay",
+        "他|tā|anh ấy",
+        "正用电脑|zhèng yòng diàn nǎo|đang dùng máy tính",
+        "向云端|xiàng yún duān|lên đám mây",
+        "传输|chuán shū|truyền tải",
+        "高清视频数据|gāo qīng shì pín shù jù|dữ liệu video độ nét cao",
+        "时|shí|lúc / khi",
         "，",
-        "她|tā|bà ấy / cô ấy",
-        "深表关切|shēn biǎo guān qiè|bày tỏ sự quan tâm sâu sắc",
+        "行业协会|háng yè xié huì|hiệp hội ngành nghề",
+        "突然|tū rán|đột nhiên",
+        "发布了|fā bù le|đã công bố / đăng",
+        "一条|yī tiáo|một",
+        "重磅|zhòng bàng|quan trọng / chấn động",
+        "公告|gōng gào|thông cáo / thông báo",
         "，",
+        "称|chēng|nêu rõ / cho biết",
+        "本次创新展|běn cì chuàng xīn zhǎn|triển lãm đổi mới sáng tạo lần này",
+        "将为|jiāng wèi|sẽ dành cho",
+        "年轻团队|nián qīng tuán duì|đội ngũ trẻ",
+        "提供|tí gōng|cung cấp / mở ra",
+        "广阔|guǎng kuò|rộng lớn / rộng mở",
+        "的",
+        "市场前景|shì chǎng qián jǐng|triển vọng thị trường",
+        "，",
+        "他|tā|anh ấy",
+        "看后|kàn hòu|sau khi xem xong",
         "立刻|lì kè|lập tức",
-        "在|zài|ở / tại",
-        "社区群里|shè qū qún lǐ|trong nhóm khu dân cư",
-        "传输|chuán shū|truyền tải / gửi",
-        "寻狗消息|xún gǒu xiāo xi|tin nhắn tìm chó",
+        "决定|jué dìng|quyết định",
+        "去|qù|đến",
+        "展会现场|zhǎn huì xiàn chǎng|hiện trường triển lãm",
+        "一探究竟|yī tàn jiū jìng|tìm hiểu thực hư",
         "。"
       ],
-      "vietnamese": "Bản dịch tiếng Việt mượt mà, sát nghĩa của toàn bộ đoạn văn tiếng Trung ở trên..."
+      "vietnamese": "Năm ngoái Lâm Triết đã sáng lập một studio truyền thông kỹ thuật số, hôm nay khi anh đang dùng máy tính truyền tải dữ liệu video độ nét cao lên đám mây thì hiệp hội ngành nghề bất ngờ đăng tải một thông cáo quan trọng, cho biết triển lãm đổi mới sáng tạo lần này sẽ mở ra triển vọng thị trường rộng lớn cho các đội ngũ trẻ, xem xong anh lập tức quyết định đến hiện trường triển lãm để tìm hiểu thực hư..."
     }
   ]
 }`;
@@ -20878,7 +20911,7 @@ ${wordListPrompt}
                 messages: [
                   {
                     role: 'system',
-                    content: SIMPLIFIED_ONLY_SYSTEM_MSG + ' 特别注意：编写故事时，故事正文(content)和分词数组(tokens)中的词语必须100%为纯简体中文汉字，连成唯一1个自然段，绝对禁止用越南语写故事正文！'
+                    content: SIMPLIFIED_ONLY_SYSTEM_MSG + ' 特别注意：1. 故事正文(content)和分词数组(tokens)中的词语必须100%为纯简体中文汉字，连成唯一1个自然段，绝对禁止用越南语写故事正文！2. 严格遵守现代汉语母语者的固定搭配（Collocation）、语体色彩与适用对象（如“传输”仅限数据/信号/文件，严禁写“传输消息/公告”；“创立”仅限公司/品牌/学派，严禁写“创立小俱乐部”；双音节形容词如“广阔”修饰名词必须带“的”且搭配宏大对象如“广阔的市场/前景/天地”，严禁写“广阔草坪”），确保全文零语病、零中式生硬拼凑！'
                   },
                   { role: 'user', content: storyPrompt }
                 ]
