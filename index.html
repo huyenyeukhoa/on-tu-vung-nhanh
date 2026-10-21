@@ -4582,15 +4582,7 @@
           <!-- Rendered dynamically -->
         </div>
 
-        <div style="margin-top: 12px; margin-bottom: 6px;" class="ai-story-sec-title">🎨 Phong cách bài viết:</div>
-        <div class="ai-story-styles-row" id="aiStoryStylesRow">
-          <div class="ai-story-style-chip active" data-style="daily">☕ Đời thường & Hài hước</div>
-          <div class="ai-story-style-chip" data-style="news">📰 Thời sự & Xã hội</div>
-          <div class="ai-story-style-chip" data-style="work">💼 Công sở & Phỏng vấn</div>
-          <div class="ai-story-style-chip" data-style="story">🕵️ Trinh thám & Kịch tính</div>
-        </div>
-
-        <div style="margin-top: 14px;">
+        <div style="margin-top: 12px;">
           <button type="button" class="ai-story-act-btn reader" id="btnStartGenerateStory" style="padding: 12px; font-size: 13.5px;">
             ✨ Tạo bài đọc ngay (~130 chữ)
           </button>
@@ -20741,20 +20733,13 @@ Hãy trả về DUY NHẤT một đối tượng JSON hợp lệ (không bọc m
       const pctCtrl = createSmoothPctController('aiStoryLoadingPct', 8);
       pctCtrl.glideTo(92, 280);
 
-      const styleDescriptions = {
-        daily: '现代都市生活与轻职场故事 (câu chuyện đời sống đô thị & công việc hiện đại tự nhiên, gần gũi, dí dỏm; linh hoạt kết hợp bối cảnh công việc/sáng tạo/công nghệ với đời sống để mọi từ vựng đều đúng ngữ cảnh bản xứ)',
-        news: '现代社会与科技财经简讯 (bản tin ngắn thời sự - xã hội - công nghệ hiện đại, văn phong báo chí chuẩn mực, súc tích)',
-        work: '职场与商务实战情境 (tình huống công sở, khởi nghiệp, dự án hoặc kinh doanh thực tế)',
-        story: '悬疑反转精彩故事 (mẩu chuyện kịch tính, bất ngờ, cuốn hút người đọc)'
-      };
-      const styleDesc = styleDescriptions[aiStoryCurrentStyle] || styleDescriptions.daily;
       const targetHanziList = aiStorySelectedWords.map(w => w.hanzi);
       const wordListPrompt = aiStorySelectedWords
         .map(w => `- ${w.hanzi} (${w.pinyin || ''}): ${w.vietnamese || ''}`)
         .join('\n');
 
-      const storyPrompt = `你是一位精通现代汉语语法、词语搭配（Collocation）与HSK高级词汇教学的中国本土作家及中越双语专家。请用【100%纯正、地道、符合母语者语感的现代简体中文】编写一篇短文（约120 - 150个汉字），风格为：${styleDesc}。
-必须自然、地道、零语病地将以下所有目标中文词汇融入这篇纯中文短文中：
+      const storyPrompt = `你是一位精通现代汉语语法、词语搭配（Collocation）与HSK高级词汇教学的中国本土作家及中越双语专家。请根据以下目标词汇的真实语体色彩与标准搭配，自动选择最贴切、最合理的现代现实场景，用【100%纯正、地道、自然平实、完全符合母语者语感的现代简体中文】编写一篇短文（约120 - 150个汉字）。
+不需要刻意搞笑或夸张，只需行文自然流畅、逻辑顺畅、用词100%准确零语病地将以下所有目标中文词汇融入这篇纯中文短文中：
 ${wordListPrompt}
 
 【QUY TẮC NGỮ PHÁP & CÁCH DÙNG TỪ BẢN XỨ BẮT BUỘC (母语级搭配与语法铁律)】:
