@@ -12512,8 +12512,13 @@ ${targetRuleText}
      + Cụm danh từ / thời gian / nơi chốn / phương vị: "首次会面" (cuộc gặp đầu tiên), "半年以来" (nửa năm qua), "他们五个人" (5 người bọn họ), "社区群里" (trong nhóm khu dân cư), "寻狗消息" (tin nhắn tìm chó), "手机定位" (định vị điện thoại), "我家小狗" (chú chó nhỏ nhà tôi), "走丢后" (sau khi đi lạc), "王阿姨" (dì Vương), "王经理" (giám đốc Vương), "项目评审会" (cuộc họp thẩm định dự án), "第一次" (lần đầu tiên), "来例假" (có kinh nguyệt), "怪病" (bệnh lạ), "相关知识" (kiến thức liên quan).
    - **TUYỆT ĐỐI KHÔNG xé lẻ vụn vặt 1–2 chữ đơn** (như "群", "里", "后", "上", "下", "起", "感", "所", "部", "商", "会", "店", "馆", "牌", "们", "着", "了", "过") tách rời khỏi cụm từ chính khiến người đọc bấm vào không hiểu nghĩa cả cụm! (Ví dụ: BẮT BUỘC gom "社区群里", CẤM tách thành "社区" + "群" + "里"; BẮT BUỘC gom "寻狗消息", CẤM tách "寻狗" + "消息"; BẮT BUỘC gom "走丢后", CẤM tách "走丢" + "后").
 
-2) QUY TẮC NGHĨA VIỆT CỦA TOKEN (TIẾNG VIỆT TỰ NHIÊN, DỄ HIỂU — CẤM DỊCH ÂM HÁN-VIỆT CỨNG NHẮC):
-   - Trong mảng tokens, phần nghĩa tiếng Việt BẮT BUỘC dịch bằng **tiếng Việt thông dụng, tự nhiên, dễ hiểu nhất** trong ngữ cảnh câu!
+2) QUY TẮC NGHĨA VIỆT & PINYIN CỦA TOKEN THEO NGỮ CẢNH (CỰC KỲ QUAN TRỌNG):
+   - Trong mảng tokens, phần Pinyin và nghĩa tiếng Việt BẮT BUỘC dịch bằng **tiếng Việt thông dụng, tự nhiên, đúng 100% ngữ cảnh câu**!
+   - **CẢNH BÁO TỪ ĐA ÂM / ĐA NGHĨA**: Với các từ/cụm đa âm hoặc đa nghĩa theo ngữ cảnh, BẮT BUỘC chọn đúng âm Pinyin và nghĩa trong câu đó:
+     + Ví dụ: "都会" trong "每次放学都会来" ➔ BẮT BUỘC là **"都会|dōu huì|đều sẽ"** (hoặc tách "都|dōu|đều", "会|huì|sẽ"), TUYỆT ĐỐI CẤM ghi thành ❌"dū huì|đô thị"!
+     + "才能" khi làm phó từ ("努力才能成功") ➔ **"cái néng|mới có thể"** (chỉ dịch "tài năng" khi là danh từ).
+     + "穿着" khi là động từ ("穿着一件衣服") ➔ **"chuān zhe|đang mặc"** (chỉ dịch "chuān zhuó|trang phục" khi là danh từ).
+     + Các chữ đa âm như "还" (hái: vẫn/còn vs huán: trả), "得" (de / dé: đạt được / děi: phải), "长" (cháng: dài vs zhǎng: lớn lên/trưởng), "重" (zhòng: nặng/trọng vs chóng: lặp lại), "行" (xíng: đi/được vs háng: ngành/hàng), "只" (zhǐ: chỉ vs zhī: con/chiếc), "为" (wèi: vì vs wéi: làm/thành), "地" (de: một cách vs dì: đất) BẮT BUỘC ghi Pinyin chuẩn theo ngữ cảnh!
    - **TUYỆT ĐỐI CẤM bê nguyên âm Hán-Việt tối nghĩa/ít dùng trong đời sống** làm nghĩa của từ! Ví dụ:
      + "专注" ➔ BẮT BUỘC dịch là **"chuyên về / tập trung"** (TUYỆT ĐỐI CẤM dịch âm Hán-Việt là ❌"chuyên chú").
      + "寻求" ➔ dịch là **"tìm kiếm / nhờ"** (CẤM dịch ❌"tầm cầu") | "秉持" ➔ **"giữ vững"** (CẤM dịch ❌"bỉnh trì") | "赋能" ➔ **"tiếp sức / nâng tầm"** (CẤM dịch ❌"phú năng") | "驻足" ➔ **"dừng chân"** (CẤM dịch ❌"trú túc").
@@ -12840,8 +12845,51 @@ ${chunkText}
       '怼了回去': { pinyin: 'duì le huí qù', vietnamese: 'bật lại / cãi lại' },
       '落日飞车': { pinyin: 'luò rì fēi chē', vietnamese: 'xe buýt ngắm hoàng hôn (Sunset Coaster)' },
       '落日': { pinyin: 'luò rì', vietnamese: 'hoàng hôn / mặt trời lặn' },
-      '飞车': { pinyin: 'fēi chē', vietnamese: 'chuyến xe tốc hành / xe bay' }
+      '飞车': { pinyin: 'fēi chē', vietnamese: 'chuyến xe tốc hành / xe bay' },
+      '都会': { pinyin: 'dōu huì', vietnamese: 'đều sẽ' },
+      '大都': { pinyin: 'dà dōu', vietnamese: 'đa số đều / phần lớn đều' },
+      '第一次': { pinyin: 'dì yī cì', vietnamese: 'lần đầu tiên' },
+      '因为': { pinyin: 'yīn wèi', vietnamese: 'bởi vì' },
+      '此前': { pinyin: 'cǐ qián', vietnamese: 'trước đây' }
     };
+
+    // Self-heal any legacy saved token that was corrupted by older static dictionary overwrites
+    function healCorruptedLegacyToken(tok) {
+      if (!tok || !tok.hanzi || tok._userEdited) return tok;
+      if (tok.hanzi === '都会') {
+        const py = String(tok.pinyin || '').trim().toLowerCase();
+        const vi = String(tok.vietnamese || '').trim();
+        if (!py || py === 'dūhuì' || py === 'dū huì' || /đô thị|thành phố lớn/i.test(vi)) {
+          tok.pinyin = 'dōu huì';
+          tok.vietnamese = 'đều sẽ';
+        }
+      } else if (tok.hanzi === '大都') {
+        const py = String(tok.pinyin || '').trim().toLowerCase();
+        if (py === 'dàdū' || py === 'dà dū') {
+          tok.pinyin = 'dà dōu';
+          if (!tok.vietnamese || /đại đô/i.test(tok.vietnamese)) tok.vietnamese = 'đa số đều';
+        }
+      } else if (tok.hanzi === '落日飞车' && /xe buýt hai tầng/i.test(String(tok.vietnamese || ''))) {
+        tok.pinyin = 'luò rì fēi chē';
+        tok.vietnamese = 'xe buýt ngắm hoàng hôn (Sunset Coaster)';
+      } else if (tok.hanzi === '红揭面') {
+        tok.hanzi = '痕迹';
+        tok.pinyin = 'hén jì';
+        tok.vietnamese = 'dấu vết';
+      }
+      return tok;
+    }
+
+    // Words in HSK dictionary that collide with 2-character grammar/function word sequences (e.g. 都+会, 才+能, 穿+着, 空+地)
+    // Never auto-merge two single characters into these dictionary entries unless AI explicitly returned them as a single word!
+    const AMBIGUOUS_GRAMMAR_COMPOUND_SET = new Set([
+      '都会', '才能', '穿着', '还原', '还给', '只得', '不得', '免得', '懒得', '非得', '心得',
+      '得了', '算了', '罢了', '空地', '实地', '特地', '就地', '遍地', '落地', '种地', '工地',
+      '场地', '基地', '大地', '天地', '内地', '余地', '境地', '学会', '理会', '领会', '集会',
+      '本着', '沉着', '执着', '着想', '放过', '越过', '穿过', '透过', '好在', '好比', '要好',
+      '也好', '和好', '叫好', '好不', '去向', '向来', '往来', '来往', '来回', '过往', '比起',
+      '跟进', '上进', '全能'
+    ]);
 
     const CHINESE_SURNAMES_MAP = {
       '王': { py: 'wáng', vi: 'Vương' },
@@ -12887,7 +12935,7 @@ ${chunkText}
       const leadPunctRe = /^([，。！？；：、“”‘’（）《》【】…—,.!?;:"'()\[\]\-]+)(.+)$/;
       const trailPunctRe = /^(.+?)([，。！？；：、“”‘’（）《》【】…—,.!?;:"'()\[\]\-]+)$/;
       for (let i = 0; i < tokens.length; i++) {
-        let tok = tokens[i];
+        let tok = healCorruptedLegacyToken(tokens[i]);
         if (!tok || !tok.hanzi) continue;
         if (!AI_PUNCT_TEST_RE.test(tok.hanzi)) {
           const mLead = tok.hanzi.match(leadPunctRe);
@@ -12962,7 +13010,8 @@ ${chunkText}
         }
       }
 
-      // 3. Greedy sliding window (length 4 down to 2) to merge FIXED_COMPOUND_PHRASES and split dictionary compounds
+      // 3. Greedy sliding window (length 4 down to 2) to merge FIXED_COMPOUND_PHRASES and un-translated fallback single chars
+      // IMPORTANT: Never overwrite tokens that already have contextual meanings from Gemini AI with ambiguous HSK dictionary nouns!
       const merged = [];
       let idx = 0;
       while (idx < titleFixed.length) {
@@ -12972,7 +13021,7 @@ ${chunkText}
           const slice = titleFixed.slice(idx, idx + len);
           if (slice.some(t => !t || !t.hanzi || AI_PUNCT_TEST_RE.test(t.hanzi))) continue;
           const combined = slice.map(t => t.hanzi).join('');
-          if (FIXED_COMPOUND_PHRASES[combined]) {
+          if (FIXED_COMPOUND_PHRASES[combined] && !AMBIGUOUS_GRAMMAR_COMPOUND_SET.has(combined)) {
             matched = {
               hanzi: combined,
               pinyin: FIXED_COMPOUND_PHRASES[combined].pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(combined) : ''),
@@ -12982,17 +13031,14 @@ ${chunkText}
             matchLen = len;
             break;
           }
-          const isLexicalCompound = Boolean(
-            COMMON_CHINESE_COMPOUNDS[combined] ||
-            (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[combined]) ||
-            (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[combined]) ||
-            (typeof window !== 'undefined' && window.HSK_DICTIONARY && window.HSK_DICTIONARY[combined])
-          );
           const allSingleChars = slice.every(t => t.hanzi.length === 1 && /^[\u4e00-\u9fff]$/.test(t.hanzi));
+          const alreadyHasAiMeaning = slice.some(t => t.vietnamese && String(t.vietnamese).trim() && t.pinyin && String(t.pinyin).trim());
+          // Only merge dictionary compounds when single characters lacked AI meanings (or are in COMMON_CHINESE_COMPOUNDS) and are NOT ambiguous grammar collisions
           if (
+            allSingleChars &&
             combined.length <= 4 &&
-            slice.every(t => /^[\u4e00-\u9fff]+$/.test(t.hanzi)) &&
-            (isLexicalCompound || (allSingleChars && isKnownChineseCompound(combined)))
+            !AMBIGUOUS_GRAMMAR_COMPOUND_SET.has(combined) &&
+            (!alreadyHasAiMeaning ? isKnownChineseCompound(combined) : Boolean(COMMON_CHINESE_COMPOUNDS[combined]))
           ) {
             const meta = lookupDictMetaForToken(combined);
             matched = {
@@ -13009,15 +13055,16 @@ ${chunkText}
           merged.push(matched);
           idx += matchLen;
         } else {
-          const tok = titleFixed[idx];
-          if (tok && FIXED_COMPOUND_PHRASES[tok.hanzi]) {
-            tok.pinyin = FIXED_COMPOUND_PHRASES[tok.hanzi].pinyin || tok.pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(tok.hanzi) : '');
-            tok.vietnamese = FIXED_COMPOUND_PHRASES[tok.hanzi].vietnamese;
-            tok.isVocab = true;
-          } else if (tok && tok.hanzi && /[\u4e00-\u9fff]/.test(tok.hanzi) && (!tok.pinyin || !tok.vietnamese)) {
-            const meta = lookupDictMetaForToken(tok.hanzi);
-            if (!tok.pinyin && meta.pinyin) tok.pinyin = meta.pinyin;
-            if (!tok.vietnamese && meta.vietnamese) tok.vietnamese = meta.vietnamese;
+          const tok = healCorruptedLegacyToken(titleFixed[idx]);
+          if (tok && tok.hanzi && /[\u4e00-\u9fff]/.test(tok.hanzi)) {
+            const hasPy = Boolean(tok.pinyin && String(tok.pinyin).trim());
+            const hasVi = Boolean(tok.vietnamese && String(tok.vietnamese).trim());
+            if (!hasPy || !hasVi) {
+              const fixedMeta = FIXED_COMPOUND_PHRASES[tok.hanzi];
+              const meta = lookupDictMetaForToken(tok.hanzi);
+              if (!hasPy) tok.pinyin = (fixedMeta && fixedMeta.pinyin) || meta.pinyin || '';
+              if (!hasVi) tok.vietnamese = (fixedMeta && fixedMeta.vietnamese) || meta.vietnamese || '';
+            }
           }
           merged.push(tok);
           idx++;
@@ -13155,7 +13202,7 @@ ${chunkText}
           continue;
         }
 
-        // Case D: [1-char Verb] + standalone "着" -> e.g. "笑" + "着" -> "笑着"
+        // Case D: [1-char Verb] + standalone "着" -> e.g. "笑" + "着" -> "笑着" (never use noun chuānzhuó from dict)
         if (
           cur && nxt &&
           cur.isVocab && cur.hanzi.length === 1 && !nonVerbSingleChars.has(cur.hanzi) &&
@@ -13163,11 +13210,10 @@ ${chunkText}
         ) {
           const combinedH = cur.hanzi + '着';
           const fixed = FIXED_COMPOUND_PHRASES[combinedH];
-          const dictMeta = lookupDictMetaForToken(combinedH);
           finalMerged.push({
             hanzi: combinedH,
-            pinyin: (fixed && fixed.pinyin) || dictMeta.pinyin || `${cur.pinyin || ''} zhe`.trim(),
-            vietnamese: (fixed && fixed.vietnamese) || dictMeta.vietnamese || cur.vietnamese || '',
+            pinyin: (fixed && fixed.pinyin) || `${cur.pinyin || ''} zhe`.trim(),
+            vietnamese: (fixed && fixed.vietnamese) || (cur.vietnamese ? `đang ${cur.vietnamese}` : ''),
             isVocab: true
           });
           k += 2;
@@ -15863,15 +15909,18 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       const customGroupPinyinMap = new Map((customGroup && customGroup.words ? customGroup.words : []).map(w => [w.hanzi, w.pinyin || '']));
 
       function resolveTokenMeaning(tok) {
+        healCorruptedLegacyToken(tok);
         let raw = '';
-        if (FIXED_COMPOUND_PHRASES[tok.hanzi] && FIXED_COMPOUND_PHRASES[tok.hanzi].vietnamese) {
-          raw = FIXED_COMPOUND_PHRASES[tok.hanzi].vietnamese;
+        if (tok._userEdited && tok.vietnamese) {
+          raw = tok.vietnamese;
+        } else if (tok.vietnamese && String(tok.vietnamese).trim()) {
+          raw = tok.vietnamese;
         } else if (selectedMeaningMap.has(tok.hanzi) && selectedMeaningMap.get(tok.hanzi)) {
           raw = selectedMeaningMap.get(tok.hanzi);
-        } else if (tok.vietnamese) {
-          raw = tok.vietnamese;
         } else if (customGroupWordMap.has(tok.hanzi) && customGroupWordMap.get(tok.hanzi)) {
           raw = customGroupWordMap.get(tok.hanzi);
+        } else if (FIXED_COMPOUND_PHRASES[tok.hanzi] && FIXED_COMPOUND_PHRASES[tok.hanzi].vietnamese) {
+          raw = FIXED_COMPOUND_PHRASES[tok.hanzi].vietnamese;
         } else {
           const lw = lookup.get(tok.hanzi);
           if (lw && (lw.vietnamese || lw.vi || lw.meaning)) {
@@ -15896,15 +15945,17 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       }
 
       function resolveTokenPinyin(tok) {
-        if (FIXED_COMPOUND_PHRASES[tok.hanzi] && FIXED_COMPOUND_PHRASES[tok.hanzi].pinyin) {
-          return FIXED_COMPOUND_PHRASES[tok.hanzi].pinyin;
-        }
-        if (tok.pinyin) return tok.pinyin;
+        healCorruptedLegacyToken(tok);
+        if (tok._userEdited && tok.pinyin) return tok.pinyin;
+        if (tok.pinyin && String(tok.pinyin).trim()) return tok.pinyin;
         if (selectedPinyinMap.has(tok.hanzi) && selectedPinyinMap.get(tok.hanzi)) {
           return selectedPinyinMap.get(tok.hanzi);
         }
         if (customGroupPinyinMap.has(tok.hanzi) && customGroupPinyinMap.get(tok.hanzi)) {
           return customGroupPinyinMap.get(tok.hanzi);
+        }
+        if (FIXED_COMPOUND_PHRASES[tok.hanzi] && FIXED_COMPOUND_PHRASES[tok.hanzi].pinyin) {
+          return FIXED_COMPOUND_PHRASES[tok.hanzi].pinyin;
         }
         const lw = lookup.get(tok.hanzi);
         if (lw && lw.pinyin) return lw.pinyin;
@@ -16536,6 +16587,8 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         }
       }
 
+      healCorruptedLegacyToken(tok);
+
       const lookup = srsGetLookup();
       const lw = lookup.get(tok.hanzi);
       const selWord = (art.selectedWords || []).find(w => w.hanzi === tok.hanzi)
@@ -16546,10 +16599,11 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       const fixedCompound = FIXED_COMPOUND_PHRASES[tok.hanzi];
       const meta = (!tok.pinyin || !tok.vietnamese) ? lookupDictMetaForToken(tok.hanzi) : { pinyin: '', vietnamese: '' };
 
-      const rawResolvedMeaning = (fixedCompound && fixedCompound.vietnamese)
-        || (selWord && (selWord.vietnamese || selWord.meaning))
+      const rawResolvedMeaning = (tok._userEdited && tok.vietnamese)
         || tok.vietnamese
+        || (selWord && (selWord.vietnamese || selWord.meaning))
         || (cgWord && (cgWord.vietnamese || cgWord.meaning))
+        || (fixedCompound && fixedCompound.vietnamese)
         || (lw && (lw.vietnamese || lw.vi || lw.meaning))
         || meta.vietnamese
         || (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].vietnamese)
@@ -16559,10 +16613,11 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         ? humanizeVietnameseTokenGloss(tok.hanzi, rawResolvedMeaning)
         : rawResolvedMeaning;
 
-      const resolvedPinyin = (fixedCompound && fixedCompound.pinyin)
+      const resolvedPinyin = (tok._userEdited && tok.pinyin)
         || tok.pinyin
         || (selWord && selWord.pinyin)
         || (cgWord && cgWord.pinyin)
+        || (fixedCompound && fixedCompound.pinyin)
         || (lw && lw.pinyin)
         || meta.pinyin
         || (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].pinyin)
@@ -18210,13 +18265,19 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
       const s = String(sentence || '').trim();
       if (!s) return [];
 
-      const hasCompound = (w) =>
-        (typeof isKnownChineseCompound === 'function' && isKnownChineseCompound(w)) ||
-        (typeof COMMON_CHINESE_COMPOUNDS !== 'undefined' && COMMON_CHINESE_COMPOUNDS[w]) ||
-        (typeof FIXED_COMPOUND_PHRASES !== 'undefined' && FIXED_COMPOUND_PHRASES[w]) ||
-        (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[w]) ||
-        (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[w]) ||
-        (typeof window !== 'undefined' && window.PINYIN_POLYPHONES && window.PINYIN_POLYPHONES[w]);
+      const hasCompound = (w) => {
+        if (typeof AMBIGUOUS_GRAMMAR_COMPOUND_SET !== 'undefined' && AMBIGUOUS_GRAMMAR_COMPOUND_SET.has(w)) {
+          return false;
+        }
+        return (
+          (typeof isKnownChineseCompound === 'function' && isKnownChineseCompound(w)) ||
+          (typeof COMMON_CHINESE_COMPOUNDS !== 'undefined' && COMMON_CHINESE_COMPOUNDS[w]) ||
+          (typeof FIXED_COMPOUND_PHRASES !== 'undefined' && FIXED_COMPOUND_PHRASES[w]) ||
+          (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[w]) ||
+          (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[w]) ||
+          (typeof window !== 'undefined' && window.PINYIN_POLYPHONES && window.PINYIN_POLYPHONES[w])
+        );
+      };
 
       const segmenter = vslGetZhWordSegmenter();
       if (segmenter) {
@@ -18498,19 +18559,16 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
 
         // Always merge any split compound words (e.g. 因+为 -> 因为, 此+前 -> 此前, 女+孩 -> 女孩, 第+一+次 -> 第一次) and fix adverbial 的->地
         if (Array.isArray(sub.tokens) && sub.tokens.length > 0) {
-          const beforeSig = sub.tokens.map(t => `${(t && t.hanzi) || ''}:${(t && t.vietnamese) || ''}`).join('|');
+          const beforeSig = sub.tokens.map(t => `${(t && t.hanzi) || ''}:${(t && t.pinyin) || ''}:${(t && t.vietnamese) || ''}`).join('|');
           sub.tokens = mergeFixedCompoundTokensInList(sub.tokens);
           for (let j = 0; j < sub.tokens.length; j++) {
-            const t = sub.tokens[j];
+            const t = healCorruptedLegacyToken(sub.tokens[j]);
             if (t && t.hanzi && /[\u4e00-\u9fff]/.test(t.hanzi)) {
-              const fixedMeta = FIXED_COMPOUND_PHRASES[t.hanzi];
-              if (fixedMeta && !t._userEdited) {
-                if (fixedMeta.pinyin && t.pinyin !== fixedMeta.pinyin) t.pinyin = fixedMeta.pinyin;
-                if (fixedMeta.vietnamese && t.vietnamese !== fixedMeta.vietnamese) t.vietnamese = fixedMeta.vietnamese;
-              } else if (!t.pinyin || !t.vietnamese) {
+              if (!t.pinyin || !t.vietnamese) {
+                const fixedMeta = FIXED_COMPOUND_PHRASES[t.hanzi];
                 const meta = lookupDictMetaForToken(t.hanzi);
-                if (!t.pinyin && meta.pinyin) t.pinyin = meta.pinyin;
-                if (!t.vietnamese && meta.vietnamese) t.vietnamese = meta.vietnamese;
+                if (!t.pinyin) t.pinyin = (fixedMeta && fixedMeta.pinyin) || meta.pinyin || '';
+                if (!t.vietnamese) t.vietnamese = (fixedMeta && fixedMeta.vietnamese) || meta.vietnamese || '';
               }
               if (t.vietnamese && !t._userEdited && typeof humanizeVietnameseTokenGloss === 'function') {
                 const humanized = humanizeVietnameseTokenGloss(t.hanzi, t.vietnamese);
@@ -18522,7 +18580,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
             sub.vietnamese = sub.vietnamese.replace(/xe buýt hai tầng/gi, 'xe buýt ngắm hoàng hôn (Sunset Coaster)');
             changed = true;
           }
-          const afterSig = sub.tokens.map(t => `${(t && t.hanzi) || ''}:${(t && t.vietnamese) || ''}`).join('|');
+          const afterSig = sub.tokens.map(t => `${(t && t.hanzi) || ''}:${(t && t.pinyin) || ''}:${(t && t.vietnamese) || ''}`).join('|');
           if (beforeSig !== afterSig) {
             const newText = sub.tokens.map(t => (t && t.hanzi) || '').join('');
             if (newText) sub.text = newText;
@@ -18559,13 +18617,17 @@ Hãy đọc thật kỹ TIÊU ĐỀ VIDEO ("${videoTitle || 'Video tiếng Trung
    - **QUY TẮC SỐ 1 (BẮT BUỘC)**: Với MỌI câu, hãy rà soát từng cụm chữ xem có cụm chữ Hán nào **không tồn tại trong từ điển, ghép chữ kỳ quặc, hoặc phi logic với ngữ cảnh câu chuyện** không (ví dụ: trong vụ án Conan điều tra máy móc biển hiệu, "红揭面" là cụm chữ bịa đặt do ASR nghe nhầm âm từ "痕迹" - dấu vết). TUYỆT ĐỐI KHÔNG dịch bừa chữ sai ASR (như dịch "红揭面" thành "mặt nạ đỏ"), mà PHẢI suy luận âm đọc Pinyin tương đương để khôi phục đúng từ tiếng Trung chuẩn xác 100% trước khi dịch và tách từ!
    - **LƯU Ý LỖI "的" -> "地"**: Khi đứng sau tính từ hoặc cụm miêu tả trạng thái/biểu cảm (như "满脸哀求", "惊慌", "气愤", "高兴", "小心翼翼"...) và đứng TRƯỚC động từ hoặc giới từ chỉ hành động/phương hướng (như "向...", "往...", "朝...", "对...", "走", "跑", "说", "看", "寻求"...), BẮT BUỘC sửa chữ "的" thành **"地"** đúng ngữ pháp trạng ngữ.
 2. DỊCH CÂU ĐÃ SỬA sang tiếng Việt mượt mà, tự nhiên, đúng ngữ cảnh câu chuyện ("vietnamese").
-3. PHÂN TÁCH CÂU ĐÃ SỬA THÀNH MẢNG "tokens" VỚI NGHĨA TIẾNG VIỆT DỄ HIỂU, TỰ NHIÊN:
+3. PHÂN TÁCH CÂU ĐÃ SỬA THÀNH MẢNG "tokens" VỚI PINYIN & NGHĨA TIẾNG VIỆT ĐÚNG 100% NGỮ CẢNH:
    - **A. GOM TRỌN CÁC CỤM TỪ GHÉP & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH**:
      + BẮT BUỘC gom các cụm từ ghép, cụm danh từ, cụm phương vị (trong/trên/sau...), cụm động-tân ngắn, cụm ngữ pháp hay, động từ ly hợp, thành ngữ, cụm diễn đạt hoàn chỉnh thành 1 token có nghĩa tự nhiên.
      + Ví dụ gom cụm chuẩn: "很感兴趣的样子" (dáng vẻ rất hứng thú), "一脸戏谑的样子" (dáng vẻ chế giễu), "刚起了一个头" (vừa mới mở đầu), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ / kỳ lạ), "一落千丈" (tuột dốc không phanh), "硬生生" (thẳng thừng / cứng rắn), "怼了回去" (bật lại / cãi lại), "有所触动" (có chút xúc động), "皱起眉头" (nhíu mày), "松了口气" (thở phào nhẹ nhõm), "笑着说" (cười nói), "第一次" (lần đầu tiên), "来例假" (có kinh nguyệt), "得了" (mắc phải), "怪病" (bệnh lạ), "相关知识" (kiến thức liên quan), "接触过" (từng tiếp xúc), "讲过" (từng kể), "首次会面" (cuộc gặp đầu tiên), "半年以来" (nửa năm qua), "他们五个人" (5 người bọn họ), "社区群里" (trong nhóm khu dân cư), "日卖电视台" (Đài truyền hình Nichiuri), "高尔夫名人大赛" (Giải Golf Người Nổi Tiếng).
-   - **B. TUYỆT ĐỐI KHÔNG XÉ LẺ VỤN VẶT TỪ ĐƠN HOẶC TỪ GHÉP 2 ÂM TIẾT**:
+   - **B. CẢNH BÁO TỪ ĐA ÂM / ĐA NGHĨA THEO NGỮ CẢNH**:
+     + "都会" trong câu "每次放学都会来光顾" ➔ BẮT BUỘC là **"都会|dōu huì|đều sẽ"** (hoặc tách "都|dōu|đều", "会|huì|sẽ"), TUYỆT ĐỐI CẤM ghi thành ❌"dū huì|đô thị"!
+     + "才能" khi là phó từ ➔ **"cái néng|mới có thể"** | "穿着" khi là động từ ➔ **"chuān zhe|đang mặc"**.
+     + Các chữ đa âm ("还" hái/huán, "得" de/dé/děi, "长" cháng/zhǎng, "重" zhòng/chóng, "行" xíng/háng, "只" zhǐ/zhī, "为" wèi/wéi, "地" de/dì) BẮT BUỘC ghi Pinyin chuẩn theo ngữ cảnh câu!
+   - **C. TUYỆT ĐỐI KHÔNG XÉ LẺ VỤN VẶT TỪ ĐƠN HOẶC TỪ GHÉP 2 ÂM TIẾT**:
      + Các từ 2 âm tiết chuẩn (như "因为", "此前", "从未", "关于", "女性", "生理", "相关", "知识", "就连", "母亲", "从没", "女孩", "以为", "自己", "怪病", "感到", "害怕", "故事", "气愤", "痕迹", "招牌", "机械", "之后", "不过") luôn giữ nguyên cả từ, và TUYỆT ĐỐI KHÔNG tách hậu tố/chữ đơn ("群", "里", "后", "上", "下", "起", "感", "所", "部", "商", "会", "员", "室", "们", "着", "过", "了") thành chữ đơn lẻ!
-   - **C. NGHĨA TIẾNG VIỆT CỦA TOKEN PHẢI DỄ HIỂU (CẤM HÁN VIỆT CỨNG NHẮC)**:
+   - **D. NGHĨA TIẾNG VIỆT CỦA TOKEN PHẢI DỄ HIỂU (CẤM HÁN VIỆT CỨNG NHẮC)**:
      + Dùng tiếng Việt hiện đại, đời thường, dễ hiểu ngay (ví dụ: "专注" -> "tập trung / chuyên về" chứ KHÔNG ghi "chuyên chú"; "痕迹" -> "dấu vết"; "招牌" -> "biển hiệu").
      + Ghi theo chuỗi "Chữ Hán|pinyin|nghĩa tiếng Việt sát ngữ cảnh" (với dấu câu hoặc trợ từ "的", "地" đứng độc lập chỉ cần ghi chính ký tự đó, ví dụ "，", "。", "的", "地").
 
@@ -20651,6 +20713,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       const tokens = sub.tokens;
 
       const renderedParts = tokens.map((tok, tIdx) => {
+        healCorruptedLegacyToken(tok);
         const h = tok.hanzi || '';
         const isPunct = !tok.isVocab && !/[\u4e00-\u9fff]/.test(h);
         if (isPunct) {
@@ -20671,15 +20734,15 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         const cleanTokVi = String(tok.vietnamese || '').trim();
         const meta = (!cleanTokPy || !cleanTokVi) ? lookupDictMetaForToken(h) : { pinyin: '', vietnamese: '' };
         const resolvedPinyin = (tok._userEdited && cleanTokPy)
-          || (fixedCompound && fixedCompound.pinyin)
           || cleanTokPy
+          || (fixedCompound && fixedCompound.pinyin)
           || (lw && lw.pinyin)
           || meta.pinyin
           || getLocalTokenPinyin(h)
           || '';
         const rawGlossUnfiltered = (tok._userEdited && cleanTokVi)
-          || (fixedCompound && fixedCompound.vietnamese)
           || cleanTokVi
+          || (fixedCompound && fixedCompound.vietnamese)
           || (lw && (lw.vietnamese || lw.vi || lw.meaning))
           || meta.vietnamese
           || (typeof VSL_COMMON_CHAR_GLOSS !== 'undefined' && VSL_COMMON_CHAR_GLOSS[h])
@@ -20740,6 +20803,8 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       const tok = sub.tokens && sub.tokens[tokIdx];
       if (!tok || !tok.hanzi) return;
 
+      healCorruptedLegacyToken(tok);
+
       // Pause video automatically when user taps a word to look it up
       vslPauseVideo();
 
@@ -20758,10 +20823,10 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       const meta = lookupDictMetaForToken(tok.hanzi);
 
       const rawResolvedMeaning = (tok._userEdited && tok.vietnamese)
-        || (fixedCompound && fixedCompound.vietnamese)
-        || (selWord && (selWord.vietnamese || selWord.meaning))
         || tok.vietnamese
+        || (selWord && (selWord.vietnamese || selWord.meaning))
         || (cgWord && (cgWord.vietnamese || cgWord.meaning))
+        || (fixedCompound && fixedCompound.vietnamese)
         || (lw && (lw.vietnamese || lw.vi || lw.meaning))
         || meta.vietnamese
         || (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].vietnamese)
@@ -20772,10 +20837,10 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         : rawResolvedMeaning;
 
       const resolvedPinyin = (tok._userEdited && tok.pinyin)
-        || (fixedCompound && fixedCompound.pinyin)
         || tok.pinyin
         || (selWord && selWord.pinyin)
         || (cgWord && cgWord.pinyin)
+        || (fixedCompound && fixedCompound.pinyin)
         || (lw && lw.pinyin)
         || meta.pinyin
         || (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].pinyin)
