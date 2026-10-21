@@ -1700,11 +1700,14 @@
         width: 150px !important;
         max-width: 150px !important;
       }
-      #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-vi-gloss {
+      #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-vi-gloss,
+      #readingPassageContainer.quick-lookup-mode.reading-review-mode .reading-token:not(.selected).active-token .token-vi-gloss {
         font-size: 13px !important;
       }
       #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token.has-long-gloss,
-      #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token:has(.token-vi-gloss.is-long-gloss) {
+      #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token:has(.token-vi-gloss.is-long-gloss),
+      #readingPassageContainer.quick-lookup-mode.reading-review-mode .reading-token:not(.selected).active-token.has-long-gloss,
+      #readingPassageContainer.quick-lookup-mode.reading-review-mode .reading-token:not(.selected).active-token:has(.token-vi-gloss.is-long-gloss) {
         min-width: 156px !important;
       }
       .reading-para-vi-box {
@@ -2328,7 +2331,8 @@
 
     #readingPassageContainer.show-vi-gloss .reading-token.selected .token-vi-gloss.is-long-gloss .token-vi-gloss-track,
     #readingPassageContainer.reading-review-mode .reading-token.selected:not(.retry-passed) .token-vi-gloss.is-long-gloss .token-vi-gloss-track,
-    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-vi-gloss.is-long-gloss .token-vi-gloss-track {
+    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-vi-gloss.is-long-gloss .token-vi-gloss-track,
+    #readingPassageContainer.quick-lookup-mode.reading-review-mode .reading-token:not(.selected).active-token .token-vi-gloss.is-long-gloss .token-vi-gloss-track {
       animation: tokenGlossMarqueeLoop var(--gloss-dur, 10s) linear infinite;
     }
 
@@ -2379,7 +2383,8 @@
       line-height: 2.38;
     }
 
-    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token {
+    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token,
+    #readingPassageContainer.quick-lookup-mode.reading-review-mode .reading-token:not(.selected).active-token {
       display: inline-flex !important;
       flex-direction: column !important;
       align-items: center !important;
@@ -2400,13 +2405,15 @@
       box-shadow: inset 0 0 0 1.2px #9c82c4 !important;
     }
 
-    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-pinyin {
+    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-pinyin,
+    #readingPassageContainer.quick-lookup-mode.reading-review-mode .reading-token:not(.selected).active-token .token-pinyin {
       display: block !important;
       position: static !important;
       transform: none !important;
     }
 
-    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-vi-gloss {
+    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-vi-gloss,
+    #readingPassageContainer.quick-lookup-mode.reading-review-mode .reading-token:not(.selected).active-token .token-vi-gloss {
       display: block !important;
       position: static !important;
       transform: none !important;
@@ -2421,11 +2428,14 @@
     }
 
     #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token.has-long-gloss,
-    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token:has(.token-vi-gloss.is-long-gloss) {
+    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token:has(.token-vi-gloss.is-long-gloss),
+    #readingPassageContainer.quick-lookup-mode.reading-review-mode .reading-token:not(.selected).active-token.has-long-gloss,
+    #readingPassageContainer.quick-lookup-mode.reading-review-mode .reading-token:not(.selected).active-token:has(.token-vi-gloss.is-long-gloss) {
       min-width: 118px !important;
     }
 
-    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-vi-gloss.is-long-gloss {
+    #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-vi-gloss.is-long-gloss,
+    #readingPassageContainer.quick-lookup-mode.reading-review-mode .reading-token:not(.selected).active-token .token-vi-gloss.is-long-gloss {
       width: 100% !important;
       min-width: 0 !important;
       max-width: 100% !important;
@@ -2434,8 +2444,8 @@
       text-align: left !important;
     }
 
-    /* When Reading Review Mode (Ôn bài / Dò lại) is active, force-hide Pinyin (keep Vietnamese gloss visible below!) */
-    #readingPassageContainer.reading-review-mode .reading-token .token-pinyin {
+    /* When Reading Review Mode (Ôn bài / Dò lại) is active, force-hide Pinyin on selected review words (keep Vietnamese gloss visible below!) */
+    #readingPassageContainer.reading-review-mode .reading-token.selected .token-pinyin {
       display: none !important;
     }
 
@@ -12380,10 +12390,11 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
 
     function lookupSingleDictEntryMeta(s) {
       if (!s) return { pinyin: '', vietnamese: '' };
+      const stripHtml = (str) => String(str || '').replace(/<br\s*\/?>[\s\S]*/i, '').replace(/<[^>]*>/g, '').trim();
       if (typeof FIXED_COMPOUND_PHRASES !== 'undefined' && FIXED_COMPOUND_PHRASES[s]) {
         return {
           pinyin: FIXED_COMPOUND_PHRASES[s].pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(s) : ''),
-          vietnamese: FIXED_COMPOUND_PHRASES[s].vietnamese || ''
+          vietnamese: stripHtml(FIXED_COMPOUND_PHRASES[s].vietnamese)
         };
       }
       const lookup = typeof srsGetLookup === 'function' ? srsGetLookup() : null;
@@ -12391,21 +12402,21 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       if (lw && (lw.pinyin || lw.vietnamese || lw.vi || lw.meaning)) {
         return {
           pinyin: lw.pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(s) : ''),
-          vietnamese: lw.vietnamese || lw.vi || lw.meaning || ''
+          vietnamese: stripHtml(lw.vietnamese || lw.vi || lw.meaning || '')
         };
       }
       if (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[s]) {
         const e6 = hsk6Data[s];
         return {
           pinyin: e6.py || e6.pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(s) : ''),
-          vietnamese: e6.vi || e6.vietnamese || e6.meaning || ''
+          vietnamese: stripHtml(e6.vi || e6.vietnamese || e6.meaning || '')
         };
       }
       if (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[s]) {
         const e79 = hsk79Data[s];
         return {
           pinyin: e79.py || e79.pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(s) : ''),
-          vietnamese: e79.vi || e79.vietnamese || e79.meaning || ''
+          vietnamese: stripHtml(e79.vi || e79.vietnamese || e79.meaning || '')
         };
       }
       const dict = (typeof window !== 'undefined' && window.HSK_DICTIONARY) ? window.HSK_DICTIONARY : null;
@@ -12413,7 +12424,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         const entry = dict[s];
         return {
           pinyin: entry.p || entry.py || entry.pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(s) : ''),
-          vietnamese: entry.v || entry.vi || entry.vietnamese || entry.meaning || ''
+          vietnamese: stripHtml(entry.v || entry.vi || entry.vietnamese || entry.meaning || '')
         };
       }
       if (COMMON_CHINESE_COMPOUNDS[s]) {
@@ -12425,7 +12436,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       if (typeof aiCache !== 'undefined' && aiCache && aiCache[s] && (aiCache[s].meaning || aiCache[s].vietnamese)) {
         return {
           pinyin: aiCache[s].pinyin || (typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function' ? window.getInstantPinyin(s) : ''),
-          vietnamese: aiCache[s].meaning || aiCache[s].vietnamese || ''
+          vietnamese: stripHtml(aiCache[s].meaning || aiCache[s].vietnamese || '')
         };
       }
       if (COMMON_SINGLE_CHAR_GLOSS[s]) {
@@ -12453,6 +12464,9 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       if (direct.vietnamese) {
         if (!direct.pinyin && typeof window !== 'undefined' && typeof window.getInstantPinyin === 'function') {
           direct.pinyin = window.getInstantPinyin(s) || '';
+        }
+        if (typeof humanizeVietnameseTokenGloss === 'function') {
+          direct.vietnamese = humanizeVietnameseTokenGloss(s, direct.vietnamese);
         }
         dictMetaMemoCache.set(s, direct);
         return direct;
@@ -13314,7 +13328,25 @@ ${chunkText}
       '致力于': 'dốc sức vào / chuyên tâm',
       '着眼于': 'hướng tới / chú trọng',
       '得益于': 'nhờ có',
-      '有赖于': 'nhờ vào'
+      '有赖于': 'nhờ vào',
+      '上旬': 'đầu tháng (thượng tuần)',
+      '中旬': 'giữa tháng (trung tuần)',
+      '下旬': 'cuối tháng (hạ tuần)',
+      '下线': 'rời ca / ngoại tuyến',
+      '减免': 'miễn giảm',
+      '曲艺': 'nghệ thuật diễn xướng',
+      '章程': 'điều lệ / quy chế',
+      '无情': 'nhẫn tâm / lạnh lùng',
+      '改良': 'cải tiến',
+      '行情': 'giá thị trường',
+      '自如': 'trôi chảy / tự nhiên',
+      '赏识': 'trọng dụng / đánh giá cao',
+      '预见': 'tiên liệu / nhìn trước',
+      '交接': 'bàn giao / tiếp nhận',
+      '诚挚': 'chân thành',
+      '真挚': 'chân thành',
+      '纯粹': 'thuần túy / hoàn toàn',
+      '敏锐': 'nhạy bén'
     };
 
     function getRawHanVietString(hanziStr) {
@@ -13331,14 +13363,15 @@ ${chunkText}
 
     function humanizeVietnameseTokenGloss(hanziStr, rawVi) {
       const h = String(hanziStr || '').trim();
-      const v = String(rawVi || '').trim();
+      const v = String(rawVi || '').replace(/<br\s*\/?>[\s\S]*/i, '').replace(/<[^>]*>/g, '').trim();
       if (!h) return v;
 
       const hv = getRawHanVietString(h);
       const vLower = v.toLowerCase();
+      const vNoParenLower = v.replace(/\([^)]*\)/g, '').trim().toLowerCase();
 
       if (NATURAL_VI_GLOSS_OVERRIDES[h]) {
-        if (!v || (hv && vLower === hv) || vLower === 'chuyên chú') {
+        if (!v || (hv && (vLower === hv || vNoParenLower === hv || vLower.startsWith(hv + ',') || vLower.startsWith(hv + ';'))) || vLower === 'chuyên chú') {
           return NATURAL_VI_GLOSS_OVERRIDES[h];
         }
       }
@@ -13346,11 +13379,11 @@ ${chunkText}
       if (!hv) return v;
 
       // Case 1: AI returned ONLY the raw Sino-Vietnamese reading (e.g. "chuyên chú" for 专注, "tầm cầu" for 寻求)
-      if (vLower === hv) {
+      if (vLower === hv || vNoParenLower === hv) {
         const dictMeta = typeof lookupSingleDictEntryMeta === 'function' ? lookupSingleDictEntryMeta(h) : null;
         if (dictMeta && dictMeta.vietnamese) {
           const dictParts = String(dictMeta.vietnamese).replace(/<[^>]*>/g, '').split(/[,;/]/).map(x => x.trim()).filter(Boolean);
-          const pureParts = dictParts.filter(p => p.toLowerCase() !== hv);
+          const pureParts = dictParts.filter(p => p.replace(/\([^)]*\)/g, '').trim().toLowerCase() !== hv);
           if (pureParts.length > 0) {
             return pureParts.slice(0, 2).join(', ');
           }
@@ -13359,10 +13392,10 @@ ${chunkText}
 
       // Case 2: Multi-part dictionary meaning where the 1st part is raw Sino-Vietnamese and 2nd part is clear everyday Vietnamese
       if (v.includes(',') || v.includes(';')) {
-        const cleanV = v.replace(/<[^>]*>/g, '');
-        const parts = cleanV.split(/[,;]/).map(x => x.trim()).filter(Boolean);
-        if (parts.length >= 2 && parts[0].toLowerCase() === hv) {
-          const rest = parts.slice(1).filter(p => p.toLowerCase() !== hv);
+        const parts = v.split(/[,;]/).map(x => x.trim()).filter(Boolean);
+        const firstNoParen = parts[0] ? parts[0].replace(/\([^)]*\)/g, '').trim().toLowerCase() : '';
+        if (parts.length >= 2 && firstNoParen === hv) {
+          const rest = parts.slice(1).filter(p => p.replace(/\([^)]*\)/g, '').trim().toLowerCase() !== hv);
           if (rest.length > 0) {
             return [...rest, parts[0]].join(', ');
           }
@@ -15848,6 +15881,14 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           } else if (typeof lookupDictMetaForToken === 'function') {
             raw = lookupDictMetaForToken(tok.hanzi).vietnamese || '';
           }
+          if (!raw && tok.hanzi && tok.hanzi.length >= 2) {
+            for (const [sw, swMeaning] of selectedMeaningMap.entries()) {
+              if (sw && sw.length >= 2 && swMeaning && tok.hanzi.includes(sw)) {
+                raw = swMeaning;
+                break;
+              }
+            }
+          }
         }
         return (!tok._userEdited && typeof humanizeVietnameseTokenGloss === 'function')
           ? humanizeVietnameseTokenGloss(tok.hanzi, raw)
@@ -16139,6 +16180,16 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       updateReadingGlossToggleUI();
       updateReadingReviewToggleUI();
 
+      // Ensure 100% of selected/highlighted words have a Vietnamese gloss below them (for Nghĩa TV & Ôn bài modes)
+      readingPassageContainer.querySelectorAll('.reading-token.selected').forEach(el => {
+        const glEl = el.querySelector('.token-vi-gloss');
+        if (glEl && !String(glEl.textContent || '').trim()) {
+          const idx = parseInt(el.getAttribute('data-index'), 10);
+          const tok = !isNaN(idx) && art.tokens ? art.tokens[idx] : null;
+          if (tok) quickLookupFillMissingTokenMeaning(tok, el);
+        }
+      });
+
       const btnToggleGloss = document.getElementById('btnToggleReadingGloss');
       if (btnToggleGloss && !btnToggleGloss.dataset.bound) {
         btnToggleGloss.addEventListener('click', toggleReadingGloss);
@@ -16199,7 +16250,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       if (!apiKey) return;
       tok._quickAiPending = true;
       try {
-        const prompt = `Từ tiếng Trung: "${tok.hanzi}". Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa ngắn gọn 2-4 chữ"}`;
+        const prompt = `Từ tiếng Trung: "${tok.hanzi}". Trả về DUY NHẤT JSON: {"pinyin":"...","vietnamese":"nghĩa tiếng Việt đời thường, dễ hiểu (2-4 chữ, cấm ghi âm Hán Việt cứng nhắc)"}`;
         const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: getOpenRouterHeaders(),
@@ -16221,7 +16272,12 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         const parsed = typeof safeParseJSON === 'function' ? safeParseJSON(cleaned) : JSON.parse(cleaned);
         if (parsed && (parsed.pinyin || parsed.vietnamese)) {
           if (parsed.pinyin && !tok.pinyin) tok.pinyin = String(parsed.pinyin).trim();
-          if (parsed.vietnamese && !tok.vietnamese) tok.vietnamese = String(parsed.vietnamese).trim();
+          if (parsed.vietnamese && !tok.vietnamese) {
+            const rawVi = String(parsed.vietnamese).trim();
+            tok.vietnamese = typeof humanizeVietnameseTokenGloss === 'function'
+              ? humanizeVietnameseTokenGloss(tok.hanzi, rawVi)
+              : rawVi;
+          }
           if (targetEl) {
             const pyEl = targetEl.querySelector('.vsl-tok-pinyin, .token-pinyin');
             if (pyEl && tok.pinyin) pyEl.textContent = tok.pinyin;
@@ -16443,11 +16499,12 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       const wasAlreadyActive = Boolean(targetEl && targetEl.classList.contains('active-token'));
       const isSelected = (art.selectedWords || []).some(w => w.hanzi === tok.hanzi);
       const isTargetWord = (art.targetWords || []).some(w => w.hanzi === tok.hanzi);
+      const isHighlightedEl = Boolean(targetEl && targetEl.classList.contains('selected'));
 
       // In Review Mode:
       // - 1st tap on a blurred word: reveals the Hanzi in-place.
       // - 2nd tap on an already-revealed word: re-blurs & marks it into readingReviewRetrySet for the next round!
-      if (isReadingReviewModeActive && (isSelected || isTargetWord) && targetEl && !targetEl.classList.contains('retry-passed')) {
+      if (isReadingReviewModeActive && (isSelected || isTargetWord || isHighlightedEl) && targetEl && !targetEl.classList.contains('retry-passed')) {
         if (!targetEl.classList.contains('revealed')) {
           const useMilkyBlue = readingReviewRound >= 2 || targetEl.classList.contains('retry-mark');
           // Reveal all instances of this word that are currently active in this round
