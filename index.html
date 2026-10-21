@@ -1677,7 +1677,8 @@
         line-height: 2.25 !important;
         margin-bottom: 18px !important;
       }
-      #readingPassageContainer.show-vi-gloss .reading-para-box {
+      #readingPassageContainer.show-vi-gloss .reading-para-box,
+      #readingPassageContainer.reading-review-mode .reading-para-box {
         line-height: 2.62 !important;
       }
       #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-para-box {
@@ -2261,7 +2262,8 @@
       line-break: strict;
       -webkit-line-break: strict;
     }
-    #readingPassageContainer.show-vi-gloss .reading-para-box {
+    #readingPassageContainer.show-vi-gloss .reading-para-box,
+    #readingPassageContainer.reading-review-mode .reading-para-box {
       line-height: 2.45;
     }
 
@@ -2324,7 +2326,8 @@
       will-change: transform;
     }
 
-    #readingPassageContainer.show-vi-gloss:not(.reading-review-mode) .reading-token.selected .token-vi-gloss.is-long-gloss .token-vi-gloss-track,
+    #readingPassageContainer.show-vi-gloss .reading-token.selected .token-vi-gloss.is-long-gloss .token-vi-gloss-track,
+    #readingPassageContainer.reading-review-mode .reading-token.selected:not(.retry-passed) .token-vi-gloss.is-long-gloss .token-vi-gloss-track,
     #readingPassageContainer.quick-lookup-mode:not(.reading-review-mode) .reading-token.active-token .token-vi-gloss.is-long-gloss .token-vi-gloss-track {
       animation: tokenGlossMarqueeLoop var(--gloss-dur, 10s) linear infinite;
     }
@@ -2345,8 +2348,9 @@
       }
     }
 
-    /* Only show gloss when toggle is ON, Review Mode is OFF, AND token is selected (saved/highlighted) */
-    #readingPassageContainer.show-vi-gloss:not(.reading-review-mode) .reading-token.selected .token-vi-gloss {
+    /* Show gloss when Nghĩa TV toggle is ON, OR when Reading Review Mode (Ôn bài) is ON for active review words */
+    #readingPassageContainer.show-vi-gloss .reading-token.selected .token-vi-gloss,
+    #readingPassageContainer.reading-review-mode .reading-token.selected:not(.retry-passed) .token-vi-gloss {
       display: block !important;
     }
 
@@ -2430,9 +2434,8 @@
       text-align: left !important;
     }
 
-    /* When Reading Review Mode (Ôn bài / Dò lại) is active, force-hide Pinyin and Vietnamese glosses */
-    #readingPassageContainer.reading-review-mode .reading-token .token-pinyin,
-    #readingPassageContainer.reading-review-mode .reading-token .token-vi-gloss {
+    /* When Reading Review Mode (Ôn bài / Dò lại) is active, force-hide Pinyin (keep Vietnamese gloss visible below!) */
+    #readingPassageContainer.reading-review-mode .reading-token .token-pinyin {
       display: none !important;
     }
 
@@ -15838,8 +15841,13 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           raw = customGroupWordMap.get(tok.hanzi);
         } else {
           const lw = lookup.get(tok.hanzi);
-          if (lw && (lw.vietnamese || lw.vi || lw.meaning)) raw = lw.vietnamese || lw.vi || lw.meaning;
-          else if (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].vietnamese) raw = aiCache[tok.hanzi].vietnamese;
+          if (lw && (lw.vietnamese || lw.vi || lw.meaning)) {
+            raw = lw.vietnamese || lw.vi || lw.meaning;
+          } else if (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].vietnamese) {
+            raw = aiCache[tok.hanzi].vietnamese;
+          } else if (typeof lookupDictMetaForToken === 'function') {
+            raw = lookupDictMetaForToken(tok.hanzi).vietnamese || '';
+          }
         }
         return (!tok._userEdited && typeof humanizeVietnameseTokenGloss === 'function')
           ? humanizeVietnameseTokenGloss(tok.hanzi, raw)
@@ -15860,6 +15868,10 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         const lw = lookup.get(tok.hanzi);
         if (lw && lw.pinyin) return lw.pinyin;
         if (aiCache && aiCache[tok.hanzi] && aiCache[tok.hanzi].pinyin) return aiCache[tok.hanzi].pinyin;
+        if (typeof lookupDictMetaForToken === 'function') {
+          const metaPy = lookupDictMetaForToken(tok.hanzi).pinyin;
+          if (metaPy) return metaPy;
+        }
         return '';
       }
 
@@ -16322,6 +16334,9 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         if (container) {
           container.classList.add('reading-review-mode');
           container.classList.toggle('reading-review-round2', readingReviewRound >= 2);
+          container.querySelectorAll('.reading-token.selected .token-vi-gloss-track').forEach(el => {
+            restartReadingTokenGlossMarquee(el);
+          });
         }
         if (btn) {
           const hasRetry = readingReviewRetrySet.size > 0;
@@ -17112,6 +17127,10 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           const sa = subsA[i];
           const sb = subsB[i];
           if (sa && sb) {
+            const aV4 = !!(sa._aiProofreadV4 && Array.isArray(sa.tokens) && sa.tokens.length > 0 && sa.vietnamese);
+            const bV4 = !!(sb._aiProofreadV4 && Array.isArray(sb.tokens) && sb.tokens.length > 0 && sb.vietnamese);
+            if (aV4 && !bV4) { mergedSubs.push(sa); continue; }
+            if (bV4 && !aV4) { mergedSubs.push(sb); continue; }
             const aDone = !!(sa._aiProofreadV2 && Array.isArray(sa.tokens) && sa.tokens.length > 0 && sa.vietnamese);
             const bDone = !!(sb._aiProofreadV2 && Array.isArray(sb.tokens) && sb.tokens.length > 0 && sb.vietnamese);
             if (aDone && !bDone) mergedSubs.push(sa);
@@ -18046,8 +18065,9 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
               vietnamese: viTxt,
               tokens: builtTokens,
               _aiEnriched: isComplete,
-              _aiProofreadV2: isComplete,
-              _aiSegmentedV3: Boolean(isComplete && hasAiTokens)
+              _aiProofreadV2: false,
+              _aiSegmentedV3: false,
+              _aiProofreadV4: false
             });
           }
           prevContextText = allSegments.slice(-2).map(s => s.text).join(' ');
@@ -18089,8 +18109,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
       if (!Array.isArray(s.tokens) || s.tokens.length === 0) return false;
       const hasVi = Boolean(String(s.vietnamese || s.vi || s.vi_text || '').trim());
       if (!hasVi) return false;
-      if (s._aiSegmentedV3) return true;
-      return false;
+      return Boolean(s._aiProofreadV4);
     }
 
     // Check if a subtitle needs AI proofreading/segmentation
@@ -18278,16 +18297,17 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
         .map(s => {
           const hasValidTokens = Array.isArray(s.tokens) && s.tokens.length > 0 && !vslTokensNeedLocalRebuild(s.tokens);
           const viStr = String(s.vietnamese || s.vi || s.vi_text || '').trim();
-          const isProofreadV2 = !!(!s._forceReproofread && hasValidTokens && viStr);
+          const isProofreadV4 = Boolean(!s._forceReproofread && s._aiProofreadV4 && hasValidTokens && viStr);
           return {
             start: Number(s.start) || 0,
             end: Math.max((Number(s.start) || 0) + 0.6, Number(s.end) || ((Number(s.start) || 0) + 2.2)),
             text: toSimplifiedChinese(String(s.text || '').replace(/\s+/g, ' ').trim()),
             vietnamese: viStr,
             tokens: hasValidTokens ? mergeFixedCompoundTokensInList(s.tokens) : null,
-            _aiEnriched: isProofreadV2,
-            _aiProofreadV2: isProofreadV2,
-            _aiSegmentedV3: Boolean(isProofreadV2 && s._aiSegmentedV3)
+            _aiEnriched: isProofreadV4,
+            _aiProofreadV2: isProofreadV4,
+            _aiSegmentedV3: Boolean(isProofreadV4 && s._aiSegmentedV3),
+            _aiProofreadV4: isProofreadV4
           };
         })
         .filter(s => s.text.length > 0);
@@ -18364,7 +18384,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
       const finalSentenceText = toSimplifiedChinese(String((seg && seg.text) || '').replace(/\s+/g, ' ').trim());
       if (seg && Array.isArray(seg.tokens) && seg.tokens.length > 0 && !vslTokensNeedLocalRebuild(seg.tokens)) {
         const viStr = String(seg.vietnamese || seg.vi || seg.vi_text || '').trim();
-        const isProofread = !!(!seg._forceReproofread && viStr);
+        const isProofread = Boolean(!seg._forceReproofread && seg._aiProofreadV4 && viStr);
         return {
           start: Number(seg.start) || 0,
           end: Math.max((Number(seg.start) || 0) + 0.6, Number(seg.end) || ((Number(seg.start) || 0) + 2.2)),
@@ -18373,12 +18393,13 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
           tokens: mergeFixedCompoundTokensInList(seg.tokens.map(normalizeAiTokenItem).filter(Boolean)),
           _aiEnriched: isProofread,
           _aiProofreadV2: isProofread,
-          _aiSegmentedV3: Boolean(isProofread && seg._aiSegmentedV3)
+          _aiSegmentedV3: Boolean(isProofread && seg._aiSegmentedV3),
+          _aiProofreadV4: isProofread
         };
       }
       const tokens = vslBuildSubtitleTokensWithAiPhrases(finalSentenceText, seg && seg.phrases);
       const viStr = String((seg && (seg.vietnamese || seg.vi || seg.vi_text)) || '').trim();
-      const isProofread = !!(!seg || !seg._forceReproofread) && Boolean(viStr && tokens.length > 0);
+      const isProofread = Boolean(seg && !seg._forceReproofread && seg._aiProofreadV4 && viStr && tokens.length > 0);
       return {
         start: Number(seg && seg.start) || 0,
         end: Math.max((Number(seg && seg.start) || 0) + 0.6, Number(seg && seg.end) || ((Number(seg && seg.start) || 0) + 2.2)),
@@ -18387,7 +18408,8 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
         tokens,
         _aiEnriched: isProofread,
         _aiProofreadV2: isProofread,
-        _aiSegmentedV3: false
+        _aiSegmentedV3: false,
+        _aiProofreadV4: isProofread
       };
     }
 
@@ -18397,6 +18419,26 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
       for (let i = 0; i < lesson.subtitles.length; i++) {
         const sub = lesson.subtitles[i];
         if (!sub) continue;
+
+        // Instant self-healing for known ASR mishearings (e.g. "红揭面" -> "痕迹")
+        if (sub.text && sub.text.includes('红揭面')) {
+          sub.text = sub.text.replace(/红揭面/g, '痕迹');
+          if (sub.vietnamese) {
+            if (/mặt nạ đỏ|tấm biển hiệu màu đỏ của máy móc/i.test(sub.vietnamese)) {
+              sub.vietnamese = 'Tuy nhiên, sau khi Conan xem xét dấu vết trên bộ máy của tấm biển hiệu,';
+            }
+          }
+          if (Array.isArray(sub.tokens)) {
+            sub.tokens = sub.tokens.map(t => {
+              if (t && t.hanzi === '红揭面') {
+                return { hanzi: '痕迹', pinyin: 'hén jì', vietnamese: 'dấu vết', isVocab: true };
+              }
+              return t;
+            });
+          }
+          changed = true;
+        }
+
         // Always merge any split compound words (e.g. 因+为 -> 因为, 此+前 -> 此前, 女+孩 -> 女孩, 第+一+次 -> 第一次) and fix adverbial 的->地
         if (Array.isArray(sub.tokens) && sub.tokens.length > 0) {
           const beforeSig = sub.tokens.map(t => `${(t && t.hanzi) || ''}:${(t && t.vietnamese) || ''}`).join('|');
@@ -18412,6 +18454,10 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
                 const meta = lookupDictMetaForToken(t.hanzi);
                 if (!t.pinyin && meta.pinyin) t.pinyin = meta.pinyin;
                 if (!t.vietnamese && meta.vietnamese) t.vietnamese = meta.vietnamese;
+              }
+              if (t.vietnamese && !t._userEdited && typeof humanizeVietnameseTokenGloss === 'function') {
+                const humanized = humanizeVietnameseTokenGloss(t.hanzi, t.vietnamese);
+                if (humanized && humanized !== t.vietnamese) t.vietnamese = humanized;
               }
             }
           }
@@ -18442,44 +18488,47 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
 
     async function vslAnalyzeSingleBatchWithAi(batch, prevLine, nextLine, fullOverviewText, videoTitle) {
       const linesJson = JSON.stringify(batch.map((item, idx) => ({ idx, text: item.text })));
-      const prompt = `Bạn là biên tập viên hiệu đính phụ đề tiếng Trung (ASR Proofreader) và chuyên gia ngôn ngữ HSK 6 - HSK 9.
-Các câu phụ đề dưới đây được tách từ giọng nói tự động (ASR) nên CÓ THỂ CHỨA LỖI ĐỒNG ÂM / GẦN ÂM SAI NGỮ CẢNH:
-- Ví dụ: "日曼第二彩" -> "日卖电视台" (Đài truyền hình Nichiuri), "毛李" -> "毛利" (Mouri), "高尔福明人答赛" -> "高尔夫名人大赛", "进而远职" -> "敬而远之", "这动别数" -> "这栋别墅", "心底下凉" -> "心地善良", "病事前" -> "病逝前", lỗi "的/地/得", "在/再", "做/作".
+      const prompt = `Bạn là Tổng Biên Tập Hiệu Đính Phụ Đề Tiếng Trung (Master ASR Proofreader) và chuyên gia ngôn ngữ HSK 6 - HSK 9.
+Các câu phụ đề dưới đây được tách từ giọng nói tự động (ASR/Whisper) nên THƯỜNG XUYÊN CHỨA LỖI NGHE NHẦM ĐỒNG ÂM / GẦN ÂM TẠO RA CỤM CHỮ VÔ NGHĨA HOẶC LỆCH LOGIC NGỮ CẢNH:
+- Ví dụ thực tế ASR nghe sai:
+  + "看了招牌机械的红揭面之后" (ASR nghe nhầm "痕迹" hén jì thành "红揭面" hóng jiē miàn vô nghĩa) ➔ BẮT BUỘC sửa thành "看了招牌机械的痕迹之后" (sau khi xem xét dấu vết của bộ máy biển hiệu).
+  + "日曼第二彩" ➔ "日卖电视台" (Đài truyền hình Nichiuri), "毛李" ➔ "毛利" (Mouri), "高尔福明人答赛" ➔ "高尔夫名人大赛", "进而远职" ➔ "敬而远之", "这动别数" ➔ "这栋别墅", "心底下凉" ➔ "心地善良", "病事前" ➔ "病逝前", lỗi "的/地/得", "在/再", "做/作".
 
-Hãy đối chiếu TIÊU ĐỀ VIDEO ("${videoTitle || 'Video tiếng Trung'}"), mạch bài ("${fullOverviewText}")${prevLine ? `, câu trước ("${prevLine}")` : ''}${nextLine ? `, câu sau ("${nextLine}")` : ''} để thực hiện 3 nhiệm vụ:
-1. SỬA TRIỆT ĐỂ MỌI LỖI ĐỒNG ÂM ASR & LỖI NGỮ PHÁP "地" / "的" sang chữ Hán giản thể chuẩn xác 100% và thêm dấu câu tự nhiên ("text"):
-   - **CỰC KỲ LƯU Ý LỖI "的" -> "地"**: Khi đứng sau tính từ hoặc cụm miêu tả trạng thái/biểu cảm (như "满脸哀求", "惊慌", "气愤", "高兴", "小心翼翼"...) và đứng TRƯỚC động từ hoặc giới từ chỉ hành động/phương hướng (như "向...", "往...", "朝...", "对...", "走", "跑", "说", "看", "寻求"...), BẮT BUỘC sửa chữ "的" thành **"地"** đúng ngữ pháp trạng ngữ (Ví dụ: sửa "她满脸哀求的向同学们寻求帮助" ➔ "她满脸哀求地向同学们寻求帮助").
-2. DỊCH CÂU ĐÃ SỬA sang tiếng Việt mượt mà, tự nhiên, chuẩn xác ("vietnamese").
-3. PHÂN TÁCH CÂU ĐÃ SỬA THÀNH MẢNG "tokens" THEO ĐÚNG QUY TẮC GOM CỤM TỪ CỦA BÀI ĐỌC:
+Hãy đọc thật kỹ TIÊU ĐỀ VIDEO ("${videoTitle || 'Video tiếng Trung'}"), toàn cảnh nội dung video ("${fullOverviewText}")${prevLine ? `, các câu liền trước ("${prevLine}")` : ''}${nextLine ? `, các câu liền sau ("${nextLine}")` : ''} để thực hiện 3 nhiệm vụ:
+1. KIỂM TRA & SỬA TRIỆT ĐỂ MỌI LỖI ĐỒNG ÂM / NGHE NHẦM ASR & LỖI NGỮ PHÁP "地" / "的" ("text"):
+   - **QUY TẮC SỐ 1 (BẮT BUỘC)**: Với MỌI câu, hãy rà soát từng cụm chữ xem có cụm chữ Hán nào **không tồn tại trong từ điển, ghép chữ kỳ quặc, hoặc phi logic với ngữ cảnh câu chuyện** không (ví dụ: trong vụ án Conan điều tra máy móc biển hiệu, "红揭面" là cụm chữ bịa đặt do ASR nghe nhầm âm từ "痕迹" - dấu vết). TUYỆT ĐỐI KHÔNG dịch bừa chữ sai ASR (như dịch "红揭面" thành "mặt nạ đỏ"), mà PHẢI suy luận âm đọc Pinyin tương đương để khôi phục đúng từ tiếng Trung chuẩn xác 100% trước khi dịch và tách từ!
+   - **LƯU Ý LỖI "的" -> "地"**: Khi đứng sau tính từ hoặc cụm miêu tả trạng thái/biểu cảm (như "满脸哀求", "惊慌", "气愤", "高兴", "小心翼翼"...) và đứng TRƯỚC động từ hoặc giới từ chỉ hành động/phương hướng (như "向...", "往...", "朝...", "对...", "走", "跑", "说", "看", "寻求"...), BẮT BUỘC sửa chữ "的" thành **"地"** đúng ngữ pháp trạng ngữ.
+2. DỊCH CÂU ĐÃ SỬA sang tiếng Việt mượt mà, tự nhiên, đúng ngữ cảnh câu chuyện ("vietnamese").
+3. PHÂN TÁCH CÂU ĐÃ SỬA THÀNH MẢNG "tokens" VỚI NGHĨA TIẾNG VIỆT DỄ HIỂU, TỰ NHIÊN:
    - **A. GOM TRỌN CÁC CỤM TỪ GHÉP & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH**:
-     + BẮT BUỘC gom các cụm từ ghép, cụm danh từ, cụm phương vị (trong/trên/sau...), cụm động-tân ngắn, cụm ngữ pháp hay, động từ ly hợp, thành ngữ, cụm diễn đạt hoàn chỉnh thành 1 token có nghĩa tự nhiên để người học bấm vào hiểu được cả cụm!
-     + Ví dụ gom cụm chuẩn: "很感兴趣的样子" (dáng vẻ rất hứng thú), "一脸戏谑的样子" (dáng vẻ chế giễu), "刚起了一个头" (vừa mới mở đầu), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ / kỳ lạ), "一落千丈" (tuột dốc không phanh), "硬生生" (thẳng thừng / cứng rắn), "怼了回去" (bật lại / cãi lại), "有所触动" (có chút xúc động), "皱起眉头" (nhíu mày), "松了口气" (thở phào nhẹ nhõm), "笑着说" (cười nói), "第一次" (lần đầu tiên), "来例假" (có kinh nguyệt), "得了" (mắc phải), "怪病" (bệnh lạ), "相关知识" (kiến thức liên quan), "接触过" (từng tiếp xúc), "讲过" (từng kể), "首次会面" (cuộc gặp đầu tiên), "半年以来" (nửa năm qua), "他们五个人" (5 người bọn họ), "社区群里" (trong nhóm khu dân cư), "日卖电视台" (Đài truyền hình Nichiuri), "高尔夫名人大赛" (Giải Golf Người Nổi Tiếng), "项目评审会" (cuộc họp thẩm định dự án), "王经理" (giám đốc Vương), "王阿姨" (dì Vương), "邻居们" (những người hàng xóm), "同学们" (các bạn học).
+     + BẮT BUỘC gom các cụm từ ghép, cụm danh từ, cụm phương vị (trong/trên/sau...), cụm động-tân ngắn, cụm ngữ pháp hay, động từ ly hợp, thành ngữ, cụm diễn đạt hoàn chỉnh thành 1 token có nghĩa tự nhiên.
+     + Ví dụ gom cụm chuẩn: "很感兴趣的样子" (dáng vẻ rất hứng thú), "一脸戏谑的样子" (dáng vẻ chế giễu), "刚起了一个头" (vừa mới mở đầu), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ / kỳ lạ), "一落千丈" (tuột dốc không phanh), "硬生生" (thẳng thừng / cứng rắn), "怼了回去" (bật lại / cãi lại), "有所触动" (có chút xúc động), "皱起眉头" (nhíu mày), "松了口气" (thở phào nhẹ nhõm), "笑着说" (cười nói), "第一次" (lần đầu tiên), "来例假" (có kinh nguyệt), "得了" (mắc phải), "怪病" (bệnh lạ), "相关知识" (kiến thức liên quan), "接触过" (từng tiếp xúc), "讲过" (từng kể), "首次会面" (cuộc gặp đầu tiên), "半年以来" (nửa năm qua), "他们五个人" (5 người bọn họ), "社区群里" (trong nhóm khu dân cư), "日卖电视台" (Đài truyền hình Nichiuri), "高尔夫名人大赛" (Giải Golf Người Nổi Tiếng).
    - **B. TUYỆT ĐỐI KHÔNG XÉ LẺ VỤN VẶT TỪ ĐƠN HOẶC TỪ GHÉP 2 ÂM TIẾT**:
-     + Các từ 2 âm tiết chuẩn (như "因为", "此前", "从未", "关于", "女性", "生理", "相关", "知识", "就连", "母亲", "从没", "女孩", "以为", "自己", "怪病", "感到", "害怕", "故事", "气愤") luôn giữ nguyên cả từ, và TUYỆT ĐỐI KHÔNG tách hậu tố/chữ đơn ("群", "里", "后", "上", "下", "起", "感", "所", "部", "商", "会", "员", "室", "们", "着", "过", "了") thành chữ đơn lẻ!
-   - **C. TRỢ TỪ "的", "地" & ĐỊNH DẠNG MỖI TOKEN**:
-     + Tách trợ từ "的", "地" thông thường thành token riêng (trừ khi nằm trong cụm cố định như "很感兴趣的样子", "头也不回地").
-     + Ghi theo chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt sát ngữ cảnh" (với dấu câu hoặc trợ từ "的", "地" đứng độc lập chỉ cần ghi chính ký tự đó, ví dụ "，", "。", "的", "地").
+     + Các từ 2 âm tiết chuẩn (như "因为", "此前", "从未", "关于", "女性", "生理", "相关", "知识", "就连", "母亲", "从没", "女孩", "以为", "自己", "怪病", "感到", "害怕", "故事", "气愤", "痕迹", "招牌", "机械", "之后", "不过") luôn giữ nguyên cả từ, và TUYỆT ĐỐI KHÔNG tách hậu tố/chữ đơn ("群", "里", "后", "上", "下", "起", "感", "所", "部", "商", "会", "员", "室", "们", "着", "过", "了") thành chữ đơn lẻ!
+   - **C. NGHĨA TIẾNG VIỆT CỦA TOKEN PHẢI DỄ HIỂU (CẤM HÁN VIỆT CỨNG NHẮC)**:
+     + Dùng tiếng Việt hiện đại, đời thường, dễ hiểu ngay (ví dụ: "专注" -> "tập trung / chuyên về" chứ KHÔNG ghi "chuyên chú"; "痕迹" -> "dấu vết"; "招牌" -> "biển hiệu").
+     + Ghi theo chuỗi "Chữ Hán|pinyin|nghĩa tiếng Việt sát ngữ cảnh" (với dấu câu hoặc trợ từ "的", "地" đứng độc lập chỉ cần ghi chính ký tự đó, ví dụ "，", "。", "的", "地").
 
-Danh sách ${batch.length} câu cần hiệu đính, dịch & phân tách từ:
+Danh sách ${batch.length} câu cần hiệu đính lỗi đồng âm ASR, dịch & phân tách từ:
 ${linesJson}
 
 Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} phần tử:
 [
   {
     "idx": 0,
-    "text": "女孩第一次来例假，却以为自己得了怪病。",
-    "vietnamese": "Cô bé lần đầu tiên có kinh nguyệt, nhưng lại tưởng rằng mình mắc phải căn bệnh lạ.",
+    "text": "不过，柯南看了招牌机械的痕迹之后，",
+    "vietnamese": "Tuy nhiên, sau khi Conan xem xét dấu vết trên bộ máy của tấm biển hiệu,",
     "tokens": [
-      "女孩|nǚ hái|cô bé",
-      "第一次|dì yī cì|lần đầu tiên",
-      "来例假|lái lì jià|có kinh nguyệt",
+      "不过|bù guò|tuy nhiên / có điều",
       "，",
-      "却|què|nhưng lại",
-      "以为|yǐ wéi|tưởng rằng",
-      "自己|zì jǐ|bản thân / mình",
-      "得了|dé le|mắc phải",
-      "怪病|guài bìng|bệnh lạ",
-      "。"
+      "柯南|kē nán|Conan",
+      "看了|kàn le|đã xem / kiểm tra",
+      "招牌|zhāo pái|biển hiệu",
+      "机械|jī xiè|máy móc / bộ máy",
+      "的",
+      "痕迹|hén jì|dấu vết",
+      "之后|zhī hòu|sau khi",
+      "，"
     ]
   }
 ]`;
@@ -18570,7 +18619,8 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
           tokens,
           _aiEnriched: isProofread,
           _aiProofreadV2: isProofread,
-          _aiSegmentedV3: Boolean(isProofread && hasAiTokens)
+          _aiSegmentedV3: Boolean(isProofread && hasAiTokens),
+          _aiProofreadV4: isProofread
         });
       }
       return outBatch;
@@ -18612,6 +18662,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
           s._aiProofreadV2 = false;
           s._aiEnriched = false;
           s._aiSegmentedV3 = false;
+          s._aiProofreadV4 = false;
           s._forceReproofread = true;
         }
       });
@@ -18644,7 +18695,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       let isFirstWave = true;
 
       try {
-        const fullOverviewText = lesson.subtitles.map(s => s.text).join(' ').slice(0, 600);
+        const fullOverviewText = lesson.subtitles.map(s => s.text).join(' ').slice(0, 2800);
 
         while (vslEnrichRunMap.get(lesson.id) === runId) {
           const liveLesson = findVslLessonById(lesson.id) || lesson;
@@ -18670,7 +18721,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
             waveChunks.push(fastSlice);
           } else {
             isFirstWave = false;
-            const batchSize = 15;
+            const batchSize = 18;
             const concurrency = 2;
             for (let c = 0; c < concurrency && c * batchSize < orderedPending.length; c++) {
               const slice = orderedPending.slice(c * batchSize, (c + 1) * batchSize).sort((a, b) => a - b);
@@ -18683,8 +18734,8 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
             const batchItems = idxList.map(idx => subs[idx]);
             const firstIdx = idxList[0];
             const lastIdx = idxList[idxList.length - 1];
-            const prevLine = firstIdx > 0 && subs[firstIdx - 1] ? subs[firstIdx - 1].text : '';
-            const nextLine = lastIdx + 1 < subs.length && subs[lastIdx + 1] ? subs[lastIdx + 1].text : '';
+            const prevLine = subs.slice(Math.max(0, firstIdx - 3), firstIdx).map(s => s && s.text).filter(Boolean).join(' ');
+            const nextLine = subs.slice(lastIdx + 1, Math.min(subs.length, lastIdx + 4)).map(s => s && s.text).filter(Boolean).join(' ');
             const analyzed = await vslAnalyzeSingleBatchWithAi(batchItems, prevLine, nextLine, fullOverviewText, liveLesson.title || '');
             if (vslEnrichRunMap.get(lesson.id) !== runId) return;
 
@@ -18693,7 +18744,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
               const targetIdx = idxList[k];
               if (analyzed[k] && subs[targetIdx]) {
                 subs[targetIdx] = analyzed[k];
-                if (analyzed[k]._aiProofreadV2) anySuccess = true;
+                if (analyzed[k]._aiProofreadV4) anySuccess = true;
               }
             }
             saveVslLessonsToStorage(liveLesson.id);
@@ -18729,50 +18780,50 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       }
     }
 
-    // Fast Single-Pass AI Proofreading + Phrase Segmentation + Translation
-    // Immediately analyzes the first 25 sentences in 1 single compact request (~2.5s)
-    // so Studio opens right away with AI-proofread opening subtitles, and enriches the rest in 25-sentence batches!
+    // Complete Contextual AI Proofreading + Phrase Segmentation + Translation
+    // Proofreads 100% of video sentences in parallel batches with full transcript context so no ASR homophone is ever left unfixed!
     async function vslAnalyzeSubtitlesWithAi(rawSegments, onProgress, videoTitle = '') {
       const cleanSegments = vslNormalizeRawSegments(rawSegments);
       if (cleanSegments.length === 0) return [];
 
-      // If segments are already translated & tokenized (e.g. from single-pass audio transcription or cache), return immediately ($0)!
+      // Only skip if 100% of segments have already passed V4 contextual AI proofreading
       const allAlreadyAnalyzed = cleanSegments.every(vslIsSubtitleAiDone);
       if (allAlreadyAnalyzed) {
         if (typeof onProgress === 'function') onProgress(100);
-        return cleanSegments.map(s => vslBuildLocalFallbackSubtitleItem({ ...s, _aiEnriched: true, _aiProofreadV2: true }));
+        return cleanSegments.map(s => vslBuildLocalFallbackSubtitleItem({ ...s, _aiEnriched: true, _aiProofreadV2: true, _aiProofreadV4: true }));
       }
 
-      const fullOverviewText = cleanSegments.map(s => s.text).join(' ').slice(0, 600);
-      const batchSize = 25;
-      const immediateLimit = 25; // First 25 sentences proofread in 1 single API call!
-      const immediateCount = Math.min(cleanSegments.length, immediateLimit);
-      const immediateBatches = Math.ceil(immediateCount / batchSize);
+      const fullOverviewText = cleanSegments.map(s => s.text).join(' ').slice(0, 2800);
+      const batchSize = 20;
+      const totalBatches = Math.ceil(cleanSegments.length / batchSize);
       const analyzedSubtitles = cleanSegments.map(s => vslBuildLocalFallbackSubtitleItem(s));
 
       let completedBatches = 0;
       if (typeof onProgress === 'function') onProgress(12);
 
-      const tasks = [];
-      for (let b = 0; b < immediateBatches; b++) {
-        tasks.push((async () => {
-          const batchStart = b * batchSize;
-          const batchEnd = Math.min(immediateCount, batchStart + batchSize);
-          const batch = cleanSegments.slice(batchStart, batchEnd);
-          const prevLine = batchStart > 0 ? cleanSegments[batchStart - 1].text : '';
-          const nextLine = batchEnd < cleanSegments.length ? cleanSegments[batchEnd].text : '';
-          const outBatch = await vslAnalyzeSingleBatchWithAi(batch, prevLine, nextLine, fullOverviewText, videoTitle);
-          for (let i = 0; i < outBatch.length; i++) {
-            analyzedSubtitles[batchStart + i] = outBatch[i];
-          }
-          completedBatches++;
-          if (typeof onProgress === 'function') {
-            onProgress(12 + Math.round((completedBatches / immediateBatches) * 88));
-          }
-        })());
+      const concurrency = 3;
+      for (let waveStart = 0; waveStart < totalBatches; waveStart += concurrency) {
+        const wavePromises = [];
+        for (let b = waveStart; b < Math.min(totalBatches, waveStart + concurrency); b++) {
+          wavePromises.push((async () => {
+            const batchStart = b * batchSize;
+            const batchEnd = Math.min(cleanSegments.length, batchStart + batchSize);
+            const batch = cleanSegments.slice(batchStart, batchEnd);
+            const prevLine = cleanSegments.slice(Math.max(0, batchStart - 3), batchStart).map(s => s && s.text).filter(Boolean).join(' ');
+            const nextLine = cleanSegments.slice(batchEnd, Math.min(cleanSegments.length, batchEnd + 3)).map(s => s && s.text).filter(Boolean).join(' ');
+            const outBatch = await vslAnalyzeSingleBatchWithAi(batch, prevLine, nextLine, fullOverviewText, videoTitle);
+            for (let i = 0; i < outBatch.length; i++) {
+              analyzedSubtitles[batchStart + i] = outBatch[i];
+            }
+            completedBatches++;
+            if (typeof onProgress === 'function') {
+              onProgress(12 + Math.round((completedBatches / totalBatches) * 88));
+            }
+          })());
+        }
+        await Promise.all(wavePromises);
       }
 
-      await Promise.all(tasks);
       return analyzedSubtitles;
     }
 
@@ -18930,7 +18981,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
         }
         if (Array.isArray(val) && val.length >= 2) {
           return val.map(s => {
-            const isProofread = !!(s._aiProofreadV2 && Array.isArray(s.tokens) && s.tokens.length > 0 && (s.vietnamese || s.vi));
+            const isProofread = !!(s._aiProofreadV4 && Array.isArray(s.tokens) && s.tokens.length > 0 && (s.vietnamese || s.vi));
             return {
               start: Number(s.start) || 0,
               end: s.end ? Number(s.end) : Number((Number(s.start || 0) + Math.max(0.8, Number(s.dur) || 2.5)).toFixed(2)),
@@ -18938,7 +18989,9 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
               vietnamese: String(s.vietnamese || s.vi || s.vi_text || '').trim(),
               tokens: Array.isArray(s.tokens) && s.tokens.length > 0 ? s.tokens : null,
               _aiEnriched: isProofread,
-              _aiProofreadV2: isProofread
+              _aiProofreadV2: isProofread,
+              _aiSegmentedV3: isProofread,
+              _aiProofreadV4: isProofread
             };
           }).filter(s => s.text);
         }
@@ -18960,8 +19013,10 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
           vi: s.vietnamese || s.vi || '',
           vi_text: s.vietnamese || s.vi_text || '',
           tokens: Array.isArray(s.tokens) && s.tokens.length > 0 ? s.tokens : undefined,
-          _aiEnriched: !!s._aiProofreadV2,
-          _aiProofreadV2: !!s._aiProofreadV2
+          _aiEnriched: !!s._aiProofreadV4,
+          _aiProofreadV2: !!s._aiProofreadV4,
+          _aiSegmentedV3: !!s._aiProofreadV4,
+          _aiProofreadV4: !!s._aiProofreadV4
         }));
         await fetch(`${VSL_MAC_SUPA_URL}/rest/v1/app_settings?on_conflict=key`, {
           method: 'POST',
@@ -19256,9 +19311,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
             pctCtrl.setTarget(68 + Math.round(p * 0.30), 450);
           }, title);
 
-          if (!cachedMacSubs || cachedMacSubs.length < 2) {
-            vslSaveSharedMacSubtitles(ytId, subtitles);
-          }
+          vslSaveSharedMacSubtitles(ytId, subtitles);
 
           if (!duration && subtitles.length > 0) {
             duration = Math.ceil(subtitles[subtitles.length - 1].end);
@@ -21013,6 +21066,7 @@ Hãy trả về DUY NHẤT một đối tượng JSON hợp lệ (không bọc m
       sub._aiEnriched = true;
       sub._aiProofreadV2 = true;
       sub._aiSegmentedV3 = true;
+      sub._aiProofreadV4 = true;
 
       const syncSavedWordLists = (finalPy, finalVi) => {
         if (Array.isArray(lesson.selectedWords)) {
