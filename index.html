@@ -12506,33 +12506,37 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
         const prompt = `Bạn là chuyên gia ngôn ngữ Tiếng Trung và biên tập viên dịch thuật cao cấp. Hãy phân tích đoạn văn tiếng Trung sau (phần ${i + 1}/${chunks.length}):
 ${targetRuleText}
 1) QUY TẮC GOM CỤM TỪ & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH (CỰC KỲ QUAN TRỌNG):
-   - **BẮT BUỘC gom các cụm từ ghép, cụm danh từ, cụm phương vị (trong/trên/sau...), cụm động-tân ngắn, cụm ngữ pháp hay, động từ ly hợp, thành ngữ, cụm diễn đạt hoàn chỉnh thành 1 token có nghĩa tự nhiên** để người học bấm vào hiểu được cả cụm!
+   - **BẮT BUỘC gom các từ ghép, cụm danh từ, cụm phương vị (trong/trên/sau...), cụm động-tân ngắn (2–5 chữ), động từ ly hợp, thành ngữ, cụm diễn đạt cố định thành 1 token có nghĩa tự nhiên** để người học bấm vào hiểu được cả cụm!
    - **Ví dụ gom cụm chuẩn**:
-     + Cụm biểu cảm / hành động / ngữ pháp: "很感兴趣的样子" (dáng vẻ rất hứng thú), "刚起了一个头" (vừa mới mở đầu / vừa mới cất lời), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ / kỳ lạ), "一落千丈" (tuột dốc không phanh), "硬生生" (thẳng thừng / cứng rắn), "怼了回去" (bật lại / cãi lại), "有所触动" (có chút xúc动), "深表关切" (bày tỏ sự quan tâm sâu sắc), "皱起眉头" (nhíu mày), "松了口气" (thở phào nhẹ nhõm), "笑着说" (cười nói), "找到了它" (tìm thấy nó), "戴名牌" (đeo bảng tên).
+     + Cụm biểu cảm / hành động / ngữ pháp: "很感兴趣的样子" (dáng vẻ rất hứng thú), "刚起了一个头" (vừa mới mở đầu / vừa mới cất lời), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ / kỳ lạ), "一落千丈" (tuột dốc không phanh), "硬生生" (thẳng thừng / cứng rắn), "怼了回去" (bật lại / cãi lại), "有所触动" (có chút xúc động), "深表关切" (bày tỏ sự quan tâm sâu sắc), "皱起眉头" (nhíu mày), "松了口气" (thở phào nhẹ nhõm), "笑着说" (cười nói), "找到了它" (tìm thấy nó), "戴名牌" (đeo bảng tên).
      + Cụm danh từ / thời gian / nơi chốn / phương vị: "首次会面" (cuộc gặp đầu tiên), "半年以来" (nửa năm qua), "他们五个人" (5 người bọn họ), "社区群里" (trong nhóm khu dân cư), "寻狗消息" (tin nhắn tìm chó), "手机定位" (định vị điện thoại), "我家小狗" (chú chó nhỏ nhà tôi), "走丢后" (sau khi đi lạc), "王阿姨" (dì Vương), "王经理" (giám đốc Vương), "项目评审会" (cuộc họp thẩm định dự án), "第一次" (lần đầu tiên), "来例假" (có kinh nguyệt), "怪病" (bệnh lạ), "相关知识" (kiến thức liên quan).
-   - **TUYỆT ĐỐI KHÔNG xé lẻ vụn vặt 1–2 chữ đơn** (như "群", "里", "后", "上", "下", "起", "感", "所", "部", "商", "会", "店", "馆", "牌", "们", "着", "了", "过") tách rời khỏi cụm từ chính khiến người đọc bấm vào không hiểu nghĩa cả cụm! (Ví dụ: BẮT BUỘC gom "社区群里", CẤM tách thành "社区" + "群" + "里"; BẮT BUỘC gom "寻狗消息", CẤM tách "寻狗" + "消息"; BẮT BUỘC gom "走丢后", CẤM tách "走丢" + "后").
+   - **TUYỆT ĐỐI KHÔNG xé lẻ vụn vặt 1–2 chữ đơn** (như "群", "里", "后", "上", "下", "起", "感", "所", "部", "商", "会", "店", "馆", "牌", "们", "着", "了", "过") tách rời khỏi cụm từ chính khiến người đọc bấm vào không hiểu nghĩa cả cụm!
 
-2) QUY TẮC NGHĨA VIỆT & PINYIN CỦA TOKEN THEO NGỮ CẢNH (CỰC KỲ QUAN TRỌNG):
-   - Trong mảng tokens, phần Pinyin và nghĩa tiếng Việt BẮT BUỘC dịch bằng **tiếng Việt thông dụng, tự nhiên, đúng 100% ngữ cảnh câu**!
-   - **CẢNH BÁO TỪ ĐA ÂM / ĐA NGHĨA**: Với các từ/cụm đa âm hoặc đa nghĩa theo ngữ cảnh, BẮT BUỘC chọn đúng âm Pinyin và nghĩa trong câu đó:
-     + Ví dụ: "都会" trong "每次放学都会来" ➔ BẮT BUỘC là **"都会|dōu huì|đều sẽ"** (hoặc tách "都|dōu|đều", "会|huì|sẽ"), TUYỆT ĐỐI CẤM ghi thành ❌"dū huì|đô thị"!
-     + "才能" khi làm phó từ ("努力才能成功") ➔ **"cái néng|mới có thể"** (chỉ dịch "tài năng" khi là danh từ).
-     + "穿着" khi là động từ ("穿着一件衣服") ➔ **"chuān zhe|đang mặc"** (chỉ dịch "chuān zhuó|trang phục" khi là danh từ).
-     + Các chữ đa âm như "还" (hái: vẫn/còn vs huán: trả), "得" (de / dé: đạt được / děi: phải), "长" (cháng: dài vs zhǎng: lớn lên/trưởng), "重" (zhòng: nặng/trọng vs chóng: lặp lại), "行" (xíng: đi/được vs háng: ngành/hàng), "只" (zhǐ: chỉ vs zhī: con/chiếc), "为" (wèi: vì vs wéi: làm/thành), "地" (de: một cách vs dì: đất) BẮT BUỘC ghi Pinyin chuẩn theo ngữ cảnh!
+2) QUY TẮC CHẤM PINYIN CHỮ ĐA ÂM (多音字) & NGHĨA VIỆT THEO NGỮ CẢNH (CỰC KỲ QUAN TRỌNG):
+   - Trong mảng tokens, phần Pinyin và nghĩa tiếng Việt BẮT BUỘC đúng **100% âm đọc của từ đó trong ngữ cảnh câu**!
+   - **QUY TẮC BẮT BUỘC CHO CHỮ ĐA ÂM (多音字) TRONG TỪ GHÉP & CÂU**:
+     + **都**: đọc **dōu** (đều: "都会|dōu huì|đều sẽ", "大都|dà dōu|đa số đều", "都是|dōu shì|đều là") vs **dū** (đô thị: "首都|shǒu dū", "都市|dū shì").
+     + **长**: đọc **zhǎng** (lớn lên/trưởng: "长大|zhǎng dà", "成长|chéng zhǎng", "家长|jiā zhǎng", "校长|xiào zhǎng", "长辈|zhǎng bèi", "长相|zhǎng xiàng") vs **cháng** (dài/lâu: "很长|hěn cháng", "长期|cháng qī", "特长|tè cháng").
+     + **行**: đọc **xíng** (đi/được/hành: "旅行|lǚ xíng", "进行|jìn xíng", "行为|xíng wéi", "人行道|rén xíng dào", "不行|bù xíng") vs **háng** (ngành/hàng/ngân hàng: "银行|yín háng", "行业|háng yè", "同行|tóng háng", "外行|wài háng", "一行人|yī háng rén").
+     + **教**: đọc **jiào** (trong từ ghép: "教育|jiào yù", "教师|jiào shī", "教室|jiào shì", "教授|jiào shòu", "教材|jiào cái", "教练|jiào liàn", "教训|jiào xun") vs **jiāo** (động từ dạy: "教书|jiāo shū", "教我|jiāo wǒ").
+     + **重**: đọc **zhòng** (nặng/trọng: "重要|zhòng yào", "严重|yán zhòng", "尊重|zūn zhòng") vs **chóng** (lặp lại: "重新|chóng xīn", "重复|chóng fù", "重逢|chóng féng").
+     + **乐**: đọc **lè** (vui: "快乐|kuài lè", "可乐|kě lè") vs **yuè** (nhạc: "音乐|yīn yuè", "乐器|yuè qì", "乐队|yuè duì").
+     + **觉**: đọc **jué** (cảm giác: "觉得|jué de", "感觉|gǎn jué", "发觉|fā jué") vs **jiào** (ngủ: "睡觉|shuì jiào", "午觉|wǔ jiào").
+     + **还**: đọc **hái** (vẫn/còn: "还是|hái shì", "还有|hái yǒu") vs **huán** (trả lại: "还钱|huán qián", "还给|huán gěi", "归还|guī huán", "还原|huán yuán").
+     + **发**: đọc **fā** (phát/gửi: "发现|fā xiàn", "发生|fā shēng", "散发|sàn fā") vs **fà** (tóc: "头发|tóu fa", "理发|lǐ fà", "白发|bái fà", "染发|rǎn fà").
+     + **着**: đọc **zhe** (đang: "看着|kàn zhe", "穿着|chuān zhe", "笑着|xiào zhe") vs **zháo** (trúng/được/sốt ruột: "着急|zháo jí", "睡着|shuì zháo", "睡不着|shuì bu zháo", "用不着|yòng bu zháo", "着凉|zháo liáng", "着火|zháo huǒ", "着迷|zháo mí") vs **zhuó** ("着落|zhuó luò", "着手|zhuó shǒu", "着实|zhuó shí", "执着|zhí zhuó", "沉着|chén zhuó", danh từ "穿着|chuān zhuó|trang phục").
+     + **了**: đọc **le** (rồi/đã: "走了|zǒu le", "看了|kàn le") vs **liǎo** (xong/nổi/hiểu: "了解|liǎo jiě", "受不了|shòu bu liǎo", "了不起|liǎo bu qǐ", "不得了|bù dé liǎo", "少不了|shǎo bu liǎo").
+     + **得**: đọc **de** (bổ ngữ: "觉得|jué de", "跑得快|pǎo de kuài") vs **děi** (phải: "得去|děi qù", "总得|zǒng děi", "非得|fēi děi") vs **dé** (đạt được: "得到|dé dào", "得意|dé yì", "得失|dé shī", "得以|dé yǐ").
+     + **地**: đọc **de** (trợ từ trạng ngữ: "气愤地|qì fèn de", "慢慢地|màn màn de") vs **dì** (đất/nơi: "地方|dì fang", "地上|dì shang", "草地|cǎo dì", "绿地|lǜ dì", "目的地|mù dì dì").
+     + Các chữ đa âm khác như **处** (chǔ xử lý/chung sống vs chù nơi/chỗ), **应** (yīng nên vs yìng đáp ứng/phản ứng), **切** (qiē cắt vs qiè thiết/tất cả), **调** (tiáo điều chỉnh/hòa vs diào điều tra/giai điệu), **弹** (tán gảy đàn/đàn hồi vs dàn đạn), **差** (chà kém vs chā chênh lệch vs chāi công tác), **假** (jiǎ giả vs jià kỳ nghỉ), **少** (shǎo ít vs shào trẻ/thiếu niên), **好** (hǎo tốt vs hào thích/hiếu), **只** (zhǐ chỉ vs zhī con/chiếc), **便** (biàn tiện vs pián rẻ), **盛** (shèng thịnh vs chéng xới/đựng), **数** (shù số vs shǔ đếm), **相** (xiāng lẫn nhau vs xiàng tướng/ảnh), **难** (nán khó vs nàn tai nạn), **传** (chuán truyền vs zhuàn truyện ký), **参** (cān tham gia vs shēn sâm vs cēn so le), **露** (lù sương/bộc lộ vs lòu lộ mặt), **倒** (dǎo ngã/đổ vs dào ngược/rót/lại), **背** (bēi cõng/đeo vs bèi lưng), **模** (mó mô hình vs mú khuôn/dáng vẻ "模样|mú yàng") BẮT BUỘC ghi đúng âm Pinyin trong từ đó!
    - **TUYỆT ĐỐI CẤM bê nguyên âm Hán-Việt tối nghĩa/ít dùng trong đời sống** làm nghĩa của từ! Ví dụ:
-     + "专注" ➔ BẮT BUỘC dịch là **"chuyên về / tập trung"** (TUYỆT ĐỐI CẤM dịch âm Hán-Việt là ❌"chuyên chú").
-     + "寻求" ➔ dịch là **"tìm kiếm / nhờ"** (CẤM dịch ❌"tầm cầu") | "秉持" ➔ **"giữ vững"** (CẤM dịch ❌"bỉnh trì") | "赋能" ➔ **"tiếp sức / nâng tầm"** (CẤM dịch ❌"phú năng") | "驻足" ➔ **"dừng chân"** (CẤM dịch ❌"trú túc").
-   - Tuyệt đối không thêm các từ ngữ cảnh ở xa ngoài phạm vi token đó vào nghĩa tiếng Việt.
-   - **Ví dụ**:
-     - Token "刚起了一个头" ➔ "vừa mới mở đầu" (dịch chuẩn nghĩa bóng cả cụm)
-     - Token "很感兴趣的样子" ➔ "dáng vẻ rất hứng thú"
-     - Token "社区群里" ➔ "trong nhóm khu dân cư" | Token "寻狗消息" ➔ "tin nhắn tìm chó"
-     - Token "头也不回地" ➔ "không ngoảnh đầu lại" | Token "首次会面" ➔ "cuộc gặp đầu tiên"
+     + "专注" ➔ BẮT BUỘC dịch là **"chuyên về / tập trung"** (CẤM dịch ❌"chuyên chú").
+     + "寻求" ➔ **"tìm kiếm / nhờ"** (CẤM dịch ❌"tầm cầu") | "秉持" ➔ **"giữ vững"** (CẤM dịch ❌"bỉnh trì") | "赋能" ➔ **"tiếp sức / nâng tầm"** (CẤM dịch ❌"phú năng") | "驻足" ➔ **"dừng chân"** (CẤM dịch ❌"trú túc").
 
 3) QUY TẮC VỀ TRỢ TỪ "的", "地" VÀ LIÊN TỪ "与":
-   - Trợ từ "的" nối giữa hai cụm từ độc lập (như "半年以来" + "的" + "首次会面", hoặc "大小姐" + "的" + "故事", "上次" + "的" + "经验"), hãy tách chữ "的" thành 1 token riêng (trừ khi nằm trong 1 cụm biểu đạt liền mạch như "很感兴趣的样子").
-   - Trợ từ "地" đứng sau tính từ 2 âm tiết thông thường (như "和蔼" + "地", "气愤" + "地"), hãy tách chữ "地" thành 1 token riêng. Chỉ gộp "地" khi thuộc cụm quán dụng/thành ngữ cố định (như "头也不回地").
-   - KHÔNG ghép liên từ "与" vào đầu từ B trong "A 与 B" (Ví dụ: tách "大小姐", "与", "佐野").
+   - Trợ từ "的" nối giữa hai cụm từ độc lập (như "大小姐" + "的|de|của" + "故事"), hãy tách chữ "的|de|của" thành 1 token riêng có đầy đủ pinyin và nghĩa.
+   - Trợ từ "地" đứng sau tính từ 2 âm tiết thông thường (như "气愤|qì fèn|tức giận" + "地|de|một cách"), hãy tách chữ "地|de|một cách" thành 1 token riêng có đầy đủ pinyin.
+   - KHÔNG ghép liên từ "与" vào đầu từ B trong "A 与 B" (tách "与|yǔ|và / cùng").
 
 4) TỰ ĐỘNG SỬA LỖI GRAMMAR "地" / "的" & CHUẨN HÓA DẤU CÂU:
    - Trước ĐỘNG TỪ hoặc TRẠNG NGỮ chỉ hành động (như "头也不回地走了", "气愤地说着", "高兴地笑"), nếu bài gốc viết sai thành chữ "的", bạn BẮT BUỘC sửa thành "地" đúng chuẩn ngữ pháp!
@@ -12548,7 +12552,7 @@ ${isFirstChunk && !customTitle ? '6)' : '5)'} Chia văn bản thành các ĐOẠ
 ${chunkText}
 """
 
-Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown). Mỗi phần tử trong mảng "tokens" dùng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt" (với dấu câu hoặc trợ từ "的", "地" chỉ cần ghi chính ký tự đó, ví dụ "，", "的", "地"):
+Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown). MỌI từ và trợ từ tiếng Trung trong mảng "tokens" BẮT BUỘC ghi đầy đủ "Chữ Hán|pinyin|nghĩa tiếng Việt" (chỉ duy nhất dấu câu mới ghi riêng ký tự dấu câu như "，", "。"):
 {
   ${isFirstChunk && !customTitle ? '"title": "Tiêu đề tiếng Việt tự nhiên mượt mà",' : ''}
   "paragraphs": [
@@ -12560,7 +12564,7 @@ ${chunkText}
         "很感兴趣的样子|hěn gǎn xìng qù de yàng zi|dáng vẻ rất hứng thú",
         "，",
         "大小姐|dà xiǎo jiě|tiểu thư",
-        "的",
+        "的|de|của",
         "故事|gù shi|câu chuyện",
         "刚起了一个头|gāng qǐ le yī gè tóu|vừa mới mở đầu",
         "就|jiù|thì",
@@ -12571,7 +12575,7 @@ ${chunkText}
         "，",
         "然后|rán hòu|sau đó",
         "气愤|qì fèn|tức giận",
-        "地",
+        "地|de|một cách",
         "头也不回地|tóu yě bù huí de|không ngoảnh đầu lại",
         "走了|zǒu le|bỏ đi",
         "。"
@@ -12853,29 +12857,114 @@ ${chunkText}
       '此前': { pinyin: 'cǐ qián', vietnamese: 'trước đây' }
     };
 
-    // Self-heal any legacy saved token that was corrupted by older static dictionary overwrites
+    // Unambiguous compound words containing polyphonic characters (多音字) where the reading is 100% fixed in that word
+    const UNAMBIGUOUS_POLYPHONE_PINYIN_MAP = {
+      '教育': 'jiào yù', '教师': 'jiào shī', '教室': 'jiào shì', '教授': 'jiào shòu', '教学': 'jiào xué',
+      '教材': 'jiào cái', '教练': 'jiào liàn', '教训': 'jiào xun', '教养': 'jiào yǎng', '教导': 'jiào dǎo',
+      '教程': 'jiào chéng', '教案': 'jiào àn', '教务': 'jiào wù', '教官': 'jiào guān', '教堂': 'jiào táng',
+      '教会': 'jiào huì', '教徒': 'jiào tú', '教条': 'jiào tiáo', '教科书': 'jiào kē shū', '请教': 'qǐng jiào',
+      '指教': 'zhǐ jiào', '宗教': 'zōng jiào', '家教': 'jiā jiào', '早教': 'zǎo jiào', '支教': 'zhī jiào',
+      '教书': 'jiāo shū', '教课': 'jiāo kè',
+      '长大': 'zhǎng dà', '成长': 'chéng zhǎng', '家长': 'jiā zhǎng', '班长': 'bān zhǎng', '校长': 'xiào zhǎng',
+      '市长': 'shì zhǎng', '部长': 'bù zhǎng', '院长': 'yuàn zhǎng', '队长': 'duì zhǎng', '组长': 'zǔ zhǎng',
+      '董事长': 'dǒng shì zhǎng', '村长': 'cūn zhǎng', '店长': 'diàn zhǎng', '厂长': 'chǎng zhǎng', '处长': 'chù zhǎng',
+      '局长': 'jú zhǎng', '省长': 'shěng zhǎng', '县长': 'xiàn zhǎng', '船长': 'chuán zhǎng', '机长': 'jī zhǎng',
+      '护士长': 'hù shi zhǎng', '会长': 'huì zhǎng', '社长': 'shè zhǎng', '学长': 'xué zhǎng', '兄长': 'xiōng zhǎng',
+      '长辈': 'zhǎng bèi', '长子': 'zhǎng zǐ', '长女': 'zhǎng nǚ', '长者': 'zhǎng zhě', '长相': 'zhǎng xiàng',
+      '生长': 'shēng zhǎng', '增长': 'zēng zhǎng', '长进': 'zhǎng jìn', '长高': 'zhǎng gāo', '长胖': 'zhǎng pàng',
+      '长期': 'cháng qī', '长短': 'cháng duǎn', '特长': 'tè cháng', '长处': 'cháng chù', '漫长': 'màn cháng',
+      '银行': 'yín háng', '行业': 'háng yè', '同行': 'tóng háng', '外行': 'wài háng', '内行': 'nèi háng',
+      '行列': 'háng liè', '行情': 'háng qíng', '行家': 'háng jia', '一行人': 'yī háng rén', '排行榜': 'pái háng bǎng',
+      '行长': 'háng zhǎng', '分行': 'fēn háng', '支行': 'zhī háng', '总行': 'zǒng háng', '央行': 'yāng háng',
+      '改行': 'gǎi háng', '转行': 'zhuǎn háng', '入行': 'rù háng', '跨行': 'kuà háng', '懂行': 'dǒng háng', '在行': 'zài háng',
+      '旅行': 'lǚ xíng', '行李': 'xíng li', '进行': 'jìn xíng', '举行': 'jǔ xíng', '行为': 'xíng wéi',
+      '行动': 'xíng dòng', '行人': 'xíng rén', '人行道': 'rén xíng dào', '流行': 'liú xíng', '发行': 'fā xíng', '不行': 'bù xíng',
+      '快乐': 'kuài lè', '可乐': 'kě lè', '娱乐': 'yú lè', '乐观': 'lè guān', '乐趣': 'lè qù',
+      '音乐': 'yīn yuè', '乐器': 'yuè qì', '乐队': 'yuè duì', '乐谱': 'yuè pǔ', '乐团': 'yuè tuán', '乐曲': 'yuè qǔ', '交响乐': 'jiāo xiǎng yuè',
+      '觉得': 'jué de', '感觉': 'gǎn jué', '发觉': 'fā jué', '知觉': 'zhī jué', '错觉': 'cuò jué', '直觉': 'zhí jué', '自觉': 'zì jué', '觉醒': 'jué xǐng',
+      '睡觉': 'shuì jiào', '午觉': 'wǔ jiào', '睡一觉': 'shuì yī jiào', '睡了一觉': 'shuì le yī jiào',
+      '重要': 'zhòng yào', '严重': 'yán zhòng', '尊重': 'zūn zhòng', '重点': 'zhòng diǎn', '重量': 'zhòng liàng', '重视': 'zhòng shì', '沉重': 'chén zhòng',
+      '重新': 'chóng xīn', '重复': 'chóng fù', '重逢': 'chóng féng', '重叠': 'chóng dié', '双重': 'shuāng chóng', '重建': 'chóng jiàn', '重组': 'chóng zǔ', '重温': 'chóng wēn', '重申': 'chóng shēn',
+      '还是': 'hái shì', '还有': 'hái yǒu', '还没': 'hái méi', '还好': 'hái hǎo',
+      '还钱': 'huán qián', '还给': 'huán gěi', '归还': 'guī huán', '偿还': 'cháng huán', '还原': 'huán yuán', '退还': 'tuì huán', '返还': 'fǎn huán', '生还': 'shēng huán',
+      '发现': 'fā xiàn', '发生': 'fā shēng', '发展': 'fā zhǎn', '出发': 'chū fā', '散发': 'sàn fā', '发表': 'fā biǎo', '发明': 'fā míng',
+      '头发': 'tóu fa', '理发': 'lǐ fà', '白发': 'bái fà', '脱发': 'tuō fà', '染发': 'rǎn fà', '长发': 'cháng fà', '短发': 'duǎn fà', '发型': 'fà xíng',
+      '着急': 'zháo jí', '睡着': 'shuì zháo', '睡不着': 'shuì bu zháo', '着凉': 'zháo liáng', '着火': 'zháo huǒ', '着迷': 'zháo mí',
+      '用不着': 'yòng bu zháo', '犯不着': 'fàn bu zháo', '够不着': 'gòu bu zháo', '摸不着': 'mō bu zháo', '找着': 'zhǎo zháo',
+      '着落': 'zhuó luò', '着手': 'zhuó shǒu', '着重': 'zhuó zhòng', '着力': 'zhuó lì', '着眼': 'zhuó yǎn', '着想': 'zhuó xiǎng', '着陆': 'zhuó lù', '着装': 'zhuó zhuāng', '衣着': 'yī zhuó', '执着': 'zhí zhuó', '沉着': 'chén zhuó', '着实': 'zhuó shí',
+      '看着': 'kàn zhe', '笑着': 'xiào zhe', '走着': 'zǒu zhe', '听着': 'tīng zhe', '拿着': 'ná zhe', '带着': 'dài zhe', '坐着': 'zuò zhe', '站着': 'zhàn zhe',
+      '了解': 'liǎo jiě', '了结': 'liǎo jié', '了却': 'liǎo què', '了然': 'liǎo rán', '一目了然': 'yī mù liǎo rán',
+      '受不了': 'shòu bu liǎo', '了不起': 'liǎo bu qǐ', '了不得': 'liǎo bu dé', '不得了': 'bù dé liǎo', '吃不了': 'chī bu liǎo', '忘不了': 'wàng bu liǎo', '少不了': 'shǎo bu liǎo', '免不了': 'miǎn bu liǎo', '大不了': 'dà bu liǎo',
+      '切菜': 'qiē cài', '切开': 'qiē kāi', '切片': 'qiē piàn', '切碎': 'qiē suì', '切块': 'qiē kuài', '切断': 'qiē duàn', '切割': 'qiē gē', '切换': 'qiē huàn', '切入': 'qiē rù', '切除': 'qiē chú', '切磋': 'qiē cuō',
+      '一切': 'yī qiè', '亲切': 'qīn qiè', '密切': 'mì qiè', '迫切': 'pò qiè', '确切': 'què qiè', '切身': 'qiè shēn',
+      '盛饭': 'chéng fàn', '盛水': 'chéng shuǐ', '盛满': 'chéng mǎn', '盛汤': 'chéng tāng', '盛开': 'shèng kāi', '茂盛': 'mào shèng', '丰盛': 'fēng shèng', '盛情': 'shèng qíng',
+      '数一数': 'shǔ yī shǔ', '数不清': 'shǔ bù qīng', '屈指可数': 'qū zhǐ kě shǔ', '数学': 'shù xué', '数字': 'shù zì', '数量': 'shù liàng', '数据': 'shù jù',
+      '调整': 'tiáo zhěng', '空调': 'kōng tiáo', '调节': 'tiáo jié', '调皮': 'tiáo pí', '调解': 'tiáo jiě', '调侃': 'tiáo kǎn', '调理': 'tiáo lǐ', '调配': 'tiáo pèi', '调味': 'tiáo wèi', '调料': 'tiáo liào', '协调': 'xié tiáo', '上调': 'shàng tiáo', '下调': 'xià tiáo', '微调': 'wēi tiáo',
+      '调查': 'diào chá', '强调': 'qiáng diào', '声调': 'shēng diào', '调动': 'diào dòng', '音调': 'yīn diào', '低调': 'dī diào', '高调': 'gāo diào',
+      '弹琴': 'tán qín', '弹钢琴': 'tán gāng qín', '弹吉他': 'tán jí tā', '弹奏': 'tán zòu', '弹唱': 'tán chàng', '弹性': 'tán xìng', '弹簧': 'tán huáng', '反弹': 'fǎn tán', '动弹': 'dòng tan',
+      '子弹': 'zǐ dàn', '炸弹': 'zhà dàn', '导弹': 'dǎo dàn',
+      '处理': 'chǔ lǐ', '相处': 'xiāng chǔ', '处于': 'chǔ yú', '处罚': 'chǔ fá', '处分': 'chǔ fèn', '处境': 'chǔ jìng', '处置': 'chǔ zhì', '处方': 'chǔ fāng', '独处': 'dú chǔ',
+      '到处': 'dào chù', '好处': 'hǎo chù', '坏处': 'huài chù', '难处': 'nán chù', '用处': 'yòng chù', '深处': 'shēn chù', '住处': 'zhù chù', '办事处': 'bàn shì chù',
+      '答应': 'dā ying', '反应': 'fǎn yìng', '适应': 'shì yìng', '应用': 'yìng yòng', '应付': 'yìng fu', '供应': 'gōng yìng', '应对': 'yìng duì', '应聘': 'yìng pìn', '应酬': 'yìng chou', '响应': 'xiǎng yìng',
+      '应该': 'yīng gāi', '应当': 'yīng dāng', '应有尽有': 'yīng yǒu jìn yǒu',
+      '便宜': 'pián yi', '占便宜': 'zhàn pián yi', '方便': 'fāng biàn', '随便': 'suí biàn', '顺便': 'shùn biàn', '即便': 'jí biàn',
+      '放假': 'fàng jià', '请假': 'qǐng jià', '假期': 'jià qī', '暑假': 'shǔ jià', '寒假': 'hán jià', '度假': 'dù jià', '休假': 'xiū jià', '病假': 'bìng jià',
+      '假如': 'jiǎ rú', '假设': 'jiǎ shè', '假装': 'jiǎ zhuāng', '真假': 'zhēn jiǎ',
+      '少年': 'shào nián', '少女': 'shào nǚ', '少爷': 'shào ye', '年少': 'nián shào', '减少': 'jiǎn shǎo', '多少': 'duō shǎo', '至少': 'zhì shǎo',
+      '爱好': 'ài hào', '好奇': 'hào qí', '好客': 'hào kè', '好学': 'hào xué', '好胜': 'hào shèng', '好强': 'hào qiáng',
+      '一只': 'yī zhī', '两只': 'liǎng zhī', '三只': 'sān zhī', '几只': 'jǐ zhī', '船只': 'chuán zhī', '只身': 'zhī shēn',
+      '只有': 'zhǐ yǒu', '只要': 'zhǐ yào', '只是': 'zhǐ shì', '只好': 'zhǐ hǎo',
+      '差不多': 'chà bu duō', '差点儿': 'chà diǎnr', '出差': 'chū chāi', '差别': 'chā bié', '差异': 'chā yì', '差距': 'chā jù', '误差': 'wù chā', '偏差': 'piān chā', '落差': 'luò chā', '反差': 'fǎn chā',
+      '照相': 'zhào xiàng', '真相': 'zhēn xiàng', '首相': 'shǒu xiàng', '相貌': 'xiàng mào', '相机': 'xiàng jī', '相片': 'xiàng piàn', '相册': 'xiàng cè', '亮相': 'liàng xiàng', '属相': 'shǔ xiàng',
+      '相信': 'xiāng xìn', '相同': 'xiāng tóng', '互相': 'hù xiāng', '相辅相成': 'xiāng fǔ xiāng chéng',
+      '灾难': 'zāi nàn', '遇难': 'yù nàn', '难民': 'nàn mín', '逃难': 'táo nàn', '难过': 'nán guò', '困难': 'kùn nan', '难道': 'nán dào',
+      '自传': 'zì zhuàn', '传记': 'zhuàn jì', '外传': 'wài zhuàn', '传统': 'chuán tǒng', '宣传': 'xuān chuán', '传染': 'chuán rǎn', '传说': 'chuán shuō',
+      '人参': 'rén shēn', '海参': 'hǎi shēn', '参差不齐': 'cēn cī bù qí', '参加': 'cān jiā', '参考': 'cān kǎo', '参与': 'cān yù',
+      '露面': 'lòu miàn', '露馅': 'lòu xiàn', '暴露': 'bào lù', '揭露': 'jiē lù', '露水': 'lù shuǐ',
+      '摔倒': 'shuāi dǎo', '跌倒': 'diē dǎo', '倒闭': 'dǎo bì', '倒塌': 'dǎo tā', '倒下': 'dǎo xià', '病倒': 'bìng dǎo', '打倒': 'dǎ dǎo', '压倒': 'yā dǎo', '难倒': 'nán dǎo', '吓倒': 'xià dǎo', '晕倒': 'yūn dǎo', '颠倒': 'diān dǎo',
+      '倒是': 'dào shì', '倒车': 'dào chē', '倒水': 'dào shuǐ', '倒茶': 'dào chá',
+      '背包': 'bēi bāo', '背负': 'bēi fù', '背黑锅': 'bēi hēi guō', '背着': 'bēi zhe',
+      '模样': 'mú yàng', '模具': 'mú jù', '一模一样': 'yī mú yī yàng', '模仿': 'mó fǎng', '模范': 'mó fàn', '模糊': 'mó hu',
+      '称心': 'chèn xīn', '对称': 'duì chèn', '相称': 'xiāng chèn', '称职': 'chèn zhí', '称呼': 'chēng hu', '称赞': 'chēng zàn',
+      '不禁': 'bù jīn', '忍俊不禁': 'rěn jùn bù jīn', '情不自禁': 'qíng bù zì jīn', '禁止': 'jìn zhǐ',
+      '绿地': 'lǜ dì', '草地': 'cǎo dì', '土地': 'tǔ dì', '大地': 'dà dì', '天地': 'tiān dì', '工地': 'gōng dì', '场地': 'chǎng dì', '基地': 'jī dì', '内地': 'nèi dì', '外地': 'wài dì', '本地': 'běn dì', '当地': 'dāng dì', '目的地': 'mù dì dì',
+      '得失': 'dé shī', '得以': 'dé yǐ', '得到': 'dé dào', '得知': 'dé zhī', '得罪': 'dé zuì', '得意': 'dé yì', '得体': 'dé tǐ', '得力': 'dé lì',
+      '总得': 'zǒng děi', '非得': 'fēi děi',
+      '古朴': 'gǔ pǔ', '纯朴': 'chún pǔ', '质朴': 'zhì pǔ', '朴素': 'pǔ sù',
+      '首都': 'shǒu dū', '都市': 'dū shì', '成都': 'chéng dū'
+    };
+
+    // Self-heal any legacy saved token or polyphone compound reading
     function healCorruptedLegacyToken(tok) {
       if (!tok || !tok.hanzi || tok._userEdited) return tok;
-      if (tok.hanzi === '都会') {
+      const h = String(tok.hanzi).trim();
+      if (h === '都会') {
         const py = String(tok.pinyin || '').trim().toLowerCase();
         const vi = String(tok.vietnamese || '').trim();
         if (!py || py === 'dūhuì' || py === 'dū huì' || /đô thị|thành phố lớn/i.test(vi)) {
           tok.pinyin = 'dōu huì';
           tok.vietnamese = 'đều sẽ';
         }
-      } else if (tok.hanzi === '大都') {
+      } else if (h === '大都') {
         const py = String(tok.pinyin || '').trim().toLowerCase();
         if (py === 'dàdū' || py === 'dà dū') {
           tok.pinyin = 'dà dōu';
           if (!tok.vietnamese || /đại đô/i.test(tok.vietnamese)) tok.vietnamese = 'đa số đều';
         }
-      } else if (tok.hanzi === '落日飞车' && /xe buýt hai tầng/i.test(String(tok.vietnamese || ''))) {
+      } else if (h === '落日飞车' && /xe buýt hai tầng/i.test(String(tok.vietnamese || ''))) {
         tok.pinyin = 'luò rì fēi chē';
         tok.vietnamese = 'xe buýt ngắm hoàng hôn (Sunset Coaster)';
-      } else if (tok.hanzi === '红揭面') {
+      } else if (h === '红揭面') {
         tok.hanzi = '痕迹';
         tok.pinyin = 'hén jì';
         tok.vietnamese = 'dấu vết';
+      } else if (UNAMBIGUOUS_POLYPHONE_PINYIN_MAP[h]) {
+        const correctPy = UNAMBIGUOUS_POLYPHONE_PINYIN_MAP[h];
+        const curPyClean = String(tok.pinyin || '').replace(/\s+/g, '').toLowerCase();
+        const expPyClean = correctPy.replace(/\s+/g, '').toLowerCase();
+        if (!curPyClean || curPyClean !== expPyClean) {
+          tok.pinyin = correctPy;
+        }
       }
       return tok;
     }
@@ -13169,12 +13258,12 @@ ${chunkText}
         const fixedMeta = FIXED_COMPOUND_PHRASES[hanzi];
         const meta = (!pinyin || !vietnamese) && !AI_PUNCT_TEST_RE.test(hanzi) ? lookupDictMetaForToken(hanzi) : { pinyin: '', vietnamese: '' };
         const rawResolvedVi = vietnamese || (fixedMeta && fixedMeta.vietnamese) || meta.vietnamese || '';
-        return {
+        return healCorruptedLegacyToken({
           hanzi,
           pinyin: pinyin || (fixedMeta && fixedMeta.pinyin) || meta.pinyin || '',
           vietnamese: !isPunctOrDe ? humanizeVietnameseTokenGloss(hanzi, rawResolvedVi) : rawResolvedVi,
           isVocab: !isPunctOrDe
-        };
+        });
       }
       if (typeof item === 'object' && item.hanzi) {
         const hanzi = toSimplified(String(item.hanzi).trim());
@@ -13183,12 +13272,12 @@ ${chunkText}
         const fixedMeta = FIXED_COMPOUND_PHRASES[hanzi];
         const meta = (!item.pinyin || !item.vietnamese) && !AI_PUNCT_TEST_RE.test(hanzi) ? lookupDictMetaForToken(hanzi) : { pinyin: '', vietnamese: '' };
         const rawResolvedVi = item.vietnamese || (fixedMeta && fixedMeta.vietnamese) || meta.vietnamese || '';
-        return {
+        return healCorruptedLegacyToken({
           hanzi,
           pinyin: item.pinyin || (fixedMeta && fixedMeta.pinyin) || meta.pinyin || '',
           vietnamese: (!isPunctOrDe && !item._userEdited) ? humanizeVietnameseTokenGloss(hanzi, rawResolvedVi) : rawResolvedVi,
           isVocab: typeof item.isVocab === 'boolean' ? item.isVocab : !isPunctOrDe
-        };
+        });
       }
       return null;
     }
@@ -18307,15 +18396,18 @@ Hãy đọc thật kỹ TIÊU ĐỀ VIDEO ("${videoTitle || 'Video tiếng Trung
    - **A. GOM TRỌN CÁC CỤM TỪ GHÉP & CẤU TRÚC NGỮ PHÁP HOÀN CHỈNH**:
      + BẮT BUỘC gom các cụm từ ghép, cụm danh từ, cụm phương vị (trong/trên/sau...), cụm động-tân ngắn, cụm ngữ pháp hay, động từ ly hợp, thành ngữ, cụm diễn đạt hoàn chỉnh thành 1 token có nghĩa tự nhiên.
      + Ví dụ gom cụm chuẩn: "很感兴趣的样子" (dáng vẻ rất hứng thú), "一脸戏谑的样子" (dáng vẻ chế giễu), "刚起了一个头" (vừa mới mở đầu), "头也不回地" (không ngoảnh đầu lại), "莫名其妙" (vô duyên vô cớ / kỳ lạ), "一落千丈" (tuột dốc không phanh), "硬生生" (thẳng thừng / cứng rắn), "怼了回去" (bật lại / cãi lại), "有所触动" (có chút xúc động), "皱起眉头" (nhíu mày), "松了口气" (thở phào nhẹ nhõm), "笑着说" (cười nói), "第一次" (lần đầu tiên), "来例假" (có kinh nguyệt), "得了" (mắc phải), "怪病" (bệnh lạ), "相关知识" (kiến thức liên quan), "接触过" (từng tiếp xúc), "讲过" (từng kể), "首次会面" (cuộc gặp đầu tiên), "半年以来" (nửa năm qua), "他们五个人" (5 người bọn họ), "社区群里" (trong nhóm khu dân cư), "日卖电视台" (Đài truyền hình Nichiuri), "高尔夫名人大赛" (Giải Golf Người Nổi Tiếng).
-   - **B. CẢNH BÁO TỪ ĐA ÂM / ĐA NGHĨA THEO NGỮ CẢNH**:
-     + "都会" trong câu "每次放学都会来光顾" ➔ BẮT BUỘC là **"都会|dōu huì|đều sẽ"** (hoặc tách "都|dōu|đều", "会|huì|sẽ"), TUYỆT ĐỐI CẤM ghi thành ❌"dū huì|đô thị"!
-     + "才能" khi là phó từ ➔ **"cái néng|mới có thể"** | "穿着" khi là động từ ➔ **"chuān zhe|đang mặc"**.
-     + Các chữ đa âm ("还" hái/huán, "得" de/dé/děi, "长" cháng/zhǎng, "重" zhòng/chóng, "行" xíng/háng, "只" zhǐ/zhī, "为" wèi/wéi, "地" de/dì) BẮT BUỘC ghi Pinyin chuẩn theo ngữ cảnh câu!
+   - **B. QUY TẮC CHẤM PINYIN CHỮ ĐA ÂM (多音字) & ĐA NGHĨA THEO NGỮ CẢNH**:
+     + **都**: đọc **dōu** (đều: "都会|dōu huì|đều sẽ", "大都|dà dōu|đa số đều") vs **dū** (đô thị: "首都|shǒu dū", "都市|dū shì").
+     + **长**: đọc **zhǎng** (lớn lên/trưởng: "长大|zhǎng dà", "成长|chéng zhǎng", "家长|jiā zhǎng", "校长|xiào zhǎng", "长辈|zhǎng bèi", "长相|zhǎng xiàng") vs **cháng** (dài/lâu: "很长|hěn cháng", "长期|cháng qī", "特长|tè cháng").
+     + **行**: đọc **xíng** (đi/được/hành: "旅行|lǚ xíng", "进行|jìn xíng", "行为|xíng wéi", "人行道|rén xíng dào", "不行|bù xíng") vs **háng** (ngành/hàng/ngân hàng: "银行|yín háng", "行业|háng yè", "同行|tóng háng", "外行|wài háng", "一行人|yī háng rén").
+     + **教**: đọc **jiào** (trong từ ghép: "教育|jiào yù", "教师|jiào shī", "教室|jiào shì", "教授|jiào shòu", "教材|jiào cái", "教练|jiào liàn", "教训|jiào xun") vs **jiāo** (động từ dạy: "教书|jiāo shū", "教我|jiāo wǒ").
+     + **重** (zhòng nặng/quan trọng vs chóng lặp lại: "重新|chóng xīn", "重复|chóng fù"), **乐** (lè vui vs yuè nhạc: "音乐|yīn yuè", "乐器|yuè qì"), **觉** (jué cảm giác: "觉得|jué de" vs jiào ngủ: "睡觉|shuì jiào"), **还** (hái vẫn/còn vs huán trả lại: "还给|huán gěi", "归还|guī huán"), **发** (fā phát/gửi vs fà tóc: "头发|tóu fa", "理发|lǐ fà").
+     + **着** (zhe đang: "穿着|chuān zhe|đang mặc" vs zháo trúng/được/sốt ruột: "着急|zháo jí", "睡着|shuì zháo", "睡不着|shuì bu zháo", "用不着|yòng bu zháo" vs zhuó: "着落|zhuó luò", "着实|zhuó shí", "执着|zhí zhuó"), **了** (le rồi vs liǎo xong/nổi: "了解|liǎo jiě", "受不了|shòu bu liǎo", "不得了|bù dé liǎo"), **得** (de bổ ngữ vs děi phải vs dé đạt được), **地** (de một cách vs dì mặt đất), **处** (chǔ xử lý/chung sống vs chù nơi/chỗ), **应** (yīng nên vs yìng đáp ứng/phản ứng), **切** (qiē cắt vs qiè thiết/tất cả), **调** (tiáo điều chỉnh vs diào điều tra/giai điệu), **弹** (tán gảy đàn/đàn hồi vs dàn đạn), **差** (chà kém vs chā chênh lệch vs chāi công tác), **假** (jiǎ giả vs jià kỳ nghỉ), **少** (shǎo ít vs shào trẻ/thiếu niên), **好** (hǎo tốt vs hào thích/hiếu), **只** (zhǐ chỉ vs zhī con/chiếc), **便** (biàn tiện vs pián rẻ), **盛** (shèng thịnh vs chéng xới/đựng), **数** (shù số vs shǔ đếm), **相** (xiāng lẫn nhau vs xiàng tướng/ảnh), **难** (nán khó vs nàn tai nạn), **传** (chuán truyền vs zhuàn truyện ký), **参** (cān tham gia vs shēn sâm vs cēn so le), **露** (lù sương/bộc lộ vs lòu lộ mặt), **倒** (dǎo ngã/đổ vs dào ngược/rót/lại), **背** (bēi cõng/đeo vs bèi lưng), **模** (mó mô hình vs mú khuôn/dáng vẻ "模样|mú yàng") BẮT BUỘC ghi đúng âm Pinyin trong từ đó!
    - **C. TUYỆT ĐỐI KHÔNG XÉ LẺ VỤN VẶT TỪ ĐƠN HOẶC TỪ GHÉP 2 ÂM TIẾT**:
      + Các từ 2 âm tiết chuẩn (như "因为", "此前", "从未", "关于", "女性", "生理", "相关", "知识", "就连", "母亲", "从没", "女孩", "以为", "自己", "怪病", "感到", "害怕", "故事", "气愤", "痕迹", "招牌", "机械", "之后", "不过") luôn giữ nguyên cả từ, và TUYỆT ĐỐI KHÔNG tách hậu tố/chữ đơn ("群", "里", "后", "上", "下", "起", "感", "所", "部", "商", "会", "员", "室", "们", "着", "过", "了") thành chữ đơn lẻ!
    - **D. NGHĨA TIẾNG VIỆT CỦA TOKEN PHẢI DỄ HIỂU (CẤM HÁN VIỆT CỨNG NHẮC)**:
      + Dùng tiếng Việt hiện đại, đời thường, dễ hiểu ngay (ví dụ: "专注" -> "tập trung / chuyên về" chứ KHÔNG ghi "chuyên chú"; "痕迹" -> "dấu vết"; "招牌" -> "biển hiệu").
-     + Ghi theo chuỗi "Chữ Hán|pinyin|nghĩa tiếng Việt sát ngữ cảnh" (với dấu câu hoặc trợ từ "的", "地" đứng độc lập chỉ cần ghi chính ký tự đó, ví dụ "，", "。", "的", "地").
+     + MỌI từ và trợ từ tiếng Trung trong mảng "tokens" BẮT BUỘC ghi theo chuỗi "Chữ Hán|pinyin|nghĩa tiếng Việt sát ngữ cảnh" (chỉ duy nhất dấu câu mới ghi riêng ký tự dấu câu như "，", "。").
 
 Danh sách ${batch.length} câu cần hiệu đính lỗi đồng âm ASR, dịch & phân tách từ:
 ${linesJson}
@@ -18333,7 +18425,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       "看了|kàn le|đã xem / kiểm tra",
       "招牌|zhāo pái|biển hiệu",
       "机械|jī xiè|máy móc / bộ máy",
-      "的",
+      "的|de|của",
       "痕迹|hén jì|dấu vết",
       "之后|zhī hòu|sau khi",
       "，"
@@ -21557,9 +21649,10 @@ ${wordListPrompt}
        • Cụm động từ / biểu cảm / ngữ pháp (khi KHÔNG chứa từ mục tiêu): gom "深表关切" (bày tỏ sự quan tâm sâu sắc), "笑着说" (cười nói), "皱起眉头" (nhíu mày), "松了口气" (thở phào nhẹ nhõm), "点了点头" (gật đầu).
    - **B. TUYỆT ĐỐI KHÔNG XÉ LẺ VỤN VẶT CHỮ ĐƠN CỦA TỪ THÔNG THƯỜNG**:
      + Với các từ thông thường (không phải từ mục tiêu), CẤM tách lẻ các chữ đơn như "群", "里", "后", "上", "下", "部", "商", "会", "店", "馆", "牌", "们" đứng bơ vơ một mình khi chúng thuộc về cụm danh từ phía trước. Riêng nếu "了 / 着 / 过 / 的 / 地" đứng ngay sau **từ mục tiêu**, BẮT BUỘC tách riêng trợ từ đó ra để từ mục tiêu giữ nguyên mặt chữ gốc!
-   - **C. TRỢ TỪ "的", "地" & NGHĨA TIẾNG VIỆT TỰ NHIÊN DỄ HIỂU CHO MỖI TOKEN (CẤM DỊCH ÂM HÁN-VIỆT CỨNG NHẮC)**:
-     + Tách trợ từ "的", "地" thông thường thành token riêng (ví dụ: "广阔" + "的" + "市场前景").
-     + Mỗi phần tử trong mảng "tokens" dùng chuỗi ngắn gọn "Chữ Hán|pinyin|nghĩa tiếng Việt tự nhiên dễ hiểu sát ngữ cảnh" (với dấu câu hoặc trợ từ "的", "地" chỉ cần ghi chính ký tự đó, ví dụ "，", "的", "地").
+   - **C. CHẤM PINYIN CHỮ ĐA ÂM (多音字) CHUẨN 100% & NGHĨA TIẾNG VIỆT TỰ NHIÊN DỄ HIỂU (CẤM DỊCH ÂM HÁN-VIỆT CỨNG NHẮC)**:
+     + Tách trợ từ "的", "地" thông thường thành token riêng có đầy đủ pinyin và nghĩa (ví dụ: "广阔|guǎng kuò|rộng lớn" + "的|de|của" + "市场前景|shì chǎng qián jǐng|triển vọng thị trường").
+     + MỌI từ và trợ từ tiếng Trung trong mảng "tokens" dùng chuỗi "Chữ Hán|pinyin|nghĩa tiếng Việt tự nhiên dễ hiểu sát ngữ cảnh" (chỉ duy nhất dấu câu mới ghi riêng ký tự dấu câu như "，", "。").
+     + Với chữ đa âm (多音字) như 都 (dōu/dū), 长 (zhǎng/cháng), 行 (xíng/háng), 教 (jiào/jiāo), 重 (zhòng/chóng), 乐 (lè/yuè), 觉 (jué/jiào), 还 (hái/huán), 发 (fā/fà), 着 (zhe/zháo/zhuó), 了 (le/liǎo), 得 (de/děi/dé), 地 (de/dì), 处 (chǔ/chù), 应 (yīng/yìng), 切 (qiē/qiè), 调 (tiáo/diào), 弹 (tán/dàn), 差 (chà/chā/chāi), 假 (jiǎ/jià), 少 (shǎo/shào), 好 (hǎo/hào), 只 (zhǐ/zhī), 便 (biàn/pián), 盛 (shèng/chéng), 数 (shù/shǔ), 相 (xiāng/xiàng), 难 (nán/nàn), 传 (chuán/zhuàn), 模 (mó/mú), BẮT BUỘC chấm đúng âm Pinyin trong từ và ngữ cảnh đó!
      + **TUYỆT ĐỐI CẤM bê nguyên âm Hán-Việt tối nghĩa/cứng nhắc** làm nghĩa của từ! Phải dịch ra tiếng Việt đời thường dễ hiểu nhất: ví dụ "专注" BẮT BUỘC dịch là **"chuyên về / tập trung"** (TUYỆT ĐỐI CẤM dịch âm Hán-Việt là ❌"chuyên chú"); "寻求" dịch là **"tìm kiếm / nhờ"** (CẤM dịch ❌"tầm cầu"); "秉持" dịch là **"giữ vững"** (CẤM dịch ❌"bỉnh trì"); "赋能" dịch là **"tiếp sức / nâng tầm"** (CẤM dịch ❌"phú năng").
 
 Định dạng JSON trả về thuần tuý (KHÔNG bọc trong markdown, chỉ tham khảo cấu trúc JSON dưới đây và viết nội dung mới 100% theo danh sách từ mục tiêu ở trên). Mảng "paragraphs" CHỈ CÓ ĐÚNG 1 PHẦN TỬ DUY NHẤT:
