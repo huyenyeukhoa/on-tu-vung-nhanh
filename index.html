@@ -6609,12 +6609,15 @@
     }
 
     // ==========================================
-    // SMART REVIEW – SPACED REPETITION (SRS)
+    // SMART REVIEW – SPACED REPETITION (ANKI FSRS + V3 SCHEDULER)
     // ==========================================
-    // Record per hanzi: { l: level 0-5, d: dueDay, t: lastChangeTs(ms), x: lapses, w: lastWrongDay }
+    // Record per hanzi:
+    //   { l: level 0-5 (Tu Tiên rank), d: dueDay, t: lastChangeTs(ms), x: lapses, w: lastWrongDay,
+    //     s: stability(days), df: difficulty(1..10), ivl: scheduledInterval(days), lr: lastReviewDay, reps: reviewCount }
     // Tombstone (undone enrollment): { del: 1, t }
     const SRS_INTERVALS = [1, 2, 4, 8, 16, 35];
     const SRS_MAX_LEVEL = SRS_INTERVALS.length - 1;
+    const SRS_MAX_INTERVAL = 365;
     const SRS_COLORS = ['#F4B9C1', '#F6CBA3', '#F3DE9C', '#BFDDBB', '#B8D4EA', '#C8B4E3'];
     const SRS_LEVEL_NAMES = [
       'Phàm Phẩm',
@@ -6627,6 +6630,23 @@
     const SRS_COLOR_NAMES = SRS_LEVEL_NAMES;
     const SRS_LEECH_LAPSES = 3;
     const SRS_CORRECTION_WINDOW_MS = 20000;
+
+    // Official Anki FSRS-5 / FSRS-6 weights calibrated for daily vocab review (smooth progression across all 6 Tu Tiên ranks)
+    const ANKI_FSRS_W = [
+      0.40255, 1.18385, 3.173, 15.69105, 7.1949,
+      0.5345, 1.4604, 0.0046, 0.985, 0.1192,
+      1.01925, 1.9395, 0.11, 0.29605, 2.2698,
+      0.2315, 2.9898, 0.51655, 0.6621
+    ];
+    const ANKI_FSRS_DECAY = -0.5;
+    const ANKI_FSRS_FACTOR = 19 / 81; // ensures R(t = S, S) = 0.90 (90% desired retention)
+
+    // Official Anki V3 fuzz ranges (from rslib/src/scheduler/states/fuzz.rs)
+    const ANKI_FUZZ_RANGES = [
+      { start: 2.5, end: 7.0, factor: 0.15 },
+      { start: 7.0, end: 20.0, factor: 0.10 },
+      { start: 20.0, end: Infinity, factor: 0.05 }
+    ];
 
     let srsData = safeGetJSON('hsk_srs_data', {});
     let srsSession = safeGetJSON('hsk_srs_session', { day: 0, ticks: {}, queue: [], undo: {} });
@@ -6645,6 +6665,216 @@
       const r = srsData[hanzi];
       return r && !r.del ? r : null;
     }
+
+    // Clamp helper & rounding
+    function srsClamp(val, min, max) {
+      return Math.max(min, Math.min(max, val));
+    }
+    function srsRound2(val) {
+      return Math.round(val * 100) / 100;
+    }
+
+    // Map Stability / Interval (days) to 6 Tu Tiên ranks (0: Phàm Phẩm -> 5: Thần Phẩm)
+    function srsStabilityToLevel(days) {
+      const d = Number(days) || 0;
+      if (d <= 1.4) return 0; // Phàm Phẩm (~1 ngày)
+      if (d <= 3.4) return 1; // Linh Phẩm (~2-3 ngày)
+      if (d <= 7.4) return 2; // Huyền Phẩm (~4-7 ngày)
+      if (d <= 15.4) return 3; // Địa Phẩm (~8-15 ngày)
+      if (d <= 30.4) return 4; // Thiên Phẩm (~16-30 ngày)
+      return 5;                // Thần Phẩm (31+ ngày)
+    }
+
+    // Deterministic or seeded fuzz factor per (hanzi, reps/day) so fuzz is well-distributed across words
+    function srsHashFuzzFactor(hanzi, salt) {
+      const str = `${hanzi || ''}:${salt || 0}`;
+      let h = 2166136261 >>> 0;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619) >>> 0;
+      }
+      return (h % 10000) / 10000;
+    }
+
+    // Port of fuzz_delta & constrained_fuzz_bounds & with_review_fuzz from Anki fuzz.rs
+    function srsFuzzDelta(interval) {
+      if (interval < 2.5) return 0.0;
+      let delta = 1.0;
+      for (let i = 0; i < ANKI_FUZZ_RANGES.length; i++) {
+        const r = ANKI_FUZZ_RANGES[i];
+        delta += r.factor * Math.max(0.0, Math.min(interval, r.end) - r.start);
+      }
+      return delta;
+    }
+
+    function srsConstrainedFuzzBounds(interval, minimum, maximum) {
+      const minClamped = Math.min(minimum, maximum);
+      const ivlClamped = srsClamp(interval, minClamped, maximum);
+      const delta = srsFuzzDelta(ivlClamped);
+      let lower = Math.round(ivlClamped - delta);
+      let upper = Math.round(ivlClamped + delta);
+      lower = srsClamp(lower, minClamped, maximum);
+      upper = srsClamp(upper, minClamped, maximum);
+      if (upper === lower && upper > 2 && upper < maximum) {
+        upper = lower + 1;
+      }
+      return [lower, upper];
+    }
+
+    function srsMinimumReviewFuzzInterval(interval, previousInterval, maximumInterval) {
+      const rounded = Math.round(interval);
+      const [, upper] = srsConstrainedFuzzBounds(interval, 1, maximumInterval);
+      if (rounded > previousInterval) {
+        return previousInterval + 1;
+      } else if (previousInterval <= upper) {
+        return previousInterval;
+      }
+      return 1;
+    }
+
+    function srsApplyAnkiReviewFuzz(rawInterval, previousInterval, hanzi, salt) {
+      const minIvl = Math.max(1, srsMinimumReviewFuzzInterval(rawInterval, previousInterval, SRS_MAX_INTERVAL));
+      if (rawInterval < 2.5) {
+        return srsClamp(Math.round(rawInterval), minIvl, SRS_MAX_INTERVAL);
+      }
+      const [lower, upper] = srsConstrainedFuzzBounds(rawInterval, minIvl, SRS_MAX_INTERVAL);
+      const fuzzFactor = srsHashFuzzFactor(hanzi, salt);
+      return srsClamp(Math.floor(lower + fuzzFactor * (1 + upper - lower)), minIvl, SRS_MAX_INTERVAL);
+    }
+
+    // FSRS Retrievability R(t, S): probability (0..1) of recalling after elapsedDays with stability S
+    function srsCalcRetrievability(elapsedDays, stability) {
+      const s = Math.max(0.1, Number(stability) || 1);
+      const elapsed = Math.max(0, Number(elapsedDays) || 0);
+      if (elapsed <= 0) return 1.0;
+      return Math.pow(1 + ANKI_FSRS_FACTOR * (elapsed / s), ANKI_FSRS_DECAY);
+    }
+
+    // Hydrate legacy record { l, d, x, w, t } into full FSRS + V3 state seamlessly
+    function srsHydrateState(rec, today) {
+      const lv = srsClamp(Number(rec && rec.l) || 0, 0, SRS_MAX_LEVEL);
+      const baseIvl = SRS_INTERVALS[lv] || 1;
+      const ivl = Math.max(1, Number(rec && rec.ivl) || baseIvl);
+      const s = Math.max(0.5, Number(rec && rec.s) || ivl);
+      const lapses = Math.max(0, Number(rec && rec.x) || 0);
+      // Initial FSRS difficulty D0(3) ~ 5.28, adjusted upward if the word has prior lapses
+      const defaultDf = srsClamp(5.28 + Math.min(3.5, lapses * 0.65) - (lv >= 3 ? (lv - 2) * 0.25 : 0), 1.0, 10.0);
+      const df = srsClamp(Number(rec && rec.df) || defaultDf, 1.0, 10.0);
+      const due = (rec && typeof rec.d === 'number') ? rec.d : today;
+      const lr = (rec && typeof rec.lr === 'number') ? rec.lr : (due - ivl);
+      const reps = Math.max(0, Number(rec && rec.reps) || lv);
+      return { lv, ivl, s, df, due, lr, lapses, reps };
+    }
+
+    // FSRS + V3 next state on Recall (✓ / 'correct')
+    function srsComputeRecallState(prevRec, hanzi, today) {
+      if (!prevRec) {
+        // First time learning as ✓ (Good): D0(3) = 5.28, S0 = 2.0 days (Linh Phẩm Cấp 1)
+        const s0 = 2.0;
+        const df0 = 5.28;
+        const ivl0 = 2;
+        return {
+          l: 1,
+          d: today + ivl0,
+          x: 0,
+          s: s0,
+          df: df0,
+          ivl: ivl0,
+          lr: today,
+          reps: 1
+        };
+      }
+      const st = srsHydrateState(prevRec, today);
+      const elapsedDays = Math.max(1, today - st.lr);
+      const daysLate = Math.max(0, today - st.due);
+      const R = srsCalcRetrievability(elapsedDays, st.s);
+
+      // Update Difficulty D' (in 2-button mode, consecutive ✓ gently lowers D so mastered words expand faster)
+      const d0EasyTarget = 4.15;
+      const deltaD = -ANKI_FSRS_W[6] * 0.25; // ~ -0.36 difficulty per successful recall
+      const dampedD = st.df + deltaD * ((10.0 - st.df) / 9.0);
+      const nextDf = srsRound2(srsClamp(ANKI_FSRS_W[7] * d0EasyTarget + (1.0 - ANKI_FSRS_W[7]) * dampedD, 1.0, 10.0));
+
+      // FSRS S'_recall(D, S, R) formula
+      const recallFactor = Math.exp(ANKI_FSRS_W[8]) *
+        (11.0 - nextDf) *
+        Math.pow(st.s, -ANKI_FSRS_W[9]) *
+        (Math.exp(ANKI_FSRS_W[10] * (1.0 - R)) - 1.0);
+      let nextS = st.s * (1.0 + recallFactor);
+
+      // Anki V3 overdue bonus floor from review.rs#L241: when daysLate > 0, ensure credit for extra days remembered
+      if (daysLate > 0) {
+        const easeEquiv = srsClamp(2.5 - (nextDf - 1.0) * (1.2 / 9.0), 1.3, 2.5);
+        const v3LateFloor = (st.ivl + daysLate / 2.0) * easeEquiv;
+        nextS = Math.max(nextS, v3LateFloor);
+      }
+      nextS = srsClamp(Math.max(nextS, st.ivl + 1), 2.0, SRS_MAX_INTERVAL);
+
+      const nextReps = st.reps + 1;
+      const nextIvl = srsApplyAnkiReviewFuzz(nextS, st.ivl, hanzi, today + nextReps);
+      const nextLv = srsStabilityToLevel(nextIvl);
+
+      const nextRec = {
+        ...prevRec,
+        l: srsClamp(Math.max(1, nextLv), 1, SRS_MAX_LEVEL),
+        d: today + nextIvl,
+        s: srsRound2(nextS),
+        df: nextDf,
+        ivl: nextIvl,
+        lr: today,
+        reps: nextReps
+      };
+      return nextRec;
+    }
+
+    // FSRS + V3 next state on Forget / Lapse (✕ / 'wrong')
+    function srsComputeForgetState(prevRec, hanzi, today) {
+      if (!prevRec) {
+        // First time marked ✕ (Again): D0(1) = 7.19, S0 = 1.0 day (Phàm Phẩm Cấp 0, due tomorrow)
+        return {
+          l: 0,
+          d: today + SRS_INTERVALS[0],
+          x: 0,
+          w: today,
+          s: 1.0,
+          df: 7.19,
+          ivl: 1,
+          lr: today,
+          reps: 0
+        };
+      }
+      const st = srsHydrateState(prevRec, today);
+      const elapsedDays = Math.max(1, today - st.lr);
+      const R = srsCalcRetrievability(elapsedDays, st.s);
+
+      // Update Difficulty D' on Lapse (G = 1 -> increases difficulty, equivalent to V3 ease_factor -0.20)
+      const deltaD = -ANKI_FSRS_W[6] * (1.0 - 3.0); // +2.92
+      const dampedD = st.df + deltaD * ((10.0 - st.df) / 9.0);
+      const nextDf = srsRound2(srsClamp(ANKI_FSRS_W[7] * 7.19 + (1.0 - ANKI_FSRS_W[7]) * dampedD, 1.0, 10.0));
+
+      // FSRS S'_forget(D, S, R) post-lapse stability formula
+      const sForget = ANKI_FSRS_W[11] *
+        Math.pow(nextDf, -ANKI_FSRS_W[12]) *
+        (Math.pow(st.s + 1.0, ANKI_FSRS_W[13]) - 1.0) *
+        Math.exp(ANKI_FSRS_W[14] * (1.0 - R));
+      const nextS = srsRound2(srsClamp(Math.min(st.s, sForget), 1.0, Math.max(1.0, st.s * 0.5)));
+      const nextLapses = st.lapses + 1;
+      const nextLv = Math.max(0, Math.min((prevRec.l || 0) - 2, srsStabilityToLevel(nextS)));
+
+      return {
+        ...prevRec,
+        l: nextLv,
+        d: today + SRS_INTERVALS[0], // Re-review tomorrow
+        x: nextLapses,
+        w: today,
+        s: nextS,
+        df: nextDf,
+        ivl: 1,
+        lr: today,
+        reps: st.reps
+      };
+    }
+
     function srsEnsureDay() {
       const t = srsToday();
       if (!srsSession || srsSession.day !== t) {
@@ -6696,22 +6926,18 @@
 
       if (result === 'correct') {
         if (!rec) {
-          rec = { l: 1, d: t + SRS_INTERVALS[1], x: 0 };
+          rec = srsComputeRecallState(null, hanzi, t);
           changed = true;
-        } else if (source === 'due' && rec.d <= t) {
-          rec.l = Math.min(SRS_MAX_LEVEL, (rec.l || 0) + 1);
-          rec.d = t + SRS_INTERVALS[rec.l];
+        } else if (rec.d <= t && (source === 'due' || rec.lr !== t)) {
+          rec = srsComputeRecallState(rec, hanzi, t);
           changed = true;
         }
       } else if (result === 'wrong') {
         if (!rec) {
-          rec = { l: 0, d: t + SRS_INTERVALS[0], x: 0, w: t };
+          rec = srsComputeForgetState(null, hanzi, t);
           changed = true;
         } else if (rec.w !== t) {
-          rec.l = Math.max(0, (rec.l || 0) - 2);
-          rec.d = t + SRS_INTERVALS[0];
-          rec.x = (rec.x || 0) + 1;
-          rec.w = t;
+          rec = srsComputeForgetState(rec, hanzi, t);
           changed = true;
         }
       }
@@ -6766,8 +6992,13 @@
       Object.keys(userProgress || {}).forEach(h => {
         if (srsData[h] || !lookup.has(h)) return;
         const st = userProgress[h];
-        if (st === 'correct') { srsData[h] = { l: 1, d: t + SRS_INTERVALS[1], x: 0, t: Date.now() }; added++; }
-        else if (st === 'wrong') { srsData[h] = { l: 0, d: t, x: 0, t: Date.now() }; added++; }
+        if (st === 'correct') {
+          srsData[h] = { l: 1, d: t + SRS_INTERVALS[1], x: 0, s: 2.0, df: 5.28, ivl: 2, lr: t, reps: 1, t: Date.now() };
+          added++;
+        } else if (st === 'wrong') {
+          srsData[h] = { l: 0, d: t, x: 0, s: 1.0, df: 7.19, ivl: 1, lr: t - 1, reps: 0, t: Date.now() };
+          added++;
+        }
       });
       if (added) saveSrsData();
       return added;
@@ -6789,7 +7020,7 @@
       return changed;
     }
 
-    // Today's locked queue: due words sorted (most overdue first, then lowest level)
+    // Today's locked queue: due words sorted by lowest Retrievability R (most urgent memory decay), then lowest level
     function srsGetTodayQueue() {
       srsEnsureDay();
       const t = srsToday();
@@ -6801,7 +7032,13 @@
         const r = srsGet(h);
         if (r && r.d <= t && lookup.has(h) && !inQueue.has(h)) fresh.push(h);
       });
-      fresh.sort((a, b) => (srsData[a].d - srsData[b].d) || ((srsData[a].l || 0) - (srsData[b].l || 0)));
+      fresh.sort((a, b) => {
+        const ra = srsHydrateState(srsData[a], t);
+        const rb = srsHydrateState(srsData[b], t);
+        const retA = srsCalcRetrievability(Math.max(1, t - ra.lr), ra.s);
+        const retB = srsCalcRetrievability(Math.max(1, t - rb.lr), rb.s);
+        return (retA - retB) || (srsData[a].d - srsData[b].d) || ((srsData[a].l || 0) - (srsData[b].l || 0));
+      });
       let sessionChanged = Boolean(fresh.length || existing.length !== srsSession.queue.length);
       if (sessionChanged) {
         srsSession.queue = existing.concat(fresh);
@@ -6837,7 +7074,7 @@
       const lookup = srsGetLookup();
       return Object.keys(srsData)
         .filter(h => { const r = srsGet(h); return r && (r.x || 0) >= SRS_LEECH_LAPSES && lookup.has(h); })
-        .sort((a, b) => (srsData[b].x - srsData[a].x) || (srsData[a].l - srsData[b].l));
+        .sort((a, b) => (srsData[b].x - srsData[a].x) || ((srsData[b].df || 5) - (srsData[a].df || 5)) || (srsData[a].l - srsData[b].l));
     }
 
     function srsGetDueWords() {
@@ -6864,9 +7101,11 @@
       const r = srsGet(hanzi);
       if (!r) return;
       const t = srsToday();
-      const lv = r.l || 0;
+      const st = srsHydrateState(r, t);
+      const lv = Math.max(0, Math.min(SRS_MAX_LEVEL, r.l || 0));
+      const R = Math.round(srsCalcRetrievability(Math.max(0, t - st.lr), st.s) * 100);
       const dueTxt = r.d <= t ? 'đến hạn hôm nay' : `ôn lại ${srsDayToLabel(r.d)} (còn ${r.d - t} ngày)`;
-      showToast(`${hanzi} · Cấp ${lv} (${SRS_LEVEL_NAMES[lv]}) · ${dueTxt}${r.x ? ` · quên ${r.x} lần` : ''}`);
+      showToast(`${hanzi} · Cấp ${lv} (${SRS_LEVEL_NAMES[lv]}) · Nhớ ~${R}% (Độ bền ${Math.round(st.s)}d) · ${dueTxt}${r.x ? ` · quên ${r.x} lần` : ''}`);
     }
     window.showSrsWordInfo = showSrsWordInfo;
 
@@ -6954,16 +7193,20 @@
       const levelCounts = new Array(SRS_MAX_LEVEL + 1).fill(0);
       const forecast = new Array(7).fill(0);
       let total = 0;
+      let sumRetrievability = 0;
       Object.keys(srsData).forEach(h => {
         const r = srsGet(h);
         if (!r || !lookup.has(h)) return;
         total++;
+        const st = srsHydrateState(r, t);
+        sumRetrievability += srsCalcRetrievability(Math.max(0, t - st.lr), st.s);
         levelCounts[Math.max(0, Math.min(SRS_MAX_LEVEL, r.l || 0))]++;
         const diff = r.d - t;
         if (diff >= 1 && diff <= 6) forecast[diff]++;
       });
       forecast[0] = srsRemainingToday();
       const leechCount = srsGetLeeches().length;
+      const avgRetention = total > 0 ? Math.round((sumRetrievability / total) * 100) : 0;
       const maxLevel = Math.max(1, ...levelCounts);
       const maxFc = Math.max(1, ...forecast);
       const weekdays = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -6989,7 +7232,7 @@
 
       body.innerHTML = `
         <div class="srs-stat-summary">
-          <div><b>${total}</b><span>từ trong lịch</span></div>
+          <div><b>${total}</b><span>từ trong lịch${total > 0 ? ` (nhớ ~${avgRetention}%)` : ''}</span></div>
           <div><b>${forecast[0]}</b><span>cần ôn hôm nay</span></div>
           <div class="srs-stat-click" onclick="closeSrsStatsModal(); srsGoToDue('leech');"><b>${leechCount}</b><span>😵 hay quên</span></div>
         </div>
@@ -6997,7 +7240,7 @@
         <div class="srs-lv-list">${levelRows}</div>
         <div class="srs-section-label">7 ngày tới</div>
         <div class="srs-fc">${fcCols}</div>
-        <div class="srs-note">✓ đúng khi đến hạn → lên 1 cấp · ✕ quên → tụt 2 cấp, ôn lại ngày mai.<br>Khoảng ôn: 1 · 2 · 4 · 8 · 16 · 35 ngày.</div>
+        <div class="srs-note">Thuật toán <b>Anki FSRS + V3</b>: tự chỉnh độ khó & độ bền trí nhớ riêng từng từ, cộng bù ngày trễ hạn và rải đều lịch ôn chống dồn bài.</div>
       `;
       modal.classList.add('active');
     }
