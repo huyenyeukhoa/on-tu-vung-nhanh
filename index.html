@@ -669,14 +669,7 @@
       border-color: var(--primary-color);
     }
 
-    .group-picker-item.active {
-      background: linear-gradient(135deg, #f3eef9 0%, #e9d5ff 100%) !important;
-      border: 2px solid var(--primary-color) !important;
-      color: var(--primary-color) !important;
-      font-weight: 700 !important;
-    }
-
-    /* Completed Group Highlight (lavender purple theme) */
+    /* Completed Group Highlight (soft lavender theme) */
     .group-picker-item.completed {
       background: linear-gradient(135deg, #f5f0fb 0%, #e9ddf7 100%) !important;
       border: 1.5px solid #9b87c4 !important;
@@ -685,9 +678,35 @@
       box-shadow: 0 3px 10px rgba(135, 114, 168, 0.18) !important;
     }
 
+    /* Active (Currently Studying) Group Highlight - unmistakable deep purple + gold accent */
+    .group-picker-item.active,
     .group-picker-item.completed.active {
-      border: 2.5px solid #766299 !important;
-      box-shadow: 0 4px 14px rgba(118, 98, 153, 0.28) !important;
+      background: linear-gradient(135deg, #7c5cbf 0%, #5b3e96 100%) !important;
+      border: 2px solid #4c2f82 !important;
+      color: #ffffff !important;
+      font-weight: 700 !important;
+      box-shadow: 0 5px 14px rgba(91, 62, 150, 0.35) !important;
+      transform: translateY(-1px);
+    }
+
+    .group-picker-item.active div,
+    .group-picker-item.active span:not(.group-picker-badge):not(.group-picker-active-pill) {
+      color: #ffffff !important;
+    }
+
+    .group-picker-active-pill {
+      display: inline-flex;
+      align-items: center;
+      background: #fef08a;
+      color: #5b3e96 !important;
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 999px;
+      margin-left: 6px;
+      letter-spacing: 0.2px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+      vertical-align: middle;
     }
 
     .group-picker-badge {
@@ -707,6 +726,13 @@
     .group-picker-badge.in-progress {
       background: #f3f4f6;
       color: #6b7280;
+    }
+
+    .group-picker-item.active .group-picker-badge {
+      background: rgba(255, 255, 255, 0.22) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      box-shadow: none !important;
     }
 
     .group-nav-btn {
@@ -2967,6 +2993,22 @@
       gap: 7px;
       font-size: 11.5px;
       font-family: var(--font-mali);
+      padding: 5px 8px;
+      margin: 0 -4px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.12s ease;
+    }
+    .srs-lv-row:hover {
+      background: #f5effc;
+    }
+    .srs-lv-row:active {
+      background: #ece2f8;
+      transform: scale(0.985);
+    }
+    .srs-lv-row.active-lv {
+      background: #efe6fa;
+      box-shadow: inset 0 0 0 1.5px #b99ce0;
     }
     .srs-lv-chip {
       width: 11px;
@@ -6928,7 +6970,7 @@
         if (!rec) {
           rec = srsComputeRecallState(null, hanzi, t);
           changed = true;
-        } else if (rec.d <= t && (source === 'due' || rec.lr !== t)) {
+        } else if (source === 'due' && rec.d <= t) {
           rec = srsComputeRecallState(rec, hanzi, t);
           changed = true;
         }
@@ -7077,9 +7119,35 @@
         .sort((a, b) => (srsData[b].x - srsData[a].x) || ((srsData[b].df || 5) - (srsData[a].df || 5)) || (srsData[a].l - srsData[b].l));
     }
 
+    function srsGetWordsByLevel(targetLevel) {
+      const lv = Math.max(0, Math.min(SRS_MAX_LEVEL, Number(targetLevel) || 0));
+      const t = srsToday();
+      const lookup = srsGetLookup();
+      return Object.keys(srsData)
+        .filter(h => {
+          const r = srsGet(h);
+          return r && Math.max(0, Math.min(SRS_MAX_LEVEL, r.l || 0)) === lv && lookup.has(h);
+        })
+        .sort((a, b) => {
+          const ra = srsHydrateState(srsData[a], t);
+          const rb = srsHydrateState(srsData[b], t);
+          const retA = srsCalcRetrievability(Math.max(0, t - ra.lr), ra.s);
+          const retB = srsCalcRetrievability(Math.max(0, t - rb.lr), rb.s);
+          return (retA - retB) || (srsData[a].d - srsData[b].d);
+        });
+    }
+
     function srsGetDueWords() {
       const lookup = srsGetLookup();
-      const list = dueSubMode === 'leech' ? srsGetLeeches() : srsGetTodayQueue();
+      let list;
+      if (dueSubMode === 'leech') {
+        list = srsGetLeeches();
+      } else if (typeof dueSubMode === 'string' && dueSubMode.startsWith('level_')) {
+        const lv = parseInt(dueSubMode.slice(6), 10);
+        list = srsGetWordsByLevel(lv);
+      } else {
+        list = srsGetTodayQueue();
+      }
       return list.map(h => lookup.get(h)).filter(Boolean);
     }
 
@@ -7125,7 +7193,7 @@
       const bannerTotal = document.getElementById('srsBannerTotal');
       if (bannerTotal) bannerTotal.textContent = srsSession.queue.length;
       const btnStory = document.getElementById('btnSrsBannerStory');
-      if (btnStory && currentLevel === 'due' && dueSubMode !== 'leech') {
+      if (btnStory && currentLevel === 'due' && dueSubMode === 'due') {
         const wrongCount = srsSession.queue.filter(h => getWordStatus(h) === 'wrong' || (srsSession.ticks && srsSession.ticks[h] === 'wrong')).length;
         const poolCount = wrongCount > 0 ? wrongCount : (remaining || srsSession.queue.length);
         const pickCount = Math.min(5, poolCount);
@@ -7146,6 +7214,28 @@
             </div>
             <div class="srs-banner-actions">
               ${n > 0 ? `<button type="button" class="srs-mini-btn srs-story-btn" onclick="openAiStoryModal('leech')">📝 Tạo bài (${pickCount})</button>` : ''}
+              <button type="button" class="srs-mini-btn srs-secondary-btn" onclick="openSrsStatsModal()">📊 Lịch ôn</button>
+              <button type="button" class="srs-mini-btn srs-secondary-btn" onclick="srsGoToDue('due')">◀ Ôn hôm nay</button>
+            </div>
+          </div>`;
+      }
+      if (typeof dueSubMode === 'string' && dueSubMode.startsWith('level_')) {
+        const lv = Math.max(0, Math.min(SRS_MAX_LEVEL, parseInt(dueSubMode.slice(6), 10) || 0));
+        const wordsInLv = srsGetWordsByLevel(lv);
+        const n = wordsInLv.length;
+        const pickCount = Math.min(5, n);
+        return `
+          <div class="srs-banner">
+            <div class="srs-banner-main">
+              <div class="srs-banner-title" style="white-space: nowrap; display: flex; align-items: center; gap: 6px;">
+                <span class="srs-lv-chip" style="background:${SRS_COLORS[lv]}; width:10px; height:10px; display:inline-block; border-radius:50%;"></span>
+                Cấp ${lv} · ${SRS_LEVEL_NAMES[lv]}
+              </div>
+              <div class="srs-banner-sub">${n} từ đang ở ${SRS_LEVEL_NAMES[lv]}</div>
+            </div>
+            <div class="srs-banner-actions">
+              ${n > 0 ? `<button type="button" class="srs-mini-btn srs-story-btn" onclick="openAiStoryModal('level')">📝 Tạo bài (${pickCount})</button>` : ''}
+              <button type="button" class="srs-mini-btn srs-secondary-btn" onclick="openSrsStatsModal()">📊 Lịch ôn</button>
               <button type="button" class="srs-mini-btn srs-secondary-btn" onclick="srsGoToDue('due')">◀ Ôn hôm nay</button>
             </div>
           </div>`;
@@ -7170,14 +7260,33 @@
 
     function srsGoToDue(mode) {
       clearVocabSearch(false);
-      dueSubMode = mode === 'leech' ? 'leech' : 'due';
+      if (mode === 'leech') {
+        dueSubMode = 'leech';
+      } else if (typeof mode === 'string' && mode.startsWith('level_')) {
+        dueSubMode = mode;
+      } else {
+        dueSubMode = 'due';
+      }
       currentLevel = 'due';
       currentGroupIndex = 0;
       document.querySelectorAll('.level-tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-level') === 'due'));
+      const levelContainer = document.getElementById('levelDropdownContainer');
+      if (levelContainer) levelContainer.classList.remove('open');
       if (typeof resetShuffleState === 'function') resetShuffleState();
-      saveCurrentState();
       updateLevelDropdownLabel();
       updateGroupWordsState();
+      if (Array.isArray(groupWordsState) && groupWordsState.length > 0) {
+        const hasWrongInDue = groupWordsState.some(w => w && getWordStatus(w.hanzi) === 'wrong');
+        const hasNewInDue = groupWordsState.some(w => w && getWordStatus(w.hanzi) === null);
+        if ((activeTab === 'review' && !hasWrongInDue) || (activeTab === 'new' && !hasNewInDue)) {
+          activeTab = 'all';
+          document.querySelectorAll('.tab-item').forEach(t => {
+            t.classList.toggle('active', t.getAttribute('data-tab') === 'all');
+          });
+          if (typeof updateFilterDropdownLabel === 'function') updateFilterDropdownLabel();
+        }
+      }
+      saveCurrentState();
       renderGroupDropdown();
       renderVocabList();
       window.scrollTo({ top: 0, behavior: 'instant' });
@@ -7211,13 +7320,16 @@
       const maxFc = Math.max(1, ...forecast);
       const weekdays = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
-      const levelRows = levelCounts.map((c, lv) => `
-        <div class="srs-lv-row">
+      const levelRows = levelCounts.map((c, lv) => {
+        const isCurrentLv = currentLevel === 'due' && dueSubMode === `level_${lv}`;
+        return `
+        <div class="srs-lv-row ${isCurrentLv ? 'active-lv' : ''}" onclick="closeSrsStatsModal(); srsGoToDue('level_${lv}');" title="Chạm để xem & ôn ${c} từ ở Cấp ${lv} · ${SRS_LEVEL_NAMES[lv]}">
           <span class="srs-lv-chip" style="background:${SRS_COLORS[lv]};"></span>
           <span class="srs-lv-name">Cấp ${lv} · ${SRS_LEVEL_NAMES[lv]}</span>
           <div class="srs-lv-track"><div class="srs-lv-fill" style="width:${Math.round(c / maxLevel * 100)}%; background:${SRS_COLORS[lv]};"></div></div>
-          <span class="srs-lv-count">${c}</span>
-        </div>`).join('');
+          <span class="srs-lv-count">${c} ›</span>
+        </div>`;
+      }).join('');
 
       const fcCols = forecast.map((c, i) => {
         const d = new Date((t + i) * 86400000);
@@ -7233,10 +7345,10 @@
       body.innerHTML = `
         <div class="srs-stat-summary">
           <div><b>${total}</b><span>từ trong lịch${total > 0 ? ` (nhớ ~${avgRetention}%)` : ''}</span></div>
-          <div><b>${forecast[0]}</b><span>cần ôn hôm nay</span></div>
+          <div class="srs-stat-click" onclick="closeSrsStatsModal(); srsGoToDue('due');"><b>${forecast[0]}</b><span>🔔 cần ôn hôm nay</span></div>
           <div class="srs-stat-click" onclick="closeSrsStatsModal(); srsGoToDue('leech');"><b>${leechCount}</b><span>😵 hay quên</span></div>
         </div>
-        <div class="srs-section-label">Phân bố cấp độ</div>
+        <div class="srs-section-label">Phân bố cấp độ (chạm để lọc từ)</div>
         <div class="srs-lv-list">${levelRows}</div>
         <div class="srs-section-label">7 ngày tới</div>
         <div class="srs-fc">${fcCols}</div>
@@ -7276,7 +7388,15 @@
       else if (currentLevel === 'hsk79') lbl.textContent = 'HSK 7-9';
       else if (currentLevel === 'custom') lbl.textContent = 'Tự tạo';
       else if (currentLevel === 'upgrade') lbl.textContent = 'Nâng cấp';
-      else if (currentLevel === 'due') lbl.textContent = dueSubMode === 'leech' ? 'Hay quên' : 'Ôn hôm nay';
+      else if (currentLevel === 'due') {
+        if (dueSubMode === 'leech') lbl.textContent = 'Hay quên';
+        else if (typeof dueSubMode === 'string' && dueSubMode.startsWith('level_')) {
+          const lv = Math.max(0, Math.min(SRS_MAX_LEVEL, parseInt(dueSubMode.slice(6), 10) || 0));
+          lbl.textContent = SRS_LEVEL_NAMES[lv];
+        } else {
+          lbl.textContent = 'Ôn hôm nay';
+        }
+      }
     }
 
     function updateFilterDropdownLabel() {
@@ -8009,6 +8129,30 @@
       return groupSlice.filter(w => getWordStatus(w.hanzi) === 'correct').length;
     }
 
+    function ensureValidFilterTabForCurrentGroup() {
+      if (!Array.isArray(groupWordsState) || groupWordsState.length === 0) return;
+      const hasWrong = groupWordsState.some(w => w && getWordStatus(w.hanzi) === 'wrong');
+      const hasNew = groupWordsState.some(w => w && getWordStatus(w.hanzi) === null);
+      if ((activeTab === 'review' && !hasWrong) || (activeTab === 'new' && !hasNew)) {
+        activeTab = 'all';
+        document.querySelectorAll('.tab-item').forEach(t => {
+          t.classList.toggle('active', t.getAttribute('data-tab') === 'all');
+        });
+        if (typeof updateFilterDropdownLabel === 'function') updateFilterDropdownLabel();
+      }
+    }
+
+    function scrollActiveGroupPickerItemIntoView() {
+      requestAnimationFrame(() => {
+        const listContainer = document.getElementById('groupPickerListContainer');
+        if (!listContainer) return;
+        const activeEl = listContainer.querySelector('.group-picker-item.active');
+        if (activeEl && typeof activeEl.scrollIntoView === 'function') {
+          activeEl.scrollIntoView({ block: 'center', behavior: 'instant' });
+        }
+      });
+    }
+
     // Render Group Selection Dropdown & Custom Mali Font Picker List
     function renderGroupDropdown(forceBuildList = false) {
       const selectGroupEl = document.getElementById('selectGroup');
@@ -8017,7 +8161,7 @@
       const shouldBuildPickerList = Boolean(forceBuildList || (pickerModalEl && pickerModalEl.classList.contains('active')));
       const btnCustomGroupSelect = document.getElementById('btnCustomGroupSelect');
       const studyRow = btnCustomGroupSelect ? btnCustomGroupSelect.closest('.compact-study-row') : null;
-      const hideGroupBtn = currentLevel === 'due' && !currentSearchQuery;
+      const hideGroupBtn = currentLevel === 'due' && !currentSearchQuery && getCurrentLevelWords().length <= 100;
       if (btnCustomGroupSelect) {
         btnCustomGroupSelect.style.display = hideGroupBtn ? 'none' : '';
       }
@@ -8083,7 +8227,8 @@
           if (groupPickerTabMode === 'oldest') {
             groupsToRender = customGroupInfo.filter(info => info.done).sort((a, b) => a.date - b.date);
           } else {
-            groupsToRender = customGroupInfo.filter(info => !info.done);
+            // Always keep the currently active custom group visible so the user knows which group they are on
+            groupsToRender = customGroupInfo.filter(info => !info.done || info.grp.id === currentCustomGroupId);
           }
 
           // 1. Render Top Item: Tất cả nhóm tự tạo (only in "Tất cả nhóm" tab)
@@ -8092,17 +8237,13 @@
           const allDiv = document.createElement('div');
           allDiv.className = `group-picker-item ${isAllActive ? 'active' : ''}`;
           allDiv.style.cursor = 'pointer';
-          if (isAllActive) {
-            allDiv.style.background = '#f0ebf8';
-            allDiv.style.borderColor = '#8772a8';
-          }
 
           allDiv.innerHTML = `
             <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
               <span style="font-size: 15px; font-weight: 700; flex-shrink:0;">${isAllActive ? '▶' : '🌟'}</span>
               <div style="min-width:0; flex:1;">
                 <div style="font-size: 14px; font-weight: 700; color: #6b21a8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                  Tất cả nhóm tự tạo
+                  Tất cả nhóm tự tạo${isAllActive ? '<span class="group-picker-active-pill">Đang học</span>' : ''}
                 </div>
               </div>
             </div>
@@ -8124,8 +8265,9 @@
             currentCustomGroupId = 'all_custom_groups';
             currentGroupIndex = 0;
             resetShuffleState();
-            saveCurrentState();
             updateGroupWordsState();
+            ensureValidFilterTabForCurrentGroup();
+            saveCurrentState();
             renderGroupDropdown();
             renderVocabList();
           });
@@ -8165,10 +8307,10 @@
 
             itemDiv.innerHTML = `
               <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
-                <span style="font-size: 14px; font-weight: 700; flex-shrink:0;">${grpDone ? '💜' : (isActive ? '▶' : '📁')}</span>
+                <span style="font-size: 14px; font-weight: 700; flex-shrink:0;">${isActive ? '▶' : (grpDone ? '💜' : '📁')}</span>
                 <div style="min-width:0; flex:1;">
                   <div style="font-size: 13.5px; font-weight: 700; color: #1f2937; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                    ${grp.name}
+                    ${grp.name}${isActive ? '<span class="group-picker-active-pill">Đang học</span>' : ''}
                   </div>
                 </div>
               </div>
@@ -8188,32 +8330,44 @@
               currentCustomGroupId = grp.id;
               currentGroupIndex = 0;
               resetShuffleState();
-              saveCurrentState();
               updateGroupWordsState();
+              ensureValidFilterTabForCurrentGroup();
+              saveCurrentState();
               renderGroupDropdown();
               renderVocabList();
             });
 
             listContainer.appendChild(itemDiv);
           });
+          scrollActiveGroupPickerItemIntoView();
         }
         if (appHeaderTitle) appHeaderTitle.textContent = currentCustomGroupId === 'all_custom_groups' ? `Ôn tổng` : `Tự tạo`;
         return;
       }
 
-      // Smart review level (daily due queue / leeches)
+      // Smart review level (daily due queue / leeches / SRS level filter)
       if (currentLevel === 'due') {
         const dueWords = getCurrentLevelWords();
         const totalGroupsDue = Math.max(1, Math.ceil(dueWords.length / 100));
         if (isNaN(currentGroupIndex) || currentGroupIndex < 0 || currentGroupIndex >= totalGroupsDue) currentGroupIndex = 0;
         const s = currentGroupIndex * 100;
         const e = Math.min(s + 100, dueWords.length);
+        const isLevelMode = typeof dueSubMode === 'string' && dueSubMode.startsWith('level_');
+        const activeLvNum = isLevelMode ? Math.max(0, Math.min(SRS_MAX_LEVEL, parseInt(dueSubMode.slice(6), 10) || 0)) : 0;
 
         const customTextEl = document.getElementById('customGroupSelectText');
         if (customTextEl) {
-          customTextEl.innerHTML = dueSubMode === 'leech'
-            ? `Hay quên (${dueWords.length} từ)`
-            : (dueWords.length === 0 ? `Không có từ đến hạn` : `Nhóm ${currentGroupIndex + 1} (${s + 1}-${e})`);
+          if (dueSubMode === 'leech') {
+            customTextEl.innerHTML = dueWords.length > 100
+              ? `Nhóm ${currentGroupIndex + 1} (${s + 1}-${e})`
+              : `Hay quên (${dueWords.length} từ)`;
+          } else if (isLevelMode) {
+            customTextEl.innerHTML = dueWords.length > 100
+              ? `Nhóm ${currentGroupIndex + 1} (${s + 1}-${e})`
+              : `${SRS_LEVEL_NAMES[activeLvNum]} (${dueWords.length} từ)`;
+          } else {
+            customTextEl.innerHTML = dueWords.length === 0 ? `Không có từ đến hạn` : `Nhóm ${currentGroupIndex + 1} (${s + 1}-${e})`;
+          }
         }
 
         if (shouldBuildPickerList && listContainer) {
@@ -8225,8 +8379,8 @@
           summary.className = 'srs-picker-summary';
           summary.innerHTML = `
             <div>
-              <div class="srs-picker-summary-title">🔔 Ôn hôm nay</div>
-              <div class="srs-picker-summary-sub">Còn <b>${remaining}</b> / ${queueAll.length} từ cần ôn</div>
+              <div class="srs-picker-summary-title">${isLevelMode ? `Cấp ${activeLvNum} · ${SRS_LEVEL_NAMES[activeLvNum]}` : '🔔 Ôn hôm nay'}</div>
+              <div class="srs-picker-summary-sub">${isLevelMode ? `Tổng cộng <b>${dueWords.length}</b> từ ở cấp này` : `Còn <b>${remaining}</b> / ${queueAll.length} từ cần ôn`}</div>
             </div>
             <button type="button" class="srs-mini-btn" id="btnPickerOpenSrsStats">📊 Lịch ôn</button>
           `;
@@ -8234,8 +8388,47 @@
           const statsBtn = summary.querySelector('#btnPickerOpenSrsStats');
           if (statsBtn) statsBtn.addEventListener('click', (ev) => { ev.stopPropagation(); openSrsStatsModal(); });
 
+          if (isLevelMode) {
+            const lvGroups = Math.ceil(dueWords.length / 100);
+            for (let i = 0; i < lvGroups; i++) {
+              const gs = i * 100;
+              const ge = Math.min(gs + 100, dueWords.length);
+              const slice = dueWords.slice(gs, ge);
+              const doneCount = slice.filter(w => srsSession.ticks[w.hanzi] === 'correct').length;
+              const isActive = i === currentGroupIndex;
+              const done = doneCount === slice.length && slice.length > 0;
+              const itemDiv = document.createElement('div');
+              itemDiv.className = `group-picker-item ${isActive ? 'active' : ''} ${done ? 'completed' : ''}`;
+              itemDiv.style.cursor = 'pointer';
+              itemDiv.innerHTML = `
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size: 14px; font-weight: 700;">${isActive ? '▶' : (done ? '💜' : '📁')}</span>
+                  <div style="font-size: 13.5px; font-weight: 700;">Nhóm ${i + 1} (${gs + 1} - ${ge} từ)${isActive ? '<span class="group-picker-active-pill">Đang học</span>' : ''}</div>
+                </div>
+                <span class="group-picker-badge ${done ? 'completed' : 'in-progress'}">${done ? '🎉 ' : ''}${doneCount}/${slice.length} từ</span>
+              `;
+              itemDiv.addEventListener('click', () => {
+                const modal = document.getElementById('groupPickerModal');
+                if (modal) modal.classList.remove('active');
+                clearVocabSearch(false);
+                currentGroupIndex = i;
+                resetShuffleState();
+                updateLevelDropdownLabel();
+                updateGroupWordsState();
+                ensureValidFilterTabForCurrentGroup();
+                saveCurrentState();
+                renderGroupDropdown();
+                renderVocabList();
+              });
+              listContainer.appendChild(itemDiv);
+            }
+            const hrLv = document.createElement('div');
+            hrLv.style.cssText = 'margin: 6px 0; border-bottom: 1px dashed #e5e7eb;';
+            listContainer.appendChild(hrLv);
+          }
+
           const queueGroups = Math.ceil(queueAll.length / 100);
-          if (queueGroups === 0) {
+          if (queueGroups === 0 && !isLevelMode) {
             const emptyDiv = document.createElement('div');
             emptyDiv.style.cssText = 'padding: 18px 12px; text-align: center; color: #9ca3af; font-size: 13px; line-height: 1.5;';
             emptyDiv.innerHTML = '🎉 Hôm nay không có từ nào đến hạn ôn!';
@@ -8253,8 +8446,8 @@
             itemDiv.style.cursor = 'pointer';
             itemDiv.innerHTML = `
               <div style="display:flex; align-items:center; gap:8px;">
-                <span style="font-size: 14px; font-weight: 700;">${done ? '💜' : (isActive ? '▶' : '🔔')}</span>
-                <div style="font-size: 13.5px; font-weight: 700;">Nhóm ${i + 1} (${gs + 1} - ${ge} từ)</div>
+                <span style="font-size: 14px; font-weight: 700;">${isActive ? '▶' : (done ? '💜' : '🔔')}</span>
+                <div style="font-size: 13.5px; font-weight: 700;">Ôn hôm nay · Nhóm ${i + 1} (${gs + 1} - ${ge} từ)${isActive ? '<span class="group-picker-active-pill">Đang học</span>' : ''}</div>
               </div>
               <span class="group-picker-badge ${done ? 'completed' : 'in-progress'}">${done ? '🎉 ' : ''}${doneCount}/${slice.length} từ</span>
             `;
@@ -8265,9 +8458,10 @@
               dueSubMode = 'due';
               currentGroupIndex = i;
               resetShuffleState();
-              saveCurrentState();
               updateLevelDropdownLabel();
               updateGroupWordsState();
+              ensureValidFilterTabForCurrentGroup();
+              saveCurrentState();
               renderGroupDropdown();
               renderVocabList();
             });
@@ -8285,7 +8479,7 @@
           leechDiv.innerHTML = `
             <div style="display:flex; align-items:center; gap:8px;">
               <span style="font-size: 14px; font-weight: 700;">${leechActive ? '▶' : '😵'}</span>
-              <div style="font-size: 13.5px; font-weight: 700;">Từ hay quên <span style="font-weight:600; color:#9a8cb3; font-size:11.5px;">(quên ≥ ${SRS_LEECH_LAPSES} lần)</span></div>
+              <div style="font-size: 13.5px; font-weight: 700;">Từ hay quên <span style="font-weight:600; color:#9a8cb3; font-size:11.5px;">(quên ≥ ${SRS_LEECH_LAPSES} lần)</span>${leechActive ? '<span class="group-picker-active-pill">Đang học</span>' : ''}</div>
             </div>
             <span class="group-picker-badge in-progress">${leeches.length} từ</span>
           `;
@@ -8296,16 +8490,22 @@
             dueSubMode = 'leech';
             currentGroupIndex = 0;
             resetShuffleState();
-            saveCurrentState();
             updateLevelDropdownLabel();
             updateGroupWordsState();
+            ensureValidFilterTabForCurrentGroup();
+            saveCurrentState();
             renderGroupDropdown();
             renderVocabList();
           });
           listContainer.appendChild(leechDiv);
+          scrollActiveGroupPickerItemIntoView();
         }
 
-        if (appHeaderTitle) appHeaderTitle.textContent = dueSubMode === 'leech' ? 'Hay quên' : 'Ôn hôm nay';
+        if (appHeaderTitle) {
+          if (dueSubMode === 'leech') appHeaderTitle.textContent = 'Hay quên';
+          else if (isLevelMode) appHeaderTitle.textContent = SRS_LEVEL_NAMES[activeLvNum];
+          else appHeaderTitle.textContent = 'Ôn hôm nay';
+        }
         return;
       }
 
@@ -8367,8 +8567,8 @@
             return timeA - timeB;
           });
         } else {
-          // "Tất cả nhóm" tab: only groups that are NOT fully ticked yet
-          indicesToRender = indicesToRender.filter(i => !isGroupCompleted(i));
+          // "Tất cả nhóm" tab: keep uncompleted groups AND always include currentGroupIndex so the active group stays highlighted in place
+          indicesToRender = indicesToRender.filter(i => !isGroupCompleted(i) || i === currentGroupIndex);
         }
 
         if (groupPickerTabMode !== 'oldest' && indicesToRender.length === 0) {
@@ -8388,12 +8588,13 @@
             const start = words.length === 0 ? 0 : i * 100 + 1;
             const end = Math.min((i + 1) * 100, words.length);
             const completed = isGroupCompleted(i);
+            const isActive = i === currentGroupIndex;
             const learnedCount = getGroupLearnedCount(i);
             const groupSize = words.length === 0 ? 0 : end - start + 1;
             const compDate = groupCompletedDates[`${currentLevel}_${i}`];
 
             const itemDiv = document.createElement('div');
-            itemDiv.className = `group-picker-item ${i === currentGroupIndex ? 'active' : ''} ${completed ? 'completed' : ''}`;
+            itemDiv.className = `group-picker-item ${isActive ? 'active' : ''} ${completed ? 'completed' : ''}`;
             
             let badgeHTML = '';
             if (completed) {
@@ -8405,9 +8606,9 @@
 
             itemDiv.innerHTML = `
               <div style="display:flex; align-items:center; gap:8px;">
-                <span style="font-size: 14px; font-weight: 700;">${completed ? '💜' : (i === currentGroupIndex ? '▶' : '📁')}</span>
+                <span style="font-size: 14px; font-weight: 700;">${isActive ? '▶' : (completed ? '💜' : '📁')}</span>
                 <div>
-                  <div style="font-size: 13.5px; font-weight: 700;">Nhóm ${i + 1} (${start} - ${end} từ)</div>
+                  <div style="font-size: 13.5px; font-weight: 700;">Nhóm ${i + 1} (${start} - ${end} từ)${isActive ? '<span class="group-picker-active-pill">Đang học</span>' : ''}</div>
                 </div>
               </div>
               ${badgeHTML}
@@ -8420,14 +8621,16 @@
               currentGroupIndex = i;
               if (selectGroupEl) selectGroupEl.value = i;
               resetShuffleState();
-              saveCurrentState();
               updateGroupWordsState();
+              ensureValidFilterTabForCurrentGroup();
+              saveCurrentState();
               renderGroupDropdown();
               renderVocabList();
             });
 
             listContainer.appendChild(itemDiv);
           });
+          scrollActiveGroupPickerItemIntoView();
         }
       }
 
@@ -8442,7 +8645,13 @@
         if (currentLevel === 'hsk6') appHeaderTitle.textContent = `HSK 6`;
         else if (currentLevel === 'hsk79') appHeaderTitle.textContent = `HSK 7-9`;
         else if (currentLevel === 'upgrade') appHeaderTitle.textContent = `Nâng cấp`;
-        else if (currentLevel === 'due') appHeaderTitle.textContent = dueSubMode === 'leech' ? 'Hay quên' : 'Ôn hôm nay';
+        else if (currentLevel === 'due') {
+          if (dueSubMode === 'leech') appHeaderTitle.textContent = 'Hay quên';
+          else if (typeof dueSubMode === 'string' && dueSubMode.startsWith('level_')) {
+            const lv = Math.max(0, Math.min(SRS_MAX_LEVEL, parseInt(dueSubMode.slice(6), 10) || 0));
+            appHeaderTitle.textContent = SRS_LEVEL_NAMES[lv];
+          } else appHeaderTitle.textContent = 'Ôn hôm nay';
+        }
         else appHeaderTitle.textContent = `Tự tạo`;
       }
     }
@@ -8657,7 +8866,7 @@
 
     function getGroupWordsRaw() {
       const words = getCurrentLevelWords();
-      if (currentLevel === 'custom' || currentLevel === 'due') {
+      if (currentLevel === 'custom') {
         return words.map(item => {
           const hanzi = item.hanzi || item.word || item.text || item.chinese || '';
           return {
@@ -8676,11 +8885,17 @@
       }
       const start = currentGroupIndex * 100;
       const end = Math.min(start + 100, words.length);
-      return words.slice(start, end).map(item => ({
-        ...item,
-        status: getWordStatus(item.hanzi),
-        revealed: false
-      }));
+      return words.slice(start, end).map(item => {
+        const hanzi = item.hanzi || item.word || item.text || item.chinese || '';
+        return {
+          ...item,
+          hanzi,
+          pinyin: item.pinyin || '',
+          vietnamese: item.vietnamese || item.vi || item.meaning || '',
+          status: getWordStatus(hanzi),
+          revealed: false
+        };
+      }).filter(item => item.hanzi !== '');
     }
 
     // Get 100 Words for Current Group (Supports Shuffled Order & Search Results)
@@ -10963,6 +11178,22 @@ Lưu ý:
       }, 100);
     }, { passive: true });
 
+    function switchFilterTab(targetTab) {
+      if (!targetTab) return;
+      activeTab = targetTab;
+      if (typeof reviewPinnedSet !== 'undefined' && reviewPinnedSet) reviewPinnedSet.clear();
+      document.querySelectorAll('.tab-item').forEach(t => {
+        t.classList.toggle('active', t.getAttribute('data-tab') === targetTab);
+      });
+      const filterContainer = document.getElementById('filterDropdownContainer');
+      if (filterContainer) filterContainer.classList.remove('open');
+      if (typeof updateFilterDropdownLabel === 'function') updateFilterDropdownLabel();
+      saveCurrentState();
+      renderVocabList();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+    window.switchFilterTab = switchFilterTab;
+
     // Render Main Vocabulary List
     function renderVocabList(preserveScroll = false) {
       const currentScrollY = preserveScroll ? (window.scrollY || window.pageYOffset || document.documentElement.scrollTop) : 0;
@@ -10982,20 +11213,90 @@ Lưu ý:
 
       if (filteredData.length === 0) {
         let emptyMsg = 'Không có từ nào trong mục này.';
+        const wrongInGroupCount = (groupWordsState || []).filter(w => w && getWordStatus(w.hanzi) === 'wrong').length;
+        const newInGroupCount = (groupWordsState || []).filter(w => w && getWordStatus(w.hanzi) === null).length;
+
         if (currentSearchQuery) {
           emptyMsg = `🔍 Không tìm thấy từ nào khớp với "<b>${escapeHtml(currentSearchQuery)}</b>" trong dữ liệu.`;
         } else if (activeTab === 'new') {
-          emptyMsg = '🎉 Bạn đã thuộc tất cả từ trong nhóm này!';
+          if (wrongInGroupCount > 0) {
+            emptyMsg = `
+              <div style="margin-bottom: 14px; color: #4b5563; font-weight: 600;">
+                ✅ Đã tích xong lượt từ mới! Còn <b style="color: var(--red-color);">${wrongInGroupCount} từ</b> đánh dấu ✕ chưa thuộc.
+              </div>
+              <button type="button" onclick="switchFilterTab('review')" style="background: linear-gradient(135deg, #e07a8c 0%, #c95b70 100%); color: #fff; border: none; padding: 11px 20px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(201, 91, 112, 0.28); display: inline-flex; align-items: center; gap: 7px;">
+                🔄 Ôn lại ngay ${wrongInGroupCount} từ chưa thuộc (✕)
+              </button>
+            `;
+          } else {
+            emptyMsg = '🎉 Bạn đã thuộc tất cả từ trong nhóm này!';
+          }
         } else if (activeTab === 'review') {
-          emptyMsg = '✨ Tuyệt vời! Không có từ nào bị đánh dấu sai trong nhóm này.';
+          if (newInGroupCount > 0) {
+            emptyMsg = `
+              <div style="margin-bottom: 14px;">✨ Tuyệt vời! Không có từ nào bị đánh dấu sai. Còn <b>${newInGroupCount} từ</b> chưa tích.</div>
+              <button type="button" onclick="switchFilterTab('new')" style="background: linear-gradient(135deg, #a38ebe 0%, #8772a8 100%); color: #fff; border: none; padding: 10px 18px; border-radius: 14px; font-size: 13.5px; font-weight: 700; cursor: pointer; box-shadow: 0 3px 10px rgba(135, 114, 168, 0.25);">
+                ▶ Học tiếp ${newInGroupCount} từ chưa nhớ (学新)
+              </button>
+            `;
+          } else {
+            emptyMsg = `
+              <div style="margin-bottom: 14px;">✨ Tuyệt vời! Bạn đã xử lý xong toàn bộ từ chưa thuộc trong nhóm này.</div>
+              <button type="button" onclick="switchFilterTab('all')" style="background: #f3eef9; color: #766299; border: 1.5px solid #d4c5e8; padding: 9px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer;">
+                📋 Xem lại toàn bộ nhóm (全部)
+              </button>
+            `;
+          }
         } else if (currentLevel === 'due' && groupWordsState.length === 0) {
-          emptyMsg = dueSubMode === 'leech'
-            ? '👏 Chưa có từ nào bị quên từ 3 lần trở lên.'
-            : '🎉 Hôm nay không có từ nào đến hạn ôn!<br><span style="font-size:12.5px;">Tick từ ở các nhóm HSK / Tự tạo để đưa từ vào lịch ôn.</span>';
+          if (dueSubMode === 'leech') {
+            emptyMsg = '👏 Chưa có từ nào bị quên từ 3 lần trở lên.';
+          } else if (typeof dueSubMode === 'string' && dueSubMode.startsWith('level_')) {
+            const lv = Math.max(0, Math.min(SRS_MAX_LEVEL, parseInt(dueSubMode.slice(6), 10) || 0));
+            emptyMsg = `📭 Hiện chưa có từ nào ở <b>Cấp ${lv} · ${SRS_LEVEL_NAMES[lv]}</b>.<br><button type="button" onclick="openSrsStatsModal()" style="margin-top:12px; background:#f3eef9; color:#766299; border:1.5px solid #d4c5e8; padding:8px 16px; border-radius:11px; font-size:13px; font-weight:700; cursor:pointer;">📊 Chọn cấp độ khác trong Lịch ôn</button>`;
+          } else {
+            emptyMsg = '🎉 Hôm nay không có từ nào đến hạn ôn!<br><span style="font-size:12.5px;">Tick từ ở các nhóm HSK / Tự tạo để đưa từ vào lịch ôn.</span>';
+          }
+        }
+
+        let customBackBannerHTML = '';
+        if (currentLevel === 'custom' && currentCustomGroupId) {
+          const matchingArt = (readingArticles || []).find(a => a && ('custom_' + a.id === currentCustomGroupId || String(a.id) === String(currentCustomGroupId).replace(/^custom_/, '')));
+          const matchingVsl = !matchingArt && typeof vslLessons !== 'undefined' && Array.isArray(vslLessons)
+            ? vslLessons.find(v => v && ('custom_' + v.id === currentCustomGroupId || String(v.id) === String(currentCustomGroupId).replace(/^custom_/, '')))
+            : null;
+          if (matchingArt) {
+            const safeArtId = String(matchingArt.id).replace(/'/g, "\\'");
+            customBackBannerHTML = `
+              <div onclick="openReadingViewModal('${safeArtId}')" style="margin-bottom: 12px; background: linear-gradient(135deg, #f3eef9 0%, #ffffff 100%); padding: 10px 14px; border-radius: 14px; border: 1.5px solid #d4c5e8; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 8px rgba(135,114,168,0.1); text-align: left;">
+                <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+                  <span style="font-size: 15px; font-weight: 700; color: #766299;">◀</span>
+                  <div style="min-width: 0; flex: 1;">
+                    <div style="font-size: 11.5px; font-weight: 700; color: #766299;">Quay lại bài đọc:</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📖 ${escapeHtml(matchingArt.title || 'Bài đọc')}</div>
+                  </div>
+                </div>
+                <button type="button" class="primary-submit-btn" style="padding: 6px 11px; font-size: 12px; font-weight: 700; border-radius: 9px; flex-shrink: 0; margin-left: 6px;">📖 Đọc bài</button>
+              </div>`;
+          } else if (matchingVsl) {
+            const safeVslId = String(matchingVsl.id).replace(/'/g, "\\'");
+            const cleanVslTitle = String(matchingVsl.title || 'Bài học Video').replace(/^[🎬✨📖]\s*/, '');
+            customBackBannerHTML = `
+              <div onclick="openVslLessonStudio('${safeVslId}')" style="margin-bottom: 12px; background: linear-gradient(135deg, #f3eef9 0%, #ffffff 100%); padding: 10px 14px; border-radius: 14px; border: 1.5px solid #d4c5e8; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 8px rgba(135,114,168,0.1); text-align: left;">
+                <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+                  <span style="font-size: 15px; font-weight: 700; color: #766299;">◀</span>
+                  <div style="min-width: 0; flex: 1;">
+                    <div style="font-size: 11.5px; font-weight: 700; color: #766299;">Quay lại video:</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">🎬 ${escapeHtml(cleanVslTitle)}</div>
+                  </div>
+                </div>
+                <button type="button" class="primary-submit-btn" style="padding: 6px 11px; font-size: 12px; font-weight: 700; border-radius: 9px; flex-shrink: 0; margin-left: 6px;">🎬 Mở video</button>
+              </div>`;
+          }
         }
 
         vocabListEl.innerHTML = `
           ${currentLevel === 'due' ? buildSrsBannerHTML() : ''}
+          ${customBackBannerHTML}
           <div style="padding: 40px 20px; text-align: center; color: #9ca3af; font-size: 14.5px; line-height: 1.6;">
             ${emptyMsg}
           </div>
@@ -11031,9 +11332,12 @@ Lưu ý:
         if (bannerWrap.firstElementChild) fragment.appendChild(bannerWrap.firstElementChild);
       }
 
-      // Prepend Back to Reading Passage Banner if studying a Reading Article group
+      // Prepend Back to Reading Passage (📖) or Video Lesson (🎬) Banner if studying an article/video group
       if (currentLevel === 'custom' && currentCustomGroupId) {
-        const matchingArt = readingArticles.find(a => 'custom_' + a.id === currentCustomGroupId || a.id === currentCustomGroupId.replace('custom_', ''));
+        const matchingArt = (readingArticles || []).find(a => a && ('custom_' + a.id === currentCustomGroupId || String(a.id) === String(currentCustomGroupId).replace(/^custom_/, '')));
+        const matchingVsl = !matchingArt && typeof vslLessons !== 'undefined' && Array.isArray(vslLessons)
+          ? vslLessons.find(v => v && ('custom_' + v.id === currentCustomGroupId || String(v.id) === String(currentCustomGroupId).replace(/^custom_/, '')))
+          : null;
         if (matchingArt) {
           const backBanner = document.createElement('div');
           backBanner.style.cssText = 'margin-bottom: 12px; background: linear-gradient(135deg, #f3eef9 0%, #ffffff 100%); padding: 10px 14px; border-radius: 14px; border: 1.5px solid #d4c5e8; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 8px rgba(135,114,168,0.1);';
@@ -11042,12 +11346,28 @@ Lưu ý:
               <span style="font-size: 15px; font-weight: 700; color: #766299;">◀</span>
               <div style="min-width: 0; flex: 1;">
                 <div style="font-size: 11.5px; font-weight: 700; color: #766299;">Quay lại bài đọc:</div>
-                <div style="font-size: 13px; font-weight: 700; color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📖 ${matchingArt.title}</div>
+                <div style="font-size: 13px; font-weight: 700; color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📖 ${escapeHtml(matchingArt.title || 'Bài đọc')}</div>
               </div>
             </div>
-            <button class="primary-submit-btn" style="padding: 6px 11px; font-size: 12px; font-weight: 700; border-radius: 9px; flex-shrink: 0; margin-left: 6px;">📖 Đọc bài</button>
+            <button type="button" class="primary-submit-btn" style="padding: 6px 11px; font-size: 12px; font-weight: 700; border-radius: 9px; flex-shrink: 0; margin-left: 6px;">📖 Đọc bài</button>
           `;
           backBanner.onclick = () => openReadingViewModal(matchingArt.id);
+          fragment.appendChild(backBanner);
+        } else if (matchingVsl) {
+          const cleanVslTitle = String(matchingVsl.title || 'Bài học Video').replace(/^[🎬✨📖]\s*/, '');
+          const backBanner = document.createElement('div');
+          backBanner.style.cssText = 'margin-bottom: 12px; background: linear-gradient(135deg, #f3eef9 0%, #ffffff 100%); padding: 10px 14px; border-radius: 14px; border: 1.5px solid #d4c5e8; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 8px rgba(135,114,168,0.1);';
+          backBanner.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+              <span style="font-size: 15px; font-weight: 700; color: #766299;">◀</span>
+              <div style="min-width: 0; flex: 1;">
+                <div style="font-size: 11.5px; font-weight: 700; color: #766299;">Quay lại video:</div>
+                <div style="font-size: 13px; font-weight: 700; color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">🎬 ${escapeHtml(cleanVslTitle)}</div>
+              </div>
+            </div>
+            <button type="button" class="primary-submit-btn" style="padding: 6px 11px; font-size: 12px; font-weight: 700; border-radius: 9px; flex-shrink: 0; margin-left: 6px;">🎬 Mở video</button>
+          `;
+          backBanner.onclick = () => openVslLessonStudio(matchingVsl.id);
           fragment.appendChild(backBanner);
         }
       }
@@ -11170,22 +11490,40 @@ Lưu ý:
                            (activeTab === 'review' && (updatedStatus === 'wrong' || reviewPinnedSet.has(hanzi)));
 
       if (targetRow && item) {
+        if (targetRow._fadeTimer) {
+          clearTimeout(targetRow._fadeTimer);
+          targetRow._fadeTimer = null;
+        }
+        targetRow.classList.remove('row-fade-out');
         if (belongsInTab) {
           // Row stays in current tab: update in-place immediately, zero reflow flash
           targetRow.innerHTML = buildRowContent(item);
           updateCounters();
         } else {
-          // Row leaves current tab: animate out smoothly
-          targetRow.classList.add('row-fade-out');
+          // Row leaves current tab: if marked wrong in 'new' tab while column 2 is hidden, reveal meaning for 1.15s first so eyes can read it
+          const shouldDelayWrongReveal = (activeTab === 'new' && updatedStatus === 'wrong' && !alwaysShowCol2);
+          if (shouldDelayWrongReveal) {
+            targetRow.innerHTML = buildRowContent(item);
+          }
           updateCounters();
-          setTimeout(() => {
-            if (targetRow.parentNode) {
-              targetRow.remove();
-            }
-            if (vocabListEl.querySelectorAll('.vocab-item').length === 0) {
-              renderVocabList(true);
-            }
-          }, 180);
+          const hideRowNow = () => {
+            targetRow._fadeTimer = null;
+            if (!targetRow.parentNode) return;
+            targetRow.classList.add('row-fade-out');
+            setTimeout(() => {
+              if (targetRow.parentNode) {
+                targetRow.remove();
+              }
+              if (vocabListEl.querySelectorAll('.vocab-item').length === 0) {
+                renderVocabList(true);
+              }
+            }, 180);
+          };
+          if (shouldDelayWrongReveal) {
+            targetRow._fadeTimer = setTimeout(hideRowNow, 1150);
+          } else {
+            hideRowNow();
+          }
         }
       } else {
         renderVocabList(true);
@@ -11205,12 +11543,15 @@ Lưu ý:
         const v = groupWords[i];
         if (!v || !v.hanzi) continue;
         const st = getWordStatus(v.hanzi);
+        const isPracticeReset = practiceResetSet.has(v.hanzi);
         if (st === 'correct') {
           correctCount++;
+          if (isPracticeReset) newCount++;
           if (reviewPinnedSet.has(v.hanzi)) reviewTabCount++;
         } else if (st === 'wrong') {
           wrongCount++;
           reviewTabCount++;
+          if (isPracticeReset) newCount++;
         } else {
           newCount++;
           if (reviewPinnedSet.has(v.hanzi)) reviewTabCount++;
@@ -12009,18 +12350,23 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
       // Level Tabs Switch (HSK 6 vs HSK 7-9 vs Custom vs Upgrade vs Due)
       document.querySelectorAll('.level-tab').forEach(tab => {
         tab.addEventListener('click', () => {
+          const targetLevel = tab.getAttribute('data-level');
+          if (targetLevel === 'due') {
+            srsGoToDue('due');
+            return;
+          }
           clearVocabSearch(false);
           document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
           tab.classList.add('active');
-          currentLevel = tab.getAttribute('data-level');
-          if (currentLevel === 'due') dueSubMode = 'due';
+          currentLevel = targetLevel;
           const levelContainer = document.getElementById('levelDropdownContainer');
           if (levelContainer) levelContainer.classList.remove('open');
           updateLevelDropdownLabel();
           currentGroupIndex = 0;
           resetShuffleState();
-          saveCurrentState();
           updateGroupWordsState();
+          ensureValidFilterTabForCurrentGroup();
+          saveCurrentState();
           renderGroupDropdown();
           renderVocabList();
         });
@@ -16885,8 +17231,21 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       document.querySelectorAll('.level-tab').forEach(t => {
         t.classList.toggle('active', t.getAttribute('data-level') === 'custom');
       });
+      if (typeof updateLevelDropdownLabel === 'function') updateLevelDropdownLabel();
 
       updateGroupWordsState();
+      if (Array.isArray(groupWordsState) && groupWordsState.length > 0) {
+        const hasWrongInGroup = groupWordsState.some(w => w && getWordStatus(w.hanzi) === 'wrong');
+        const hasNewInGroup = groupWordsState.some(w => w && getWordStatus(w.hanzi) === null);
+        if ((activeTab === 'review' && !hasWrongInGroup) || (activeTab === 'new' && !hasNewInGroup)) {
+          activeTab = 'all';
+          document.querySelectorAll('.tab-item').forEach(t => {
+            t.classList.toggle('active', t.getAttribute('data-tab') === 'all');
+          });
+          if (typeof updateFilterDropdownLabel === 'function') updateFilterDropdownLabel();
+        }
+      }
+      saveCurrentState();
       renderGroupDropdown();
       renderVocabList();
 
@@ -19883,7 +20242,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
       }
 
       const modal = document.getElementById('videoLearningModal');
-      if (modal) modal.classList.add('studio-mode');
+      if (modal) modal.classList.add('active', 'studio-mode');
 
       const dash = document.getElementById('vslDashboardView');
       const studio = document.getElementById('vslStudioView');
@@ -21596,8 +21955,21 @@ Hãy trả về DUY NHẤT một đối tượng JSON hợp lệ (không bọc m
       document.querySelectorAll('.level-tab').forEach(t => {
         t.classList.toggle('active', t.getAttribute('data-level') === 'custom');
       });
+      if (typeof updateLevelDropdownLabel === 'function') updateLevelDropdownLabel();
 
       updateGroupWordsState();
+      if (Array.isArray(groupWordsState) && groupWordsState.length > 0) {
+        const hasWrongInGroup = groupWordsState.some(w => w && getWordStatus(w.hanzi) === 'wrong');
+        const hasNewInGroup = groupWordsState.some(w => w && getWordStatus(w.hanzi) === null);
+        if ((activeTab === 'review' && !hasWrongInGroup) || (activeTab === 'new' && !hasNewInGroup)) {
+          activeTab = 'all';
+          document.querySelectorAll('.tab-item').forEach(t => {
+            t.classList.toggle('active', t.getAttribute('data-tab') === 'all');
+          });
+          if (typeof updateFilterDropdownLabel === 'function') updateFilterDropdownLabel();
+        }
+      }
+      saveCurrentState();
       renderGroupDropdown();
       renderVocabList();
 
@@ -21669,6 +22041,11 @@ Hãy trả về DUY NHẤT một đối tượng JSON hợp lệ (không bọc m
 
       if (sourceMode === 'leech' || (sourceMode === 'auto' && currentLevel === 'due' && dueSubMode === 'leech')) {
         pool = srsGetLeeches().map(h => lookup.get(h)).filter(Boolean);
+      } else if (sourceMode === 'level' || (sourceMode === 'auto' && currentLevel === 'due' && typeof dueSubMode === 'string' && dueSubMode.startsWith('level_'))) {
+        const lv = Math.max(0, Math.min(SRS_MAX_LEVEL, parseInt(String(dueSubMode).slice(6), 10) || 0));
+        const lvWords = srsGetWordsByLevel(lv).map(h => lookup.get(h)).filter(Boolean);
+        const wrongLv = lvWords.filter(w => getWordStatus(w.hanzi) === 'wrong');
+        pool = wrongLv.length > 0 ? [...sortBySrsUrgency(wrongLv), ...lvWords.filter(w => getWordStatus(w.hanzi) !== 'wrong')] : lvWords;
       } else if (sourceMode === 'due' || (sourceMode === 'auto' && currentLevel === 'due' && dueSubMode === 'due')) {
         const dueWords = srsGetTodayQueue().map(h => lookup.get(h)).filter(Boolean);
         const wrongDue = dueWords.filter(w => getWordStatus(w.hanzi) === 'wrong' || (srsSession && srsSession.ticks && srsSession.ticks[w.hanzi] === 'wrong'));
@@ -23448,7 +23825,7 @@ ${wordListPrompt}
 
       // Reset Currently Visible Words for Practice (Non-destructive to SRS / learned progress)
       btnReset.addEventListener('click', () => {
-        const visibleWords = groupWordsState.filter(item => {
+        let visibleWords = groupWordsState.filter(item => {
           if (!item || !item.hanzi) return false;
           if (currentSearchQuery) return true;
           const status = getWordStatus(item.hanzi);
@@ -23456,6 +23833,25 @@ ${wordListPrompt}
           if (activeTab === 'review') return status === 'wrong' || reviewPinnedSet.has(item.hanzi);
           return true;
         });
+
+        if (visibleWords.length === 0 && Array.isArray(groupWordsState) && groupWordsState.length > 0) {
+          if (!currentSearchQuery && activeTab === 'review') {
+            const wrongWords = groupWordsState.filter(item => item && item.hanzi && getWordStatus(item.hanzi) === 'wrong');
+            if (wrongWords.length > 0) {
+              visibleWords = wrongWords;
+            } else {
+              activeTab = 'all';
+              document.querySelectorAll('.tab-item').forEach(t => {
+                t.classList.toggle('active', t.getAttribute('data-tab') === 'all');
+              });
+              if (typeof updateFilterDropdownLabel === 'function') updateFilterDropdownLabel();
+              saveCurrentState();
+              visibleWords = groupWordsState.filter(item => item && item.hanzi);
+            }
+          } else {
+            visibleWords = groupWordsState.filter(item => item && item.hanzi);
+          }
+        }
 
         if (visibleWords.length === 0) {
           showToast('Không có từ nào đang hiển thị để làm mới!');
@@ -23477,8 +23873,12 @@ ${wordListPrompt}
           });
         }
 
+        if (currentLevel) {
+          localStorage.setItem(`hsk_scroll_${currentLevel}_${currentGroupIndex || 0}`, '0');
+        }
         renderVocabList(true);
-        showToast(`🔄 Đã làm mới ${visibleWords.length} từ đang hiển thị để ôn lại (không ảnh hưởng tiến độ)!`);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showToast(`🔄 Đã làm mới ${visibleWords.length} từ để dò lại từ đầu (không ảnh hưởng tiến độ)!`);
       });
 
       // Submit / Restart Group
@@ -23493,8 +23893,12 @@ ${wordListPrompt}
               practiceResetSet.add(v.hanzi);
               v.revealed = false;
             });
+            if (currentLevel) {
+              localStorage.setItem(`hsk_scroll_${currentLevel}_${currentGroupIndex || 0}`, '0');
+            }
             renderVocabList(true);
-            showToast('🔄 Đã làm mới nhóm để ôn lại (không ảnh hưởng tiến độ)!');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast('🔄 Đã làm mới nhóm để ôn lại từ đầu (không ảnh hưởng tiến độ)!');
           }
         });
       }
