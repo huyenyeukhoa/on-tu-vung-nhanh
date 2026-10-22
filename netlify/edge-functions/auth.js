@@ -115,9 +115,9 @@ function renderLoginPage(errorMessage = "", statusCode = 401) {
 
     ${errorMessage ? `<div class="error-msg">${errorMessage}</div>` : ''}
 
-    <form method="POST" action="/auth-login">
+    <form method="POST" action="/auth-login" autocomplete="off">
       <div class="auth-input-wrap">
-        <input type="password" name="password" placeholder="Nhập mật khẩu..." autofocus required autocomplete="current-password" />
+        <input type="text" name="pass" placeholder="Nhập mật khẩu..." autofocus required autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" style="-webkit-text-security: disc; text-security: disc;" />
       </div>
       <button type="submit">Mở khóa ➔</button>
     </form>

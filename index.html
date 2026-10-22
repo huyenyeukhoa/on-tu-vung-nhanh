@@ -5500,8 +5500,8 @@
             </div>
           </div>
           <div style="display: flex; gap: 6px;">
-            <input type="password" id="inputApiKey" class="st-input" placeholder="sk-or-v1-..." />
-            <button class="st-btn st-btn-sm" id="btnSaveApiKey" style="flex: 0 0 auto;">Lưu</button>
+            <input type="text" id="inputApiKey" name="openrouter_api_token_field" class="st-input" placeholder="sk-or-v1-..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="-webkit-text-security: disc; text-security: disc;" />
+            <button type="button" class="st-btn st-btn-sm" id="btnSaveApiKey" style="flex: 0 0 auto;">Lưu</button>
           </div>
         </div>
 
@@ -6029,6 +6029,26 @@
     </div>
   </div>
 
+  <!-- Quick Edit Vietnamese Meaning Modal (Nhấn giữ nghĩa tiếng Việt để sửa) -->
+  <div class="modal-overlay" id="editMeaningModal" style="z-index: 2010;">
+    <div class="modal-card" style="max-width: 380px; text-align: left; padding: 20px 18px; border-radius: 20px; box-shadow: 0 12px 32px rgba(72, 52, 107, 0.22);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+        <div style="font-family: var(--font-mali); font-size: 15.5px; font-weight: 800; color: #584575;">✏️ Đổi nghĩa tiếng Việt</div>
+        <button type="button" class="modal-close-btn" id="btnEditMeaningClose">✕</button>
+      </div>
+      <div id="editMeaningWordHeader" style="background: #f8f5fc; border: 1.2px solid #e2d6f3; border-radius: 12px; padding: 8px 12px; margin-bottom: 12px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;"></div>
+      <div id="editMeaningQuickChipsWrap" style="display: none; margin-bottom: 10px;">
+        <div style="font-size: 11.5px; font-weight: 700; color: #766299; margin-bottom: 5px;">💡 Chạm để chọn nhanh hoặc tự gõ bên dưới:</div>
+        <div id="editMeaningQuickChips" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+      </div>
+      <input type="text" id="inputEditMeaningVi" placeholder="Nhập nghĩa tiếng Việt bạn muốn..." autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.6px solid #c4b5fd; border-radius: 12px; font-size: 14.5px; font-family: var(--font-mali); font-weight: 700; color: #1f2937; outline: none; margin-bottom: 14px;" />
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button type="button" class="secondary-btn" id="btnEditMeaningCancel" style="flex: 1; padding: 10px; font-size: 13.5px; font-weight: 700; border-radius: 12px;">Hủy</button>
+        <button type="button" class="primary-submit-btn" id="btnEditMeaningSave" style="flex: 1.2; padding: 10px; font-size: 13.5px; font-weight: 700; border-radius: 12px;">💾 Lưu nghĩa</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Notification Toast -->
   <div class="toast" id="toast">phát âm Xiaoxiao</div>
 
@@ -6498,6 +6518,310 @@
       });
     }
 
+    // ==========================================
+    // CUSTOM VIETNAMESE MEANING OVERRIDE (LONG-PRESS TO EDIT)
+    // ==========================================
+    let customWordMeanings = safeGetJSON('hsk_custom_word_meanings', {});
+    let editingMeaningHanzi = null;
+    let suppressNextViClickUntil = 0;
+
+    function getEffectiveWordMeaning(hanzi, fallbackVi) {
+      if (hanzi && customWordMeanings && typeof customWordMeanings[hanzi] === 'string' && customWordMeanings[hanzi].trim()) {
+        return customWordMeanings[hanzi].trim();
+      }
+      return fallbackVi || '';
+    }
+
+    function getOriginalDictMeaning(hanzi) {
+      if (!hanzi) return '';
+      if (typeof hsk6Data !== 'undefined' && hsk6Data && hsk6Data[hanzi] && hsk6Data[hanzi].vi) {
+        return hsk6Data[hanzi].vi;
+      }
+      if (typeof hsk79Data !== 'undefined' && hsk79Data && hsk79Data[hanzi] && hsk79Data[hanzi].vi) {
+        return hsk79Data[hanzi].vi;
+      }
+      return '';
+    }
+
+    function applyCustomMeaningsToMemoryLists() {
+      if (!customWordMeanings || typeof customWordMeanings !== 'object') return;
+      if (Array.isArray(hsk6List)) {
+        hsk6List.forEach(it => {
+          if (it && it.hanzi && customWordMeanings[it.hanzi]) {
+            it.vietnamese = customWordMeanings[it.hanzi];
+            ensureSearchCacheOnItem(it);
+          }
+        });
+      }
+      if (Array.isArray(hsk79List)) {
+        hsk79List.forEach(it => {
+          if (it && it.hanzi && customWordMeanings[it.hanzi]) {
+            it.vietnamese = customWordMeanings[it.hanzi];
+            ensureSearchCacheOnItem(it);
+          }
+        });
+      }
+      if (Array.isArray(customGroups)) {
+        customGroups.forEach(g => {
+          (g && g.words || []).forEach(w => {
+            const h = w && (w.hanzi || w.word || w.text || w.chinese);
+            if (h && customWordMeanings[h]) {
+              w.vietnamese = customWordMeanings[h];
+              if (w.vi !== undefined) w.vi = customWordMeanings[h];
+              if (w.meaning !== undefined) w.meaning = customWordMeanings[h];
+              ensureSearchCacheOnItem(w);
+            }
+          });
+        });
+      }
+    }
+
+    function openEditMeaningModal(hanzi) {
+      if (!hanzi) return;
+      const modal = document.getElementById('editMeaningModal');
+      const headerEl = document.getElementById('editMeaningWordHeader');
+      const inputEl = document.getElementById('inputEditMeaningVi');
+      const chipsWrap = document.getElementById('editMeaningQuickChipsWrap');
+      const chipsEl = document.getElementById('editMeaningQuickChips');
+      if (!modal || !inputEl) return;
+
+      editingMeaningHanzi = hanzi;
+
+      const itemInGroup = (groupWordsState || []).find(w => w && w.hanzi === hanzi);
+      const lookupMap = typeof srsGetLookup === 'function' ? srsGetLookup() : null;
+      const lookupItem = itemInGroup || (lookupMap && lookupMap.get(hanzi)) || {};
+      const pinyin = lookupItem.pinyin || (typeof hsk6Data !== 'undefined' && hsk6Data?.[hanzi]?.py) || (typeof hsk79Data !== 'undefined' && hsk79Data?.[hanzi]?.py) || '';
+      const currentVi = getEffectiveWordMeaning(hanzi, lookupItem.vietnamese || lookupItem.vi || lookupItem.meaning || getOriginalDictMeaning(hanzi) || '');
+      const origDictVi = getOriginalDictMeaning(hanzi);
+
+      if (headerEl) {
+        headerEl.innerHTML = `
+          <span style="font-family: var(--font-hanzi); font-size: 21px; font-weight: 700; color: #3c2e54;">${escapeHtml(hanzi)}</span>
+          ${pinyin ? `<span style="font-size: 13.5px; color: #766299; font-weight: 700;">${escapeHtml(pinyin)}</span>` : ''}
+        `;
+      }
+
+      // Build quick suggestion chips from split parts of current meaning + original dictionary meaning + AI cache meaning
+      const candidateSet = new Set();
+      const addCandidatesFrom = (str) => {
+        if (!str || typeof str !== 'string') return;
+        const clean = str.trim();
+        if (!clean) return;
+        const parts = clean.split(/\s*[\/,;；，]\s*/).map(s => s.trim()).filter(Boolean);
+        if (parts.length > 1) {
+          parts.forEach(p => candidateSet.add(p));
+        }
+        candidateSet.add(clean);
+      };
+      addCandidatesFrom(currentVi);
+      addCandidatesFrom(origDictVi);
+      if (typeof aiCache !== 'undefined' && aiCache && aiCache[hanzi]) {
+        addCandidatesFrom(aiCache[hanzi].meaning || aiCache[hanzi].vietnamese);
+      }
+
+      const chips = Array.from(candidateSet).filter(Boolean);
+      if (chipsWrap && chipsEl) {
+        if (chips.length > 1) {
+          chipsWrap.style.display = 'block';
+          chipsEl.innerHTML = chips.map(c => {
+            const safeChip = escapeHtml(c);
+            return `<button type="button" class="edit-meaning-chip" data-val="${safeChip}" style="background: #f3eef9; border: 1.2px solid #d5c5eb; color: #4b3b66; font-family: var(--font-mali); font-size: 12.5px; font-weight: 700; padding: 5px 10px; border-radius: 999px; cursor: pointer;">${safeChip}</button>`;
+          }).join('');
+          chipsEl.querySelectorAll('.edit-meaning-chip').forEach(btn => {
+            btn.addEventListener('click', () => {
+              inputEl.value = btn.getAttribute('data-val') || '';
+              inputEl.focus();
+            });
+          });
+        } else {
+          chipsWrap.style.display = 'none';
+          chipsEl.innerHTML = '';
+        }
+      }
+
+      inputEl.value = currentVi;
+      modal.classList.add('active');
+      setTimeout(() => {
+        inputEl.focus();
+        try { inputEl.select(); } catch (e) {}
+      }, 60);
+    }
+
+    function closeEditMeaningModal() {
+      const modal = document.getElementById('editMeaningModal');
+      if (modal) modal.classList.remove('active');
+      editingMeaningHanzi = null;
+    }
+
+    function saveCustomWordMeaning(hanzi, rawNewVi) {
+      if (!hanzi) return;
+      const newVi = String(rawNewVi || '').trim();
+      if (!newVi) {
+        showToast('⚠️ Vui lòng nhập nghĩa tiếng Việt!');
+        return;
+      }
+
+      customWordMeanings[hanzi] = newVi;
+      try {
+        localStorage.setItem('hsk_custom_word_meanings', JSON.stringify(customWordMeanings));
+      } catch (e) {}
+
+      // Update HSK 6 & HSK 7-9 in-memory lists
+      if (Array.isArray(hsk6List)) {
+        hsk6List.forEach(it => {
+          if (it && it.hanzi === hanzi) {
+            it.vietnamese = newVi;
+            ensureSearchCacheOnItem(it);
+          }
+        });
+      }
+      if (Array.isArray(hsk79List)) {
+        hsk79List.forEach(it => {
+          if (it && it.hanzi === hanzi) {
+            it.vietnamese = newVi;
+            ensureSearchCacheOnItem(it);
+          }
+        });
+      }
+
+      // Update Custom Groups
+      let customChanged = false;
+      if (Array.isArray(customGroups)) {
+        customGroups.forEach(g => {
+          (g && g.words || []).forEach(w => {
+            const h = w && (w.hanzi || w.word || w.text || w.chinese);
+            if (h === hanzi) {
+              w.vietnamese = newVi;
+              if (w.vi !== undefined) w.vi = newVi;
+              if (w.meaning !== undefined) w.meaning = newVi;
+              ensureSearchCacheOnItem(w);
+              customChanged = true;
+            }
+          });
+        });
+        if (customChanged) {
+          try { localStorage.setItem('hsk_custom_groups', JSON.stringify(customGroups)); } catch (e) {}
+        }
+      }
+
+      // Update Reading Articles selectedWords & tokens if present
+      if (typeof readingArticles !== 'undefined' && Array.isArray(readingArticles)) {
+        let artChanged = false;
+        readingArticles.forEach(art => {
+          if (!art) return;
+          (art.selectedWords || []).forEach(sw => {
+            if (sw && sw.hanzi === hanzi) {
+              sw.vietnamese = newVi;
+              artChanged = true;
+            }
+          });
+          (art.tokens || []).forEach(tk => {
+            if (tk && (tk.hanzi === hanzi || tk.word === hanzi || tk.text === hanzi)) {
+              tk.vietnamese = newVi;
+              if (tk.vi !== undefined) tk.vi = newVi;
+              artChanged = true;
+            }
+          });
+        });
+        if (artChanged && typeof saveReadingArticlesToStorage === 'function') {
+          saveReadingArticlesToStorage();
+        }
+      }
+
+      // Update Video Lessons savedWords & subtitle tokens if present
+      if (typeof vslLessons !== 'undefined' && Array.isArray(vslLessons)) {
+        vslLessons.forEach(les => {
+          if (!les) return;
+          let lesChanged = false;
+          (les.savedWords || []).forEach(sw => {
+            if (sw && sw.hanzi === hanzi) {
+              sw.vietnamese = newVi;
+              lesChanged = true;
+            }
+          });
+          (les.subtitles || []).forEach(sub => {
+            (sub && sub.tokens || []).forEach(tk => {
+              if (tk && (tk.word === hanzi || tk.hanzi === hanzi)) {
+                tk.vietnamese = newVi;
+                lesChanged = true;
+              }
+            });
+          });
+          if (lesChanged && typeof saveVslLessonsToStorage === 'function') {
+            saveVslLessonsToStorage(les.id);
+          }
+        });
+      }
+
+      // Update AI Cache if present
+      if (typeof aiCache !== 'undefined' && aiCache && aiCache[hanzi]) {
+        aiCache[hanzi].meaning = newVi;
+        aiCache[hanzi].vietnamese = newVi;
+        if (typeof persistAiEntry === 'function') persistAiEntry(hanzi);
+      }
+
+      // Update working state & shuffled state
+      if (Array.isArray(groupWordsState)) {
+        groupWordsState.forEach(w => {
+          if (w && w.hanzi === hanzi) w.vietnamese = newVi;
+        });
+      }
+      if (Array.isArray(shuffledGroupWords)) {
+        shuffledGroupWords.forEach(w => {
+          if (w && w.hanzi === hanzi) w.vietnamese = newVi;
+        });
+      }
+
+      if (typeof srsInvalidateLookup === 'function') srsInvalidateLookup();
+
+      // Update DOM row in place without scrolling
+      if (vocabListEl) {
+        const item = (groupWordsState || []).find(v => v && v.hanzi === hanzi);
+        const targetRow = vocabListEl.querySelector(`.vocab-item[data-hanzi="${CSS.escape ? CSS.escape(hanzi) : hanzi}"]`);
+        if (targetRow && item) {
+          targetRow.innerHTML = buildRowContent(item);
+        } else {
+          renderVocabList(true);
+        }
+      }
+
+      if (typeof saveToCloud === 'function') {
+        saveToCloud(false);
+      }
+
+      closeEditMeaningModal();
+      showToast(`✅ Đã đổi nghĩa "${hanzi}" ➔ "${newVi}"`);
+    }
+
+    (function initEditMeaningModalEvents() {
+      const modal = document.getElementById('editMeaningModal');
+      const btnClose = document.getElementById('btnEditMeaningClose');
+      const btnCancel = document.getElementById('btnEditMeaningCancel');
+      const btnSave = document.getElementById('btnEditMeaningSave');
+      const inputEl = document.getElementById('inputEditMeaningVi');
+
+      if (btnClose) btnClose.addEventListener('click', closeEditMeaningModal);
+      if (btnCancel) btnCancel.addEventListener('click', closeEditMeaningModal);
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeEditMeaningModal();
+        });
+      }
+      if (btnSave && inputEl) {
+        btnSave.addEventListener('click', () => {
+          if (editingMeaningHanzi) saveCustomWordMeaning(editingMeaningHanzi, inputEl.value);
+        });
+        inputEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            if (editingMeaningHanzi) saveCustomWordMeaning(editingMeaningHanzi, inputEl.value);
+          } else if (e.key === 'Escape') {
+            closeEditMeaningModal();
+          }
+        });
+      }
+    })();
+
     // Long Press Helper Function (detects 500ms press without scrolling)
     function addLongPressListener(element, callback, duration = 500) {
       if (!element) return;
@@ -6578,7 +6902,7 @@
           hanzi: hanzi,
           pinyin: (val && val.py) || '',
           pos: (val && val.pos) || '',
-          vietnamese: (val && val.vi) || '',
+          vietnamese: getEffectiveWordMeaning(hanzi, (val && val.vi) || ''),
           level: 'hsk6'
         }));
       }
@@ -6589,10 +6913,12 @@
           hanzi: hanzi,
           pinyin: (val && val.py) || '',
           pos: (val && val.pos) || '',
-          vietnamese: (val && val.vi) || '',
+          vietnamese: getEffectiveWordMeaning(hanzi, (val && val.vi) || ''),
           level: 'hsk79'
         }));
       }
+
+      applyCustomMeaningsToMemoryLists();
 
       // Update UI tab counts dynamically to match loaded dictionary data
       const countHsk6 = document.getElementById('countLevelHsk6');
@@ -6949,7 +7275,7 @@
       (customGroups || []).forEach(g => (g.words || []).forEach(w => {
         const h = w && (w.hanzi || w.word || w.text || w.chinese);
         if (h && !map.has(h)) {
-          map.set(h, { ...w, hanzi: h, pinyin: w.pinyin || '', vietnamese: w.vietnamese || w.vi || w.meaning || '' });
+          map.set(h, { ...w, hanzi: h, pinyin: w.pinyin || '', vietnamese: getEffectiveWordMeaning(h, w.vietnamese || w.vi || w.meaning || '') });
         }
       }));
       (hsk6List || []).forEach(w => { if (w && w.hanzi && !map.has(w.hanzi)) map.set(w.hanzi, w); });
@@ -7559,6 +7885,7 @@
         reading_audio_speed: localStorage.getItem('hsk_reading_audio_speed') || '1.0',
         srsData: srsData || {},
         aiCompareCache: aiCompareCache || {},
+        customWordMeanings: customWordMeanings || {},
         studyStreak: (() => { try { return studyCloudPayload(); } catch (e) { return undefined; } })(),
         updated_at: new Date().toISOString()
       };
@@ -7759,6 +8086,11 @@
           if (rowData.aiCompareCache && typeof rowData.aiCompareCache === 'object') {
             Object.assign(aiCompareCache, rowData.aiCompareCache);
             try { localStorage.setItem('hsk_ai_compare_cache', JSON.stringify(aiCompareCache)); } catch (e) {}
+          }
+          if (rowData.customWordMeanings && typeof rowData.customWordMeanings === 'object') {
+            Object.assign(customWordMeanings, rowData.customWordMeanings);
+            try { localStorage.setItem('hsk_custom_word_meanings', JSON.stringify(customWordMeanings)); } catch (e) {}
+            applyCustomMeaningsToMemoryLists();
           }
           if (rowData.qwenAudioCache && typeof rowData.qwenAudioCache === 'object') {
             qwenAudioCache = Object.assign({}, rowData.qwenAudioCache, qwenAudioCache);
@@ -8847,7 +9179,7 @@
         hanzi: hanzi,
         pinyin: it.pinyin || '',
         pos: it.pos || '',
-        vietnamese: it.vietnamese || it.vi || it.meaning || '',
+        vietnamese: getEffectiveWordMeaning(hanzi, it.vietnamese || it.vi || it.meaning || ''),
         level: it.level || defaultLevel,
         levelLabel: it.level === 'hsk6' ? 'HSK 6' :
                     it.level === 'hsk79' ? 'HSK 7-9' :
@@ -8873,7 +9205,7 @@
             ...item,
             hanzi,
             pinyin: item.pinyin || '',
-            vietnamese: item.vietnamese || item.vi || item.meaning || '',
+            vietnamese: getEffectiveWordMeaning(hanzi, item.vietnamese || item.vi || item.meaning || ''),
             status: getWordStatus(hanzi),
             revealed: false
           };
@@ -8891,7 +9223,7 @@
           ...item,
           hanzi,
           pinyin: item.pinyin || '',
-          vietnamese: item.vietnamese || item.vi || item.meaning || '',
+          vietnamese: getEffectiveWordMeaning(hanzi, item.vietnamese || item.vi || item.meaning || ''),
           status: getWordStatus(hanzi),
           revealed: false
         };
@@ -9614,6 +9946,13 @@
     // TRADITIONAL -> SIMPLIFIED CHINESE CONVERTER (OpenCC)
     // ==========================================
     const SIMPLIFIED_ONLY_SYSTEM_MSG = 'QUY TẮC BẮT BUỘC: Mọi chữ Hán trong câu trả lời (kể cả trong phần giải thích tiếng Việt, ví dụ, cụm từ) PHẢI viết bằng CHỮ GIẢN THỂ (简体中文, chuẩn Trung Quốc đại lục). TUYỆT ĐỐI KHÔNG dùng chữ phồn thể (繁體). Ví dụ đúng: 乐于, 学习, 这个. Ví dụ sai: 樂於, 學習, 這個.';
+    function getOpenRouterReasoning(modelName) {
+      const m = String(modelName || '').toLowerCase();
+      if (m.includes('gemini-3')) {
+        return { effort: 'low', exclude: true };
+      }
+      return { enabled: false };
+    }
     let _t2sConverter = null;
     function toSimplified(str) {
       if (!str || typeof str !== 'string') return str;
@@ -9907,7 +10246,8 @@ Lưu ý:
 - Mỗi từ chỉ đúng 1 câu ví dụ chất lượng.
 - Phần "why_this_word" phải giải thích cụ thể lý do ngữ pháp/ngữ cảnh khiến từ này phù hợp mà từ kia không phù hợp.`;
 
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const primaryModel = forceRefresh ? 'google/gemini-3.8-flash' : 'google/gemini-2.5-flash';
+      let response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
@@ -9916,11 +10256,28 @@ Lưu ý:
           'X-Title': 'HSK Vocab App'
         },
         body: JSON.stringify({
-          model: forceRefresh ? 'google/gemini-3.8-flash' : 'google/gemini-2.5-flash',
-          reasoning: { enabled: false },
+          model: primaryModel,
+          reasoning: getOpenRouterReasoning(primaryModel),
           messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
         })
       });
+
+      if (!response.ok && primaryModel !== 'google/gemini-2.5-flash') {
+        response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.href,
+            'X-Title': 'HSK Vocab App'
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            reasoning: { enabled: false },
+            messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
+          })
+        });
+      }
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
@@ -10531,7 +10888,7 @@ Viết bằng tiếng Việt, đúng chính tả, không dùng chữ phồn th�
           },
           body: JSON.stringify({
             model: 'google/gemini-3.8-flash',
-            reasoning: { enabled: false },
+            reasoning: getOpenRouterReasoning('google/gemini-3.8-flash'),
             messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
@@ -10597,7 +10954,7 @@ Lưu ý quan trọng:
 - Tuyệt đối KHÔNG thêm icon loa 🔊 hay emoji âm thanh vào cuối câu chữ Hán, pinyin hoặc tiếng Việt.`;
 
       const targetModel = modelOverride || (forceRefresh ? 'google/gemini-3.8-flash' : 'google/gemini-2.5-flash');
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      let response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
@@ -10607,10 +10964,27 @@ Lưu ý quan trọng:
         },
         body: JSON.stringify({
           model: targetModel,
-          reasoning: { enabled: false },
+          reasoning: getOpenRouterReasoning(targetModel),
           messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
         })
       });
+
+      if (!response.ok && targetModel !== 'google/gemini-2.5-flash') {
+        response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.href,
+            'X-Title': 'HSK Vocab App'
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            reasoning: { enabled: false },
+            messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
+          })
+        });
+      }
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
@@ -10810,8 +11184,28 @@ Lưu ý quan trọng:
       });
     }
 
+    function buildAiExampleCardHTML(ex, idx, targetHanzi) {
+      const highlightTagStyle = "font-family: var(--font-hanzi) !important; background: #efe8f7; color: #584575; font-weight: 700; padding: 1px 6px; border-radius: 6px; border: 1px solid #d5c5eb;";
+      const cleanHanzi = (ex.hanzi || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
+      const cleanPinyin = (ex.pinyin || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
+      const cleanVietnamese = (ex.vietnamese || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
+      const escapedHanzi = cleanHanzi.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const highlightedHanzi = highlightWordInSentence(cleanHanzi, targetHanzi, highlightTagStyle);
+
+      return `
+          <div class="af-example-zone" data-example-idx="${idx}" onclick="speakChinese('${escapedHanzi}')" title="Chạm để nghe phát âm câu ví dụ">
+            <div class="af-example-head">
+              <span>✿ Câu ví dụ ${idx + 1}</span>
+            </div>
+            <div class="af-example-hanzi">${highlightedHanzi}</div>
+            ${cleanPinyin ? `<div class="af-example-pinyin">${cleanPinyin}</div>` : ''}
+            ${cleanVietnamese ? `<div class="af-example-vi">${cleanVietnamese}</div>` : ''}
+          </div>
+        `;
+    }
+
     // Render AI Explanation inside Modal (Standard vocabulary levels & Custom groups)
-    function renderAiExplanation(data) {
+    function renderAiExplanation(data, options = {}) {
       data = deepToSimplified(data || {});
       const modalCard = aiModal.querySelector('.modal-card');
       modalCard.classList.remove('transparent-loading');
@@ -10845,26 +11239,7 @@ Lưu ý quan trọng:
         hanziFontSize = 'clamp(30px, 7.8vw, 33px)';
       }
 
-      const highlightTagStyle = "font-family: var(--font-hanzi) !important; background: #efe8f7; color: #584575; font-weight: 700; padding: 1px 6px; border-radius: 6px; border: 1px solid #d5c5eb;";
-
-      let examplesHTML = (data.examples || []).map((ex, idx) => {
-        const cleanHanzi = (ex.hanzi || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
-        const cleanPinyin = (ex.pinyin || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
-        const cleanVietnamese = (ex.vietnamese || '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27B0]|🔊|📢|🔈|🔉/g, '').trim();
-        const escapedHanzi = cleanHanzi.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        const highlightedHanzi = highlightWordInSentence(cleanHanzi, data.hanzi, highlightTagStyle);
-
-        return `
-          <div class="af-example-zone" onclick="speakChinese('${escapedHanzi}')" title="Chạm để nghe phát âm câu ví dụ">
-            <div class="af-example-head">
-              <span>✿ Câu ví dụ ${idx + 1}</span>
-            </div>
-            <div class="af-example-hanzi">${highlightedHanzi}</div>
-            ${cleanPinyin ? `<div class="af-example-pinyin">${cleanPinyin}</div>` : ''}
-            ${cleanVietnamese ? `<div class="af-example-vi">${cleanVietnamese}</div>` : ''}
-          </div>
-        `;
-      }).join('');
+      let examplesHTML = (data.examples || []).map((ex, idx) => buildAiExampleCardHTML(ex, idx, data.hanzi)).join('');
 
       const hanVietUpper = (data.hanViet || getHanViet(data.hanzi) || '').trim().toUpperCase();
       if (hanVietUpper && (!data.hanViet || data.hanViet !== hanVietUpper)) {
@@ -10930,7 +11305,9 @@ Lưu ý quan trọng:
         </div>
       `;
 
-      resetModalScroll(aiModal);
+      if (!options.preserveScroll) {
+        resetModalScroll(aiModal);
+      }
 
       const compareInput = document.getElementById('compareWordInput');
       const btnSubmitCompare = document.getElementById('btnSubmitCompare');
@@ -11006,18 +11383,36 @@ Lưu ý:
 
         const resData = await response.json();
         const contentStr = resData.choices?.[0]?.message?.content || '{}';
-        const parsed = safeParseJSON(contentStr);
+        const parsed = deepToSimplified(safeParseJSON(contentStr) || {});
 
         if (parsed.examples && parsed.examples.length > 0) {
           if (!aiCache[hanzi].examples) aiCache[hanzi].examples = [];
+          const startIdx = aiCache[hanzi].examples.length;
           aiCache[hanzi].examples.push(...parsed.examples);
           persistAiEntry(hanzi);
-          renderAiExplanation(aiCache[hanzi]);
+
+          const examplesContainer = document.getElementById('examplesContainer');
+          if (examplesContainer) {
+            const appendedHTML = parsed.examples
+              .map((ex, i) => buildAiExampleCardHTML(ex, startIdx + i, hanzi))
+              .join('');
+            examplesContainer.insertAdjacentHTML('beforeend', appendedHTML);
+            btn.innerHTML = `<span>✿ Xem thêm ví dụ khác</span>`;
+            btn.disabled = false;
+            const firstNewCard = examplesContainer.querySelector(`[data-example-idx="${startIdx}"]`);
+            if (firstNewCard) {
+              firstNewCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          } else {
+            renderAiExplanation(aiCache[hanzi], { preserveScroll: true });
+          }
           showToast('Đã thêm 3 câu ví dụ mới!');
+        } else {
+          throw new Error('Không có ví dụ mới');
         }
       } catch (err) {
         showToast('Không thể lấy thêm ví dụ!');
-        btn.innerHTML = `<span>➕ Xem thêm ví dụ khác</span>`;
+        btn.innerHTML = `<span>✿ Xem thêm ví dụ khác</span>`;
         btn.disabled = false;
       }
     }
@@ -11097,7 +11492,7 @@ Lưu ý:
         `;
 
         const vietnameseBlock = `
-          <div class="vietnamese-text" ${!alwaysShowCol2 && hanziInCol1 ? `onclick="toggleRevealItem('${safeId}', event)" style="cursor:pointer;"` : ''}>${item.vietnamese || ''}</div>
+          <div class="vietnamese-text" data-edit-hanzi="${escapeHtml(item.hanzi || '')}" title="Nhấn giữ để đổi nghĩa tiếng Việt" style="user-select:none;-webkit-user-select:none;${!alwaysShowCol2 && hanziInCol1 ? 'cursor:pointer;' : ''}" ${!alwaysShowCol2 && hanziInCol1 ? `onclick="toggleRevealItem('${safeId}', event)"` : ''}>${item.vietnamese || ''}</div>
         `;
 
         const blankBlock = `
@@ -11129,6 +11524,7 @@ Lưu ý:
     // Toggle reveal state for an item on tap
     function toggleRevealItem(id, event) {
       if (event) event.stopPropagation();
+      if (Date.now() < suppressNextViClickUntil) return;
       const item = groupWordsState.find(v => v.id === id || v.hanzi === id);
       if (item) {
         item.revealed = !item.revealed;
@@ -11141,6 +11537,76 @@ Lưu ý:
         }
       }
     }
+
+    // Delegated long-press on Vietnamese meaning column (.vietnamese-text) across all levels
+    (function initVocabListViLongPress() {
+      if (!vocabListEl) return;
+      let viTimer = null;
+      let startX = 0, startY = 0;
+
+      function resolveViTargetHanzi(target) {
+        if (!target || typeof target.closest !== 'function') return null;
+        if (target.closest('.actions-cell') || target.closest('.col-empty-blank') || target.closest('.hanzi-text')) return null;
+        const directVi = target.closest('.vietnamese-text');
+        if (directVi) {
+          const h = directVi.getAttribute('data-edit-hanzi') || directVi.closest('.vocab-item')?.getAttribute('data-hanzi');
+          return h || null;
+        }
+        const colMain = target.closest('.col-main');
+        if (colMain && !colMain.querySelector('.hanzi-text')) {
+          const innerVi = colMain.querySelector('.vietnamese-text');
+          if (innerVi) {
+            return innerVi.getAttribute('data-edit-hanzi') || colMain.closest('.vocab-item')?.getAttribute('data-hanzi') || null;
+          }
+        }
+        return null;
+      }
+
+      function clearViTimer() {
+        if (viTimer) {
+          clearTimeout(viTimer);
+          viTimer = null;
+        }
+      }
+
+      function onStart(e) {
+        if (e.touches && e.touches.length > 1) return;
+        const hanzi = resolveViTargetHanzi(e.target);
+        if (!hanzi) return;
+        const pt = e.touches ? e.touches[0] : e;
+        startX = pt.clientX;
+        startY = pt.clientY;
+        clearViTimer();
+        viTimer = setTimeout(() => {
+          viTimer = null;
+          suppressNextViClickUntil = Date.now() + 650;
+          if (navigator.vibrate) navigator.vibrate(40);
+          openEditMeaningModal(hanzi);
+        }, 480);
+      }
+
+      function onMove(e) {
+        if (!viTimer) return;
+        const pt = e.touches ? e.touches[0] : e;
+        if (Math.hypot(pt.clientX - startX, pt.clientY - startY) > 10) {
+          clearViTimer();
+        }
+      }
+
+      vocabListEl.addEventListener('touchstart', onStart, { passive: true });
+      vocabListEl.addEventListener('touchend', clearViTimer);
+      vocabListEl.addEventListener('touchcancel', clearViTimer);
+      vocabListEl.addEventListener('touchmove', onMove, { passive: true });
+      vocabListEl.addEventListener('mousedown', onStart);
+      vocabListEl.addEventListener('mouseup', clearViTimer);
+      vocabListEl.addEventListener('mouseleave', clearViTimer);
+      vocabListEl.addEventListener('mousemove', onMove);
+      vocabListEl.addEventListener('contextmenu', (e) => {
+        if (resolveViTargetHanzi(e.target)) {
+          e.preventDefault();
+        }
+      });
+    })();
 
     // Current working group words list in memory
     let groupWordsState = [];
@@ -11384,10 +11850,15 @@ Lưu ý:
 
           row.innerHTML = buildRowContent(item);
 
-          // Enable long-press confirmation popup to delete word only on custom/upgrade level
+          // Enable long-press confirmation popup to delete word only on custom/upgrade level (when pressing Hanzi side, not Vietnamese meaning side)
           if (canLongPressDelete) {
-            addLongPressListener(row, () => {
+            addLongPressListener(row, (e) => {
               if (currentSearchQuery) return;
+              if (e && e.target && typeof e.target.closest === 'function') {
+                if (e.target.closest('.vietnamese-text') || e.target.closest('.actions-cell')) return;
+                const colMain = e.target.closest('.col-main');
+                if (colMain && !colMain.querySelector('.hanzi-text') && colMain.querySelector('.vietnamese-text')) return;
+              }
               if (currentLevel === 'custom') {
                 if (currentCustomGroupId === 'all_custom_groups') {
                   const combined = getCurrentLevelWords();
@@ -12153,7 +12624,7 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
   }
 }`;
 
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        let response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${apiKey}`,
@@ -12163,10 +12634,27 @@ Trả về JSON thuần tuý (không bọc trong markdown \`\`\`json):
           },
           body: JSON.stringify({
             model: 'google/gemini-3.8-flash',
-            reasoning: { enabled: false },
+            reasoning: getOpenRouterReasoning('google/gemini-3.8-flash'),
             messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
           })
         });
+
+        if (!response.ok) {
+          response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': window.location.href,
+              'X-Title': 'HSK Vocab App'
+            },
+            body: JSON.stringify({
+              model: 'google/gemini-2.5-flash',
+              reasoning: { enabled: false },
+              messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
+            })
+          });
+        }
 
         if (!response.ok) throw new Error('Không thể tra AI');
 
@@ -13186,7 +13674,7 @@ ${chunkText}
               },
               body: JSON.stringify({
                 model: options.model || 'google/gemini-2.5-flash',
-                reasoning: { enabled: false },
+                reasoning: getOpenRouterReasoning(options.model || 'google/gemini-2.5-flash'),
                 messages: [{ role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG }, { role: 'user', content: prompt }]
               })
             });
@@ -14339,7 +14827,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           });
         });
 
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        let response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${apiKey}`,
@@ -14349,13 +14837,33 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           },
           body: JSON.stringify({
             model: 'google/gemini-3.8-flash',
-            reasoning: { enabled: false },
+            reasoning: getOpenRouterReasoning('google/gemini-3.8-flash'),
             messages: [
               { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
               { role: 'user', content: userContent }
             ]
           })
         });
+
+        if (!response.ok) {
+          response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': window.location.href,
+              'X-Title': 'HSK Vocab App'
+            },
+            body: JSON.stringify({
+              model: 'google/gemini-2.5-flash',
+              reasoning: { enabled: false },
+              messages: [
+                { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
+                { role: 'user', content: userContent }
+              ]
+            })
+          });
+        }
 
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
@@ -14986,7 +15494,7 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
             },
             body: JSON.stringify({
               model: modelName,
-              reasoning: { enabled: false },
+              reasoning: getOpenRouterReasoning(modelName),
               messages: [
                 { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
                 { role: 'user', content: condensePrompt }
@@ -18504,7 +19012,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ theo cấu trúc:
               body: JSON.stringify({
                 model: modelName,
                 temperature: 0.1,
-                reasoning: { enabled: false },
+                reasoning: getOpenRouterReasoning(modelName),
                 messages: [
                   { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
                   {
@@ -19048,7 +19556,7 @@ Trả về DUY NHẤT một mảng JSON hợp lệ có đúng ${batch.length} ph
             body: JSON.stringify({
               model: modelName,
               temperature: 0.1,
-              reasoning: { enabled: false },
+              reasoning: getOpenRouterReasoning(modelName),
               messages: [
                 { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
                 { role: 'user', content: prompt }
@@ -21558,7 +22066,7 @@ Hãy trả về DUY NHẤT một đối tượng JSON hợp lệ (không bọc m
               model: modelName,
               temperature: 0.1,
               max_tokens: 220,
-              reasoning: { enabled: false },
+              reasoning: getOpenRouterReasoning(modelName),
               messages: [
                 { role: 'system', content: SIMPLIFIED_ONLY_SYSTEM_MSG },
                 { role: 'user', content: prompt }
@@ -22533,7 +23041,7 @@ ${wordListPrompt}
               },
               body: JSON.stringify({
                 model: currentModel,
-                reasoning: { enabled: false },
+                reasoning: getOpenRouterReasoning(currentModel),
                 messages: [
                   {
                     role: 'system',
@@ -23214,6 +23722,7 @@ ${wordListPrompt}
 
       btnCloseApiKeyModal.addEventListener('click', () => {
         apiKeyModal.classList.remove('active');
+        inputApiKey.value = '';
       });
 
       btnSaveApiKey.addEventListener('click', () => {
@@ -23222,6 +23731,7 @@ ${wordListPrompt}
           localStorage.setItem('openrouter_api_key', val);
           showToast('đã lưu OpenRouter API Key!');
           apiKeyModal.classList.remove('active');
+          inputApiKey.value = '';
           triggerDebouncedCloudSave();
         } else {
           showToast('vui lòng nhập API Key hợp lệ!');
