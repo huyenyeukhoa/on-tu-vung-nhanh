@@ -7951,6 +7951,7 @@
         readingArticles: cleanArticles,
         deletedReadingArticleIds: deletedReadingArticleIds || [],
         pinnedHskNews: (typeof hskPinnedNewsList !== 'undefined' && Array.isArray(hskPinnedNewsList)) ? hskPinnedNewsList : [],
+        curatedHskNewsCache: safeGetJSON(HSK_NEWS_CACHE_KEY, null),
         openrouter_api_key: localStorage.getItem('openrouter_api_key') || '',
         reading_audio_speed: localStorage.getItem('hsk_reading_audio_speed') || '1.0',
         srsData: srsData || {},
@@ -8135,6 +8136,14 @@
             hskPinnedNewsList = rowData.pinnedHskNews;
             try { localStorage.setItem(HSK_PINNED_NEWS_KEY, JSON.stringify(hskPinnedNewsList)); } catch (e) {}
             if (typeof updatePinnedNewsCountUI === 'function') updatePinnedNewsCountUI();
+          }
+
+          if (rowData.curatedHskNewsCache && Array.isArray(rowData.curatedHskNewsCache.items) && rowData.curatedHskNewsCache.items.length > 0) {
+            const localCurated = safeGetJSON(HSK_NEWS_CACHE_KEY, null);
+            if (!localCurated || !Array.isArray(localCurated.items) || localCurated.items.length === 0 || (Number(rowData.curatedHskNewsCache.savedAt) || 0) >= (Number(localCurated.savedAt) || 0)) {
+              hskCuratedNewsList = rowData.curatedHskNewsCache.items;
+              try { localStorage.setItem(HSK_NEWS_CACHE_KEY, JSON.stringify(rowData.curatedHskNewsCache)); } catch (e) {}
+            }
           }
 
           if (rowData.aiCache && typeof rowData.aiCache === 'object') {
@@ -15077,28 +15086,31 @@ Lưu ý cốt lõi: Hội đồng ra đề HSK 7-9 KHÔNG BAO GIỜ lặp lại 
    - Quy luật chọn bài MỚI có khả năng ra thi: Chọn những bài bình luận văn hóa - xã hội - giáo dục sâu sắc (đặc biệt từ 人民日报·时评/论坛), bàn về **giá trị con người, đạo đức nghề nghiệp, thái độ sống, sự kiên trì, đọc sách và tư duy độc lập trong thời đại số**.`;
 
     function openHskNewsModal() {
+      const modal = document.getElementById('hskNewsModal');
+      if (modal) modal.classList.add('active');
+      updatePinnedNewsCountUI();
+
+      // Always keep existing scanned news intact until user explicitly clicks "↻ Quét mới"
+      try {
+        const cached = JSON.parse(localStorage.getItem(HSK_NEWS_CACHE_KEY) || 'null');
+        if (cached && Array.isArray(cached.items) && cached.items.length > 0) {
+          hskCuratedNewsList = cached.items;
+          renderHskNewsCards();
+          return;
+        }
+      } catch (e) {}
+
+      if (Array.isArray(hskCuratedNewsList) && hskCuratedNewsList.length > 0) {
+        renderHskNewsCards();
+        return;
+      }
+
       const apiKey = localStorage.getItem('openrouter_api_key');
       if (!apiKey) {
         if (apiKeyModal) apiKeyModal.classList.add('active');
         showToast('Vui lòng nhập OpenRouter API Key để AI lọc tin tức HSK 7-9!');
         return;
       }
-      const modal = document.getElementById('hskNewsModal');
-      if (modal) modal.classList.add('active');
-      updatePinnedNewsCountUI();
-
-      // Load cached curated news if fetched within the last 12 hours
-      try {
-        const cached = JSON.parse(localStorage.getItem(HSK_NEWS_CACHE_KEY) || 'null');
-        if (cached && Array.isArray(cached.items) && cached.items.length > 0) {
-          hskCuratedNewsList = cached.items;
-          renderHskNewsCards();
-          if (Date.now() - (cached.savedAt || 0) > 12 * 3600 * 1000) {
-            fetchAndCurateHskDailyNews(true);
-          }
-          return;
-        }
-      } catch (e) {}
 
       fetchAndCurateHskDailyNews(false);
     }
@@ -15388,6 +15400,8 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
             items: curated
           }));
         } catch (e) {}
+        if (typeof triggerDebouncedCloudSave === 'function') triggerDebouncedCloudSave();
+        if (typeof mhQueueReadingAndNewsCloudSync === 'function') mhQueueReadingAndNewsCloudSync();
 
         renderHskNewsCards();
         if (forceRefresh) {
@@ -18553,9 +18567,12 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
           updatedAt: Date.now()
         });
         if (typeof hskPinnedNewsList !== 'undefined' && Array.isArray(hskPinnedNewsList)) {
+          const curatedCacheObj = safeGetJSON(HSK_NEWS_CACHE_KEY, null);
           await mhIdbPutKv('pinned_hsk_news', hskPinnedNewsList);
+          if (curatedCacheObj) await mhIdbPutKv('curated_hsk_news_cache', curatedCacheObj);
           await mhPersonalSupaUpsert('pinned_hsk_news_data', {
             pinnedHskNews: hskPinnedNewsList,
+            curatedHskNewsCache: curatedCacheObj,
             updatedAt: Date.now()
           });
         }
@@ -18571,6 +18588,14 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         if (Array.isArray(idbArts) && idbArts.length > (readingArticles || []).length) {
           const delSet = new Set((deletedReadingArticleIds || []).map(String));
           readingArticles = idbArts.filter(a => a && !delSet.has(String(a.id))).map(hydrateArticleTokensInPlace);
+        }
+        const idbCurated = await mhIdbGetKv('curated_hsk_news_cache');
+        if (idbCurated && Array.isArray(idbCurated.items) && idbCurated.items.length > 0) {
+          const localCurated = safeGetJSON(HSK_NEWS_CACHE_KEY, null);
+          if (!localCurated || !Array.isArray(localCurated.items) || localCurated.items.length === 0) {
+            hskCuratedNewsList = idbCurated.items;
+            try { localStorage.setItem(HSK_NEWS_CACHE_KEY, JSON.stringify(idbCurated)); } catch (e) {}
+          }
         }
         // 2. Sync from Supabase personal vault (nbexbqzuqcsqirpepdju)
         const remoteReading = await mhPersonalSupaGet('reading_articles_data');
@@ -18611,14 +18636,23 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         }
 
         const remoteNews = await mhPersonalSupaGet('pinned_hsk_news_data');
-        if (remoteNews && Array.isArray(remoteNews.pinnedHskNews) && remoteNews.pinnedHskNews.length > 0) {
-          if (typeof hskPinnedNewsList !== 'undefined') {
-            const map = new Map();
-            remoteNews.pinnedHskNews.forEach(n => { if (n && (n.id || n.title)) map.set(String(n.id || n.title), n); });
-            (hskPinnedNewsList || []).forEach(n => { if (n && (n.id || n.title)) map.set(String(n.id || n.title), n); });
-            hskPinnedNewsList = Array.from(map.values());
-            try { localStorage.setItem(HSK_PINNED_NEWS_KEY, JSON.stringify(hskPinnedNewsList)); } catch (e) {}
-            if (typeof updatePinnedNewsCountUI === 'function') updatePinnedNewsCountUI();
+        if (remoteNews && typeof remoteNews === 'object') {
+          if (Array.isArray(remoteNews.pinnedHskNews) && remoteNews.pinnedHskNews.length > 0) {
+            if (typeof hskPinnedNewsList !== 'undefined') {
+              const map = new Map();
+              remoteNews.pinnedHskNews.forEach(n => { if (n && (n.id || n.title)) map.set(String(n.id || n.title), n); });
+              (hskPinnedNewsList || []).forEach(n => { if (n && (n.id || n.title)) map.set(String(n.id || n.title), n); });
+              hskPinnedNewsList = Array.from(map.values());
+              try { localStorage.setItem(HSK_PINNED_NEWS_KEY, JSON.stringify(hskPinnedNewsList)); } catch (e) {}
+              if (typeof updatePinnedNewsCountUI === 'function') updatePinnedNewsCountUI();
+            }
+          }
+          if (remoteNews.curatedHskNewsCache && Array.isArray(remoteNews.curatedHskNewsCache.items) && remoteNews.curatedHskNewsCache.items.length > 0) {
+            const localCurated = safeGetJSON(HSK_NEWS_CACHE_KEY, null);
+            if (!localCurated || !Array.isArray(localCurated.items) || localCurated.items.length === 0 || (Number(remoteNews.curatedHskNewsCache.savedAt) || 0) >= (Number(localCurated.savedAt) || 0)) {
+              hskCuratedNewsList = remoteNews.curatedHskNewsCache.items;
+              try { localStorage.setItem(HSK_NEWS_CACHE_KEY, JSON.stringify(remoteNews.curatedHskNewsCache)); } catch (e) {}
+            }
           }
         }
       } catch (e) {
