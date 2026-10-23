@@ -318,8 +318,9 @@ exports.handler = async function (event) {
       { type: 'people', url: 'http://ent.people.com.cn/', origin: 'http://ent.people.com.cn', category: '文化·非遗', source: '人民日报·文旅', group: 'people' },
       { type: 'people', url: 'http://society.people.com.cn/', origin: 'http://society.people.com.cn', category: '社会·民生', source: '人民日报·社会', group: 'people' },
 
-      // 2. 科普中国 (Kepu China - CAST & People's Daily)
+      // 2. 科普中国 & 人民网科技 (Kepu China & People's Daily Sci-Tech)
       { type: 'people', url: 'http://kpzg.people.com.cn/', origin: 'http://kpzg.people.com.cn', category: '前沿·科普', source: '科普中国·人民网', group: 'kepu' },
+      { type: 'people', url: 'http://scitech.people.com.cn/', origin: 'http://scitech.people.com.cn', category: '自然·科普', source: '人民日报·科技', group: 'kepu' },
 
       // 3. 新华网 (Xinhua News Agency)
       { type: 'xinhua', url: 'https://www.news.cn/tech/', origin: 'https://www.news.cn', category: 'AI·硬科技', source: '新华网·科技', group: 'xinhua' },

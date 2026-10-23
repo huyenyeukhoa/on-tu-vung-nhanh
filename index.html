@@ -15286,15 +15286,24 @@ Lưu ý cốt lõi: Hội đồng ra đề HSK 7-9 KHÔNG BAO GIỜ lặp lại 
       }
 
       try {
-        const rawArticles = await fetchLiveChinaNewsFeedList();
-        if (!rawArticles || rawArticles.length === 0) {
+        const allFetchedArticles = await fetchLiveChinaNewsFeedList();
+        if (!allFetchedArticles || allFetchedArticles.length === 0) {
           throw new Error('Không kết nối được nguồn báo Trung Quốc. Vui lòng thử lại!');
         }
+
+        // Filter out articles already shown in previous scans, pinned, or saved in reading list
+        const seenUrls = new Set(safeGetJSON('hsk79_seen_news_urls_v1', []));
+        (hskCuratedNewsList || []).forEach(it => { if (it && it.link) seenUrls.add(it.link); });
+        (hskPinnedNewsList || []).forEach(it => { if (it && it.link) seenUrls.add(it.link); });
+        (readingArticles || []).forEach(art => { if (art && art.newsUrl) seenUrls.add(art.newsUrl); });
+
+        const freshArticles = allFetchedArticles.filter(art => art && art.link && !seenUrls.has(art.link));
+        const rawArticles = freshArticles.length >= 14 ? freshArticles : allFetchedArticles;
 
         pctCtrl.setFloor(42);
         pctCtrl.glideTo(94, 300);
         if (loadingText) {
-          loadingText.textContent = `🦋 Đã lấy ${rawArticles.length} bản tin từ 人民日报, 科普中国, 新华网, 中新网 · AI đang chọn bài có khả năng ra thi cao nhất...`;
+          loadingText.textContent = `🦋 Đã lấy ${rawArticles.length} bản tin mới từ 人民日报, 科普中国, 新华网, 中新网 · AI đang chọn bài có khả năng ra thi cao nhất...`;
         }
 
         const candidateListText = rawArticles.map((art, idx) =>
@@ -15311,8 +15320,13 @@ ${candidateListText}
 
 【NHIỆM VỤ CỦA BẠN — DỰ ĐOÁN BÀI MỚI CÓ KHẢ NĂNG RA THI】:
 1. **KHÔNG PHẢI tìm bài lặp lại nội dung đã từng ra thi rồi**! Mà hãy **dựa vào quy luật/khẩu vị ra đề từ các đề đã ra** để chọn ra **10 đến 12 bản tin MỚI** có **KHẢ NĂNG ĐƯỢC CHỌN VÀO ĐỀ THI HSK 7-9 SẮP TỚI CAO NHẤT** (cho phần Đọc hiểu, Nghe hiểu, Nói 5.3 hoặc Viết luận).
-2. **ĐẢM BẢO ĐA DẠNG CẢ 4 NGUỒN BÁO**: Hãy chọn kết hợp các bài đặc sắc từ cả **人民日报** (thời bình, giáo dục, y tế dưỡng lão, văn hóa), **科普中国** (khoa học thường thức, y sinh, AI, sinh thái), **新华网** (công nghệ cao, robot, kinh tế số) và **中新网** (đời sống xã hội, di sản phi vật thể).
-3. **LOẠI BỎ NGAY** các tin tức ngoại giao chính trị thuần túy, hội nghị hành chính, tai nạn hình sự lẻ tẻ, tin vắn chứng khoán/tỷ giá, hoặc tin giải trí showbiz/thể thao thuần túy không mang giá trị học thuật/xã hội.
+2. **PHÂN BỔ ĐỀU CẢ 5 TRỤC CHỦ ĐỀ & CẢ 4 NGUỒN BÁO**:
+   - Đảm bảo có đủ cả 5 trục (\`"tech"\`, \`"culture"\`, \`"social"\`, \`"eco"\`, \`"quote"\`, mỗi trục khoảng 2–3 bài xuất sắc nhất).
+   - Kết hợp đa dạng từ **人民日报** (thời bình, giáo dục, y tế dưỡng lão, văn hóa), **科普中国 & 人民日报·科技** (khoa học tự nhiên, y sinh, tâm lý học, AI, sinh thái), **新华网** (công nghệ cao, robot, kinh tế số) và **中新网** (đời sống xã hội, di sản phi vật thể).
+3. **QUY TẮC BỐI CẢNH TRUNG QUỐC & KHOA HỌC PHỔ QUÁT (CHUẨN ĐỀ THI THẬT)**:
+   - **Về Văn hóa, Xã hội, Đời sống, Mô hình kinh tế - công nghệ ứng dụng**: Ưu tiên chọn các câu chuyện, thành tựu và hiện tượng gắn với bối cảnh **Trung Quốc đương đại**.
+   - **Về Khoa học tự nhiên, Y sinh học, Tâm lý học, Thần kinh học, Sinh thái học & Nguyên lý công nghệ (科普)**: **Chấp nhận cả nghiên cứu của Trung Quốc lẫn nghiên cứu quốc tế** (vì đề thi Đọc hiểu & Nghe HSK 7-9 thường xuyên lấy các phát hiện khoa học/y học/tâm lý học mới trên thế giới qua cụm "研究人员发现 / 一项最新研究表明").
+   - **LOẠI BỎ NGAY**: Tin thời sự chính trị/ngoại giao, sự vụ xã hội nội bộ của riêng một nước ngoài, tin PR thương mại/cổ phiếu thuần túy của một nhãn hàng nước ngoài, hội nghị hành chính, tai nạn lẻ tẻ hoặc giải trí showbiz/thể thao thuần túy.
 4. Với mỗi bài được chọn, trả về:
    - \`index\`: Số thứ tự gốc \`[idx]\` trong danh sách trên (BẮT BUỘC khớp chính xác).
    - \`axis\`: Phân vào đúng 1 trong 5 trục: \`"tech"\` | \`"culture"\` | \`"social"\` | \`"eco"\` | \`"quote"\`.
@@ -15391,6 +15405,13 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         pctCtrl.stop(100);
         curated.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
         hskCuratedNewsList = curated;
+
+        // Record newly curated URLs into seen history (keep latest 150 URLs) so future "↻ Quét mới" never repeats them
+        try {
+          const prevSeen = safeGetJSON('hsk79_seen_news_urls_v1', []);
+          const nextSeen = Array.from(new Set([...curated.map(c => c.link).filter(Boolean), ...(Array.isArray(prevSeen) ? prevSeen : [])])).slice(0, 150);
+          localStorage.setItem('hsk79_seen_news_urls_v1', JSON.stringify(nextSeen));
+        } catch (e) {}
 
         const nowLabel = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN');
         try {
@@ -15601,8 +15622,9 @@ ${fullText.slice(0, 4200)}
      + **Đoạn 1 (Mở đầu)**: Bối cảnh, sự kiện, hiện tượng hoặc phát minh mở đầu bài báo.
      + **Đoạn 2 (& Đoạn 3) (Thân bài)**: Đầy đủ các luận điểm chính, nguyên nhân, cơ chế hoạt động, số liệu/dẫn chứng thực tế quan trọng trong thân bài.
      + **Đoạn cuối (Kết bài)**: Ý nghĩa thực tiễn, nhận định của chuyên gia, giải pháp hoặc thông điệp kết luận ở cuối bài báo gốc.
-3. **GIỮ NGUYÊN VĂN PHONG BÁO CHÍ CHÍNH THỐNG & TỪ VỰNG HSK 7-9 ĐẮT GIÁ**:
+3. **GIỮ NGUYÊN VĂN PHONG ĐỀ THI HSK 7-9 & TỪ VỰNG ĐẮT GIÁ**:
    - Giữ lại tối đa các từ vựng cao cấp HSK 6 / HSK 7-9, thành ngữ 4 chữ (成语), thuật ngữ chuyên môn và các câu văn báo chí/nghị luận đắt giá có trong bài báo gốc.
+   - Nếu bài gốc đề cập đến thương hiệu thương mại nước ngoài hoặc nhóm nghiên cứu quốc tế, hãy diễn đạt theo đúng văn phong khách quan của đề thi HSK 7-9 (ví dụ: dùng "研究人员发现 / 科学家指出 / 某科技团队研发..." và tập trung sâu vào cơ chế khoa học, công nghệ, ứng dụng thực tiễn và giá trị xã hội).
    - 100% viết bằng Chữ Hán Giản Thể (简体中文), tuyệt đối không chèn tiếng Việt hay lời bình ngoài lề.
 
 Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
