@@ -2,7 +2,7 @@ const https = require('https');
 const http = require('http');
 const { URL } = require('url');
 
-function fetchUrlText(targetUrl, timeoutMs = 8500, maxRedirects = 4) {
+function fetchUrlText(targetUrl, timeoutMs = 4500, maxRedirects = 4) {
   return new Promise((resolve, reject) => {
     if (maxRedirects <= 0) return reject(new Error('Too many redirects'));
     let parsed;
@@ -11,8 +11,22 @@ function fetchUrlText(targetUrl, timeoutMs = 8500, maxRedirects = 4) {
     } catch (e) {
       return reject(new Error('Invalid URL: ' + targetUrl));
     }
+    let settled = false;
+    let req = null;
+    const finish = (err, val) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(wallTimer);
+      if (err) reject(err);
+      else resolve(val);
+    };
+    const wallTimer = setTimeout(() => {
+      try { if (req) req.destroy(); } catch (e) {}
+      finish(new Error('Wall timeout fetching ' + targetUrl));
+    }, timeoutMs);
+
     const client = parsed.protocol === 'http:' ? http : https;
-    const req = client.get(targetUrl, {
+    req = client.get(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -21,6 +35,8 @@ function fetchUrlText(targetUrl, timeoutMs = 8500, maxRedirects = 4) {
       timeout: timeoutMs
     }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        clearTimeout(wallTimer);
+        settled = true;
         let nextUrl = res.headers.location;
         if (nextUrl.startsWith('//')) nextUrl = parsed.protocol + nextUrl;
         else if (nextUrl.startsWith('/')) nextUrl = parsed.origin + nextUrl;
@@ -36,18 +52,19 @@ function fetchUrlText(targetUrl, timeoutMs = 8500, maxRedirects = 4) {
             headAscii.includes('charset=gb2312') || headAscii.includes('charset="gb2312"') ||
             headAscii.includes('charset=gbk') || headAscii.includes('charset="gbk"')) {
           try {
-            return resolve(new TextDecoder('gb18030').decode(buf));
+            return finish(null, new TextDecoder('gb18030').decode(buf));
           } catch (e) {
-            return resolve(buf.toString('utf-8'));
+            return finish(null, buf.toString('utf-8'));
           }
         }
-        resolve(buf.toString('utf-8'));
+        finish(null, buf.toString('utf-8'));
       });
+      res.on('error', err => finish(err));
     });
-    req.on('error', reject);
+    req.on('error', err => finish(err));
     req.on('timeout', () => {
-      req.destroy();
-      reject(new Error('Timeout fetching ' + targetUrl));
+      try { req.destroy(); } catch (e) {}
+      finish(new Error('Timeout fetching ' + targetUrl));
     });
   });
 }
@@ -318,7 +335,7 @@ exports.handler = async function (event) {
 
     const results = await Promise.allSettled(
       sourcesConfig.map(async cfg => {
-        const raw = await fetchUrlText(cfg.url, 6500);
+        const raw = await fetchUrlText(cfg.url, 4500);
         let parsedItems = [];
         if (cfg.type === 'rss') {
           parsedItems = parseRssItems(raw, cfg.category, cfg.source);

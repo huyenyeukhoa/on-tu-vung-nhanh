@@ -2307,6 +2307,88 @@
       border-color: #8772a8 !important;
     }
 
+    /* ===== Foldable Inner Screen (e.g. OPPO Find N5 8.12") 2-Column Parallel Book Layout ===== */
+    #readingPassageContainer.split-bilingual-mode .reading-para-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
+      position: relative;
+      padding-bottom: 18px;
+      margin-bottom: 0 !important;
+    }
+    #readingPassageContainer.split-bilingual-mode .reading-para-row:last-of-type {
+      padding-bottom: 4px;
+    }
+    #readingPassageContainer.split-bilingual-mode .reading-para-row::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 1px;
+      background: rgba(135, 114, 168, 0.28);
+      transform: translateX(-0.5px);
+      pointer-events: none;
+    }
+    #readingPassageContainer.split-bilingual-mode .reading-para-vi-box {
+      display: block !important;
+      margin: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      font-family: var(--font-mali) !important;
+      font-size: 15.5px !important;
+      line-height: 1.72 !important;
+      color: #352849 !important;
+      text-align: left !important;
+      text-indent: 0 !important;
+    }
+    #readingPassageContainer.split-bilingual-mode .reading-para-box {
+      display: block !important;
+      margin: 0 !important;
+      font-size: 20px !important;
+      line-height: 2.1 !important;
+      text-align: left !important;
+      text-indent: 0 !important;
+    }
+    #readingPassageContainer.split-bilingual-mode .reading-token {
+      text-indent: 0 !important;
+    }
+    #readingPassageContainer.split-bilingual-mode.show-vi-gloss .reading-para-box,
+    #readingPassageContainer.split-bilingual-mode.reading-review-mode .reading-para-box,
+    #readingPassageContainer.split-bilingual-mode.quick-lookup-mode:not(.reading-review-mode) .reading-para-box {
+      line-height: 2.45 !important;
+    }
+    #readingPassageContainer.split-bilingual-mode .tiny-para-toggle-btn,
+    #readingPassageContainer.split-bilingual-mode .reading-para-vi-box .tiny-para-audio-btn {
+      display: none !important;
+    }
+    #readingPassageContainer.split-bilingual-mode.split-vi-left .reading-para-vi-box {
+      grid-column: 1;
+      grid-row: 1;
+      padding: 2px 18px 2px 2px !important;
+    }
+    #readingPassageContainer.split-bilingual-mode.split-vi-left .reading-para-box {
+      grid-column: 2;
+      grid-row: 1;
+      padding: 0 2px 0 18px !important;
+    }
+    #readingPassageContainer.split-bilingual-mode.split-vi-right .reading-para-box {
+      grid-column: 1;
+      grid-row: 1;
+      padding: 0 18px 0 2px !important;
+    }
+    #readingPassageContainer.split-bilingual-mode.split-vi-right .reading-para-vi-box {
+      grid-column: 2;
+      grid-row: 1;
+      padding: 2px 2px 2px 18px !important;
+    }
+    #readingPassageContainer.split-bilingual-mode .reading-para-row:has(.active-playing-para) {
+      background: rgba(239, 232, 247, 0.5);
+      border-radius: 12px;
+    }
+
     /* Vietnamese gloss layer under highlighted words (invisible overlay layer) */
     .reading-token .token-vi-gloss,
     .reading-token .token-vi-gloss * {
@@ -5575,38 +5657,23 @@
         <input type="hidden" id="readingTitleInput" value="" />
 
         <!-- Daily HSK 7-9 Curated Real News Entry Banner -->
-        <div class="rd-news-entry-banner" onclick="openHskNewsModal()" title="Đọc báo Trung Quốc xuất bản hôm nay, được AI dự đoán chủ đề mới dễ ra thi nhất dựa trên quy luật ra đề HSK 7-9">
-          <div style="display: flex; align-items: center; gap: 9px; min-width: 0; flex: 1;">
-            <span style="font-size: 22px; line-height: 1; flex-shrink: 0;">📰</span>
-            <div style="min-width: 0; flex: 1;">
-              <div style="font-family: var(--font-mali); font-size: 13.5px; font-weight: 800; color: #4b3b66; line-height: 1.25;">Tin tức HSK 7-9 hôm nay</div>
-              <div style="font-family: var(--font-mali); font-size: 11px; font-weight: 600; color: #68528a; margin-top: 2px; line-height: 1.3;">Báo gốc 中新网 mới nhất · AI dự đoán chủ đề có khả năng ra thi</div>
-            </div>
+        <div class="rd-news-entry-banner" onclick="openHskNewsModal()" style="padding: 9px 12px;" title="Đọc báo Trung Quốc xuất bản hôm nay, được AI dự đoán chủ đề mới dễ ra thi nhất dựa trên quy luật ra đề HSK 7-9">
+          <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+            <span style="font-size: 20px; line-height: 1; flex-shrink: 0;">📰</span>
+            <div style="font-family: var(--font-mali); font-size: 12.8px; font-weight: 800; color: #4b3b66; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Tin tức HSK 7-9 hôm nay</div>
           </div>
           <span style="font-family: var(--font-mali); font-size: 11.5px; font-weight: 800; color: #ffffff; background: linear-gradient(135deg, #9882b8 0%, #766299 100%); padding: 5px 10px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; box-shadow: 0 2px 6px rgba(118, 98, 153, 0.25);">Khám phá ➔</span>
-        </div>
-
-        <!-- Video Learning Entry Banner -->
-        <div class="rd-news-entry-banner" onclick="openVideoLearningModal()" style="margin-top: -4px;" title="Học từ vựng qua Video YouTube, Douyin (抖音) hoặc tải video từ điện thoại">
-          <div style="display: flex; align-items: center; gap: 9px; min-width: 0; flex: 1;">
-            <span style="font-size: 22px; line-height: 1; flex-shrink: 0;">🎬</span>
-            <div style="min-width: 0; flex: 1;">
-              <div style="font-family: var(--font-mali); font-size: 13.5px; font-weight: 800; color: #4b3b66; line-height: 1.25;">Học qua Video (YouTube · 抖音 · Từ máy)</div>
-              <div style="font-family: var(--font-mali); font-size: 11px; font-weight: 600; color: #68528a; margin-top: 2px; line-height: 1.3;">AI tự tách cụm từ, dịch nghĩa &amp; chạm tra từ như bài đọc</div>
-            </div>
-          </div>
-          <span style="font-family: var(--font-mali); font-size: 11.5px; font-weight: 800; color: #ffffff; background: linear-gradient(135deg, #9882b8 0%, #766299 100%); padding: 5px 10px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; box-shadow: 0 2px 6px rgba(118, 98, 153, 0.25);">Mở ➔</span>
         </div>
 
         <!-- Compact paste box -->
         <div class="rd-paste-card">
           <div class="rd-paste-head">
-            <span>✍️ Dán bài tiếng Trung</span>
+            <span style="font-size: 12.5px; white-space: nowrap;">✍️ Dán bài đọc</span>
             <span id="readingTextCharCount" class="rd-char-count"></span>
-            <button type="button" onclick="openImageScanModal()" class="rd-mini-btn" style="background: #efe8f7; color: #584575; border-color: #d5c5eb;">📸 Quét ảnh</button>
-            <button type="button" id="btnPasteReadingText" class="rd-mini-btn">📋 Dán</button>
+            <button type="button" onclick="openImageScanModal()" class="rd-mini-btn" style="background: #efe8f7; color: #584575; border-color: #d5c5eb; white-space: nowrap; flex-shrink: 0;">📸 Quét ảnh</button>
+            <button type="button" id="btnPasteReadingText" class="rd-mini-btn" style="white-space: nowrap; flex-shrink: 0;">📋 Dán</button>
           </div>
-          <textarea id="readingTextInput" class="rd-paste-textarea" rows="3" placeholder="Dán văn bản tiếng Trung vào đây... (AI sẽ tự đặt tiêu đề)"></textarea>
+          <textarea id="readingTextInput" class="rd-paste-textarea" rows="3" placeholder=""></textarea>
           <button class="primary-submit-btn" id="btnAnalyzeReadingText" style="width: 100%; padding: 10px; font-size: 13.5px; font-weight: 700; border-radius: 12px;">⚡ AI tách từ &amp; tạo bài</button>
         </div>
 
@@ -5908,6 +5975,9 @@
             </span>
           </div>
           <div style="display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; flex-wrap: nowrap !important;">
+            <button id="btnSwapReadingSplitCols" onclick="toggleReadingSplitSide()" class="tiny-underline-toggle-btn" style="display: none; font-size: 10px; font-weight: 700; padding: 2px 5.5px; border-radius: 7px; border: 1.2px solid #cbb6e8; background: #ede4f9; color: #5c4385; cursor: pointer; align-items: center; justify-content: center; gap: 3px; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.12); flex-shrink: 0; white-space: nowrap !important;" title="Đổi vị trí cột Tiếng Việt sang Trái hoặc Phải (Bố cục song ngữ màn hình trong)">
+              <span id="swapReadingSplitColsText">⇄ Việt | Trung</span>
+            </button>
             <button id="btnToggleReadingQuickLookup" onclick="toggleReadingQuickLookup()" class="tiny-underline-toggle-btn" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 7px; border: 1.2px solid #dfd3ef; background: #f3eef9; color: #766299; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mali); transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(118, 98, 153, 0.08); flex-shrink: 0; white-space: nowrap !important;" title="Tra nhanh: Chạm 1 lần hiện Pinyin + Nghĩa tại chỗ (ẩn bảng dưới), chạm lần 2 để Lưu/Bỏ lưu từ, giữ 0.5s mở bảng tra cứu AI">
               <span id="quickLookupToggleText">Tra nhanh</span>
             </button>
@@ -15063,7 +15133,7 @@ Lưu ý cốt lõi: Hội đồng ra đề HSK 7-9 KHÔNG BAO GIỜ lặp lại 
         console.warn('Netlify function fetch-hsk-news fallback to CORS proxy:', e);
       }
 
-      // 2. Multi-proxy fallback (CodeTabs + AllOrigins + CorsProxy)
+      // 2. Multi-proxy fallback (rss2json + parallel CodeTabs / AllOrigins / ThingProxy)
       const fallbackFeeds = [
         { url: 'https://www.chinanews.com.cn/rss/culture.xml', category: '文化·非遗', source: '中新网·文化' },
         { url: 'https://www.chinanews.com.cn/rss/society.xml', category: '社会·民生', source: '中新网·社会' },
@@ -15077,24 +15147,59 @@ Lưu ý cốt lõi: Hội đồng ra đề HSK 7-9 KHÔNG BAO GIỜ lặp lại 
         const proxyBuilders = [
           u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
           u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-          u => `https://corsproxy.io/?${encodeURIComponent(u)}`
+          u => `https://thingproxy.freeboard.io/fetch/${u}`
         ];
-        for (const buildProxy of proxyBuilders) {
-          try {
+        try {
+          return await Promise.any(proxyBuilders.map(async buildProxy => {
             const ctrl = new AbortController();
-            const tid = setTimeout(() => ctrl.abort(), 7500);
-            const r = await fetch(buildProxy(feedUrl), { signal: ctrl.signal });
-            clearTimeout(tid);
-            if (r.ok) {
+            const tid = setTimeout(() => ctrl.abort(), 6500);
+            try {
+              const r = await fetch(buildProxy(feedUrl), { signal: ctrl.signal });
+              if (!r.ok) throw new Error('HTTP ' + r.status);
               const txt = await r.text();
               if (txt && txt.includes('<item>')) return txt;
+              throw new Error('No <item>');
+            } finally {
+              clearTimeout(tid);
             }
-          } catch (err) {}
+          }));
+        } catch (err) {
+          return '';
         }
-        return '';
       }
 
       await Promise.allSettled(fallbackFeeds.map(async f => {
+        // Try rss2json JSON API first (fast & CORS-enabled)
+        try {
+          const ctrl = new AbortController();
+          const tid = setTimeout(() => ctrl.abort(), 5500);
+          const rJson = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(f.url)}`, { signal: ctrl.signal });
+          clearTimeout(tid);
+          if (rJson.ok) {
+            const jData = await rJson.json();
+            if (jData && Array.isArray(jData.items) && jData.items.length > 0) {
+              jData.items.forEach(it => {
+                const title = String(it.title || '').trim();
+                const link = String(it.link || '').trim().replace(/^http:\/\//i, 'https://');
+                const summary = String(it.description || it.content || '').replace(/<[^>]+>/g, '').trim();
+                if (!title || !link || seen.has(link)) return;
+                seen.add(link);
+                const dMatch = link.match(/\/(\d{4})\/(\d{2})-(\d{2})\//);
+                const dateStr = dMatch ? `${dMatch[1]}-${dMatch[2]}-${dMatch[3]}` : 'Hôm nay';
+                items.push({
+                  title,
+                  link,
+                  summary: summary.slice(0, 200),
+                  dateStr,
+                  feedCategory: f.category,
+                  source: f.source
+                });
+              });
+              return;
+            }
+          }
+        } catch (e) {}
+
         const xml = await fetchRssViaProxies(f.url);
         if (!xml) return;
         const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
@@ -15415,12 +15520,27 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         console.warn('Netlify article fetch fallback to proxy:', e);
       }
 
-      // 2. Fallback via CORS proxy if running locally
+      // 2. Fallback via parallel CORS proxies if running locally
       try {
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-        const r = await fetch(proxyUrl);
-        if (r.ok) {
-          const html = await r.text();
+        const proxyUrls = [
+          `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+          `https://thingproxy.freeboard.io/fetch/${targetUrl}`
+        ];
+        const html = await Promise.any(proxyUrls.map(async pUrl => {
+          const ctrl = new AbortController();
+          const tid = setTimeout(() => ctrl.abort(), 7000);
+          try {
+            const r = await fetch(pUrl, { signal: ctrl.signal });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            const txt = await r.text();
+            if (txt && txt.includes('<p')) return txt;
+            throw new Error('No <p>');
+          } finally {
+            clearTimeout(tid);
+          }
+        }));
+        if (html) {
           const zwStart = html.search(/<div class="left_zw"|<div\s+class=["'][^"']*rm_txt_con|id=["']detailContent["']/i);
           const region = zwStart !== -1 ? html.slice(zwStart, zwStart + 32000) : html;
           const pRegex = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;
@@ -16889,10 +17009,13 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
       art.tokens = syncedFlatTokens;
 
       let overallTokenIdx = 0;
+      const fallbackViLines = (art.translation && typeof art.translation === 'string')
+        ? art.translation.split(/\n+/).map(s => s.trim()).filter(Boolean)
+        : [];
 
       const paragraphsHTML = paragraphs.map((para, pIdx) => {
         const isToggledVi = !!activeParagraphToggles[pIdx];
-        const viText = para.vietnamese || (paragraphs.length === 1 && art.translation ? art.translation : 'Đoạn này chưa có bản dịch.');
+        const viText = para.vietnamese || fallbackViLines[pIdx] || (paragraphs.length === 1 && art.translation ? art.translation : 'Đoạn này chưa có bản dịch.');
         const purpleSpeakerSVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#8772a8" style="vertical-align: middle; flex-shrink: 0;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
         const tinyAudioBtnZhHTML = `<button class="tiny-para-audio-btn" data-pidx="${pIdx}" id="btnParaAudio_${pIdx}" title="Chạm: Đọc riêng đoạn này | Giữ 0.5s: Đọc tiếp từ đoạn này đến hết">${purpleSpeakerSVG}</button>`;
         const tinyAudioBtnViHTML = `<button class="tiny-para-audio-btn" data-pidx="${pIdx}" title="Chạm: Đọc riêng đoạn này | Giữ 0.5s: Đọc tiếp từ đoạn này đến hết">${purpleSpeakerSVG}</button>`;
@@ -16933,11 +17056,13 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         }).join('');
 
         return `
-          <div class="reading-para-box" data-pidx="${pIdx}" id="readingParaBox_${pIdx}" style="display: ${isToggledVi ? 'none' : 'block'}; margin-bottom: 14px; position: relative;">
-            <span style="display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; margin-right: 4px; text-indent: 0;">${tinyBtnZhHTML}${tinyAudioBtnZhHTML}</span>${paraTokensHTML}
-          </div>
-          <div class="reading-para-vi-box" data-pidx="${pIdx}" id="readingParaViBox_${pIdx}" style="display: ${isToggledVi ? 'block' : 'none'}; margin-bottom: 14px; text-indent: 0; background: #f3eef9; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2d8ef; font-size: 15.5px; color: #4b3b66; font-style: normal; font-weight: 500; font-family: var(--font-mali) !important; word-break: normal !important; overflow-wrap: break-word !important; word-wrap: break-word !important; line-height: 1.65; transition: all 0.25s ease;">
-            <span style="display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; margin-right: 6px; text-indent: 0;">${tinyBtnViHTML}${tinyAudioBtnViHTML}</span>${viText}
+          <div class="reading-para-row" data-pidx="${pIdx}">
+            <div class="reading-para-box" data-pidx="${pIdx}" id="readingParaBox_${pIdx}" style="display: ${isToggledVi ? 'none' : 'block'}; margin-bottom: 14px; position: relative;">
+              <span style="display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; margin-right: 4px; text-indent: 0;">${tinyBtnZhHTML}${tinyAudioBtnZhHTML}</span>${paraTokensHTML}
+            </div>
+            <div class="reading-para-vi-box" data-pidx="${pIdx}" id="readingParaViBox_${pIdx}" style="display: ${isToggledVi ? 'block' : 'none'}; margin-bottom: 14px; text-indent: 0; background: #f3eef9; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2d8ef; font-size: 15.5px; color: #4b3b66; font-style: normal; font-weight: 500; font-family: var(--font-mali) !important; word-break: normal !important; overflow-wrap: break-word !important; word-wrap: break-word !important; line-height: 1.65; transition: all 0.25s ease;">
+              <span style="display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; margin-right: 6px; text-indent: 0;">${tinyBtnViHTML}${tinyAudioBtnViHTML}</span>${viText}
+            </div>
           </div>
         `;
       }).join('');
@@ -17034,6 +17159,11 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
 
       readingPassageContainer.innerHTML = newsHeaderHTML + (paragraphsHTML || '<div class="reading-para-box" style="margin-bottom: 14px;"></div>') + storyFooterHTML;
 
+      // Apply 2-column parallel book layout automatically when unfolded on OPPO Find N5 8.12" inner screen
+      if (typeof syncReadingSplitScreenLayout === 'function') {
+        syncReadingSplitScreenLayout();
+      }
+
       // Attach touch/click long-press listeners to each paragraph audio button
       document.querySelectorAll('#readingPassageContainer .tiny-para-audio-btn').forEach(btn => {
         const pIdx = parseInt(btn.getAttribute('data-pidx'), 10);
@@ -17128,6 +17258,46 @@ Trả về JSON thuần tuý (KHÔNG bọc trong markdown \`\`\`json):
         btnToggleReview.dataset.bound = 'true';
       }
     }
+
+    // Automatic 2-Column Parallel Book Layout for OPPO Find N5 8.12" Inner Screen (and wide screens >= 540px)
+    let readingSplitViSide = localStorage.getItem('hsk_reading_split_vi_side') === 'right' ? 'right' : 'left';
+
+    function isFoldableInnerScreenForReading() {
+      const w = window.innerWidth || document.documentElement.clientWidth || 0;
+      return w >= 540;
+    }
+
+    function syncReadingSplitScreenLayout() {
+      const container = document.getElementById('readingPassageContainer');
+      const swapBtn = document.getElementById('btnSwapReadingSplitCols');
+      const swapText = document.getElementById('swapReadingSplitColsText');
+      const isInner = isFoldableInnerScreenForReading();
+
+      if (container) {
+        container.classList.toggle('split-bilingual-mode', isInner);
+        container.classList.toggle('split-vi-left', isInner && readingSplitViSide === 'left');
+        container.classList.toggle('split-vi-right', isInner && readingSplitViSide === 'right');
+      }
+      if (swapBtn) {
+        swapBtn.style.display = isInner ? 'inline-flex' : 'none';
+      }
+      if (swapText) {
+        swapText.textContent = readingSplitViSide === 'left' ? '⇄ Việt | Trung' : '⇄ Trung | Việt';
+      }
+    }
+
+    function toggleReadingSplitSide() {
+      readingSplitViSide = readingSplitViSide === 'left' ? 'right' : 'left';
+      try {
+        localStorage.setItem('hsk_reading_split_vi_side', readingSplitViSide);
+      } catch (e) {}
+      syncReadingSplitScreenLayout();
+      showToast(readingSplitViSide === 'left' ? '⇄ Tiếng Việt bên trái · Tiếng Trung bên phải' : '⇄ Tiếng Trung bên trái · Tiếng Việt bên phải');
+    }
+    window.toggleReadingSplitSide = toggleReadingSplitSide;
+    window.addEventListener('resize', () => {
+      syncReadingSplitScreenLayout();
+    }, { passive: true });
 
     function updateReadingQuickLookupToggleUI() {
       const btn = document.getElementById('btnToggleReadingQuickLookup');
